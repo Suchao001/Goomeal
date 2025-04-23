@@ -4,7 +4,18 @@ module.exports = {
 
   presets: [require('nativewind/preset')],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily : {
+        prompt : ['Prompt-Regular'],
+        promptBold : ['Prompt-Bold'],
+        promptMedium : ['Prompt-Medium'],
+        promptLight : ['Prompt-Light'],
+        promptSemiBold : ['Prompt-SemiBold'],
+      },
+      colors: {
+        primary: '#ffb800',
+      },
+    },
   },
   plugins: [],
 };

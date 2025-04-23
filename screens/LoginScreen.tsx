@@ -1,53 +1,38 @@
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity } from 'react-native';
+
+import { View, Text, TouchableOpacity } from 'react-native';
+import { Text_input } from '../components/FormMaterial'; 
+import { useTypedNavigation } from '../hooks/Navigation';
+
 
 const LoginScreen = () => {
-    return (
-        <View className="flex-1 justify-center items-center bg-white p-4">
-            {/* Title */}
-            <Text className="text-3xl font-bold text-gray-800 mb-2">
-                เข้าสู่ระบบ
-            </Text>
-            {/* Subtitle */}
-            <Text className="text-base text-gray-600 mb-6">
-                กรุณากรอกข้อมูลเพื่อเข้าสู่ระบบ
-            </Text>
 
-            {/* Email Input */}
-            <View className="w-full mb-4">
-                <Text className="text-sm text-gray-700 mb-1">อีเมล</Text>
-                <TextInput
-                    className="w-full bg-white rounded-lg p-3 border border-gray-300"
-                    placeholder="อีเมล"
-                    keyboardType="email-address"
-                />
-            </View>
+  const navigation = useTypedNavigation<'Login'>();
+  return (
+    <View className="flex-1 items-center bg-white p-6 " >
+      <Text className="text-3xl text-gray-800 mb-2 mt-36 font-promptSemiBold" >
+        เข้าสู่ระบบ 
+      </Text>
+      <Text className="text-base text-gray-600 mb-6 font-prompt">
+        กรุณากรอกข้อมูลเพื่อเข้าสู่ระบบ
+      </Text>
 
-            {/* Password Input */}
-            <View className="w-full mb-4">
-                <Text className="text-sm text-gray-700 mb-1">รหัสผ่าน</Text>
-                <TextInput
-                    className="w-full bg-white rounded-lg p-3 border border-gray-300"
-                    placeholder="รหัสผ่าน"
-                    secureTextEntry
-                />
-            </View>
+      <Text_input title="ชื่อผู้ใช้" placeholder="ชื่อผู้ใช้" keyboardType="default" />
+      <Text_input title="รหัสผ่าน" placeholder="รหัสผ่าน" keyboardType="default" secureTextEntry={true} />
 
-            {/* Forgot Password Link */}
-            <TouchableOpacity>
-                <Text className="text-blue-500 text-sm mb-6">
-                    ลืมรหัสผ่าน ?
-                </Text>
-            </TouchableOpacity>
+      <View className="w-full flex-row justify-between my-3">
+        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+        <Text className="text-blue-500  font-prompt">ยังไม่มีบัญชี ?</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={()=> navigation.navigate('ForgotPassword')}>
+        <Text className="text-blue-500  font-prompt" >ลืมรหัสผ่าน ?</Text>
+        </TouchableOpacity>
+      </View>
 
-            {/* Login Button */}
-            <TouchableOpacity className="w-full bg-yellow-500 rounded-lg p-4 justify-center items-center">
-                <Text className="text-white text-lg font-semibold">
-                    เข้าสู่ระบบ
-                </Text>
-            </TouchableOpacity>
-        </View>
-    );
+      <TouchableOpacity className="w-[95%] bg-primary rounded-lg p-4 justify-center items-center " onPress={() => navigation.navigate('PersonalSetup')}>
+        <Text className="text-white text-lg font-promptBold" >เข้าสู่ระบบ</Text>
+      </TouchableOpacity>
+    </View>
+  );
 };
 
 export default LoginScreen;

@@ -17,12 +17,14 @@ export function useNavigationHelpers() {
     return {
         // goToHome: () => navigation.navigate('Home'),
         goBack: () => navigation.goBack(),
+        
         goToScreen: <T extends keyof RootStackParamList>(
             screen: T, 
             params?: RootStackParamList[T]
         ) => {
             navigation.navigate(screen, params);
         },
+
         resetToScreen: <T extends keyof RootStackParamList>(
             screen: T,
             params?: RootStackParamList[T]

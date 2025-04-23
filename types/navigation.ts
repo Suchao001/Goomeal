@@ -2,4 +2,13 @@ export type RootStackParamList = {
     Splash: undefined;
     Slides: undefined;
     Login: undefined;
+    Register: undefined;
+    ForgotPassword: undefined;
+    ForgotPassword_after: undefined;
+    PersonalSetup: undefined;
+    PersonalPlan1: undefined;
+    PersonalPlan2: undefined;
+    PersonalPlan3: undefined;
+
+
   };
