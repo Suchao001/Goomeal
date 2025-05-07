@@ -60,23 +60,22 @@ const PersonalPlanScreen1 = () => {
 
       {/* Target Selection */}
       <View className="w-full mb-4 p-3">
-        {['ลดน้ำหนัก', 'สุขภาพดี', 'เพิ่มน้ำหนัก'].map((target) => (
-          <TouchableOpacity
-            key={target}
-            className={`w-full rounded-lg p-3 items-center mb-2 ${
-              selectedTarget === target ? 'bg-primary' : 'bg-gray-200'
-            }`}
-            onPress={() => setSelectedTarget(target)}
-            accessibilityLabel={`เลือกเป้าหมาย ${target}`}
-          >
-            <Text
-              className={`font-prompt ${selectedTarget === target ? 'text-white' : 'text-black'}`}
+          {['ลดน้ำหนัก', 'สุขภาพดี', 'เพิ่มน้ำหนัก'].map((target) => (
+            <TouchableOpacity
+              key={target}
+              className={`w-full rounded-2xl p-3 items-center mb-2 shadow-lg shadow-slate-800 ${
+                selectedTarget === target ? 'bg-white border border-primary' : 'bg-white border border-transparent'
+              }`}
+              onPress={() => setSelectedTarget(target)}
+              accessibilityLabel={`เลือกเป้าหมาย ${target}`}
             >
-              {target}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+              <Text className="font-prompt text-black">
+                {target}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
 
       {/* Plan Duration Selection */}
       <View className="w-5/6 mb-4">
@@ -87,9 +86,9 @@ const PersonalPlanScreen1 = () => {
           {['7', '30'].map((duration) => (
             <TouchableOpacity
               key={duration}
-              className={`w-1/4 rounded-lg p-3 items-center ${
+              className={`w-1/4 rounded-2xl p-3 items-center ${
                 planDuration === duration && !isCustomPlan
-                  ? 'border-2 border-primary bg-white'
+                  ? 'border border-primary bg-white'
                   : 'bg-gray-100'
               }`}
               onPress={() => handlePlanDuration(duration)}
@@ -112,14 +111,14 @@ const PersonalPlanScreen1 = () => {
               placeholder="เลือกจำนวนวัน"
               containerStyle={{ width: '50%', height: 50 }}
               style={{
-                backgroundColor: '#F3F4F6',
-                borderRadius: 8,
+                backgroundColor: '#ffff',
+                borderRadius: 14,
                 borderWidth: 1,
                 paddingHorizontal: 12,
                 borderColor: planDuration ? '#ffb800' : '#d1d5db', // Add border color based on selection
               }}
               dropDownContainerStyle={{
-                backgroundColor: '#F3F4F6',
+                backgroundColor: '#fff',
                 borderRadius: 8,
                 borderWidth: 1,
                 borderColor: '#ffb800', // Add border color for dropdown container
@@ -133,7 +132,7 @@ const PersonalPlanScreen1 = () => {
             />
           ) : (
             <TouchableOpacity
-              className="w-2/4 rounded-lg p-3 items-center bg-gray-100"
+              className="w-2/4 rounded-2xl p-3 items-center bg-gray-100"
               onPress={handleCustomPlan}
               accessibilityLabel="กำหนดระยะเวลาเอง"
             >
@@ -159,7 +158,7 @@ const PersonalPlanScreen1 = () => {
         
           style={{
             backgroundColor: '#F3F4F6',
-            borderRadius: 8,
+            borderRadius: 14,
             borderWidth: 0,
             paddingHorizontal: 12,
             
@@ -180,7 +179,7 @@ const PersonalPlanScreen1 = () => {
 
       {/* Next Button */}
       <TouchableOpacity
-        className="w-[95%] bg-primary rounded-lg p-4 justify-center items-center"
+        className="w-[95%] bg-primary rounded-2xl p-4 justify-center items-center absolute bottom-8"
         onPress={() => navigation.navigate('PersonalPlan2')} 
         accessibilityLabel="ไปยังหน้าถัดไป"
       >

@@ -36,7 +36,7 @@ const PersonalPlanScreen2 = () => {
         ระดับการทำกิจกรรมของคุณ
       </Text>
 
-      <View className="w-full mb-6 flex gap-1 p-4">
+      <View className="w-full mb-6 flex gap-3 p-4">
   {activityItems.map((item, index) => (
     <TouchableHighlight 
       key={index} 
@@ -45,16 +45,16 @@ const PersonalPlanScreen2 = () => {
       underlayColor="#facc15"
       activeOpacity={1}
     >
-      <View className={`w-full p-5 rounded-2xl  ${actLevel == index + 1 ? 'border border-yellow-400' : 'border border-transparent'}`}>
+      <View className={`w-full p-5 rounded-2xl  ${actLevel == index + 1 ? 'border border-primary' : 'border border-transparent'}`}>
         <Text className="text-gray-800 text-lg font-promptMedium">{item.label}</Text>
-        <Text className="text-gray-600 text-sm">{item.content}</Text>
+        <Text className="text-gray-600 text-sm font-promptLight">{item.content}</Text>
       </View>
     </TouchableHighlight>
   ))}
 </View>
 
       <TouchableOpacity
-        className="w-[95%] bg-yellow-500 rounded-lg p-4 justify-center items-center"
+        className="w-[95%] bg-primary rounded-2xl p-4 justify-center items-center absolute bottom-8"
         onPress={()=>navigation.navigate('PersonalPlan3')}
       >
         <Text className="text-white text-lg font-promptBold">ต่อไป</Text>

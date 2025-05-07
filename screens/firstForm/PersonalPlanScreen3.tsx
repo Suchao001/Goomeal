@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 
 const PersonalPlanScreen3 = () => {
-  useTypedNavigation<'PersonalPlan2'>(); 
+  const navigation =useTypedNavigation<'PersonalPlan2'>(); 
 
   const imageMap: Record<string, any> = {
     foodtype1: require('../../assets/images/Foodtype_1.png'),
@@ -53,7 +53,7 @@ const PersonalPlanScreen3 = () => {
    underlayColor="#facc15"
    activeOpacity={1}
  >
-   <View className={`w-full p-5 rounded-2xl flex-row items-center gap-4  ${foodType == index + 1 ? 'border border-yellow-400' : 'border border-transparent'}`}>
+   <View className={`w-full p-5 rounded-2xl flex-row items-center gap-4  ${foodType == index + 1 ? 'border border-primary' : 'border border-transparent'}`}>
      
      {/* รูปภาพด้านซ้าย */}
      <Image
@@ -65,7 +65,7 @@ const PersonalPlanScreen3 = () => {
      {/* ข้อความด้านขวา */}
      <View className="flex-1">
        <Text className="text-gray-800 text-lg font-promptMedium">{item.label}</Text>
-       <Text className="text-gray-600 text-sm">{item.content}</Text>
+       <Text className="text-gray-600 text-sm font-promptLight">{item.content}</Text>
      </View>
 
    </View>
@@ -75,8 +75,8 @@ const PersonalPlanScreen3 = () => {
 </View>
 
       <TouchableOpacity
-        className="w-[95%] bg-yellow-500 rounded-lg p-4 justify-center items-center absolute bottom-8"
-
+        className="w-[95%] bg-primary rounded-2xl p-4 justify-center items-center absolute bottom-8"
+        onPress={()=> navigation.navigate('PersonalPlan4') }
       >
         <Text className="text-white text-lg font-promptBold">ต่อไป</Text>
       </TouchableOpacity>

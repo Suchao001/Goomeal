@@ -113,13 +113,13 @@ const PersonalSetupScreen = () => {
                 <Text className="text-base text-gray-800 font-prompt mb-2">เพศ</Text>
                 <View className="flex-row justify-between">
                     <TouchableOpacity
-                        className={`w-[48%]  rounded-lg p-3 items-center ${gender === 'male' ? 'border-2 border-primary bg-white' : 'bg-gray-100'}`}
+                        className={`w-[48%]  rounded-2xl p-3 items-center ${gender === 'male' ? 'border border-primary bg-white' : 'bg-gray-100'}`}
                         onPress={() => handleGenderChange('male')}
                     >
                         <Text className={`font-prompt`}>ชาย</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                        className={`w-[48%]  rounded-lg p-3 items-center ${gender === 'female' ? 'border-2 border-primary bg-white' : 'bg-gray-100'}`}
+                        className={`w-[48%]  rounded-2xl p-3 items-center ${gender === 'female' ? 'border border-primary bg-white' : 'bg-gray-100'}`}
                         onPress={() => handleGenderChange('female')}
                     >
                         <Text className={`font-prompt`}>หญิง</Text>
@@ -131,36 +131,23 @@ const PersonalSetupScreen = () => {
             <View className="w-full mb-6">
                 <Text className="text-base text-gray-800 font-prompt mb-2">ระดับไขมันในร่างกาย</Text>
                 <View className="flex-row flex-wrap justify-between">
-                    <TouchableOpacity
-                        className={`w-[23%] rounded-lg p-2 items-center ${activityLevel === 'low' ? 'border-2 border-primary bg-white' : 'bg-gray-100'}`}
-                        onPress={() => handleActivityLevelChange('low')}
-                    >
-                        <Text className="font-prompt">ต่ำ</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        className={`w-[23%] rounded-lg p-2 items-center ${activityLevel === 'medium' ? 'border-2 border-primary bg-white' : 'bg-gray-100'}`}
-                        onPress={() => handleActivityLevelChange('medium')}
-                    >
-                        <Text className="font-prompt">ปานกลาง</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        className={`w-[23%] rounded-lg p-2 items-center ${activityLevel === 'high' ? 'border-2 border-primary bg-white' : 'bg-gray-100'}`}
-                        onPress={() => handleActivityLevelChange('high')}
-                    >
-                        <Text className="font-prompt">สูง</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        className={`w-[23%] rounded-lg p-2 items-center ${activityLevel === 'unknow' ? 'border-2 border-primary bg-white' : 'bg-gray-100'}`}
-                        onPress={() => handleActivityLevelChange('unknow')}
-                    >
-                        <Text className="font-prompt">ไม่ทราบ</Text>
-                    </TouchableOpacity>
+                    {['low', 'medium', 'high', 'unknow'].map((level) => (
+                        <TouchableOpacity
+                            key={level}
+                            className={`w-[23%] rounded-xl p-2 items-center ${activityLevel === level ? 'border border-primary bg-white' : 'bg-gray-100'}`}
+                            onPress={() => handleActivityLevelChange(level)}
+                        >
+                            <Text className="font-prompt">
+                                {level === 'low' ? 'ต่ำ' : level === 'medium' ? 'ปานกลาง' : level === 'high' ? 'สูง' : 'ไม่ทราบ'}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
                 </View>
             </View>
 
             {/* Continue Button */}
             <TouchableOpacity
-                className="w-[95%] bg-primary rounded-lg p-4 justify-center items-center"
+                className="w-[95%] bg-primary rounded-2xl p-4 justify-center items-center"
                 onPress={() => navigation.navigate('PersonalPlan1')} 
             >
                 <Text className="text-white text-lg font-promptBold">ดำเนินการต่อ</Text>

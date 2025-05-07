@@ -30,6 +30,12 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
+      },
+      "package": "com.suchao.myexpoapp"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "81d4308f-d2ec-4f44-ae65-b25df2072324"
       }
     }
   }
