@@ -67,7 +67,7 @@ const PersonalPlanScreen4 = () => {
           ความต้องการเพิ่มเติม
         </Text>
 
-        <View className="w-full bg-gray-100 rounded-2xl p-4 h-40 mb-10">
+        <View className="w-full bg-gray-100 rounded-xl p-4 h-40 mb-10">
           <TextInput
             className="text-gray-800 text-lg font-promptLight"
             placeholder="พิมพ์ข้อความที่นี่..."
@@ -80,7 +80,7 @@ const PersonalPlanScreen4 = () => {
         </View>
 
         <TouchableOpacity
-          className="w-[95%] bg-primary rounded-2xl p-4 justify-center items-center mt-[6.5rem]"
+          className="w-[95%] bg-primary rounded-xl p-4 justify-center items-center mt-[6.5rem]"
           onPress={() => navigation.navigate('Home')}
         >
           <Text className="text-white text-lg font-promptBold">ต่อไป</Text>

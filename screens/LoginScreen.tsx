@@ -28,7 +28,7 @@ const LoginScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity className="w-[95%] bg-primary rounded-lg p-4 justify-center items-center " onPress={() => navigation.navigate('PersonalSetup')}>
+      <TouchableOpacity className="w-[95%] bg-primary rounded-xl p-4 justify-center items-center " onPress={() => navigation.navigate('PersonalSetup')}>
         <Text className="text-white text-lg font-promptBold" >เข้าสู่ระบบ</Text>
       </TouchableOpacity>
     </View>

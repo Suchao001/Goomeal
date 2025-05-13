@@ -63,7 +63,7 @@ const PersonalPlanScreen1 = () => {
           {['ลดน้ำหนัก', 'สุขภาพดี', 'เพิ่มน้ำหนัก'].map((target) => (
             <TouchableOpacity
               key={target}
-              className={`w-full rounded-2xl p-3 items-center mb-2 shadow-lg shadow-slate-800 ${
+              className={`w-full rounded-xl p-3 items-center mb-2 shadow-lg shadow-slate-800 ${
                 selectedTarget === target ? 'bg-white border border-primary' : 'bg-white border border-transparent'
               }`}
               onPress={() => setSelectedTarget(target)}
@@ -86,7 +86,7 @@ const PersonalPlanScreen1 = () => {
           {['7', '30'].map((duration) => (
             <TouchableOpacity
               key={duration}
-              className={`w-1/4 rounded-2xl p-3 items-center ${
+              className={`w-1/4 rounded-xl p-3 items-center ${
                 planDuration === duration && !isCustomPlan
                   ? 'border border-primary bg-white'
                   : 'bg-gray-100'
@@ -132,7 +132,7 @@ const PersonalPlanScreen1 = () => {
             />
           ) : (
             <TouchableOpacity
-              className="w-2/4 rounded-2xl p-3 items-center bg-gray-100"
+              className="w-2/4 rounded-xl p-3 items-center bg-gray-100"
               onPress={handleCustomPlan}
               accessibilityLabel="กำหนดระยะเวลาเอง"
             >
@@ -179,7 +179,7 @@ const PersonalPlanScreen1 = () => {
 
       {/* Next Button */}
       <TouchableOpacity
-        className="w-[95%] bg-primary rounded-2xl p-4 justify-center items-center absolute bottom-8"
+        className="w-[95%] bg-primary rounded-xl p-4 justify-center items-center absolute bottom-8"
         onPress={() => navigation.navigate('PersonalPlan2')} 
         accessibilityLabel="ไปยังหน้าถัดไป"
       >

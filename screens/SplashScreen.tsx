@@ -1,17 +1,13 @@
-import React, { useEffect } from 'react';
+
 import { View, Image, Pressable } from 'react-native';
 import { useTypedNavigation } from '../hooks/Navigation';
+
+
 
 const SplashScreen = () => {
     const navigation = useTypedNavigation<'Splash'>();
 
-    // useEffect(() => {
-    //     const timer = setTimeout(() => {
-    //         navigation.navigate('Slides');
-    //     }, 3000); 
-
-    //     return () => clearTimeout(timer); 
-    // }, [navigation]);
+    
 
     const handleNavigate = () => {
         navigation.navigate('Slides');

@@ -19,7 +19,7 @@ export const ForgotPasswordScreen = () => {
       <Text_input title="อีเมล" placeholder="อีเมล" keyboardType="default" />
 
       <TouchableOpacity
-        className="w-[95%] py-4 bg-primary rounded-lg justify-center items-center mt-2"
+        className="w-[95%] py-4 bg-primary rounded-xl justify-center items-center mt-2"
         onPress={() => navigation.navigate('ForgotPassword_after')}
       >
         <Text className="text-white text-lg font-promptBold">รีเซ็ตรหัสผ่าน</Text>

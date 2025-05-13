@@ -16,7 +16,7 @@ const Menu = () => {
   const navigation = useNavigation<NavigationProp>();
 
   return (
-    <View className="absolute bottom-0 w-full bg-orange-400 flex-row justify-around py-4">
+    <View className="absolute bottom-0 w-full bg-primary flex-row justify-around py-4 rounded-t-[25px]">
       <TouchableOpacity onPress={() => navigation.navigate('Home')}>
         <Text className="text-white text-2xl">🏠</Text>
       </TouchableOpacity>

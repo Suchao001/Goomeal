@@ -7,11 +7,13 @@ interface TextInputProps {
     placeholder: string;
     keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad' | 'decimal-pad' | 'url' ;
     secureTextEntry?: boolean;
+    value: string;
+    onChangeText: (text: string) => void;
+    autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
 }
 
-export const Text_input = ({ title, placeholder,keyboardType,secureTextEntry }: TextInputProps) => {
+export const Text_input = ({ title, placeholder,keyboardType,secureTextEntry, value, onChangeText, autoCapitalize }: TextInputProps) => {
     const [isFocused, setIsFocused] = useState(false);
-    const [value, setValue] = useState('');
     const animatedLabel = useState(new Animated.Value(value ? 1 : 0))[0];
   
 
@@ -73,15 +75,16 @@ export const Text_input = ({ title, placeholder,keyboardType,secureTextEntry }: 
                     {title}
                 </Animated.Text>
                 <TextInput
-                    className="w-full h-14 bg-[#f3f3f3] rounded-lg p-3 border border-transparent font-prompt"
+                    className="w-full h-14 bg-[#f3f3f3] rounded-xl p-3 border border-transparent font-prompt"
                     style={styles.input}
                     placeholder={isFocused || value ? '' : placeholder}
                     keyboardType={keyboardType}
                     value={value}
-                    onChangeText={setValue}
+                    onChangeText={onChangeText}
                     onFocus={handleFocus}
                     onBlur={handleBlur}
                     secureTextEntry={secureTextEntry}
+                    autoCapitalize={autoCapitalize}
                 />
             </View>
         </View>

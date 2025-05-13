@@ -3,8 +3,8 @@ import { View, Text } from 'react-native';
 
 const Header = () => {
   return (
-    <View className="w-full bg-orange-400 p-4 items-center">
-      <Text className="text-2xl font-bold text-white">GoodMeal</Text>
+    <View className="w-full bg-primary p-4 items-center">
+      <Text className="text-2xl mt-5 font-bold text-white">GoodMeal</Text>
     </View>
   );
 };

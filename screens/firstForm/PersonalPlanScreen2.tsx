@@ -40,12 +40,12 @@ const PersonalPlanScreen2 = () => {
   {activityItems.map((item, index) => (
     <TouchableHighlight 
       key={index} 
-      className='rounded-2xl shadow-lg shadow-slate-800 bg-white' // Changed shadow-md to shadow-lg for stronger shadow
+      className='rounded-xl shadow-lg shadow-slate-800 bg-white' // Changed shadow-md to shadow-lg for stronger shadow
       onPress={() => handleActLevel(index + 1)}
       underlayColor="#facc15"
       activeOpacity={1}
     >
-      <View className={`w-full p-5 rounded-2xl  ${actLevel == index + 1 ? 'border border-primary' : 'border border-transparent'}`}>
+      <View className={`w-full p-5 rounded-xl  ${actLevel == index + 1 ? 'border border-primary' : 'border border-transparent'}`}>
         <Text className="text-gray-800 text-lg font-promptMedium">{item.label}</Text>
         <Text className="text-gray-600 text-sm font-promptLight">{item.content}</Text>
       </View>
@@ -54,7 +54,7 @@ const PersonalPlanScreen2 = () => {
 </View>
 
       <TouchableOpacity
-        className="w-[95%] bg-primary rounded-2xl p-4 justify-center items-center absolute bottom-8"
+        className="w-[95%] bg-primary rounded-xl p-4 justify-center items-center absolute bottom-8"
         onPress={()=>navigation.navigate('PersonalPlan3')}
       >
         <Text className="text-white text-lg font-promptBold">ต่อไป</Text>

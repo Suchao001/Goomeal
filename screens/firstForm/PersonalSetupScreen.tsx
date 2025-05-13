@@ -113,13 +113,13 @@ const PersonalSetupScreen = () => {
                 <Text className="text-base text-gray-800 font-prompt mb-2">เพศ</Text>
                 <View className="flex-row justify-between">
                     <TouchableOpacity
-                        className={`w-[48%]  rounded-2xl p-3 items-center ${gender === 'male' ? 'border border-primary bg-white' : 'bg-gray-100'}`}
+                        className={`w-[48%]  rounded-xl p-3 items-center ${gender === 'male' ? 'border border-primary bg-white' : 'bg-gray-100'}`}
                         onPress={() => handleGenderChange('male')}
                     >
                         <Text className={`font-prompt`}>ชาย</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                        className={`w-[48%]  rounded-2xl p-3 items-center ${gender === 'female' ? 'border border-primary bg-white' : 'bg-gray-100'}`}
+                        className={`w-[48%]  rounded-xl p-3 items-center ${gender === 'female' ? 'border border-primary bg-white' : 'bg-gray-100'}`}
                         onPress={() => handleGenderChange('female')}
                     >
                         <Text className={`font-prompt`}>หญิง</Text>
@@ -147,7 +147,7 @@ const PersonalSetupScreen = () => {
 
             {/* Continue Button */}
             <TouchableOpacity
-                className="w-[95%] bg-primary rounded-2xl p-4 justify-center items-center"
+                className="w-[95%] bg-primary rounded-xl p-4 justify-center items-center"
                 onPress={() => navigation.navigate('PersonalPlan1')} 
             >
                 <Text className="text-white text-lg font-promptBold">ดำเนินการต่อ</Text>

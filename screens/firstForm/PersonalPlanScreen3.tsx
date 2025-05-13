@@ -48,12 +48,12 @@ const PersonalPlanScreen3 = () => {
   {foodTypeItems.map((item, index) => (
    <TouchableHighlight 
    key={index} 
-   className="rounded-2xl shadow-lg shadow-slate-800 bg-white mt-2"
+   className="rounded-xl shadow-lg shadow-slate-800 bg-white mt-2"
    onPress={() => handleActLevel(index + 1)}
    underlayColor="#facc15"
    activeOpacity={1}
  >
-   <View className={`w-full p-5 rounded-2xl flex-row items-center gap-4  ${foodType == index + 1 ? 'border border-primary' : 'border border-transparent'}`}>
+   <View className={`w-full p-5 rounded-xl flex-row items-center gap-4  ${foodType == index + 1 ? 'border border-primary' : 'border border-transparent'}`}>
      
      {/* รูปภาพด้านซ้าย */}
      <Image
@@ -75,7 +75,7 @@ const PersonalPlanScreen3 = () => {
 </View>
 
       <TouchableOpacity
-        className="w-[95%] bg-primary rounded-2xl p-4 justify-center items-center absolute bottom-8"
+        className="w-[95%] bg-primary rounded-xl p-4 justify-center items-center absolute bottom-8"
         onPress={()=> navigation.navigate('PersonalPlan4') }
       >
         <Text className="text-white text-lg font-promptBold">ต่อไป</Text>
