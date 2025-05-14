@@ -1,11 +1,12 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTypedNavigation } from '../../hooks/Navigation';
 import Header from '../material/Header';
 import Menu from '../material/Menu';
+import { useAuth } from 'AuthContext';
+import { showConfirmAlert } from '../../components/Alert';
 
-// Define your navigation stack params
 type RootStackParamList = {
   Home: undefined;
   RecordFood: undefined;
@@ -13,10 +14,21 @@ type RootStackParamList = {
   PersonalPlan1: undefined; // Add PersonalPlan1 to the navigation params
 };
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const Home = () => {
-  const navigation = useNavigation<NavigationProp>();
+  const navigation =  useTypedNavigation<'Home'>();
+  const {logout,reloadUser} =useAuth();
+
+  const handleLogout = async () => {
+    showConfirmAlert({
+      title: 'ยืนยัน',
+      message: 'คุณต้องการออกจากระบบหรือไม่?',
+      onConfirm: async () => {
+        logout();
+        await reloadUser();
+      }
+    });
+  }
 
   return (
     <View className="flex-1 bg-gray-100">
@@ -63,7 +75,8 @@ const Home = () => {
           </View>
           <TouchableOpacity
             className="bg-orange-400 px-6 py-2 rounded-full"
-            onPress={() => navigation.navigate('RecordFood')}
+            onPress={()=>handleLogout()}
+            // onPress={() => navigation.navigate('RecordFood')}
           >
             <Text className="text-white font-semibold">บันทึกอาหารวันนี้</Text>
           </TouchableOpacity>
