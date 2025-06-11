@@ -1,11 +1,15 @@
+import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
-import { useTypedNavigation } from '../../hooks/Navigation';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../types/navigation';
 import { ArrowLeft } from '../../components/GeneralMaterial';
-import { useState, useMemo } from 'react';
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const PersonalPlanScreen1 = () => {
-  const navigation = useTypedNavigation<'PersonalPlan1'>();
+  const navigation = useNavigation<NavigationProp>();
   const [planDuration, setPlanDuration] = useState('7');
   const [isCustomPlan, setIsCustomPlan] = useState(false);
   const [openWeight, setOpenWeight] = useState(false);

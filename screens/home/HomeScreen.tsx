@@ -4,8 +4,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import Header from '../material/Header';
 import Menu from '../material/Menu';
-import { useAuth } from 'AuthContext';
-import { showConfirmAlert } from '../../components/Alert';
+// import { useAuth } from 'AuthContext'; // ปิดการใช้งาน Auth ชั่วคราว
+// import { showConfirmAlert } from '../../components/Alert'; // ปิดการใช้งาน Alert ชั่วคราว
 
 type RootStackParamList = {
   Home: undefined;
@@ -14,21 +14,31 @@ type RootStackParamList = {
   PersonalPlan1: undefined; // Add PersonalPlan1 to the navigation params
 };
 
-
+/**
+ * HomeScreen Component
+ * หน้าแรกของแอปพลิเคชัน - แสดงข้อมูลแคลอรี่ และเมนูหลัก
+ * 
+ * Features:
+ * - แสดงข้อมูลแคลอรี่ที่บริโภคในวัน
+ * - แสดงปุ่มบันทึกอาหาร
+ * - แสดงประเภทอาหารต่างๆ
+ * - แสดงเมนูนำทาง
+ */
 const Home = () => {
-  const navigation =  useTypedNavigation<'Home'>();
-  const {logout,reloadUser} =useAuth();
+  const navigation = useTypedNavigation<'Home'>();
+  // const {logout,reloadUser} = useAuth(); // ปิดการใช้งาน Auth ชั่วคราว
 
-  const handleLogout = async () => {
-    showConfirmAlert({
-      title: 'ยืนยัน',
-      message: 'คุณต้องการออกจากระบบหรือไม่?',
-      onConfirm: async () => {
-        logout();
-        await reloadUser();
-      }
-    });
-  }
+  // ปิดการใช้งาน logout function ชั่วคราว
+  // const handleLogout = async () => {
+  //   showConfirmAlert({
+  //     title: 'ยืนยัน',
+  //     message: 'คุณต้องการออกจากระบบหรือไม่?',
+  //     onConfirm: async () => {
+  //       logout();
+  //       await reloadUser();
+  //     }
+  //   });
+  // }
 
   return (
     <View className="flex-1 bg-gray-100">
@@ -40,30 +50,8 @@ const Home = () => {
           <Header />
         </View>
 
-        {/* Calorie Tracker */}
-        <View className="w-[90%] bg-white rounded-lg shadow-md p-6 mt-4 mx-auto items-center">
-          <Text className="text-xl font-semibold mb-2">แคลอรี่</Text>
-          <View className="flex-row items-baseline mb-4">
-            <Text className="text-4xl font-bold text-orange-400">1,250</Text>
-            <Text className="text-gray-500 ml-2">/1750 กิโลแคลอรี่</Text>
-          </View>
-          <View className="flex-row justify-between w-full">
-            <View className="items-center">
-              <Text className="text-gray-600">คาร์บ</Text>
-              <Text className="font-semibold">0g</Text>
-            </View>
-            <View className="items-center">
-              <Text className="text-gray-600">โปรตีน</Text>
-              <Text className="font-semibold">0g</Text>
-            </View>
-            <View className="items-center">
-              <Text className="text-gray-600">ไขมัน</Text>
-              <Text className="font-semibold">0g</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Record Food Section */}
+       
+           {/* Record Food Section */}
         <View className="w-[90%] bg-white rounded-lg shadow-md p-6 mt-4 mx-auto items-center">
           <View className="flex-row items-center mb-4">
             <View className="w-6 h-6 bg-orange-400 rounded-full mr-2 items-center justify-center">
@@ -75,8 +63,7 @@ const Home = () => {
           </View>
           <TouchableOpacity
             className="bg-orange-400 px-6 py-2 rounded-full"
-            onPress={()=>handleLogout()}
-            // onPress={() => navigation.navigate('RecordFood')}
+            onPress={() => navigation.navigate('RecordFood')}
           >
             <Text className="text-white font-semibold">บันทึกอาหารวันนี้</Text>
           </TouchableOpacity>

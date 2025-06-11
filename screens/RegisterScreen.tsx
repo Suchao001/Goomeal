@@ -1,16 +1,19 @@
 import { useState,useEffect } from 'react';
 import { View, Text, TouchableOpacity,Alert} from 'react-native';
 import { Text_input } from '../components/FormMaterial';
-import { useTypedNavigation } from '../hooks/Navigation';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types/navigation';
 import {ArrowLeft} from '../components/GeneralMaterial';
 import axios from 'axios';
 import { base_url } from 'config';
 
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
 
 const RegisterScreen = () => {
 
-
-    const navigation = useTypedNavigation<'Register'>();
+    const navigation = useNavigation<NavigationProp>();
     const [user, setUser] = useState({
         username: '',
         email: '',

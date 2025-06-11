@@ -2,6 +2,12 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Home from './screens/home/HomeScreen';
+import ChatScreen from './screens/ChatScreen';
+import RecordFoodScreen from './screens/RecordFoodScreen';
+import CalendarScreen from './screens/CalendarScreen';
+import MenuScreen from './screens/MenuScreen';
+import ProfileDetailScreen from './screens/ProfileDetailScreen';
+import EditProfileScreen from './screens/EditProfileScreen';
 import PersonalSetupScreen from './screens/firstForm/PersonalSetupScreen';
 import PersonalPlanScreen1 from './screens/firstForm/PersonalPlanScreen1';
 import PersonalPlanScreen2 from './screens/firstForm/PersonalPlanScreen2';
@@ -10,10 +16,34 @@ import PersonalPlanScreen4 from './screens/firstForm/PersonalPlanScreen4';
 
 const Stack = createNativeStackNavigator();
 
+/**
+ * AppStack Navigator
+ * จัดการการนำทางหลักของแอปพลิเคชัน
+ * 
+ * Main Screens:
+ * - Home: หน้าแรก
+ * - Chat: หน้าแชท
+ * - RecordFood: หน้าบันทึกอาหาร
+ * - Calendar: หน้าปฏิทิน
+ * - Profile: หน้าโปรไฟล์
+ * 
+ * Setup Screens (สำหรับการตั้งค่าผู้ใช้ครั้งแรก):
+ * - PersonalSetup: ตั้งค่าข้อมูลส่วนตัว
+ * - PersonalPlan1-4: ขั้นตอนการวางแผนส่วนตัว
+ */
 export default function AppStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {/* Main App Screens */}
       <Stack.Screen name="Home" component={Home} />
+      <Stack.Screen name="Chat" component={ChatScreen} />
+      <Stack.Screen name="RecordFood" component={RecordFoodScreen} />
+      <Stack.Screen name="Calendar" component={CalendarScreen} />
+      <Stack.Screen name="Menu" component={MenuScreen} />
+      <Stack.Screen name="ProfileDetail" component={ProfileDetailScreen} />
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+      
+      {/* Personal Setup Screens */}
       <Stack.Screen name="PersonalSetup" component={PersonalSetupScreen} />
       <Stack.Screen name="PersonalPlan1" component={PersonalPlanScreen1} />
       <Stack.Screen name="PersonalPlan2" component={PersonalPlanScreen2} />
