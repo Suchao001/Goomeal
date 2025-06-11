@@ -15,7 +15,7 @@ export interface User {
   target_weight?: number | null;
 
   activity_level?: 'low' | 'moderate' | 'high' | null;
-  additional_needs?: string | null;
+  additional_requirements?: string | null;
   dietary_restrictions?: string | null;
   eating_type?: 'omnivore' | 'vegetarian' | 'vegan' | 'other' | null;
 

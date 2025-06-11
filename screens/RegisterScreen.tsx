@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import { View, Text, TouchableOpacity,Alert} from 'react-native';
 import { Text_input } from '../components/FormMaterial';
 import { useTypedNavigation } from '../hooks/Navigation';
@@ -8,6 +8,8 @@ import { base_url } from 'config';
 
 
 const RegisterScreen = () => {
+
+
     const navigation = useTypedNavigation<'Register'>();
     const [user, setUser] = useState({
         username: '',
@@ -45,13 +47,30 @@ const RegisterScreen = () => {
                 email: user.email,
                 password: user.password,
             };
+            
+            console.log('Sending registration data:', userData); // Add this line
             const response = await axios.post(`${base_url}/user/register`, userData);
             console.log('Registration successful:', response.data);
             Alert.alert('Success', 'Registration successful');
           
             navigation.navigate('Login');
-        } catch (error) {
+        } catch (error: any) {
             console.error('Registration error:', error);
+            
+            // Better error handling
+            if (error.response) {
+                // Server responded with error status
+                console.log('Error response:', error.response.data);
+                Alert.alert('Registration Failed', error.response.data.message || 'Registration failed');
+            } else if (error.request) {
+                // Request was made but no response received
+                console.log('No response received:', error.request);
+                Alert.alert('Network Error', 'Unable to connect to server');
+            } else {
+                // Something else happened
+                console.log('Error:', error.message);
+                Alert.alert('Error', 'Something went wrong');
+            }
         }
     };
     

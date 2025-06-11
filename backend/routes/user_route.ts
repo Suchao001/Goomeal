@@ -6,7 +6,16 @@ const router = express.Router();
 
 router.post("/register", async (req: Request, res: Response) => {
     try {
-        const { username, email, password } = req.body;
+     const { username, email, password } = req.body;
+        
+        // Validate required fields
+        if (!username || !email || !password) {
+            return res.status(400).json({
+                message: "Missing required fields",
+                error: "Username, email, and password are required"
+            });
+        }
+        
         const user = await register({ username, email, password });
         
         res.status(201).json({
@@ -14,6 +23,7 @@ router.post("/register", async (req: Request, res: Response) => {
             user,
         });
     } catch (error: any) {
+        console.error("Registration error:", error); // Add this line
         res.status(500).json({
             message: "Error registering user",
             error: error.message,
@@ -33,6 +43,7 @@ router.post("/login", async (req: Request, res: Response) => {
             refreshToken: loginResult.refreshToken,
         });
     } catch (error: any) {
+        console.error("Login error:", error); // Add this line
         res.status(500).json({
             message: "Error logging in user",
             error: error.message,
@@ -41,18 +52,30 @@ router.post("/login", async (req: Request, res: Response) => {
 });
 
 router.post("/refresh", async (req: Request, res: Response) => {
+    try {
+        const { refreshToken } = req.body;
+        if (!refreshToken) {
+            return res.status(401).json({ message: "Refresh token is required" });
+        }
 
-  const {refreshToken} = req.body;
-  if(!refreshToken) {
-    return res.status(401).json({message: "Refresh token is required"});
-  }
-  jwt.verify(refreshToken, process.env.JWT_SECRET || '', (err: any, decoded: any) => {
-    if(err) {
-      return res.status(403).json({message: "Invalid refresh token"});
+        const jwtSecret = process.env.JWT_SECRET;
+        if (!jwtSecret) {
+            return res.status(500).json({ message: "Server configuration error" });
+        }
+
+        jwt.verify(refreshToken, jwtSecret, (err: any, decoded: any) => {
+            if (err) {
+                return res.status(403).json({ message: "Invalid refresh token" });
+            }
+            const accessToken = jwt.sign({ id: decoded.id }, jwtSecret, { expiresIn: '15m' });
+            res.status(200).json({ accessToken });
+        });
+    } catch (error: any) {
+        res.status(500).json({
+            message: "Error refreshing token",
+            error: error.message,
+        });
     }
-    const accessToken = jwt.sign({id: decoded.id}, process.env.JWT_SECRET || '', {expiresIn: '15m'});
-    res.status(200).json({accessToken});
-  });
 });
 
 router.post("/logout", async (req: Request, res: Response) => {
