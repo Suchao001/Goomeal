@@ -16,9 +16,9 @@ export type RootStackParamList = {
     RecordFood: undefined;
     Calendar: undefined;
     Menu: undefined;    ProfileDetail: undefined;
-    EditProfile: undefined;
-    EditAccountSettings: undefined;
-    AccountSettings: undefined;
-    EatingBlog: undefined;
+    EditProfile: undefined;    EditAccountSettings: undefined;
+    AccountSettings: undefined;    EatingBlog: undefined;    FoodMenu: undefined;
+    SuggestionMenu: undefined;
+    MealPlan: undefined;
 
   };

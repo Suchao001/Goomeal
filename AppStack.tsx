@@ -10,6 +10,9 @@ import ProfileDetailScreen from './screens/ProfileDetailScreen';
 import EditProfileScreen from './screens/EditProfileScreen';
 import EditAccountSettingsScreen from './screens/EditAccountSettingsScreen';
 import EatingBlogScreen from './screens/EatingBlogScreen';
+import FoodMenuScreen from './screens/FoodMenuScreen';
+import SuggestionMenuScreen from './screens/SuggestionMenuScreen';
+import MealPlanScreen from './screens/MealPlanScreen';
 import PersonalSetupScreen from './screens/firstForm/PersonalSetupScreen';
 import PersonalPlanScreen1 from './screens/firstForm/PersonalPlanScreen1';
 import PersonalPlanScreen2 from './screens/firstForm/PersonalPlanScreen2';
@@ -43,9 +46,12 @@ export default function AppStack() {
       <Stack.Screen name="Calendar" component={CalendarScreen} />      
       <Stack.Screen name="Menu" component={MenuScreen} />      
       <Stack.Screen name="ProfileDetail" component={ProfileDetailScreen} />
-      <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-      <Stack.Screen name="EditAccountSettings" component={EditAccountSettingsScreen} />
-      <Stack.Screen name="EatingBlog" component={EatingBlogScreen} />
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} />    
+      <Stack.Screen name="EditAccountSettings" component={EditAccountSettingsScreen} />     
+      <Stack.Screen name="EatingBlog" component={EatingBlogScreen} />      
+      <Stack.Screen name="FoodMenu" component={FoodMenuScreen} />
+      <Stack.Screen name="SuggestionMenu" component={SuggestionMenuScreen} />
+      <Stack.Screen name="MealPlan" component={MealPlanScreen} />
       
       {/* Personal Setup Screens */}
       <Stack.Screen name="PersonalSetup" component={PersonalSetupScreen} />

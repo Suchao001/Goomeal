@@ -198,6 +198,7 @@ const EatingBlogScreen = () => {
             showsVerticalScrollIndicator={false}
           />
         </View>
+
       </ScrollView>
     </View>
   );

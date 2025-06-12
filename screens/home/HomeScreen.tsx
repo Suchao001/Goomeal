@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image, ScrollView, FlatList } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Header from '../material/Header';
@@ -8,24 +7,6 @@ import Menu from '../material/Menu';
 // import { useAuth } from 'AuthContext'; // ปิดการใช้งาน Auth ชั่วคราว
 // import { showConfirmAlert } from '../../components/Alert'; // ปิดการใช้งาน Alert ชั่วคราว
 
-type RootStackParamList = {
-  Home: undefined;
-  RecordFood: undefined;
-  Calendar: undefined;
-  PersonalPlan1: undefined; // Add PersonalPlan1 to the navigation params
-  EatingBlog: undefined;
-};
-
-/**
- * HomeScreen Component
- * หน้าแรกของแอปพลิเคชัน - แสดงข้อมูลแคลอรี่ และเมนูหลัก
- * 
- * Features:
- * - แสดงข้อมูลแคลอรี่ที่บริโภคในวัน
- * - แสดงปุ่มบันทึกอาหาร
- * - แสดงประเภทอาหารต่างๆ
- * - แสดงเมนูนำทาง
- */
 const Home = () => {
   const navigation = useTypedNavigation<'Home'>();
   // const {logout,reloadUser} = useAuth(); // ปิดการใช้งาน Auth ชั่วคราว
@@ -76,16 +57,13 @@ const Home = () => {
 
   return (
     <View className="flex-1 bg-gray-100">
-      {/* ทำให้หน้าเลื่อนได้ */}
-      <ScrollView contentContainerStyle={{ paddingBottom: 16 }}>
-
-        {/* Header */}
-        <View style={{ paddingTop: 0 /* เพิ่ม paddingTop เพื่อเว้นจาก Status Bar */ }}>
+      
+      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>     
+        <View style={{ paddingTop: 0 }}>
           <Header />
         </View>
 
-       
-           {/* Record Food Section */}
+        
         <View className="w-[90%] bg-white rounded-lg shadow-md p-6 mt-4 mx-auto items-center">
           <View className="flex-row items-center mb-4">
             <View className="w-6 h-6 bg-orange-400 rounded-full mr-2 items-center justify-center">
@@ -101,7 +79,7 @@ const Home = () => {
           >
             <Text className="text-white font-semibold">บันทึกอาหารวันนี้</Text>
           </TouchableOpacity>
-        </View>        {/* Navigate to PersonalPlan1 */}
+        </View>        
         <TouchableOpacity
           className="w-[90%] bg-green-400 rounded-lg shadow-md p-6 mt-4 mx-auto items-center"
           onPress={() => navigation.navigate('PersonalPlan1')}
@@ -109,7 +87,7 @@ const Home = () => {
           <Text className="text-white font-semibold">Go to Personal Plan</Text>
         </TouchableOpacity>
 
-        {/* Food Blog Articles Section */}
+       
         <View className="mt-6">          <View className="flex-row justify-between items-center px-4 mb-4">
             <Text className="text-xl font-bold text-gray-800">บทความการกิน</Text>
             <TouchableOpacity onPress={() => navigation.navigate('EatingBlog')}>
@@ -125,7 +103,7 @@ const Home = () => {
             renderItem={({ item }) => (
               <TouchableOpacity className="mr-4 w-72">
                 <View className="bg-white rounded-lg shadow-md overflow-hidden">
-                  {/* Article Image */}
+                 
                   <View className="h-40 bg-gray-200 items-center justify-center">
                     <Image
                       source={item.image}
@@ -134,7 +112,7 @@ const Home = () => {
                     />
                   </View>
                   
-                  {/* Article Content */}
+                 
                   <View className="p-4">
                     <Text className="text-lg font-semibold text-gray-800 mb-2" numberOfLines={2}>
                       {item.title}
@@ -180,10 +158,11 @@ const Home = () => {
                   </View>
                 </View>
               </TouchableOpacity>
-            ))}
-
-            {/* Request Menu Button */}
-            <TouchableOpacity className="bg-yellow-500 rounded-lg p-4 flex-row items-center justify-center mt-2">
+            ))}            {/* Request Menu Button */}
+            <TouchableOpacity 
+              className="bg-yellow-500 rounded-lg p-4 flex-row items-center justify-center mt-2"
+              onPress={() => navigation.navigate('FoodMenu')}
+            >
               <Icon name="sparkles" size={24} color="white" />
               <Text className="text-white font-bold text-lg ml-2">ขอเมนูอาหาร</Text>
             </TouchableOpacity>
