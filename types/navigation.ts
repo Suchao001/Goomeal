@@ -15,8 +15,10 @@ export type RootStackParamList = {
     Chat: undefined;
     RecordFood: undefined;
     Calendar: undefined;
-    Menu: undefined;
-    ProfileDetail: undefined;
+    Menu: undefined;    ProfileDetail: undefined;
     EditProfile: undefined;
+    EditAccountSettings: undefined;
+    AccountSettings: undefined;
+    EatingBlog: undefined;
 
   };

@@ -42,12 +42,18 @@ const ProfileDetailScreen = () => {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <Header />
       
+
       {/* Main Content */}
       <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 100 }}>
         {/* Profile Section */}
         <View style={styles.profileCard}>
+          <TouchableOpacity 
+          style={styles.backButtonRight}
+          onPress={() => navigation.goBack()}
+        >
+          <Icon name="arrow-back" size={24} color="#fbbf24" />
+        </TouchableOpacity>
           {/* Profile Header */}
           <View style={styles.profileHeader}>
             <View style={styles.profileImageContainer}>
@@ -162,6 +168,32 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f3f4f6',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'white',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    elevation: 3,
+  },
+  backButton: {
+    padding: 8,
+  },
+  headerCenter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginLeft: 8,
+  },
+  timeText: {
+    fontSize: 14,
+    color: '#6b7280',
   },
   content: {
     flex: 1,
@@ -366,6 +398,18 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     textAlign: 'center',
     lineHeight: 20,
+  },
+  backButtonRight: {
+    position: 'absolute',
+    top: 10,
+    right: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#fef3c7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
   },
 });
 

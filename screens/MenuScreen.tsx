@@ -19,6 +19,10 @@ const MenuScreen = () => {
     navigation.navigate('ProfileDetail');
   };
 
+  const handleAccountSettingsPress = () => {
+    navigation.navigate('EditAccountSettings');
+  };
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -34,31 +38,32 @@ const MenuScreen = () => {
             </View>
             <View style={styles.profileInfo}>
               <Text style={styles.profileName}>schaao</Text>
-              <Text style={styles.profileGreeting}>สวัสดีสวัสดี</Text>
               <View style={styles.statusRow}>
                 <View style={styles.statusDot}></View>
                 <Text style={styles.statusText}>ออนไลน์</Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.settingsButton} onPress={handleProfilePress}>
+            <View />
+            
+            <TouchableOpacity style={styles.settingsButton} onPress={handleAccountSettingsPress}>
               <View style={styles.settingsIconContainer}>
                 <Icon name="person" size={18} color="#6b7280" />
                 <Icon name="settings" size={12} color="#6b7280" style={{ position: 'absolute', bottom: -2, right: -2 }} />
               </View>
-              <Text style={styles.settingsText}>ตั้งค่าโปรไฟล์</Text>
+              
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Quick Actions */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>การดำเนินการด่วน</Text>
+          
           <View style={styles.quickActionsRow}>
-            <TouchableOpacity style={styles.quickActionCard}>
-              <View style={[styles.quickActionIcon, { backgroundColor: '#dbeafe' }]}>
-                <Icon name="document-text" size={24} color="#3b82f6" />
-              </View>
-              <Text style={styles.quickActionText}>กรอกข้อมูล</Text>
+            <TouchableOpacity style={styles.quickActionCard} onPress={handleProfilePress}>
+                <View style={[styles.quickActionIcon, { backgroundColor: '#dbeafe' }]}>
+                <Icon name="person" size={24} color="#3b82f6" />
+                </View>
+              <Text style={styles.quickActionText}>ข้อมูส่วนตัว</Text>
             </TouchableOpacity>
             
             <TouchableOpacity style={styles.quickActionCard}>
