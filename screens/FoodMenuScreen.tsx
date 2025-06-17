@@ -156,7 +156,7 @@ const FoodMenuScreen = () => {
         {/* Request New Menu Button */}
         <View className="mt-8 mb-6">
           <TouchableOpacity 
-            className="bg-yellow-500 rounded-xl p-4 flex-row items-center justify-center shadow-md"
+            className="bg-primary rounded-xl p-4 flex-row items-center justify-center shadow-md"
             onPress={() => navigation.navigate('SuggestionMenu')}
           >
             <Icon name="sparkles" size={28} color="white" />

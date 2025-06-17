@@ -160,7 +160,7 @@ const Home = () => {
               </TouchableOpacity>
             ))}            {/* Request Menu Button */}
             <TouchableOpacity 
-              className="bg-yellow-500 rounded-lg p-4 flex-row items-center justify-center mt-2"
+              className="bg-primary rounded-lg p-4 flex-row items-center justify-center mt-2"
               onPress={() => navigation.navigate('FoodMenu')}
             >
               <Icon name="sparkles" size={24} color="white" />

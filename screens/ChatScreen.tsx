@@ -48,18 +48,18 @@ const ChatScreen = () => {
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       {/* Header */}
-      <View className="bg-yellow-400 px-4 pt-10 pb-1">
+      <View className="bg-primary px-4 pt-10 pb-1">
         <View className="flex-row items-center justify-between mb-2">
           <TouchableOpacity 
         onPress={() => navigation.goBack()}
         className="p-2"
           >
-        <Icon name="arrow-back" size={24} color="#22c55e" />
+        <Icon name="arrow-back" size={24} color="#77DD77" />
           </TouchableOpacity>
           
           <View className="flex-row items-center">
-        <Icon name="restaurant" size={28} color="#22c55e" />
-        <Text className="text-2xl font-bold text-green-600 ml-2">GoodMealChat</Text>
+        <Icon name="restaurant" size={28} color="#77DD77" />
+        <Text className="text-2xl font-bold text-[#77DD77] ml-2">GoodMealChat</Text>
           </View>
           
           <View className="w-8" />
@@ -73,12 +73,12 @@ const ChatScreen = () => {
             <View className={`max-w-[80%] p-3 rounded-2xl ${
               msg.isBot 
                 ? 'bg-white border border-gray-200 rounded-bl-sm' 
-                : 'bg-yellow-500 rounded-br-sm'
+                : 'bg-primary rounded-br-sm'
             }`}>
               {msg.isBot && (
                 <View className="flex-row items-center mb-1">
-                  <Icon name="chatbubble-ellipses" size={16} color="#22c55e" />
-                  <Text className="text-green-600 text-xs font-medium ml-1">GoodMeal AI</Text>
+                  <Icon name="chatbubble-ellipses" size={16} color="#77DD77" />
+                  <Text className="text-[#77DD77] text-xs font-medium ml-1">GoodMeal AI</Text>
                 </View>
               )}
               <Text className={`text-base ${msg.isBot ? 'text-gray-800' : 'text-white'}`}>
@@ -130,7 +130,7 @@ const ChatScreen = () => {
             maxLength={500}
           />
           <TouchableOpacity
-            className="bg-yellow-500 rounded-full w-10 h-10 items-center justify-center ml-2"
+            className="bg-primary rounded-full w-10 h-10 items-center justify-center ml-2"
             onPress={sendMessage}
             disabled={!message.trim()}
           >
@@ -145,7 +145,7 @@ const ChatScreen = () => {
         {/* Start Button for initial interaction */}
         {chatMessages.length === 1 && (
           <TouchableOpacity
-            className="bg-yellow-500 rounded-xl py-3 mt-3 items-center justify-center"
+            className="bg-primary rounded-xl py-3 mt-3 items-center justify-center"
             onPress={() => setMessage('สวัสดีครับ ผมต้องการคำแนะนำเรื่องการกิน')}
           >
             <View className="flex-row items-center">

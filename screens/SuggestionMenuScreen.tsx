@@ -129,7 +129,7 @@ const SuggestionMenuScreen = () => {
                 key={meal.id}
                 className={`flex-1 min-w-[45%] p-3 m-1 rounded-lg border ${
                   selectedMealType === meal.id
-                    ? 'bg-yellow-500 border-yellow-500'
+                    ? 'bg-primary border-primary'
                     : 'bg-gray-50 border-gray-200'
                 }`}
                 onPress={() => setSelectedMealType(meal.id)}
@@ -159,7 +159,7 @@ const SuggestionMenuScreen = () => {
               <View key={index} className="items-center">
                 <TouchableOpacity
                   className={`w-12 h-12 rounded-full items-center justify-center ${
-                    hungerLevel === index ? 'bg-yellow-500' : 'bg-gray-200'
+                    hungerLevel === index ? 'bg-primary' : 'bg-gray-200'
                   }`}
                   onPress={() => setHungerLevel(index)}
                 >
@@ -177,7 +177,7 @@ const SuggestionMenuScreen = () => {
           <View className="mt-4 mx-2">
             <View className="h-2 bg-gray-200 rounded-full">
               <View 
-                className="h-2 bg-yellow-500 rounded-full"
+                className="h-2 bg-primary rounded-full"
                 style={{ width: `${((hungerLevel + 1) / 3) * 100}%` }}
               />
             </View>
@@ -196,7 +196,7 @@ const SuggestionMenuScreen = () => {
               onSubmitEditing={addIngredient}
             />
             <TouchableOpacity
-              className="w-10 h-10 bg-yellow-500 rounded-lg items-center justify-center"
+              className="w-10 h-10 bg-primary rounded-lg items-center justify-center"
               onPress={addIngredient}
             >
               <Icon name="add" size={20} color="white" />
@@ -225,7 +225,7 @@ const SuggestionMenuScreen = () => {
                 key={type}
                 className={`px-4 py-2 m-1 rounded-full border ${
                   selectedFoodType === type
-                    ? 'bg-yellow-500 border-yellow-500'
+                    ? 'bg-primary border-primary'
                     : 'bg-gray-50 border-gray-200'
                 }`}
                 onPress={() => setSelectedFoodType(type)}
@@ -307,7 +307,7 @@ const SuggestionMenuScreen = () => {
                 key={level.id}
                 className={`flex-1 p-3 mx-1 rounded-lg border ${
                   complexityLevel === level.id
-                    ? 'bg-yellow-500 border-yellow-500'
+                    ? 'bg-primary border-primary'
                     : 'bg-gray-50 border-gray-200'
                 }`}
                 onPress={() => setComplexityLevel(level.id)}
@@ -332,7 +332,7 @@ const SuggestionMenuScreen = () => {
         {/* Get Suggestion Button */}
         <View className="mx-4 mt-6 mb-8">
           <TouchableOpacity
-            className="bg-yellow-500 rounded-xl p-4 flex-row items-center justify-center shadow-md"
+            className="bg-primary rounded-xl p-4 flex-row items-center justify-center shadow-md"
             onPress={handleGetSuggestion}
           >
             <Icon name="sparkles" size={24} color="white" />
