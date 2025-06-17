@@ -1,7 +1,6 @@
 import db from '../db_config';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
 import { User } from '../models/user_model';
 
 

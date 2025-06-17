@@ -1,0 +1,44 @@
+const express = require('express');
+const nodemailer = require('nodemailer');
+const bodyParser = require('body-parser');
+
+const app = express();
+const PORT = 3000;
+
+app.use(bodyParser.json());
+
+app.get('/send-email', async (req, res) => {
+  const { to, subject, text } = {
+    to: 'suchao0101@gmail.com',
+    subject: 'Test Email',
+    text: 'This is a test email.'
+  };
+
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: 'suchaocloud0101@gmail.com',
+      pass: 'bsks jhga qkfb vmrd' // <- App password จาก Google
+    },
+  });
+
+  const mailOptions = {
+    from: 'suchaocloud0101@gmail.com',
+    to,
+    subject,
+    text
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ message: 'Email sent successfully!' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to send email.', error });
+  }
+});
+
+// อย่าลืมให้แอปทำงาน
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});

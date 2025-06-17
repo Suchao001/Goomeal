@@ -20,7 +20,6 @@ import PersonalPlanScreen3 from './screens/firstForm/PersonalPlanScreen3';
 import PersonalPlanScreen4 from './screens/firstForm/PersonalPlanScreen4';
 
 const Stack = createNativeStackNavigator();
-
 export default function AppStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>

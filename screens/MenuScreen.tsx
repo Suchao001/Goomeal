@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTypedNavigation } from '../hooks/Navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
+import { useAuth } from '../AuthContext';
 import Header from './material/Header';
 import Menu from './material/Menu';
 
@@ -14,6 +15,7 @@ import Menu from './material/Menu';
  */
 const MenuScreen = () => {
   const navigation = useTypedNavigation<'Menu'>(); 
+  const { logout } = useAuth();
 
   const handleProfilePress = () => {
     navigation.navigate('ProfileDetail');
@@ -21,6 +23,27 @@ const MenuScreen = () => {
 
   const handleAccountSettingsPress = () => {
     navigation.navigate('EditAccountSettings');
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'ออกจากระบบ',
+      'คุณต้องการออกจากระบบหรือไม่?',
+      [
+        {
+          text: 'ยกเลิก',
+          style: 'cancel',
+        },
+        {
+          text: 'ออกจากระบบ',
+          style: 'destructive',
+          onPress: () => {
+            logout();
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   return (
@@ -170,7 +193,7 @@ const MenuScreen = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>อื่นๆ</Text>
           <View style={styles.menuCard}>
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
               <View style={[styles.menuIcon, { backgroundColor: '#fecaca' }]}>
                 <Icon name="log-out" size={20} color="#ef4444" />
               </View>
