@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Header from './material/Header';
-import Menu from './material/Menu';
+import Header from '../material/Header';
+import Menu from '../material/Menu';
 
 /**
  * RecordFoodScreen Component

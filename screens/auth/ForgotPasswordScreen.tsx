@@ -1,11 +1,11 @@
 import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { useState } from 'react';
-import { Text_input } from '../components/FormMaterial';
-import { useTypedNavigation } from '../hooks/Navigation';
-import { ArrowLeft } from '../components/GeneralMaterial';
+import { Text_input } from '../../components/FormMaterial';
+import { useTypedNavigation } from '../../hooks/Navigation';
+import { ArrowLeft } from '../../components/GeneralMaterial';
 import { RouteProp, useRoute } from '@react-navigation/native';
-import { RootStackParamList } from '../types/navigation';
-import { base_url } from 'config';
+import { RootStackParamList } from '../../types/navigation';
+import { base_url } from '../../config';
 
 // ✅ Forgot Password หน้าหลัก
 export const ForgotPasswordScreen = () => {

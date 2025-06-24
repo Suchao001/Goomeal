@@ -1,12 +1,12 @@
 import { View, Text, TouchableOpacity,Alert } from 'react-native';
-import { Text_input } from '../components/FormMaterial'; 
-import { useTypedNavigation } from '../hooks/Navigation';
+import { Text_input } from '../../components/FormMaterial'; 
+import { useTypedNavigation } from '../../hooks/Navigation';
 import axios from 'axios';
-import { base_url } from 'config';
+import { base_url } from '../../config';
 import { useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
-import { showAlert } from '../components/Alert';
-import { useAuth } from '../AuthContext';
+import { showAlert } from '../../components/Alert';
+import { useAuth } from '../../AuthContext';
 
 
 

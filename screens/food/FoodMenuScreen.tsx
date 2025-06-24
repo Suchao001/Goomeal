@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Image } from 'react-native';
-import { useTypedNavigation } from '../hooks/Navigation';
+import { useTypedNavigation } from '../../hooks/Navigation';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 /**
@@ -19,7 +19,7 @@ const FoodMenuScreen = () => {
       carbs: 12,
       protein: 35,
       fat: 8,
-      image: require('../assets/images/Foodtype_1.png'),
+      image: require('../../assets/images/Foodtype_1.png'),
     },
     {
       id: '2',
@@ -28,7 +28,7 @@ const FoodMenuScreen = () => {
       carbs: 45,
       protein: 12,
       fat: 10,
-      image: require('../assets/images/Foodtype_2.png'),
+      image: require('../../assets/images/Foodtype_2.png'),
     },
     {
       id: '3',
@@ -37,7 +37,7 @@ const FoodMenuScreen = () => {
       carbs: 8,
       protein: 42,
       fat: 18,
-      image: require('../assets/images/Foodtype_3.png'),
+      image: require('../../assets/images/Foodtype_3.png'),
     },
   ];
 
@@ -50,7 +50,7 @@ const FoodMenuScreen = () => {
       carbs: 35,
       protein: 18,
       fat: 5,
-      image: require('../assets/images/Foodtype_4.png'),
+      image: require('../../assets/images/Foodtype_4.png'),
     },
     {
       id: '2',
@@ -59,7 +59,7 @@ const FoodMenuScreen = () => {
       carbs: 42,
       protein: 8,
       fat: 2,
-      image: require('../assets/images/Foodtype_1.png'),
+      image: require('../../assets/images/Foodtype_1.png'),
     },
   ];
 

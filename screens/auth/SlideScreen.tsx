@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity } from 'react-native';
 import Swiper from 'react-native-swiper';
-import {useTypedNavigation} from '../hooks/Navigation';
+import {useTypedNavigation} from '../../hooks/Navigation';
 
 
 
@@ -11,9 +11,9 @@ const SlidesScreen = () => {
     const navigation = useTypedNavigation<'Slides'>();
 
     const contents = [
-        { image: require('../assets/images/logo_1.png'), textColor: 'text-yellow-400', color: 'bg-yellow-400', title: 'วางแพลนอาหารด้วย AI' },
-        { image: require('../assets/images/logo_2.png'), textColor: 'text-green-400', color: 'bg-green-400', title: 'ช่วยคิดว่ามื้อนี้ควรทานอะไรดี' },
-        { image: require('../assets/images/logo_3.png'), textColor: 'text-yellow-400', color: 'bg-yellow-400', title: 'ช่วยเเนะนำเเละวิเคราะห์าการกินของคุณ' },
+        { image: require('../../assets/images/logo_1.png'), textColor: 'text-yellow-400', color: 'bg-yellow-400', title: 'วางแพลนอาหารด้วย AI' },
+        { image: require('../../assets/images/logo_2.png'), textColor: 'text-green-400', color: 'bg-green-400', title: 'ช่วยคิดว่ามื้อนี้ควรทานอะไรดี' },
+        { image: require('../../assets/images/logo_3.png'), textColor: 'text-yellow-400', color: 'bg-yellow-400', title: 'ช่วยเเนะนำเเละวิเคราะห์าการกินของคุณ' },
     ];
 
     return (

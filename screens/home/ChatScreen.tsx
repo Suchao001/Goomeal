@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useTypedNavigation } from '../hooks/Navigation';
-import Menu from './material/Menu';
+import { useTypedNavigation } from '../../hooks/Navigation';
+import Menu from '../material/Menu';
 
 /**
  * ChatScreen Component

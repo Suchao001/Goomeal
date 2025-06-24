@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useTypedNavigation } from '../hooks/Navigation';
-import Header from './material/Header';
-import Menu from './material/Menu';
+import { useTypedNavigation } from '../../hooks/Navigation';
+import Header from '../material/Header';
+import Menu from '../material/Menu';
 
-const RecordSettingsScreen = () => {
-  const navigation = useTypedNavigation<'RecordSettings'>();
+const EatingStyleSettingsScreen = () => {
+  const navigation = useTypedNavigation<'EatingStyleSettings'>();
 
   return (
     <View style={styles.container}>
@@ -16,14 +16,14 @@ const RecordSettingsScreen = () => {
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Icon name="arrow-back" size={24} color="#6b7280" />
           </TouchableOpacity>
-          <Text style={styles.title}>ตั้งค่าบันทึกการกิน</Text>
+          <Text style={styles.title}>ตั้งค่ารูปแบบการกิน</Text>
         </View>
         <View style={styles.mainContent}>
           <View style={styles.iconContainer}>
-            <Icon name="create" size={80} color="#6366f1" />
+            <Icon name="options" size={80} color="#8b5cf6" />
           </View>
-          <Text style={styles.subtitle}>บันทึกการกิน</Text>
-          <Text style={styles.description}>กำหนดวิธีการบันทึกอาหารที่เหมาะสมกับคุณ</Text>
+          <Text style={styles.subtitle}>กำหนดรูปแบบการกิน</Text>
+          <Text style={styles.description}>ตั้งค่ารูปแบบการกินที่เหมาะสมกับไลฟ์สไตล์ของคุณ</Text>
         </View>
       </ScrollView>
       <Menu />
@@ -51,4 +51,4 @@ const styles = StyleSheet.create({
   description: { fontSize: 16, color: '#6b7280', textAlign: 'center', lineHeight: 24 },
 });
 
-export default RecordSettingsScreen;
+export default EatingStyleSettingsScreen;

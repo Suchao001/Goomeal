@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Image, FlatList } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useTypedNavigation } from '../hooks/Navigation';
+import { useTypedNavigation } from '../../hooks/Navigation';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 /**
@@ -24,7 +24,7 @@ const EatingBlogScreen = () => {
     id: 'featured',
     title: '10 วิธีการทำอาหารเพื่อสุขภาพที่ง่ายและอร่อย',
     excerpt: 'เรียนรู้เทคนิคการปรุงอาหารที่ดีต่อสุขภาพ ลดไขมัน เพิ่มคุณค่าโภชนาการ และยังคงรสชาติที่อร่อย...',
-    image: require('../assets/images/Foodtype_1.png'),
+    image: require('../../assets/images/Foodtype_1.png'),
     author: 'นักโภชนาการ GoodMeal',
     readTime: '5 นาที',
     date: '12 มิ.ย. 2567',
@@ -37,7 +37,7 @@ const EatingBlogScreen = () => {
         id: '1',
         title: '5 เทคนิคการทำอาหารเพื่อสุขภาพ',
         excerpt: 'เรียนรู้วิธีการปรุงอาหารที่ดีต่อสุขภาพและอร่อยไปพร้อมกัน...',
-        image: require('../assets/images/Foodtype_2.png'),
+        image: require('../../assets/images/Foodtype_2.png'),
         readTime: '3 นาที',
         date: '10 มิ.ย. 2567',
       },
@@ -45,7 +45,7 @@ const EatingBlogScreen = () => {
         id: '2',
         title: 'ประโยชน์ของการกินผักผลไม้ในชีวิตประจำวัน',
         excerpt: 'ผักผลไม้มีสารอาหารที่จำเป็นต่อร่างกาย ช่วยเสริมภูมิคุ้มกัน...',
-        image: require('../assets/images/Foodtype_3.png'),
+        image: require('../../assets/images/Foodtype_3.png'),
         readTime: '4 นาที',
         date: '8 มิ.ย. 2567',
       },
@@ -53,7 +53,7 @@ const EatingBlogScreen = () => {
         id: '3',
         title: 'วิธีการเลือกซื้อผักผลไม้ที่สด',
         excerpt: 'เคล็ดลับในการเลือกซื้อผักผลไม้ที่มีคุณภาพดี เพื่อสุขภาพที่ดี...',
-        image: require('../assets/images/Foodtype_4.png'),
+        image: require('../../assets/images/Foodtype_4.png'),
         readTime: '2 นาที',
         date: '5 มิ.ย. 2567',
       },

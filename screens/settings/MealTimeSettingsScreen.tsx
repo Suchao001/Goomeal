@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useTypedNavigation } from '../hooks/Navigation';
-import Header from './material/Header';
-import Menu from './material/Menu';
+import { useTypedNavigation } from '../../hooks/Navigation';
+import Header from '../material/Header';
+import Menu from '../material/Menu';
 
 const MealTimeSettingsScreen = () => {
   const navigation = useTypedNavigation<'MealTimeSettings'>();

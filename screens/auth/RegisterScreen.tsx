@@ -1,12 +1,12 @@
 import { useState,useEffect } from 'react';
 import { View, Text, TouchableOpacity,Alert} from 'react-native';
-import { Text_input } from '../components/FormMaterial';
+import { Text_input } from '../../components/FormMaterial';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
-import {ArrowLeft} from '../components/GeneralMaterial';
+import { RootStackParamList } from '../../types/navigation';
+import {ArrowLeft} from '../../components/GeneralMaterial';
 import axios from 'axios';
-import { base_url } from 'config';
+import { base_url } from '../../config';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 

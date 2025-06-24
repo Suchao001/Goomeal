@@ -3,9 +3,9 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-nati
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
-import Header from './material/Header';
-import Menu from './material/Menu';
+import { RootStackParamList } from '../../types/navigation';
+import Header from '../material/Header';
+import Menu from '../material/Menu';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 

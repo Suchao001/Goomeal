@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Image, SafeAreaView, Modal, FlatList } from 'react-native';
-import { useTypedNavigation } from '../hooks/Navigation';
+import { useTypedNavigation } from '../../hooks/Navigation';
 import Icon from 'react-native-vector-icons/Ionicons';
-import Menu from './material/Menu';
+import Menu from '../material/Menu';
 
 /**
  * CalendarScreen Component
@@ -117,7 +117,7 @@ const CalendarScreen = () => {
       <View className="flex-1 items-center justify-center px-4">
         {/* Fruit Illustration */}
         <Image 
-          source={require('../assets/images/bg1.png')} 
+          source={require('../../assets/images/bg1.png')} 
           className="w-64 h-64 mb-6"
           resizeMode="contain"
         />

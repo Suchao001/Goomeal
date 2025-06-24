@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useTypedNavigation } from '../hooks/Navigation';
-import Header from './material/Header';
-import Menu from './material/Menu';
+import { useTypedNavigation } from '../../hooks/Navigation';
+import Header from '../material/Header';
+import Menu from '../material/Menu';
 
-const NotificationSettingsScreen = () => {
-  const navigation = useTypedNavigation<'NotificationSettings'>();
+const RecordSettingsScreen = () => {
+  const navigation = useTypedNavigation<'RecordSettings'>();
 
   return (
     <View style={styles.container}>
@@ -16,14 +16,14 @@ const NotificationSettingsScreen = () => {
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Icon name="arrow-back" size={24} color="#6b7280" />
           </TouchableOpacity>
-          <Text style={styles.title}>ตั้งค่าการแจ้งเตือน</Text>
+          <Text style={styles.title}>ตั้งค่าบันทึกการกิน</Text>
         </View>
         <View style={styles.mainContent}>
           <View style={styles.iconContainer}>
-            <Icon name="notifications" size={80} color="#f97316" />
+            <Icon name="create" size={80} color="#6366f1" />
           </View>
-          <Text style={styles.subtitle}>การแจ้งเตือน</Text>
-          <Text style={styles.description}>จัดการการแจ้งเตือนต่างๆ ให้เหมาะสมกับคุณ</Text>
+          <Text style={styles.subtitle}>บันทึกการกิน</Text>
+          <Text style={styles.description}>กำหนดวิธีการบันทึกอาหารที่เหมาะสมกับคุณ</Text>
         </View>
       </ScrollView>
       <Menu />
@@ -51,4 +51,4 @@ const styles = StyleSheet.create({
   description: { fontSize: 16, color: '#6b7280', textAlign: 'center', lineHeight: 24 },
 });
 
-export default NotificationSettingsScreen;
+export default RecordSettingsScreen;

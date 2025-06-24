@@ -1,37 +1,25 @@
 
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import Home from './screens/home/HomeScreen';
-import ChatScreen from './screens/ChatScreen';
-import RecordFoodScreen from './screens/RecordFoodScreen';
-import CalendarScreen from './screens/CalendarScreen';
+import { HomeScreen, ChatScreen, CalendarScreen } from './screens/home';
+import { RecordFoodScreen, EatingBlogScreen, FoodMenuScreen, SuggestionMenuScreen, MealPlanScreen } from './screens/food';
 import MenuScreen from './screens/MenuScreen';
-import ProfileDetailScreen from './screens/ProfileDetailScreen';
-import EditProfileScreen from './screens/EditProfileScreen';
-import EditAccountSettingsScreen from './screens/EditAccountSettingsScreen';
-import EatingBlogScreen from './screens/EatingBlogScreen';
-import FoodMenuScreen from './screens/FoodMenuScreen';
-import SuggestionMenuScreen from './screens/SuggestionMenuScreen';
-import MealPlanScreen from './screens/MealPlanScreen';
+import { ProfileDetailScreen, EditProfileScreen, EditAccountSettingsScreen } from './screens/profile';
 import PersonalSetupScreen from './screens/firstForm/PersonalSetupScreen';
 import PersonalPlanScreen1 from './screens/firstForm/PersonalPlanScreen1';
 import PersonalPlanScreen2 from './screens/firstForm/PersonalPlanScreen2';
 import PersonalPlanScreen3 from './screens/firstForm/PersonalPlanScreen3';
 import PersonalPlanScreen4 from './screens/firstForm/PersonalPlanScreen4';
-import FirstTimeSetupScreen from './screens/FirstTimeSetupScreen';
-import PlanSelectionScreen from './screens/PlanSelectionScreen';
-import EatingReportScreen from './screens/EatingReportScreen';
-import EatingStyleSettingsScreen from './screens/EatingStyleSettingsScreen';
-import NotificationSettingsScreen from './screens/NotificationSettingsScreen';
-import RecordSettingsScreen from './screens/RecordSettingsScreen';
-import MealTimeSettingsScreen from './screens/MealTimeSettingsScreen';
+import { FirstTimeSetupScreen, PlanSelectionScreen } from './screens/setup';
+import { EatingReportScreen } from './screens/reports';
+import { EatingStyleSettingsScreen, NotificationSettingsScreen, RecordSettingsScreen, MealTimeSettingsScreen } from './screens/settings';
 
 const Stack = createNativeStackNavigator();
 export default function AppStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {/* Main App Screens */}
-      <Stack.Screen name="Home" component={Home} />
+      <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="Chat" component={ChatScreen} />
       <Stack.Screen name="RecordFood" component={RecordFoodScreen} />
       <Stack.Screen name="Calendar" component={CalendarScreen} />      
