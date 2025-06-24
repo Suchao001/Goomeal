@@ -15,7 +15,7 @@ import Menu from './material/Menu';
  */
 const MenuScreen = () => {
   const navigation = useTypedNavigation<'Menu'>(); 
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const handleProfilePress = () => {
     navigation.navigate('ProfileDetail');
@@ -23,6 +23,34 @@ const MenuScreen = () => {
 
   const handleAccountSettingsPress = () => {
     navigation.navigate('EditAccountSettings');
+  };
+
+  const handleFirstTimeSetupPress = () => {
+    navigation.navigate('FirstTimeSetup');
+  };
+
+  const handlePlanSelectionPress = () => {
+    navigation.navigate('PlanSelection');
+  };
+
+  const handleEatingReportPress = () => {
+    navigation.navigate('EatingReport');
+  };
+
+  const handleEatingStyleSettingsPress = () => {
+    navigation.navigate('EatingStyleSettings');
+  };
+
+  const handleNotificationSettingsPress = () => {
+    navigation.navigate('NotificationSettings');
+  };
+
+  const handleRecordSettingsPress = () => {
+    navigation.navigate('RecordSettings');
+  };
+
+  const handleMealTimeSettingsPress = () => {
+    navigation.navigate('MealTimeSettings');
   };
 
   const handleLogout = () => {
@@ -60,7 +88,7 @@ const MenuScreen = () => {
               <Text style={styles.avatarText}>👤</Text>
             </View>
             <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>schaao</Text>
+              <Text style={styles.profileName}>{user?.username || user?.email || 'ผู้ใช้งาน'}</Text>
               <View style={styles.statusRow}>
                 <View style={styles.statusDot}></View>
                 <Text style={styles.statusText}>ออนไลน์</Text>
@@ -110,7 +138,7 @@ const MenuScreen = () => {
           <Text style={styles.sectionTitle}>เมนูหลัก</Text>
           <View style={styles.menuCard}>
             
-            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]}>
+            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} onPress={handleFirstTimeSetupPress}>
               <View style={[styles.menuIcon, { backgroundColor: '#dbeafe' }]}>
                 <Icon name="document-text" size={20} color="#3b82f6" />
               </View>
@@ -121,7 +149,7 @@ const MenuScreen = () => {
               <Icon name="chevron-forward" size={20} color="#9ca3af" />
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]}>
+            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} onPress={handlePlanSelectionPress}>
               <View style={[styles.menuIcon, { backgroundColor: '#dcfce7' }]}>
                 <Icon name="restaurant" size={20} color="#22c55e" />
               </View>
@@ -132,7 +160,7 @@ const MenuScreen = () => {
               <Icon name="chevron-forward" size={20} color="#9ca3af" />
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]}>
+            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} onPress={handleEatingReportPress}>
               <View style={[styles.menuIcon, { backgroundColor: '#fef3c7' }]}>
                 <Icon name="analytics" size={20} color="#f59e0b" />
               </View>
@@ -143,7 +171,7 @@ const MenuScreen = () => {
               <Icon name="chevron-forward" size={20} color="#9ca3af" />
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]}>
+            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} onPress={handleEatingStyleSettingsPress}>
               <View style={[styles.menuIcon, { backgroundColor: '#f3e8ff' }]}>
                 <Icon name="options" size={20} color="#8b5cf6" />
               </View>
@@ -154,7 +182,7 @@ const MenuScreen = () => {
               <Icon name="chevron-forward" size={20} color="#9ca3af" />
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]}>
+            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} onPress={handleNotificationSettingsPress}>
               <View style={[styles.menuIcon, { backgroundColor: '#fed7aa' }]}>
                 <Icon name="notifications" size={20} color="#f97316" />
               </View>
@@ -165,7 +193,7 @@ const MenuScreen = () => {
               <Icon name="chevron-forward" size={20} color="#9ca3af" />
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]}>
+            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} onPress={handleRecordSettingsPress}>
               <View style={[styles.menuIcon, { backgroundColor: '#e0e7ff' }]}>
                 <Icon name="create" size={20} color="#6366f1" />
               </View>
@@ -176,7 +204,7 @@ const MenuScreen = () => {
               <Icon name="chevron-forward" size={20} color="#9ca3af" />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity style={styles.menuItem} onPress={handleMealTimeSettingsPress}>
               <View style={[styles.menuIcon, { backgroundColor: '#ccfbf1' }]}>
                 <Icon name="time" size={20} color="#14b8a6" />
               </View>

@@ -32,7 +32,7 @@ app.get('/reset-password', async (req, res) => {
                         <title>GoodMeal - Reset Password Error</title>
                         <meta charset="utf-8">
                         <style>
-                            body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+                            body { font-family: Arial, sans-serif; max-widmth: 600px; margin: 50px auto; padding: 20px; }
                             .error { color: #d32f2f; background: #ffebee; padding: 20px; border-radius: 8px; }
                         </style>
                     </head>

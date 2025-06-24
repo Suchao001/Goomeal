@@ -18,6 +18,13 @@ import PersonalPlanScreen1 from './screens/firstForm/PersonalPlanScreen1';
 import PersonalPlanScreen2 from './screens/firstForm/PersonalPlanScreen2';
 import PersonalPlanScreen3 from './screens/firstForm/PersonalPlanScreen3';
 import PersonalPlanScreen4 from './screens/firstForm/PersonalPlanScreen4';
+import FirstTimeSetupScreen from './screens/FirstTimeSetupScreen';
+import PlanSelectionScreen from './screens/PlanSelectionScreen';
+import EatingReportScreen from './screens/EatingReportScreen';
+import EatingStyleSettingsScreen from './screens/EatingStyleSettingsScreen';
+import NotificationSettingsScreen from './screens/NotificationSettingsScreen';
+import RecordSettingsScreen from './screens/RecordSettingsScreen';
+import MealTimeSettingsScreen from './screens/MealTimeSettingsScreen';
 
 const Stack = createNativeStackNavigator();
 export default function AppStack() {
@@ -32,10 +39,18 @@ export default function AppStack() {
       <Stack.Screen name="ProfileDetail" component={ProfileDetailScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />    
       <Stack.Screen name="EditAccountSettings" component={EditAccountSettingsScreen} />     
-      <Stack.Screen name="EatingBlog" component={EatingBlogScreen} />      
+      <Stack.Screen name="EatingBlog" component={EatingBlogScreen} />        
       <Stack.Screen name="FoodMenu" component={FoodMenuScreen} />
       <Stack.Screen name="SuggestionMenu" component={SuggestionMenuScreen} />
       <Stack.Screen name="MealPlan" component={MealPlanScreen} />
+        {/* Menu Sub-screens */}
+      <Stack.Screen name="FirstTimeSetup" component={FirstTimeSetupScreen} />
+      <Stack.Screen name="PlanSelection" component={PlanSelectionScreen} />
+      <Stack.Screen name="EatingReport" component={EatingReportScreen} />
+      <Stack.Screen name="EatingStyleSettings" component={EatingStyleSettingsScreen} />
+      <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
+      <Stack.Screen name="RecordSettings" component={RecordSettingsScreen} />
+      <Stack.Screen name="MealTimeSettings" component={MealTimeSettingsScreen} />
       
       {/* Personal Setup Screens */}
       <Stack.Screen name="PersonalSetup" component={PersonalSetupScreen} />
