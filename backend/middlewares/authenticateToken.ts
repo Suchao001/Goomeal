@@ -10,24 +10,33 @@ interface CustomRequest extends Request {
     user?: JwtPayload | string;
 }
 
-const authenticateToken = (req: CustomRequest, res: Response, next: NextFunction) => {
-    const token = req.cookies.authToken;
+const authenticateToken = (req: CustomRequest, res: Response, next: NextFunction): void => {
+    // Check for token in Authorization header first, then cookies
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.startsWith('Bearer ') 
+        ? authHeader.substring(7) 
+        : req.cookies.authToken;
+        
     if (!token) {
-        return res.status(401).json({ message: 'Access denied' });
+        res.status(401).json({ message: 'Access denied - No token provided' });
+        return;
     }
     if (!jwtSecret) {
-        return res.status(500).json({ message: 'JWT secret not configured' });
+        res.status(500).json({ message: 'JWT secret not configured' });
+        return;
     }
     try {
         const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
         const currentTime = Math.floor(Date.now() / 1000);
         if (decoded.exp && decoded.exp < currentTime) {
-            return res.status(401).json({ message: 'Token has expired' });
+            res.status(401).json({ message: 'Token has expired' });
+            return;
         }
         req.user = decoded;
         next();
     } catch (error) {
         res.status(401).json({ message: 'Invalid token' });
+        return;
     }
 };
 

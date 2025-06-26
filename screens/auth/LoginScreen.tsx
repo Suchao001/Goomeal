@@ -36,6 +36,7 @@ const LoginScreen = () => {
       await SecureStore.setItemAsync('refreshToken', refreshToken);
       await SecureStore.setItemAsync('user', JSON.stringify(user));
       await reloadUser();
+      console.log('Login successful:', response.data);
     }catch(error) {
       console.error('Login error:', error);
     showAlert({

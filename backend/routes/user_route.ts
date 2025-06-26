@@ -1,7 +1,13 @@
 import express, { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { register, login } from "../controllers/user_controller";
+import { register, login, getUserProfile, updateUserProfile } from "../controllers/user_controller";
 import { sendPasswordResetEmail, resetPassword, verifyResetToken } from "../controllers/forgotpassword";
+import authenticateToken from "../middlewares/authenticateToken";
+
+// Define interface for authenticated requests
+interface AuthenticatedRequest extends Request {
+    user?: any;
+}
 
 const router = express.Router();
 
@@ -178,6 +184,83 @@ router.get("/verify-reset-token", async (req: Request, res: Response) => {
         
     } catch (error: any) {
         console.error("Verify token error:", error);
+        res.status(400).json({
+            message: error.message,
+            success: false
+        });
+    }
+});
+
+// Get user profile endpoint
+router.get("/profile", authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        const userId = req.user?.id;
+        
+        if (!userId) {
+            res.status(401).json({
+                message: "User ID not found in token",
+                success: false
+            });
+            return;
+        }
+        
+        const userProfile = await getUserProfile(userId);
+        
+        res.status(200).json({
+            message: "User profile retrieved successfully",
+            user: userProfile,
+            success: true
+        });
+        
+    } catch (error: any) {
+        console.error("Get profile error:", error);
+        res.status(500).json({
+            message: "Error getting user profile",
+            error: error.message,
+            success: false
+        });
+    }
+});
+
+// Update user profile endpoint
+router.put("/update-profile", authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        const userId = req.user?.id;
+        const { username, email, currentPassword, newPassword } = req.body;
+        
+        if (!userId) {
+            res.status(401).json({
+                message: "User ID not found in token",
+                success: false
+            });
+            return;
+        }
+        
+        if (!currentPassword) {
+            res.status(400).json({
+                message: "Current password is required",
+                success: false
+            });
+            return;
+        }
+        
+        const updateData = {
+            username,
+            email,
+            currentPassword,
+            newPassword
+        };
+        
+        const updatedUser = await updateUserProfile(userId, updateData);
+        
+        res.status(200).json({
+            message: "User profile updated successfully",
+            user: updatedUser,
+            success: true
+        });
+        
+    } catch (error: any) {
+        console.error("Update profile error:", error);
         res.status(400).json({
             message: error.message,
             success: false

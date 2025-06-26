@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, TextInput, Alert, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, Alert, StyleSheet, Modal, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
+import { RootStackParamList } from '../../types/navigation';
+import { useAuth } from '../../AuthContext';
+import axios from 'axios';
+import { base_url } from '../../config';
+import * as SecureStore from 'expo-secure-store';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -13,29 +17,145 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
  */
 const EditAccountSettingsScreen = () => {
   const navigation = useNavigation<NavigationProp>();
+  const { user, logout: authLogout, reloadUser, fetchUserProfile } = useAuth();
   
   // State for form data
-  const [username, setUsername] = useState('suchao');
-  const [email, setEmail] = useState('suchao@gmail.com');
-  const [password, setPassword] = useState('••••••••');
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
   
   // State for editing mode
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [isEditingPassword, setIsEditingPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load user data from backend when component mounts
+  useEffect(() => {
+    loadUserProfile();
+  }, []);
+
+  const loadUserProfile = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Use fetchUserProfile from AuthContext to get data
+      const userData = await fetchUserProfile();
+      
+      if (userData) {
+        setUsername(userData.username || '');
+        setEmail(userData.email || '');
+        setPassword('••••••••');
+      } else {
+        // Fallback to logout instead of navigate to Login (which might not exist in current stack)
+        Alert.alert(
+          'ข้อผิดพลาด', 
+          'ไม่สามารถโหลดข้อมูลได้ กรุณาเข้าสู่ระบบใหม่',
+          [
+            {
+              text: 'ตกลง',
+              onPress: async () => {
+                await authLogout();
+              }
+            }
+          ]
+        );
+      }
+    } catch (error: any) {
+      console.error('Load profile error:', error);
+      Alert.alert(
+        'ข้อผิดพลาด', 
+        'ไม่สามารถโหลดข้อมูลโปรไฟล์ได้'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fallback to AuthContext data if API fails
+  useEffect(() => {
+    if (user && !isLoading) {
+      if (!username) setUsername(user.username || '');
+      if (!email) setEmail(user.email || '');
+      if (password === '') setPassword('••••••••');
+    }
+  }, [user, isLoading]);
 
   const handleSaveAndEdit = () => {
-    // Here you would typically save the data to your backend
-    Alert.alert(
-      'บันทึกข้อมูล',
-      'ข้อมูลถูกบันทึกเรียบร้อยแล้ว',
-      [
-        {
-          text: 'ตกลง',
-          onPress: () => navigation.goBack()
+    // Show password confirmation dialog before saving
+    setShowPasswordConfirm(true);
+  };
+
+  const handleConfirmAndSave = async () => {
+    if (!currentPassword) {
+      Alert.alert('ข้อผิดพลาด', 'กรุณากรอกรหัสผ่านปัจจุบันเพื่อยืนยัน');
+      return;
+    }
+
+    // If editing password, check if new passwords match
+    if (isEditingPassword) {
+      if (password !== confirmPassword) {
+        Alert.alert('ข้อผิดพลาด', 'รหัสผ่านใหม่ไม่ตรงกัน');
+        return;
+      }
+      if (password.length < 6) {
+        Alert.alert('ข้อผิดพลาด', 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
+        return;
+      }
+    }
+
+    try {
+      // Prepare update data
+      const updateData: any = {
+        currentPassword,
+        username,
+        email,
+      };
+
+      if (isEditingPassword && password !== '••••••••') {
+        updateData.newPassword = password;
+      }
+
+      const response = await axios.put(`${base_url}/user/update-profile`, updateData, {
+        headers: {
+          'Authorization': `Bearer ${await SecureStore.getItemAsync('accessToken')}`
         }
-      ]
-    );
+      });
+
+      if (response.data.success) {
+        // Update user data in SecureStore with the response
+        await SecureStore.setItemAsync('user', JSON.stringify(response.data.user));
+
+        Alert.alert(
+          'สำเร็จ',
+          'ข้อมูลถูกบันทึกเรียบร้อยแล้ว',
+          [
+            {
+              text: 'ตกลง',
+              onPress: () => {
+                setShowPasswordConfirm(false);
+                setCurrentPassword('');
+                setConfirmPassword('');
+                setIsEditingUsername(false);
+                setIsEditingEmail(false);
+                setIsEditingPassword(false);
+                reloadUser(); // Reload user data
+                navigation.goBack();
+              }
+            }
+          ]
+        );
+      }
+    } catch (error: any) {
+      console.error('Update profile error:', error);
+      Alert.alert(
+        'ข้อผิดพลาด', 
+        error.response?.data?.message || 'ไม่สามารถบันทึกข้อมูลได้'
+      );
+    }
   };
 
   const handleLogout = () => {
@@ -50,9 +170,9 @@ const EditAccountSettingsScreen = () => {
         {
           text: 'ออกจากระบบ',
           style: 'destructive',
-          onPress: () => {
-            // Handle logout logic here
-            navigation.navigate('Login');
+          onPress: async () => {
+            await authLogout();
+            // Don't navigate manually - AuthContext will handle navigation
           }
         }
       ]
@@ -78,9 +198,16 @@ const EditAccountSettingsScreen = () => {
         <View className="w-10" />
       </View>
 
-      <ScrollView className="flex-1 px-4 py-6" showsVerticalScrollIndicator={false}>
-        {/* Form Container */}
-        <View className="bg-white rounded-2xl p-6 shadow-sm">
+      {/* Loading State */}
+      {isLoading ? (
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#f59e0b" />
+          <Text className="text-gray-600 font-prompt mt-4">กำลังโหลดข้อมูล...</Text>
+        </View>
+      ) : (
+        <ScrollView className="flex-1 px-4 py-6" showsVerticalScrollIndicator={false}>
+          {/* Form Container */}
+          <View className="bg-white rounded-2xl p-6 shadow-sm">
           
           {/* Username Field */}
           <View className="mb-6">
@@ -150,7 +277,17 @@ const EditAccountSettingsScreen = () => {
               />
               <TouchableOpacity
                 className="ml-3 w-8 h-8 rounded-full bg-purple-100 items-center justify-center"
-                onPress={() => setIsEditingPassword(!isEditingPassword)}
+                onPress={() => {
+                  if (isEditingPassword) {
+                    // Reset password fields when stopping edit
+                    setPassword('••••••••');
+                    setConfirmPassword('');
+                  } else {
+                    // Clear password field when starting edit
+                    setPassword('');
+                  }
+                  setIsEditingPassword(!isEditingPassword);
+                }}
               >
                 <Icon 
                   name={isEditingPassword ? "checkmark" : "create"} 
@@ -160,6 +297,24 @@ const EditAccountSettingsScreen = () => {
               </TouchableOpacity>
             </View>
           </View>
+
+          {/* Confirm Password Field - Only show when editing password */}
+          {isEditingPassword && (
+            <View className="mb-6">
+              <Text className="text-base font-promptMedium text-gray-700 mb-3">ยืนยันรหัสผ่าน</Text>
+              <View className="bg-gray-50 rounded-xl p-4">
+                <TextInput
+                  className="font-prompt text-gray-800"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  placeholder="ยืนยันรหัสผ่านใหม่"
+                  placeholderTextColor="#9ca3af"
+                  secureTextEntry={true}
+                  autoCapitalize="none"
+                />
+              </View>
+            </View>
+          )}
         </View>
 
         {/* Action Buttons */}
@@ -188,7 +343,63 @@ const EditAccountSettingsScreen = () => {
           <Text className="text-gray-400 font-prompt text-sm">GoodMeal App v1.0.0</Text>
           <Text className="text-gray-400 font-prompt text-xs mt-1">© 2024 GoodMeal Team</Text>
         </View>
-      </ScrollView>
+        </ScrollView>
+      )}
+
+      {/* Password Confirmation Modal */}
+      <Modal
+        visible={showPasswordConfirm}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowPasswordConfirm(false)}
+      >
+        <View className="flex-1 bg-black/50 justify-center items-center px-6">
+          <View className="bg-white rounded-2xl p-6 w-full max-w-sm">
+            <View className="items-center mb-6">
+              <Icon name="lock-closed" size={48} color="#f59e0b" />
+              <Text className="text-xl font-promptBold text-gray-800 mt-4 text-center">
+                ยืนยันรหัสผ่าน
+              </Text>
+              <Text className="text-base font-prompt text-gray-600 mt-2 text-center">
+                กรุณากรอกรหัสผ่านปัจจุบันเพื่อยืนยันการเปลี่ยนแปลง
+              </Text>
+            </View>
+
+            <View className="mb-6">
+              <Text className="text-base font-promptMedium text-gray-700 mb-3">รหัสผ่านปัจจุบัน</Text>
+              <TextInput
+                className="bg-gray-50 rounded-xl p-4 font-prompt text-gray-800"
+                value={currentPassword}
+                onChangeText={setCurrentPassword}
+                placeholder="กรอกรหัสผ่านปัจจุบัน"
+                placeholderTextColor="#9ca3af"
+                secureTextEntry={true}
+                autoCapitalize="none"
+                autoFocus={true}
+              />
+            </View>
+
+            <View className="flex-row space-x-3">
+              <TouchableOpacity
+                className="flex-1 bg-gray-200 rounded-xl p-4 items-center"
+                onPress={() => {
+                  setShowPasswordConfirm(false);
+                  setCurrentPassword('');
+                }}
+              >
+                <Text className="text-gray-700 font-promptBold">ยกเลิก</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className="flex-1 bg-yellow-500 rounded-xl p-4 items-center"
+                onPress={handleConfirmAndSave}
+              >
+                <Text className="text-white font-promptBold">ยืนยัน</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
