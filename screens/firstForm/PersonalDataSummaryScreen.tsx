@@ -1,24 +1,50 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import { ArrowLeft } from '../../components/GeneralMaterial';
 import { usePersonalSetup } from '../../contexts/PersonalSetupContext';
 
 const PersonalDataSummaryScreen = () => {
   const navigation = useTypedNavigation<'PersonalDataSummary'>();
-  const { getSummary, resetSetupData } = usePersonalSetup();
+  const { getSummary, submitToDatabase, resetSetupData } = usePersonalSetup();
+  const [isLoading, setIsLoading] = useState(false);
   
   const summary = getSummary();
 
-  const handleConfirm = () => {
-    // ที่นี่จะเป็นที่เรียก API เพื่อส่งข้อมูลไปยัง backend
-    console.log('✅ ยืนยันข้อมูลแล้ว - พร้อมส่งไปยัง backend');
+  const handleConfirm = async () => {
+    setIsLoading(true);
     
-    // รีเซ็ตข้อมูลหลังจากส่งเสร็จ
-    resetSetupData();
-    
-    // ไปยังหน้าหลัก
-    navigation.navigate('Home');
+    try {
+      // ส่งข้อมูลไปยัง backend
+      const result = await submitToDatabase();
+      
+      if (result.success) {
+        // แสดงข้อความสำเร็จ
+        Alert.alert(
+          'สำเร็จ!',
+          result.message,
+          [
+            {
+              text: 'ตกลง',
+              onPress: () => {
+                // รีเซ็ตข้อมูลหลังจากส่งเสร็จ
+                resetSetupData();
+                // ไปยังหน้าหลัก
+                navigation.navigate('Home');
+              }
+            }
+          ]
+        );
+      } else {
+        // แสดงข้อความผิดพลาด
+        Alert.alert('เกิดข้อผิดพลาด', result.message);
+      }
+    } catch (error) {
+      console.error('Error submitting data:', error);
+      Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const SummarySection = ({ title, data }: { title: string; data: { label: string; value: string }[] }) => (
@@ -60,10 +86,13 @@ const PersonalDataSummaryScreen = () => {
       {/* Action Buttons */}
       <View className="p-6 pt-4">
         <TouchableOpacity
-          className="w-full bg-primary rounded-xl p-4 justify-center items-center mb-3"
+          className={`w-full bg-primary rounded-xl p-4 justify-center items-center mb-3 ${isLoading ? 'opacity-50' : ''}`}
           onPress={handleConfirm}
+          disabled={isLoading}
         >
-          <Text className="text-white text-lg font-promptBold">ยืนยันข้อมูล</Text>
+          <Text className="text-white text-lg font-promptBold">
+            {isLoading ? 'กำลังบันทึก...' : 'ยืนยันข้อมูล'}
+          </Text>
         </TouchableOpacity>
         
         <TouchableOpacity

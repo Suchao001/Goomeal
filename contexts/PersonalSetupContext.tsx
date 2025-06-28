@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import * as SecureStore from 'expo-secure-store';
+import { base_url } from '../config';
 
 // Define the data structure for personal setup
 export interface PersonalSetupData {
@@ -35,6 +37,7 @@ interface PersonalSetupContextType {
     eating: { label: string; value: string }[];
     restrictions: { label: string; value: string }[];
   };
+  submitToDatabase: () => Promise<{ success: boolean; message: string }>;
   resetSetupData: () => void;
 }
 
@@ -110,6 +113,65 @@ export const PersonalSetupProvider: React.FC<{ children: ReactNode }> = ({ child
     };
   };
 
+  const submitToDatabase = async (): Promise<{ success: boolean; message: string }> => {
+    try {
+      console.log('📤 เริ่มส่งข้อมูลไปยัง backend...');
+      
+      // Get token from secure store
+      const token = await SecureStore.getItemAsync('accessToken');
+      if (!token) {
+        throw new Error('ไม่พบ access token กรุณาเข้าสู่ระบบใหม่');
+      }
+
+      // เตรียมข้อมูลสำหรับส่งไป backend
+      const requestData = {
+        age: setupData.age ? parseInt(setupData.age) : undefined,
+        weight: setupData.weight ? parseFloat(setupData.weight) : undefined,
+        height: setupData.height ? parseFloat(setupData.height) : undefined,
+        gender: setupData.gender,
+        body_fat: setupData.body_fat,
+        target_goal: setupData.target_goal,
+        target_weight: setupData.target_weight ? parseFloat(setupData.target_weight) : undefined,
+        activity_level: setupData.activity_level,
+        eating_type: setupData.eating_type,
+        dietary_restrictions: setupData.dietary_restrictions && setupData.dietary_restrictions.length > 0 
+          ? setupData.dietary_restrictions.join(', ') 
+          : undefined,
+        additional_requirements: setupData.additional_requirements || undefined
+      };
+
+      console.log('📊 ข้อมูลที่จะส่ง:', requestData);
+
+      const response = await fetch(`${base_url}/user/update-personal-data`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(requestData)
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+      }
+      
+      console.log('✅ บันทึกข้อมูลสำเร็จ:', result);
+      return { 
+        success: true, 
+        message: 'บันทึกข้อมูลส่วนตัวเรียบร้อยแล้ว' 
+      };
+      
+    } catch (error: any) {
+      console.error('❌ เกิดข้อผิดพลาดในการส่งข้อมูล:', error);
+      return { 
+        success: false, 
+        message: error.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล' 
+      };
+    }
+  };
+
   const resetSetupData = () => {
     setSetupData({});
   };
@@ -120,7 +182,8 @@ export const PersonalSetupProvider: React.FC<{ children: ReactNode }> = ({ child
         setupData, 
         updateSetupData, 
         getSummary,
-        resetSetupData 
+        resetSetupData,
+        submitToDatabase 
       }}
     >
       {children}
