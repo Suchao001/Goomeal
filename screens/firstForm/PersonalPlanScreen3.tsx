@@ -2,10 +2,12 @@ import { View, Text, TouchableOpacity,TouchableHighlight ,Image} from 'react-nat
 import { useTypedNavigation} from '../../hooks/Navigation';
 import { ArrowLeft } from '../../components/GeneralMaterial';
 import { useState } from 'react';
+import { usePersonalSetup } from '../../contexts/PersonalSetupContext';
 
 
 const PersonalPlanScreen3 = () => {
-  const navigation =useTypedNavigation<'PersonalPlan2'>(); 
+  const navigation =useTypedNavigation<'PersonalPlan3'>(); 
+  const { updateSetupData } = usePersonalSetup();
 
   const imageMap: Record<string, any> = {
     foodtype1: require('../../assets/images/Foodtype_1.png'),
@@ -15,20 +17,28 @@ const PersonalPlanScreen3 = () => {
   };
 
   const foodTypeItems = [ 
-    { label: 'อะไรก็ได้',content:'กินได้ทุกอย่าง', value: 'none' ,image:imageMap['foodtype1']},
-    { label: 'คีโต',content:'ไม่กิน ธัญพืช,พืชตระกูลถั่ว,ผักที่เป็นแป้ง', value: 'none',image:imageMap['foodtype2']},
-    { label: 'มังสวิรัติ ',content:'ไม่กิน เนื้อสัตว์', value: 'none' ,image:imageMap['foodtype3']},
-    { label: 'วีแกน',content:'ไม่กิน ผลิตภัณฑ์ที่ทำจากสัตว์', value: 'none' ,image:imageMap['foodtype4']},
+    { label: 'อะไรก็ได้',content:'กินได้ทุกอย่าง', value: 'omnivore' ,image:imageMap['foodtype1']},
+    { label: 'คีโต',content:'ไม่กิน ธัญพืช,พืชตระกูลถั่ว,ผักที่เป็นแป้ง', value: 'keto',image:imageMap['foodtype2']},
+    { label: 'มังสวิรัติ ',content:'ไม่กิน เนื้อสัตว์', value: 'vegetarian' ,image:imageMap['foodtype3']},
+    { label: 'วีแกน',content:'ไม่กิน ผลิตภัณฑ์ที่ทำจากสัตว์', value: 'vegan' ,image:imageMap['foodtype4']},
   ];
 
-  const [foodType,setActLevel] =useState(1);
+  const [foodType,setFoodType] =useState(0);
 
-  
-  
-  
-  const handleActLevel=(type:number)=>{
-    setActLevel(type);
+  const handleFoodType=(type:number)=>{
+    setFoodType(type);
   }
+
+  const handleContinue = () => {
+    // บันทึกข้อมูลลง Context
+    if (foodType > 0) {
+      updateSetupData({
+        eating_type: foodTypeItems[foodType - 1].value as 'omnivore' | 'keto' | 'vegetarian' | 'vegan' | 'other'
+      });
+    }
+    
+    navigation.navigate('PersonalPlan4');
+  };
 
   return (
     <View className="flex-1 items-center bg-white p-6 relative  ">
@@ -49,7 +59,7 @@ const PersonalPlanScreen3 = () => {
    <TouchableHighlight 
    key={index} 
    className="rounded-xl shadow-lg shadow-slate-800 bg-white mt-2"
-   onPress={() => handleActLevel(index + 1)}
+   onPress={() => handleFoodType(index + 1)}
    underlayColor="#facc15"
    activeOpacity={1}
  >
@@ -76,7 +86,7 @@ const PersonalPlanScreen3 = () => {
 
       <TouchableOpacity
         className="w-[95%] bg-primary rounded-xl p-4 justify-center items-center absolute bottom-8"
-        onPress={()=> navigation.navigate('PersonalPlan4') }
+        onPress={handleContinue}
       >
         <Text className="text-white text-lg font-promptBold">ต่อไป</Text>
       </TouchableOpacity>

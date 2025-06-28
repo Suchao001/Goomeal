@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import user from './routes/user_route';
-import { verifyResetToken } from './controllers/forgotpassword';
+import { verifyResetToken, resetPassword } from './controllers/forgotpassword';
 import { generateResetPasswordForm, generateErrorPage } from './utils/htmlTemplates';
 
 // Load environment variables
@@ -80,6 +80,60 @@ app.get('/reset-password', async (req, res) => {
                 </body>
             </html>
         `);
+    }
+});
+
+app.post('/reset-password', async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+        
+        if (!token || !newPassword) {
+            const errorHTML = generateErrorPage('Token และรหัสผ่านใหม่จำเป็นต้องระบุ');
+            return res.status(400).send(errorHTML);
+        }
+
+        if (newPassword.length < 6) {
+            const errorHTML = generateErrorPage('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
+            return res.status(400).send(errorHTML);
+        }
+
+        try {
+            const result = await resetPassword(token, newPassword);
+            
+            // Success page
+            const successHTML = `
+                <html>
+                    <head>
+                        <title>GoodMeal - รีเซ็ตรหัสผ่านสำเร็จ</title>
+                        <meta charset="utf-8">
+                        <style>
+                            body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+                            .success { color: #2e7d32; background: #e8f5e8; padding: 20px; border-radius: 8px; text-align: center; }
+                            .button { background: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; margin-top: 20px; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>🍽️ GoodMeal</h1>
+                        <div class="success">
+                            <h2>✅ รีเซ็ตรหัสผ่านสำเร็จ!</h2>
+                            <p>รหัสผ่านของคุณได้รับการเปลี่ยนแปลงเรียบร้อยแล้ว</p>
+                            <p>คุณสามารถใช้รหัสผ่านใหม่เพื่อเข้าสู่ระบบได้ทันที</p>
+                            <a href="#" class="button" onclick="window.close()">ปิดหน้าต่าง</a>
+                        </div>
+                    </body>
+                </html>
+            `;
+            res.send(successHTML);
+            
+        } catch (error: any) {
+            const errorHTML = generateErrorPage(error.message);
+            res.status(400).send(errorHTML);
+        }
+        
+    } catch (error: any) {
+        console.error("Reset password submission error:", error);
+        const errorHTML = generateErrorPage('เกิดข้อผิดพลาดในการรีเซ็ตรหัสผ่าน');
+        res.status(500).send(errorHTML);
     }
 });
 

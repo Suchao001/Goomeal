@@ -88,12 +88,13 @@ const Home = () => {
         </TouchableOpacity>
 
        
-        <View className="mt-6">          <View className="flex-row justify-between items-center px-4 mb-4">
-            <Text className="text-xl font-bold text-gray-800">บทความการกิน</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('EatingBlog')}>
-              <Text className="text-gray-500 text-sm">ดูเพิ่มเติม</Text>
-            </TouchableOpacity>
-          </View>
+        <View className="mt-6">          
+            <View className="flex-row justify-between items-center px-4 mb-4">
+                <Text className="text-xl font-bold text-gray-800">บทความการกิน</Text>
+                <TouchableOpacity onPress={() => navigation.navigate('EatingBlog')}>
+                <Text className="text-gray-500 text-sm">ดูเพิ่มเติม</Text>
+                </TouchableOpacity>
+            </View>
 
           <FlatList
             data={blogArticles}
@@ -138,7 +139,7 @@ const Home = () => {
             {recommendedMeals.map((meal) => (
               <TouchableOpacity key={meal.id} className="bg-white rounded-lg shadow-md mb-4 overflow-hidden">
                 <View className="flex-row">
-                  {/* Meal Image */}
+                  
                   <View className="w-24 h-24 bg-gray-200 items-center justify-center">
                     <Image
                       source={meal.image}
@@ -147,7 +148,7 @@ const Home = () => {
                     />
                   </View>
                   
-                  {/* Meal Info */}
+                  
                   <View className="flex-1 p-4 justify-center">
                     <Text className="text-lg font-semibold text-gray-800 mb-1">
                       {meal.name}
@@ -158,7 +159,7 @@ const Home = () => {
                   </View>
                 </View>
               </TouchableOpacity>
-            ))}            {/* Request Menu Button */}
+            ))}           
             <TouchableOpacity 
               className="bg-primary rounded-lg p-4 flex-row items-center justify-center mt-2"
               onPress={() => navigation.navigate('FoodMenu')}
@@ -169,8 +170,7 @@ const Home = () => {
           </View>
         </View>
 
-        {/* eating blog */}
-        {/* Meal Suggestions */}
+        {/* ----- จุดที่แก้ไข: ลบคอมเมนต์ที่อาจเป็นปัญหาออกไป ----- */}
         
       </ScrollView>
 
@@ -181,4 +181,3 @@ const Home = () => {
 };
 
 export default Home;
-

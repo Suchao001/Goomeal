@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { AuthProvider, useAuth } from 'AuthContext';
+import { PersonalSetupProvider } from './contexts/PersonalSetupContext';
 import FontWrapper from './components/FontWraper';
 import AuthStack from 'AuthStack';
 import AppStack from 'AppStack';
@@ -31,7 +32,9 @@ function RootNavigator() {
 export default function App() {
   return (
     <AuthProvider>
-      <RootNavigator />
+      <PersonalSetupProvider>
+        <RootNavigator />
+      </PersonalSetupProvider>
     </AuthProvider>
   );
 }

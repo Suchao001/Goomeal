@@ -12,7 +12,8 @@ export type RootStackParamList = {
     PersonalPlan1: undefined;
     PersonalPlan2: undefined;
     PersonalPlan3: undefined;
-    PersonalPlan4: undefined;    
+    PersonalPlan4: undefined;
+    PersonalDataSummary: undefined;    
     Home: undefined;
     Chat: undefined;
     RecordFood: undefined;

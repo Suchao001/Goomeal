@@ -3,14 +3,17 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { useTypedNavigation } from '../../hooks/Navigation';
 import { ArrowLeft } from '../../components/GeneralMaterial';
 import { useState } from 'react';
+import { usePersonalSetup } from '../../contexts/PersonalSetupContext';
 
 const PersonalPlanScreen4 = () => {
   const navigation = useTypedNavigation<'PersonalPlan4'>();
+  const { updateSetupData, getSummary } = usePersonalSetup();
+  
   const allergicItems = ['กลูเตน', 'ถั่ว', 'ไข่', 'ปลา', 'ถั่วเหลือง', 'ถั่วต้นไม้', 'หอย', 'กุ้ง'];
   const [allergies, setAllergies] = useState<string[]>([]);
-  const [additional, setAdditional] = useState<string | undefined>('');
+  const [additional, setAdditional] = useState<string>('');
 
-  const handleAdditional = (item :string) =>{
+  const handleAdditional = (item: string) => {
     setAdditional(item);
   }
 
@@ -20,6 +23,17 @@ const PersonalPlanScreen4 = () => {
     } else {
       setAllergies((prevAllergies) => prevAllergies.filter(allergy => allergy !== item));
     }
+  };
+
+  const handleContinue = () => {
+    // บันทึกข้อมูลลง Context
+    updateSetupData({
+      dietary_restrictions: allergies,
+      additional_requirements: additional
+    });
+
+    // ไปยังหน้าสรุปข้อมูล
+    navigation.navigate('PersonalDataSummary');
   };
 
   return (
@@ -81,7 +95,7 @@ const PersonalPlanScreen4 = () => {
 
         <TouchableOpacity
           className="w-[95%] bg-primary rounded-xl p-4 justify-center items-center mt-[6.5rem]"
-          onPress={() => navigation.navigate('Home')}
+          onPress={handleContinue}
         >
           <Text className="text-white text-lg font-promptBold">ต่อไป</Text>
         </TouchableOpacity>

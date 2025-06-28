@@ -2,25 +2,39 @@ import { View, Text, TouchableOpacity,TouchableHighlight } from 'react-native';
 import { useTypedNavigation} from '../../hooks/Navigation';
 import { ArrowLeft } from '../../components/GeneralMaterial';
 import { useState } from 'react';
+import { usePersonalSetup } from '../../contexts/PersonalSetupContext';
 
 
 const PersonalPlanScreen2 = () => {
  
   // Navigation hook used but not assigned
   const navigation = useTypedNavigation<'PersonalPlan2'>(); 
+  const { updateSetupData } = usePersonalSetup();
+  
   const activityItems = [ // Spell-checker: disable
-    { label: 'ไม่ออกกำลังกาย',content:'ไม่ค่อยได้ใช้กำลัง ทำงานอยู่กับโต๊ะเป็นส่วนมาก', value: 'none' },
-    { label: 'ได้ออกกำลังกายบ้างนิดหน่อย',content:'ได้ออกไปใช้แรงออกกำลังกาย เล็กน้อย 3 วันต่อสัปดาห์', value: 'none' },
-    { label: 'ออกกำลังกาย ระดับปานกลาง ',content:'ได้ออกไปออกกำลังกาย หรือ ใช้แรง อยู่เป็นประจำ', value: 'none' },
-    { label: 'ออกกำลังกายเป็นหลัก',content:'ได้ออกกำลังกาย หรือเล่นกีฬาอยู่แทบทุกวัน', value: 'none' },
-    { label: 'ใช้ร่างกายอย่างหนัก',content:'ออกกำลังอย่างหนัก ไม่ว่าจะเป็นงาน กีฬา หรือ เป็นการเทรนร่างกาย', value: 'none' }
+    { label: 'ไม่ออกกำลังกาย',content:'ไม่ค่อยได้ใช้กำลัง ทำงานอยู่กับโต๊ะเป็นส่วนมาก', value: 'low' },
+    { label: 'ได้ออกกำลังกายบ้างนิดหน่อย',content:'ได้ออกไปใช้แรงออกกำลังกาย เล็กน้อย 3 วันต่อสัปดาห์', value: 'moderate' },
+    { label: 'ออกกำลังกาย ระดับปานกลาง ',content:'ได้ออกไปออกกำลังกาย หรือ ใช้แรง อยู่เป็นประจำ', value: 'high' },
+    { label: 'ออกกำลังกายเป็นหลัก',content:'ได้ออกกำลังกาย หรือเล่นกีฬาอยู่แทบทุกวัน', value: 'very high' },
+    { label: 'ใช้ร่างกายอย่างหนัก',content:'ออกกำลังอย่างหนัก ไม่ว่าจะเป็นงาน กีฬา หรือ เป็นการเทรนร่างกาย', value: 'very high' }
   ];
 
-  const [actLevel,setActLevel] =useState(1);
+  const [actLevel,setActLevel] =useState(0);
   
   const handleActLevel=(level:number)=>{
     setActLevel(level);
   }
+
+  const handleContinue = () => {
+    // บันทึกข้อมูลลง Context
+    if (actLevel > 0) {
+      updateSetupData({
+        activity_level: activityItems[actLevel - 1].value as 'low' | 'moderate' | 'high' | 'very high'
+      });
+    }
+    
+    navigation.navigate('PersonalPlan3');
+  };
 
   return (
     <View className="flex-1 items-center bg-white p-6">
@@ -55,7 +69,7 @@ const PersonalPlanScreen2 = () => {
 
       <TouchableOpacity
         className="w-[95%] bg-primary rounded-xl p-4 justify-center items-center absolute bottom-8"
-        onPress={()=>navigation.navigate('PersonalPlan3')}
+        onPress={handleContinue}
       >
         <Text className="text-white text-lg font-promptBold">ต่อไป</Text>
       </TouchableOpacity>

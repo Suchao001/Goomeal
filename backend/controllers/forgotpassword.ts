@@ -16,8 +16,15 @@ const generateResetToken = (userId: number): string => {
         throw new Error('JWT_SECRET not configured');
     }
     
+    // Include current timestamp to make token unique
+    const tokenTimestamp = Date.now();
+    
     // Token expires in 1 hour
-    return jwt.sign({ userId, type: 'password_reset' }, jwtSecret, { expiresIn: '1h' });
+    return jwt.sign({ 
+        userId, 
+        type: 'password_reset', 
+        tokenTimestamp 
+    }, jwtSecret, { expiresIn: '1h' });
 };
 
 // Send password reset email using Resend
@@ -122,11 +129,17 @@ export const verifyResetToken = async (token: string) => {
         }
 
         const userId = decoded.userId;
+        const tokenTimestamp = decoded.tokenTimestamp;
         
         // Check if user exists
         const user = await db('users').where({ id: userId }).first();
         if (!user) {
             throw new Error('User not found');
+        }
+
+        // Check if token has already been used
+        if (user.last_password_reset && tokenTimestamp <= new Date(user.last_password_reset).getTime()) {
+            throw new Error('ลิงก์รีเซ็ตรหัสผ่านนี้ถูกใช้งานไปแล้ว');
         }
 
         console.log('✅ Token ถูกต้อง สำหรับ user ID:', userId);
@@ -167,20 +180,27 @@ export const resetPassword = async (token: string, newPassword: string) => {
         }
 
         const userId = decoded.userId;
+        const tokenTimestamp = decoded.tokenTimestamp;
         
         const user = await db('users').where({ id: userId }).first();
         if (!user) {
             throw new Error('User not found');
         }
 
+        // Check if token has already been used by comparing with last password reset timestamp
+        if (user.last_password_reset && tokenTimestamp <= new Date(user.last_password_reset).getTime()) {
+            throw new Error('ลิงก์รีเซ็ตรหัสผ่านนี้ถูกใช้งานไปแล้ว');
+        }
+
         // Hash new password
         const hashedPassword = await bcrypt.hash(newPassword, 10);
         
-        // Update password in database
+        // Update password and set last password reset timestamp
         await db('users')
             .where({ id: userId })
             .update({ 
                 password: hashedPassword,
+                last_password_reset: new Date(),
                 updated_at: new Date()
             });
 

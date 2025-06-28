@@ -1,21 +1,20 @@
-import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../types/navigation';
+import { useTypedNavigation } from '../../hooks/Navigation';
 import { ArrowLeft } from '../../components/GeneralMaterial';
-
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+import { useState, useMemo } from 'react';
+import { usePersonalSetup } from '../../contexts/PersonalSetupContext';
 
 const PersonalPlanScreen1 = () => {
-  const navigation = useNavigation<NavigationProp>();
+  const navigation = useTypedNavigation<'PersonalPlan1'>();
+  const { updateSetupData } = usePersonalSetup();
+  
   const [planDuration, setPlanDuration] = useState('7');
   const [isCustomPlan, setIsCustomPlan] = useState(false);
   const [openWeight, setOpenWeight] = useState(false);
   const [openDuration, setOpenDuration] = useState(false);
   const [weightValue, setWeightValue] = useState('70');
-  const [selectedTarget, setSelectedTarget] = useState('ลดน้ำหนัก');
+  const [selectedTarget, setSelectedTarget] = useState<'decrease' | 'increase' | 'healthy'>('decrease');
 
   
 
@@ -49,6 +48,17 @@ const PersonalPlanScreen1 = () => {
     setOpenDuration(true); // Open the dropdown for custom duration
   };
 
+  const handleContinue = () => {
+    // บันทึกข้อมูลลง Context
+    updateSetupData({
+      target_goal: selectedTarget,
+      target_weight: weightValue,
+      plan_duration: planDuration
+    });
+    
+    navigation.navigate('PersonalPlan2');
+  };
+
   return (
     <View className="flex-1 items-center bg-white p-6">
       {/* Back Arrow */}
@@ -64,17 +74,21 @@ const PersonalPlanScreen1 = () => {
 
       {/* Target Selection */}
       <View className="w-full mb-4 p-3">
-          {['ลดน้ำหนัก', 'สุขภาพดี', 'เพิ่มน้ำหนัก'].map((target) => (
+          {[
+            { key: 'decrease', label: 'ลดน้ำหนัก' },
+            { key: 'healthy', label: 'สุขภาพดี' },
+            { key: 'increase', label: 'เพิ่มน้ำหนัก' }
+          ].map((target) => (
             <TouchableOpacity
-              key={target}
+              key={target.key}
               className={`w-full rounded-xl p-3 items-center mb-2 shadow-lg shadow-slate-800 ${
-                selectedTarget === target ? 'bg-white border border-primary' : 'bg-white border border-transparent'
+                selectedTarget === target.key ? 'bg-white border border-primary' : 'bg-white border border-transparent'
               }`}
-              onPress={() => setSelectedTarget(target)}
-              accessibilityLabel={`เลือกเป้าหมาย ${target}`}
+              onPress={() => setSelectedTarget(target.key as 'decrease' | 'increase' | 'healthy')}
+              accessibilityLabel={`เลือกเป้าหมาย ${target.label}`}
             >
               <Text className="font-prompt text-black">
-                {target}
+                {target.label}
               </Text>
             </TouchableOpacity>
           ))}
@@ -184,7 +198,7 @@ const PersonalPlanScreen1 = () => {
       {/* Next Button */}
       <TouchableOpacity
         className="w-[95%] bg-primary rounded-xl p-4 justify-center items-center absolute bottom-8"
-        onPress={() => navigation.navigate('PersonalPlan2')} 
+        onPress={handleContinue} 
         accessibilityLabel="ไปยังหน้าถัดไป"
       >
         <Text className="text-white text-lg font-promptBold">ต่อไป</Text>

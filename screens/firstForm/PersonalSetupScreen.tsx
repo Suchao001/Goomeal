@@ -3,14 +3,18 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import { ArrowLeft } from '../../components/GeneralMaterial';
 import { useState } from 'react'; 
+import { usePersonalSetup } from '../../contexts/PersonalSetupContext'; 
 
 const PersonalSetupScreen = () => {
     const navigation = useTypedNavigation<'PersonalSetup'>();
+    const { updateSetupData } = usePersonalSetup();
 
     const [open, setOpen] = useState(false);
     const [value, setValue] = useState('20'); 
-    const [gender, setGender] = useState('male');
-    const [activityLevel, setActivityLevel] = useState('low'); // Added state for activity level
+    const [gender, setGender] = useState<'male' | 'female' | 'other'>('male');
+    const [bodyFat, setBodyFat] = useState<'low' | 'normal' | 'high' | 'don\'t know'>('normal');
+    const [height, setHeight] = useState('');
+    const [weight, setWeight] = useState('');
     const [items, setItems] = useState(
         [...Array(100).keys()].map((age) => ({
             label: `${age}`,
@@ -18,12 +22,25 @@ const PersonalSetupScreen = () => {
         }))
     );
 
-    const handleGenderChange = (selectedGender: string) => {
+    const handleGenderChange = (selectedGender: 'male' | 'female' | 'other') => {
         setGender(selectedGender);
     };
 
-    const handleActivityLevelChange = (level: string) => {
-        setActivityLevel(level);
+    const handleBodyFatChange = (level: 'low' | 'normal' | 'high' | 'don\'t know') => {
+        setBodyFat(level);
+    };
+
+    const handleContinue = () => {
+        // บันทึกข้อมูลลง Context
+        updateSetupData({
+            height,
+            weight,
+            age: value,
+            gender,
+            body_fat: bodyFat
+        });
+        
+        navigation.navigate('PersonalPlan1');
     };
 
     return (
@@ -48,14 +65,14 @@ const PersonalSetupScreen = () => {
             </Text>
 
             {/* Name Input */}
-            <View className="w-full mb-4">
+            {/* <View className="w-full mb-4">
                 <Text className="text-base text-gray-800 font-prompt mb-2">ชื่อ</Text>
                 <TextInput
                     className="w-full bg-gray-100 rounded-lg p-3 font-prompt"
                     placeholder="ชื่อคุณ"
                     keyboardType="default"
                 />
-            </View>
+            </View> */}
 
             {/* Height and Weight Inputs */}
             <View className="w-full flex-row justify-between mb-4">
@@ -65,6 +82,8 @@ const PersonalSetupScreen = () => {
                         className="w-full bg-gray-100 rounded-lg p-3 font-prompt"
                         placeholder="ส่วนสูง cm"
                         keyboardType="numeric"
+                        value={height}
+                        onChangeText={setHeight}
                     />
                 </View>
                 <View className="w-[48%]">
@@ -73,6 +92,8 @@ const PersonalSetupScreen = () => {
                         className="w-full bg-gray-100 rounded-lg p-3 font-prompt"
                         placeholder="น้ำหนัก kg"
                         keyboardType="numeric"
+                        value={weight}
+                        onChangeText={setWeight}
                     />
                 </View>
             </View>
@@ -127,19 +148,22 @@ const PersonalSetupScreen = () => {
                 </View>
             </View>
 
-            {/* Activity Level Selection */}
+            {/* Body Fat Level Selection */}
             <View className="w-full mb-6">
                 <Text className="text-base text-gray-800 font-prompt mb-2">ระดับไขมันในร่างกาย</Text>
                 <View className="flex-row flex-wrap justify-between">
-                    {['low', 'medium', 'high', 'unknow'].map((level) => (
+                    {[
+                        { key: 'low', label: 'ต่ำ' },
+                        { key: 'normal', label: 'ปานกลาง' },
+                        { key: 'high', label: 'สูง' },
+                        { key: 'don\'t know', label: 'ไม่ทราบ' }
+                    ].map((level) => (
                         <TouchableOpacity
-                            key={level}
-                            className={`w-[23%] rounded-xl p-2 items-center ${activityLevel === level ? 'border border-primary bg-white' : 'bg-gray-100'}`}
-                            onPress={() => handleActivityLevelChange(level)}
+                            key={level.key}
+                            className={`w-[23%] rounded-xl p-2 items-center ${bodyFat === level.key ? 'border border-primary bg-white' : 'bg-gray-100'}`}
+                            onPress={() => handleBodyFatChange(level.key as 'low' | 'normal' | 'high' | 'don\'t know')}
                         >
-                            <Text className="font-prompt">
-                                {level === 'low' ? 'ต่ำ' : level === 'medium' ? 'ปานกลาง' : level === 'high' ? 'สูง' : 'ไม่ทราบ'}
-                            </Text>
+                            <Text className="font-prompt">{level.label}</Text>
                         </TouchableOpacity>
                     ))}
                 </View>
@@ -148,7 +172,7 @@ const PersonalSetupScreen = () => {
             {/* Continue Button */}
             <TouchableOpacity
                 className="w-[95%] bg-primary rounded-xl p-4 justify-center items-center"
-                onPress={() => navigation.navigate('PersonalPlan1')} 
+                onPress={handleContinue}
             >
                 <Text className="text-white text-lg font-promptBold">ดำเนินการต่อ</Text>
             </TouchableOpacity>
