@@ -27,6 +27,8 @@ export type RootStackParamList = {
     FoodMenu: undefined;
     SuggestionMenu: undefined;
     MealPlan: undefined;
+    SearchFoodForAdd: { mealType?: string; mealTime?: string };
+    AddNewFood: undefined;
 
     // New Menu Pages
     FirstTimeSetup: undefined;

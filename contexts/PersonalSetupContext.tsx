@@ -134,15 +134,13 @@ export const PersonalSetupProvider: React.FC<{ children: ReactNode }> = ({ child
         target_weight: setupData.target_weight ? parseFloat(setupData.target_weight) : undefined,
         activity_level: setupData.activity_level,
         eating_type: setupData.eating_type,
-        dietary_restrictions: setupData.dietary_restrictions && setupData.dietary_restrictions.length > 0 
-          ? setupData.dietary_restrictions.join(', ') 
-          : undefined,
+        dietary_restrictions: setupData.dietary_restrictions ? setupData.dietary_restrictions.join(', ') : undefined,
         additional_requirements: setupData.additional_requirements || undefined
       };
 
       console.log('📊 ข้อมูลที่จะส่ง:', requestData);
 
-      const response = await fetch(`${base_url}/user/update-personal-data`, {
+      const response = await fetch(`${base_url}:3000/user/update-personal-data`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
