@@ -1,10 +1,9 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/navigation';
-import Header from '../material/Header';
 import Menu from '../material/Menu';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -40,118 +39,139 @@ const ProfileDetailScreen = () => {
   const currentCategory = getBMICategory(bmiValue);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView className="flex-1 bg-gray-50">
       {/* Header */}
-      
+      <View className="bg-primary px-4 py-4 pt-10">
+        <Text className="text-2xl font-bold text-white text-center font-prompt">ข้อมูลโปรไฟล์</Text>
+      </View>
 
       {/* Main Content */}
-      <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }}>
         {/* Profile Section */}
-        <View style={styles.profileCard}>
+        <View className="bg-white mx-4 mt-6 rounded-xl p-5 shadow-sm">
           <TouchableOpacity 
-          style={styles.backButtonRight}
-          onPress={() => navigation.goBack()}
-        >
-          <Icon name="arrow-back" size={24} color="#fbbf24" />
-        </TouchableOpacity>
+            className="absolute top-3 right-4 w-10 h-10 rounded-full items-center justify-center z-10"
+            onPress={() => navigation.goBack()}
+          >
+            <Icon name="arrow-back" size={24} color="#fbbf24" />
+          </TouchableOpacity>
+          
           {/* Profile Header */}
-          <View style={styles.profileHeader}>
-            <View style={styles.profileImageContainer}>
-              <View style={styles.profileImage}>
+          <View className="flex-row items-center mb-5">
+            <View className="mr-4">
+              <View className="w-20 h-20 bg-gray-200 rounded-full items-center justify-center">
                 <Icon name="person" size={48} color="#9ca3af" />
               </View>
             </View>
-            <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>suchao</Text>
+            <View className="flex-1">
+              <Text className="text-2xl font-bold text-gray-800 mb-3">suchao</Text>
               <TouchableOpacity 
-                style={styles.editButton}
+                className="bg-yellow-400 px-5 py-2 rounded-full self-start"
                 onPress={() => navigation.navigate('EditProfile')}
               >
-                <Text style={styles.editButtonText}>แก้ไข</Text>
+                <Text className="text-white font-semibold text-sm">แก้ไข</Text>
               </TouchableOpacity>
             </View>
           </View>
 
           {/* Personal Information */}
-          <View style={styles.infoContainer}>
-            <View style={styles.infoRow}>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>น้ำหนัก</Text>
-                <Text style={styles.infoValue}>{weight} kg</Text>
+          <View className="mt-2">
+            <View className="flex-row justify-between mb-3">
+              <View className="flex-1 bg-gray-50 p-4 rounded-xl mx-1 items-center">
+                <Text className="text-sm text-gray-500 mb-1">น้ำหนัก</Text>
+                <Text className="text-lg font-bold text-gray-800">{weight} kg</Text>
               </View>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>ส่วนสูง</Text>
-                <Text style={styles.infoValue}>{height} cm</Text>
+              <View className="flex-1 bg-gray-50 p-4 rounded-xl mx-1 items-center">
+                <Text className="text-sm text-gray-500 mb-1">ส่วนสูง</Text>
+                <Text className="text-lg font-bold text-gray-800">{height} cm</Text>
               </View>
             </View>
-            <View style={styles.infoRow}>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>อายุ</Text>
-                <Text style={styles.infoValue}>{age} ปี</Text>
+            <View className="flex-row justify-between">
+              <View className="flex-1 bg-gray-50 p-4 rounded-xl mx-1 items-center">
+                <Text className="text-sm text-gray-500 mb-1">อายุ</Text>
+                <Text className="text-lg font-bold text-gray-800">{age} ปี</Text>
               </View>
-              <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>BMI</Text>
-                <Text style={styles.infoValue}>{bmiValue}</Text>
+              <View className="flex-1 bg-gray-50 p-4 rounded-xl mx-1 items-center">
+                <Text className="text-sm text-gray-500 mb-1">BMI</Text>
+                <Text className="text-lg font-bold text-gray-800">{bmiValue}</Text>
               </View>
             </View>
           </View>
         </View>
 
         {/* BMI Chart Section */}
-        <View style={styles.bmiCard}>
-          <Text style={styles.bmiTitle}>ดัชนีมวลกาย (BMI)</Text>
+        <View className="bg-white mx-4 mt-4 rounded-xl p-5 shadow-sm">
+          <Text className="text-lg font-bold text-gray-800 mb-5 text-center">ดัชนีมวลกาย (BMI)</Text>
           
           {/* BMI Scale */}
-          <View style={styles.bmiScale}>
-            <View style={styles.scaleNumbers}>
-              <Text style={styles.scaleNumber}>15</Text>
-              <Text style={styles.scaleNumber}>20</Text>
-              <Text style={styles.scaleNumber}>25</Text>
-              <Text style={styles.scaleNumber}>30</Text>
-              <Text style={styles.scaleNumber}>35</Text>
-              <Text style={styles.scaleNumber}>40</Text>
+          <View className="mb-5">
+            <View className="flex-row justify-between mb-2">
+              <Text className="text-xs text-gray-500">15</Text>
+              <Text className="text-xs text-gray-500">20</Text>
+              <Text className="text-xs text-gray-500">25</Text>
+              <Text className="text-xs text-gray-500">30</Text>
+              <Text className="text-xs text-gray-500">35</Text>
+              <Text className="text-xs text-gray-500">40</Text>
             </View>
             
             {/* BMI Bars */}
-            <View style={styles.bmiBars}>
+            <View className="flex-row h-15">
               {bmiCategories.map((category, index) => (
-                <View key={index} style={styles.bmiBarContainer}>
+                <View key={index} className="flex-1 items-center mx-0.5">
                   <View 
-                    style={[
-                      styles.bmiBar, 
-                      { backgroundColor: category.color },
-                      currentCategory === index && styles.activeBmiBar
-                    ]} 
+                    className={`w-full h-8 rounded mb-1 ${
+                      currentCategory === index ? 'border-2 border-gray-800' : ''
+                    }`}
+                    style={{ backgroundColor: category.color }}
                   />
-                  <Text style={[styles.bmiLabel, { color: category.color }]}>
+                  <Text className="text-xs font-semibold text-center mb-0.5" style={{ color: category.color }}>
                     {category.label}
                   </Text>
-                  <Text style={styles.bmiRange}>{category.range}</Text>
+                  <Text className="text-xs text-gray-500 text-center">{category.range}</Text>
                 </View>
               ))}
             </View>
           </View>
 
           {/* Current BMI Indicator */}
-          <View style={styles.currentBmiContainer}>
-            <View style={styles.bmiIndicator}>
-              <View style={[styles.bmiPointer, { left: `${((bmiValue - 15) / 25) * 100}%` }]}>
-                <View style={styles.bmiArrow} />
-                <Text style={styles.bmiCurrentValue}>{bmiValue}</Text>
+          <View className="my-4">
+            <View className="relative h-8">
+              <View 
+                className="absolute items-center"
+                style={{ left: `${((bmiValue - 15) / 25) * 100}%`, marginLeft: -15 }}
+              >
+                <View 
+                  className="w-0 h-0 border-l-2 border-r-2 border-b-3 border-transparent"
+                  style={{ 
+                    borderLeftColor: 'transparent',
+                    borderRightColor: 'transparent',
+                    borderBottomColor: '#1f2937',
+                    borderLeftWidth: 8,
+                    borderRightWidth: 8,
+                    borderBottomWidth: 12
+                  }}
+                />
+                <Text className="text-xs font-bold text-gray-800 mt-1">{bmiValue}</Text>
               </View>
             </View>
           </View>
 
           {/* BMI Status */}
-          <View style={styles.bmiStatusContainer}>
-            <Text style={styles.bmiStatusTitle}>สถานะปัจจุบัน</Text>
-            <View style={styles.bmiStatus}>
-              <View style={[styles.statusDot, { backgroundColor: bmiCategories[currentCategory].color }]} />
-              <Text style={[styles.statusText, { color: bmiCategories[currentCategory].color }]}>
+          <View className="items-center mt-4">
+            <Text className="text-base font-semibold text-gray-800 mb-2">สถานะปัจจุบัน</Text>
+            <View className="flex-row items-center mb-2">
+              <View 
+                className="w-3 h-3 rounded-full mr-2"
+                style={{ backgroundColor: bmiCategories[currentCategory].color }}
+              />
+              <Text 
+                className="text-base font-semibold"
+                style={{ color: bmiCategories[currentCategory].color }}
+              >
                 {bmiCategories[currentCategory].label}
               </Text>
             </View>
-            <Text style={styles.bmiDescription}>
+            <Text className="text-sm text-gray-500 text-center leading-5">
               คุณมีน้ำหนักอยู่ในเกณฑ์ปกติ ควรรักษาน้ำหนักให้อยู่ในระดับนี้ต่อไป
             </Text>
           </View>
@@ -160,257 +180,8 @@ const ProfileDetailScreen = () => {
 
       {/* Bottom Navigation */}
       <Menu />
-    </View>
+    </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f3f4f6',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: 'white',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    elevation: 3,
-  },
-  backButton: {
-    padding: 8,
-  },
-  headerCenter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginLeft: 8,
-  },
-  timeText: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  content: {
-    flex: 1,
-  },
-  profileCard: {
-    backgroundColor: 'white',
-    marginHorizontal: 16,
-    marginTop: 24,
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  profileHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  profileImageContainer: {
-    marginRight: 16,
-  },
-  profileImage: {
-    width: 80,
-    height: 80,
-    backgroundColor: '#e5e7eb',
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  profileInfo: {
-    flex: 1,
-  },
-  profileName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 12,
-  },
-  editButton: {
-    backgroundColor: '#fbbf24',
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 20,
-    alignSelf: 'flex-start',
-  },
-  editButtonText: {
-    color: 'white',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  infoContainer: {
-    marginTop: 8,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  infoItem: {
-    flex: 1,
-    backgroundColor: '#f9fafb',
-    padding: 16,
-    borderRadius: 12,
-    marginHorizontal: 4,
-    alignItems: 'center',
-  },
-  infoLabel: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginBottom: 4,
-  },
-  infoValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1f2937',
-  },
-  bmiCard: {
-    backgroundColor: 'white',
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  bmiTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  bmiScale: {
-    marginBottom: 20,
-  },
-  scaleNumbers: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  scaleNumber: {
-    fontSize: 12,
-    color: '#6b7280',
-  },
-  bmiBars: {
-    flexDirection: 'row',
-    height: 60,
-  },
-  bmiBarContainer: {
-    flex: 1,
-    alignItems: 'center',
-    marginHorizontal: 2,
-  },
-  bmiBar: {
-    width: '100%',
-    height: 30,
-    borderRadius: 4,
-    marginBottom: 4,
-  },
-  activeBmiBar: {
-    borderWidth: 2,
-    borderColor: '#1f2937',
-  },
-  bmiLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 2,
-  },
-  bmiRange: {
-    fontSize: 8,
-    color: '#6b7280',
-    textAlign: 'center',
-  },
-  currentBmiContainer: {
-    marginVertical: 16,
-  },
-  bmiIndicator: {
-    position: 'relative',
-    height: 30,
-  },
-  bmiPointer: {
-    position: 'absolute',
-    alignItems: 'center',
-    marginLeft: -15,
-  },
-  bmiArrow: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 8,
-    borderRightWidth: 8,
-    borderBottomWidth: 12,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderBottomColor: '#1f2937',
-  },
-  bmiCurrentValue: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginTop: 4,
-  },
-  bmiStatusContainer: {
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  bmiStatusTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 8,
-  },
-  bmiStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  statusDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 8,
-  },
-  statusText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  bmiDescription: {
-    fontSize: 14,
-    color: '#6b7280',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  backButtonRight: {
-    position: 'absolute',
-    top: 10,
-    right: 16,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#fef3c7',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
-  },
-});
 
 export default ProfileDetailScreen;

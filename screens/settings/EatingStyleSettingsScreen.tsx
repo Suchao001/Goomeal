@@ -71,13 +71,21 @@ const EatingStyleSettingsScreen = () => {
         keyboardShouldPersistTaps="handled"
         extraScrollHeight={20}
       >
-        <View className="flex-row items-center px-4 py-8 bg-white border-b border-gray-200">
-          <TouchableOpacity className="mr-4 mt-5" onPress={() => navigation.goBack()}>
-            <Icon name="arrow-back" size={24} color="#6b7280" />
-          </TouchableOpacity>
-          <Text className="text-xl mt-5 font-bold text-gray-800">ตั้งค่ารูปแบบการกิน</Text>
-        </View>
-
+        <View className="flex-row items-center justify-between px-4 pt-12 pb-4 bg-white">
+                        <TouchableOpacity 
+                          className="w-10 h-10 rounded-full  items-center justify-center"
+                          onPress={() => navigation.goBack()}
+                        >
+                          <Icon name="arrow-back" size={24} color="#9ca3af" />
+                        </TouchableOpacity>
+                        
+                        <View className="flex-row items-center gap-2">
+                          <Icon name="restaurant" size={32} color="#9ca3af" />
+                          <Text className="text-lg font-semibold text-gray-800">ตั้งค่ารูปแบบการกิน</Text>
+                        </View>
+                        
+                        <Text className="text-base font-semibold text-gray-800"></Text>
+                      </View>
         <View className="bg-white mx-4 my-2 rounded-xl p-5 shadow-lg shadow-slate-800">
           <Text className="text-xl font-promptSemiBold text-gray-800 mb-2">รูปแบบการกิน</Text>
           <Text className="text-sm text-gray-600 mb-5 leading-5">เลือกรูปแบบการกินที่เหมาะกับคุณ</Text>

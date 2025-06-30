@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Modal, TextInput, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTypedNavigation } from '../../hooks/Navigation';
-import Header from '../material/Header';
-import Menu from '../material/Menu';
 
 const PlanSelectionScreen = () => {
   const navigation = useTypedNavigation<'PlanSelection'>();
@@ -99,35 +97,39 @@ const PlanSelectionScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <Header />
-      
-      <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 100 }}>
-        <View style={styles.headerSection}>
-          <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-            <Icon name="arrow-back" size={24} color="#6b7280" />
-          </TouchableOpacity>
-          <View style={styles.headerText}>
-            <Text style={styles.title}>แผนการกินที่ยืนยันแล้ว</Text>
-            <Text style={styles.subtitle}>จัดการแผนการกินของคุณ</Text>
-          </View>
+    <View className="flex-1 bg-gray-100">
+      <View className="flex-row items-center justify-between px-4 pt-10 pb-4 bg-white">
+        <TouchableOpacity 
+          className="w-10 h-10 rounded-full items-center justify-center"
+          onPress={handleBackPress}
+        >
+          <Icon name="arrow-back" size={24} color="#9ca3af" />
+        </TouchableOpacity>
+        
+        <View className="flex-row items-center gap-2">
+          <Icon name="restaurant" size={32} color="#9ca3af" />
+          <Text className="text-xl font-semibold text-gray-800">แผนการกิน</Text>
         </View>
+        
+        <Text className="text-base font-semibold text-gray-800"></Text>
+      </View>
 
-        <View style={styles.mainContent}>
-          <View style={styles.plansContainer}>
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }}>
+        <View className="flex-1 px-4 pt-6">
+          <View className="gap-4">
             {plans.map((plan) => (
-              <View key={plan.id} style={styles.planCard}>
-                <View style={styles.planContent}>
-                  <View style={styles.planIcon}>
-                    <Text style={styles.planEmoji}>{plan.image}</Text>
+              <View key={plan.id} className="bg-white rounded-2xl p-4 flex-row items-center justify-between shadow-lg shadow-slate-800">
+                <View className="flex-row items-center flex-1">
+                  <View className="w-15 h-15 rounded-xl bg-gray-100 items-center justify-center mr-4">
+                    <Text className="text-3xl">{plan.image}</Text>
                   </View>
-                  <View style={styles.planInfo}>
-                    <Text style={styles.planName}>{plan.name}</Text>
-                    <Text style={styles.planDescription}>{plan.description}</Text>
+                  <View className="flex-1">
+                    <Text className="text-lg font-bold text-gray-800 mb-1">{plan.name}</Text>
+                    <Text className="text-sm text-gray-600">{plan.description}</Text>
                   </View>
                 </View>
                 <TouchableOpacity 
-                  style={styles.optionsButton}
+                  className="p-2"
                   onPress={() => handlePlanOptions(plan)}
                 >
                   <Icon name="ellipsis-vertical" size={20} color="#eab308" />
@@ -136,9 +138,12 @@ const PlanSelectionScreen = () => {
             ))}
           </View>
 
-          <TouchableOpacity style={styles.addButton} onPress={handleAddPlan}>
+          <TouchableOpacity 
+            className="bg-white rounded-2xl p-5 flex-row items-center justify-center mt-4 border-2 border-gray-200 border-dashed"
+            onPress={handleAddPlan}
+          >
             <Icon name="add" size={24} color="#eab308" />
-            <Text style={styles.addButtonText}>+ เพิ่มแผนใหม่</Text>
+            <Text className="text-base font-semibold text-gray-600 ml-2">+ เพิ่มแผนใหม่</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -150,22 +155,31 @@ const PlanSelectionScreen = () => {
         animationType="slide"
         onRequestClose={() => setShowActionSheet(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.actionSheet}>
-            <TouchableOpacity style={styles.actionButton} onPress={() => setShowActionSheet(false)}>
-              <Text style={styles.actionButtonText}>เลือก</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton} onPress={handleEdit}>
-              <Text style={styles.actionButtonText}>แก้ไข</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.actionButton, styles.deleteButton]} onPress={handleDelete}>
-              <Text style={[styles.actionButtonText, styles.deleteButtonText]}>ลบ</Text>
-            </TouchableOpacity>
+        <View className="flex-1 bg-black bg-opacity-50 justify-end">
+          <View className="bg-white rounded-t-3xl pb-10">
             <TouchableOpacity 
-              style={[styles.actionButton, styles.cancelButton]} 
+              className="py-4 px-5 border-b border-gray-200"
               onPress={() => setShowActionSheet(false)}
             >
-              <Text style={styles.actionButtonText}>ยกเลิก</Text>
+              <Text className="text-base text-gray-800 text-center">เลือก</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              className="py-4 px-5 border-b border-gray-200"
+              onPress={handleEdit}
+            >
+              <Text className="text-base text-gray-800 text-center">แก้ไข</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              className="py-4 px-5 border-b border-gray-200 bg-red-50"
+              onPress={handleDelete}
+            >
+              <Text className="text-base text-red-500 text-center">ลบ</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              className="py-4 px-5 bg-gray-100 mt-2"
+              onPress={() => setShowActionSheet(false)}
+            >
+              <Text className="text-base text-gray-800 text-center">ยกเลิก</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -178,282 +192,60 @@ const PlanSelectionScreen = () => {
         animationType="slide"
         onRequestClose={() => setShowEditModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.editModal}>
-            <Text style={styles.modalTitle}>แก้ไขแผนการกิน</Text>
+        <View className="flex-1 bg-black bg-opacity-50 justify-center">
+          <View className="bg-white mx-5 rounded-3xl p-5 max-h-4/5">
+            <Text className="text-xl font-bold text-gray-800 text-center mb-5">แก้ไขแผนการกิน</Text>
             
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>ชื่อแผน</Text>
+            <View className="mb-4">
+              <Text className="text-base font-semibold text-gray-700 mb-2">ชื่อแผน</Text>
               <TextInput
-                style={styles.textInput}
+                className="border border-gray-300 rounded-xl px-3 py-3 text-base text-gray-800"
                 value={editName}
                 onChangeText={setEditName}
                 placeholder="ระบุชื่อแผน"
               />
             </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>คำอธิบาย</Text>
+            <View className="mb-4">
+              <Text className="text-base font-semibold text-gray-700 mb-2">คำอธิบาย</Text>
               <TextInput
-                style={[styles.textInput, styles.textArea]}
+                className="border border-gray-300 rounded-xl px-3 py-3 text-base text-gray-800 h-20"
                 value={editDescription}
                 onChangeText={setEditDescription}
                 placeholder="ระบุคำอธิบาย"
                 multiline
                 numberOfLines={3}
+                textAlignVertical="top"
               />
             </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>รูปภาพ</Text>
-              <TouchableOpacity style={styles.imageUpload}>
+            <View className="mb-4">
+              <Text className="text-base font-semibold text-gray-700 mb-2">รูปภาพ</Text>
+              <TouchableOpacity className="border-2 border-gray-300 border-dashed rounded-xl py-5 items-center justify-center">
                 <Icon name="camera" size={32} color="#9ca3af" />
-                <Text style={styles.imageUploadText}>เพิ่มรูปภาพ</Text>
+                <Text className="text-sm text-gray-600 mt-2">เพิ่มรูปภาพ</Text>
               </TouchableOpacity>
             </View>
 
-            <View style={styles.modalButtons}>
+            <View className="flex-row justify-between gap-3 mt-5">
               <TouchableOpacity 
-                style={[styles.modalButton, styles.cancelModalButton]} 
+                className="flex-1 py-3 rounded-xl bg-gray-100 items-center"
                 onPress={() => setShowEditModal(false)}
               >
-                <Text style={styles.cancelModalButtonText}>ยกเลิก</Text>
+                <Text className="text-base text-gray-600">ยกเลิก</Text>
               </TouchableOpacity>
               <TouchableOpacity 
-                style={[styles.modalButton, styles.saveButton]} 
+                className="flex-1 py-3 rounded-xl bg-yellow-400 items-center"
                 onPress={handleSaveEdit}
               >
-                <Text style={styles.saveButtonText}>บันทึก</Text>
+                <Text className="text-base font-semibold text-white">บันทึก</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-
-      <Menu />
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f3f4f6',
-  },
-  content: {
-    flex: 1,
-  },
-  headerSection: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  backButton: {
-    marginRight: 16,
-    marginTop: 4,
-  },
-  headerText: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1f2937',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginTop: 4,
-  },
-  mainContent: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 24,
-  },
-  plansContainer: {
-    gap: 16,
-  },
-  planCard: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  planContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  planIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 12,
-    backgroundColor: '#f3f4f6',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  planEmoji: {
-    fontSize: 32,
-  },
-  planInfo: {
-    flex: 1,
-  },
-  planName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 4,
-  },
-  planDescription: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  optionsButton: {
-    padding: 8,
-  },
-  addButton: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 16,
-    borderWidth: 2,
-    borderColor: '#e5e7eb',
-    borderStyle: 'dashed',
-  },
-  addButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#6b7280',
-    marginLeft: 8,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  actionSheet: {
-    backgroundColor: 'white',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingBottom: 40,
-  },
-  actionButton: {
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  actionButtonText: {
-    fontSize: 16,
-    color: '#1f2937',
-    textAlign: 'center',
-  },
-  deleteButton: {
-    backgroundColor: '#fef2f2',
-  },
-  deleteButtonText: {
-    color: '#ef4444',
-  },
-  cancelButton: {
-    backgroundColor: '#f3f4f6',
-    borderBottomWidth: 0,
-    marginTop: 8,
-  },
-  editModal: {
-    backgroundColor: 'white',
-    margin: 20,
-    borderRadius: 20,
-    padding: 20,
-    maxHeight: '80%',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  inputLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
-  },
-  textInput: {
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#1f2937',
-  },
-  textArea: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
-  imageUpload: {
-    borderWidth: 2,
-    borderColor: '#d1d5db',
-    borderStyle: 'dashed',
-    borderRadius: 8,
-    paddingVertical: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  imageUploadText: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginTop: 8,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
-    gap: 12,
-  },
-  modalButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  cancelModalButton: {
-    backgroundColor: '#f3f4f6',
-  },
-  cancelModalButtonText: {
-    fontSize: 16,
-    color: '#6b7280',
-  },
-  saveButton: {
-    backgroundColor: '#eab308',
-  },
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: 'white',
-  },
-});
 
 export default PlanSelectionScreen;

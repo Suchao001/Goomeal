@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTypedNavigation } from '../../hooks/Navigation';
-import Header from '../material/Header';
-import Menu from '../material/Menu';
 
 const MealTimeSettingsScreen = () => {
   const navigation = useTypedNavigation<'MealTimeSettings'>();
@@ -76,17 +74,24 @@ const MealTimeSettingsScreen = () => {
 
   return (
     <View className="flex-1 bg-gray-100">
-      <Header />
-      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }}>
-        <View className="flex-row items-center px-4 py-4 bg-white border-b border-gray-200">
-          <TouchableOpacity className="mr-4" onPress={() => navigation.goBack()}>
-            <Icon name="arrow-back" size={24} color="#6b7280" />
-          </TouchableOpacity>
-          <Text className="text-xl font-bold text-gray-800">ตั้งเวลามื้ออาหาร</Text>
-          <View className="ml-auto">
-            <Icon name="time" size={24} color="#f59e0b" />
-          </View>
-        </View>
+    
+      <ScrollView className="flex-1 " contentContainerStyle={{ paddingBottom: 100 }}>
+        
+        <View className="flex-row items-center justify-between px-4 pt-12 pb-4 bg-white">
+                <TouchableOpacity 
+                  className="w-10 h-10 rounded-full  items-center justify-center"
+                  onPress={() => navigation.goBack()}
+                >
+                  <Icon name="arrow-back" size={24} color="#9ca3af" />
+                </TouchableOpacity>
+                
+                <View className="flex-row items-center gap-2">
+                  <Icon name="time" size={32} color="#9ca3af" />
+                  <Text className="text-lg font-semibold text-gray-800">ตั้งค่าเวลามื้ออาหาร</Text>
+                </View>
+                
+                <Text className="text-base font-semibold text-gray-800"></Text>
+              </View>
 
         <View className="bg-white mx-4 my-4 rounded-xl p-5 shadow-lg shadow-slate-800">
           <Text className="text-xl font-promptSemiBold text-gray-800 mb-6">เลือกเวลามื้ออาหาร</Text>
@@ -175,7 +180,6 @@ const MealTimeSettingsScreen = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-      <Menu />
     </View>
   );
 };

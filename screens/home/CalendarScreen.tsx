@@ -51,7 +51,7 @@ const CalendarScreen = () => {
       }}
     >
       <Text className={`text-center font-medium ${selectedDay === item ? 'text-white' : 'text-gray-700'}`}>
-        วันที่ {item}
+         {item}
       </Text>
     </TouchableOpacity>
   );

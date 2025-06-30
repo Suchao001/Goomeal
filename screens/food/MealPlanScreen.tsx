@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Modal, TextInput, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Modal, TextInput, Alert, FlatList } from 'react-native';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -13,8 +13,12 @@ const MealPlanScreen = () => {
   // State for selected date and modals
   const [selectedDay, setSelectedDay] = useState(12); // Default to day 12
   const [showAddMealModal, setShowAddMealModal] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [newMealName, setNewMealName] = useState('');
   const [newMealTime, setNewMealTime] = useState('');
+
+  // Generate days 1-30 for date picker
+  const days = Array.from({ length: 30 }, (_, i) => i + 1);
 
   // Default meals
   const [meals, setMeals] = useState([
@@ -23,19 +27,16 @@ const MealPlanScreen = () => {
     { id: 'dinner', name: 'อาหารมื้อเย็น', icon: 'moon', time: '18:00', hasFood: false },
   ]);
 
-  // Get current date info
+  // Get current date info (simplified - just day numbers, no real dates)
   const getCurrentDate = () => {
-    const today = new Date();
-    const month = today.getMonth() + 1;
-    const year = today.getFullYear() + 543; // Convert to Buddhist Era
-    
     return {
       dayName: `วันที่ ${selectedDay}`,
-      fullDate: `${selectedDay}/${month}/${year}`
+      fullDate: `วันที่ ${selectedDay}`,
+      shortDate: `วันที่ ${selectedDay}`
     };
   };
 
-  const { dayName } = getCurrentDate();
+  const { dayName, fullDate, shortDate } = getCurrentDate();
 
   // Navigate to previous/next day
   const navigateDay = (direction: 'prev' | 'next') => {
@@ -45,6 +46,28 @@ const MealPlanScreen = () => {
       setSelectedDay(selectedDay + 1);
     }
   };
+
+  // Render date picker item
+  const renderDatePickerItem = ({ item }: { item: number }) => (
+    <TouchableOpacity
+      className={`p-2 m-1 rounded-lg items-center justify-center ${
+        selectedDay === item 
+          ? 'bg-primary shadow-lg' 
+          : 'bg-gray-100 hover:bg-gray-200'
+      }`}
+      style={{ width: 40, height: 40 }}
+      onPress={() => {
+        setSelectedDay(item);
+        setShowDatePicker(false);
+      }}
+    >
+      <Text className={`text-sm font-semibold ${
+        selectedDay === item ? 'text-white' : 'text-gray-700'
+      }`}>
+        {item}
+      </Text>
+    </TouchableOpacity>
+  );
 
   // Add new meal
   const handleAddMeal = () => {
@@ -108,7 +131,7 @@ const MealPlanScreen = () => {
 
       {/* Add food button */}
       <TouchableOpacity
-        className="bg-yellow-500 rounded-lg py-3 flex-row items-center justify-center mt-3"
+        className="bg-primary rounded-lg py-3 flex-row items-center justify-center mt-3"
         onPress={() => handleAddFoodToMeal(meal.id)}
       >
         <Icon name="add" size={20} color="white" />
@@ -132,36 +155,51 @@ const MealPlanScreen = () => {
         {/* Title */}
         <Text className="text-xl font-bold text-white font-prompt">วางแผนเมนูอาหาร</Text>
         
-        {/* Add Meal Button */}
-        <TouchableOpacity 
-          className="w-10 h-10 rounded-lg items-center justify-center"
-          onPress={() => setShowAddMealModal(true)}
+        {/* Calendar Button */}        <TouchableOpacity
+          className="flex-row items-center bg-opacity-20 rounded-lg px-3 py-2"
+          onPress={() => setShowDatePicker(true)}
         >
-          <Icon name="add" size={24} color="white" />
+          <Icon name="calendar" size={20} color="white" />
+          <View className="ml-2">
+            
+          </View>
         </TouchableOpacity>
       </View>
 
       {/* Date Navigation Bar */}
-      <View className="bg-white px-4 py-3 flex-row items-center justify-between border-b border-gray-100">
-        <TouchableOpacity
-          className={`w-8 h-8 items-center justify-center ${selectedDay <= 1 ? 'opacity-50' : ''}`}
-          onPress={() => navigateDay('prev')}
-          disabled={selectedDay <= 1}
-        >
-          <Icon name="chevron-back" size={20} color="#374151" />
-        </TouchableOpacity>
+      <View className="bg-white px-4 py-4 border-b border-gray-100">
+        <View className="flex-row items-center justify-between mb-2">
+          <TouchableOpacity
+            className={`w-10 h-10 rounded-full items-center justify-center ${
+              selectedDay <= 1 ? 'opacity-30' : 'bg-gray-100'
+            }`}
+            onPress={() => navigateDay('prev')}
+            disabled={selectedDay <= 1}
+          >
+            <Icon name="chevron-back" size={20} color="#374151" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            className="flex-1 items-center"
+            onPress={() => setShowDatePicker(true)}
+          >
+            <Text className="text-lg font-bold text-gray-800">{fullDate}</Text>
+            <Text className="text-sm text-gray-500">แตะเพื่อเปลี่ยนวันที่</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            className={`w-10 h-10 rounded-full items-center justify-center ${
+              selectedDay >= 30 ? 'opacity-30' : 'bg-gray-100'
+            }`}
+            onPress={() => navigateDay('next')}
+            disabled={selectedDay >= 30}
+          >
+            <Icon name="chevron-forward" size={20} color="#374151" />
+          </TouchableOpacity>
+        </View>
         
-        <Text className="text-lg font-medium text-gray-800">
-          {dayName}
-        </Text>
+        {/* Add Meal Button */}
         
-        <TouchableOpacity
-          className={`w-8 h-8 items-center justify-center ${selectedDay >= 30 ? 'opacity-50' : ''}`}
-          onPress={() => navigateDay('next')}
-          disabled={selectedDay >= 30}
-        >
-          <Icon name="chevron-forward" size={20} color="#374151" />
-        </TouchableOpacity>
       </View>
 
       {/* Main Content */}
@@ -177,7 +215,50 @@ const MealPlanScreen = () => {
           <Icon name="add-circle" size={48} color="#9ca3af" />
           <Text className="text-gray-600 font-medium mt-2">เพิ่มมื้อเพิ่มเติม</Text>
         </TouchableOpacity>
+        <View>
+          <Text className="text-gray-500 text-center mt-4">คุณสามารถเพิ่มมื้ออาหารได้ตามต้องการ</Text>
+        </View>
       </ScrollView>
+
+      {/* Date Picker Modal */}
+      <Modal
+        visible={showDatePicker}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowDatePicker(false)}
+      >
+        <View className="flex-1 bg-black bg-opacity-50 justify-center items-center">
+          <View className="bg-white rounded-2xl p-4 mx-8" style={{ width: 300 }}>
+            <View className="flex-row justify-between items-center mb-4">
+              <Text className="text-lg font-bold text-gray-800">เลือกวันที่</Text>
+              <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                <Icon name="close" size={20} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+            
+            <FlatList
+              data={days}
+              className='ml-[-15]'
+              renderItem={renderDatePickerItem}
+              keyExtractor={(item) => item.toString()}
+              numColumns={6}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ 
+                paddingHorizontal: 8,
+                paddingBottom: 16
+              }}
+              columnWrapperStyle={{ justifyContent: 'space-between' }}
+            />
+            
+            <TouchableOpacity
+              className="bg-primary rounded-lg py-3 items-center"
+              onPress={() => setShowDatePicker(false)}
+            >
+              <Text className="text-white font-semibold">ยืนยัน</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Add Meal Modal */}
       <Modal
@@ -227,12 +308,13 @@ const MealPlanScreen = () => {
               </TouchableOpacity>
               
               <TouchableOpacity
-                className="flex-1 bg-yellow-500 rounded-lg py-3 items-center"
+                className="flex-1 bg-primary rounded-lg py-3 items-center"
                 onPress={handleAddMeal}
               >
                 <Text className="text-white font-medium">เพิ่มมื้ออาหาร</Text>
               </TouchableOpacity>
             </View>
+            
           </View>
         </View>
       </Modal>

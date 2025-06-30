@@ -84,7 +84,7 @@ const Home = () => {
           className="w-[90%] bg-green-400 rounded-lg shadow-md p-6 mt-4 mx-auto items-center"
           onPress={() => navigation.navigate('PersonalPlan1')}
         >
-          <Text className="text-white font-semibold">Go to Personal Plan</Text>
+          <Text className="text-white font-semibold">กรอกข้อมูลครั้งแรก</Text>
         </TouchableOpacity>
 
        

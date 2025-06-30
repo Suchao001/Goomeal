@@ -13,14 +13,13 @@ export const ArrowLeft = ({ goto }: Props) => {
   return (
     <View className="flex-row items-start w-full relative">
       <TouchableOpacity
-        onPress={() => (goto ? navigation.navigate(goto) : navigation.goBack())}
-        className="absolute top-5 left-2 z-10"
+        onPress={() => (goto ? navigation.navigate(goto as any) : navigation.goBack())}
+        className="absolute top-3 left-1 z-10 w-12 h-12 items-center justify-center"
       >
         <FontAwesome
           name="angle-left"
           size={20}
           color="#999"
-          style={{ marginTop: 12, marginLeft: 4 }}
         />
       </TouchableOpacity>
     </View>

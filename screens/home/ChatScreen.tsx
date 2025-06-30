@@ -54,12 +54,12 @@ const ChatScreen = () => {
         onPress={() => navigation.goBack()}
         className="p-2"
           >
-        <Icon name="arrow-back" size={24} color="#77DD77" />
+        <Icon name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
           
           <View className="flex-row items-center">
-        <Icon name="restaurant" size={28} color="#77DD77" />
-        <Text className="text-2xl font-bold text-[#77DD77] ml-2">GoodMealChat</Text>
+        <Icon name="restaurant" size={28} color="white" />
+        <Text className="text-2xl font-bold text-white ml-2">GoodMealChat</Text>
           </View>
           
           <View className="w-8" />

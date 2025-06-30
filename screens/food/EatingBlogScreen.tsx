@@ -3,16 +3,9 @@ import { View, Text, TouchableOpacity, ScrollView, Image, FlatList } from 'react
 import { useNavigation } from '@react-navigation/native';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { ArrowLeft } from 'components/GeneralMaterial';
 
-/**
- * EatingBlogScreen Component
- * หน้าบทความการกิน - แสดงบทความเกี่ยวกับอาหารและโภชนาการ
- * 
- * Features:
- * - แสดงบทความแนะนำ
- * - Tab สำหรับกรองบทความ
- * - ปุ่มย้อนกลับ
- */
+
 const EatingBlogScreen = () => {
   const navigation = useTypedNavigation();
   const [selectedTab, setSelectedTab] = useState('แนะนำ');
@@ -161,12 +154,12 @@ const EatingBlogScreen = () => {
     <View className="flex-1 bg-gray-100">
       {/* Header */}
       <View className="bg-white px-4 pt-12 pb-4 flex-row items-center shadow-sm">
-        <TouchableOpacity 
-          className="w-10 h-10 rounded-full bg-yellow-100 items-center justify-center mr-4"
-          onPress={() => navigation.goBack()}
-        >
-          <Icon name="arrow-back" size={24} color="#eab308" />
-        </TouchableOpacity>
+      <TouchableOpacity 
+        className="w-10 h-10 rounded-full items-center justify-center mr-4"
+        onPress={() => navigation.goBack()}
+      >
+        <Icon name="arrow-back" size={24} color="#eab308" />
+      </TouchableOpacity>
         
         <Text className="text-xl font-bold text-gray-800">บทความการกิน</Text>
       </View>

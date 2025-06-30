@@ -1,11 +1,10 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert, SafeAreaView } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTypedNavigation } from '../hooks/Navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { useAuth } from '../AuthContext';
-import Header from './material/Header';
 import Menu from './material/Menu';
 
 
@@ -75,142 +74,155 @@ const MenuScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView className="flex-1 bg-gray-50">
       {/* Header */}
-      <Header />
+      <View className="bg-primary px-4 py-4 pt-10">
+        <Text className="text-2xl font-bold text-white text-center font-prompt">เมนูหลัก</Text>
+      </View>
       
       {/* Main Content */}
-      <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }}>
+        {/* First Time Setup Section */}
+
         {/* User Profile Section */}
-        <View style={styles.profileCard}>
-          <View style={styles.profileRow}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>👤</Text>
+        <View className="bg-white mx-4 mt-6 rounded-xl shadow-sm p-6">
+          <View className="flex-row items-center">
+            <View className="w-16 h-16 bg-indigo-500 rounded-full items-center justify-center">
+              <Text className="text-white text-2xl">👤</Text>
             </View>
-            <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>{user?.username || user?.email || 'ผู้ใช้งาน'}</Text>
-              <View style={styles.statusRow}>
-                <View style={styles.statusDot}></View>
-                <Text style={styles.statusText}>ออนไลน์</Text>
+            <View className="ml-4 flex-1">
+              <Text className="text-xl font-bold text-gray-800">{user?.username || user?.email || 'ผู้ใช้งาน'}</Text>
+              <View className="flex-row items-center mt-1">
+          <View className="w-2 h-2 bg-green-500 rounded-full mr-2"></View>
+          <Text className="text-sm text-green-600">ออนไลน์</Text>
               </View>
             </View>
-            <View />
             
-            <TouchableOpacity style={styles.settingsButton} onPress={handleAccountSettingsPress}>
-              <View style={styles.settingsIconContainer}>
-                <Icon name="person" size={18} color="#6b7280" />
-                <Icon name="settings" size={12} color="#6b7280" style={{ position: 'absolute', bottom: -2, right: -2 }} />
+            <TouchableOpacity 
+              className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center"
+              onPress={handleAccountSettingsPress}
+            >
+              <Icon name="settings" size={20} color="#6b7280" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Quick Actions */}
+          <View className="mt-4 pt-4 border-t border-gray-100">
+            <TouchableOpacity 
+              className="flex-row items-center p-3 bg-gray-50 rounded-lg"
+              onPress={handleProfilePress}
+            >
+              <View className="w-8 h-8 bg-blue-100 rounded-full items-center justify-center mr-3">
+          <Icon name="person" size={16} color="#3b82f6" />
               </View>
-              
+              <Text className="text-sm font-medium text-gray-700 flex-1">ข้อมูลส่วนตัว</Text>
+              <Icon name="chevron-forward" size={16} color="#9ca3af" />
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Quick Actions */}
-        <View style={styles.section}>
-          
-          <View style={styles.quickActionsRow}>
-            <TouchableOpacity style={styles.quickActionCard} onPress={handleProfilePress}>
-                <View style={[styles.quickActionIcon, { backgroundColor: '#dbeafe' }]}>
-                <Icon name="person" size={24} color="#3b82f6" />
-                </View>
-              <Text style={styles.quickActionText}>ข้อมูส่วนตัว</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.quickActionCard}>
-              <View style={[styles.quickActionIcon, { backgroundColor: '#dcfce7' }]}>
-                <Icon name="restaurant" size={24} color="#22c55e" />
-              </View>
-              <Text style={styles.quickActionText}>เลือกแพลน</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.quickActionCard}>
-              <View style={[styles.quickActionIcon, { backgroundColor: '#f3e8ff' }]}>
-                <Icon name="analytics" size={24} color="#8b5cf6" />
-              </View>
-              <Text style={styles.quickActionText}>รายงาน</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
 
+<View className="mx-4 mt-6">
+          <Text className="text-lg font-bold text-gray-800 mb-3">เริ่มต้นใช้งาน</Text>
+          <TouchableOpacity 
+            className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex-row items-center"
+            onPress={handleFirstTimeSetupPress}
+          >
+            <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mr-4">
+              <Icon name="document-text" size={24} color="#3b82f6" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-base font-semibold text-blue-800">กรอกข้อมูลครั้งแรก</Text>
+              <Text className="text-sm text-blue-600 mt-1">กรอกข้อมูลส่วนตัวเพื่อเริ่มใช้งาน</Text>
+            </View>
+            <Icon name="chevron-forward" size={20} color="#3b82f6" />
+          </TouchableOpacity>
+        </View>
         {/* Main Menu */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>เมนูหลัก</Text>
-          <View style={styles.menuCard}>
+        <View className="mx-4 mt-6">
+          <Text className="text-lg font-bold text-gray-800 mb-3">เมนูหลัก</Text>
+          <View className="bg-white rounded-xl shadow-sm overflow-hidden">
             
-            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} onPress={handleFirstTimeSetupPress}>
-              <View style={[styles.menuIcon, { backgroundColor: '#dbeafe' }]}>
-                <Icon name="document-text" size={20} color="#3b82f6" />
-              </View>
-              <View style={styles.menuContent}>
-                <Text style={styles.menuTitle}>กรอกข้อมูลครั้งแรก</Text>
-                <Text style={styles.menuSubtitle}>กรอกข้อมูลส่วนตัวเพื่อเริ่มใช้งาน</Text>
-              </View>
-              <Icon name="chevron-forward" size={20} color="#9ca3af" />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} onPress={handlePlanSelectionPress}>
-              <View style={[styles.menuIcon, { backgroundColor: '#dcfce7' }]}>
+            <TouchableOpacity 
+              className="flex-row items-center p-4 border-b border-gray-100"
+              onPress={handlePlanSelectionPress}
+            >
+              <View className="w-10 h-10 bg-green-100 rounded-full items-center justify-center mr-4">
                 <Icon name="restaurant" size={20} color="#22c55e" />
               </View>
-              <View style={styles.menuContent}>
-                <Text style={styles.menuTitle}>เลือกแพลนการกิน</Text>
-                <Text style={styles.menuSubtitle}>เลือกแพลนอาหารที่เหมาะสมกับคุณ</Text>
+              <View className="flex-1">
+                <Text className="text-base font-medium text-gray-800">เลือกแพลนการกิน</Text>
+                <Text className="text-xs text-gray-500">เลือกแพลนอาหารที่เหมาะสมกับคุณ</Text>
               </View>
               <Icon name="chevron-forward" size={20} color="#9ca3af" />
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} onPress={handleEatingReportPress}>
-              <View style={[styles.menuIcon, { backgroundColor: '#fef3c7' }]}>
+            <TouchableOpacity 
+              className="flex-row items-center p-4 border-b border-gray-100"
+              onPress={handleEatingReportPress}
+            >
+              <View className="w-10 h-10 bg-yellow-100 rounded-full items-center justify-center mr-4">
                 <Icon name="analytics" size={20} color="#f59e0b" />
               </View>
-              <View style={styles.menuContent}>
-                <Text style={styles.menuTitle}>รายงานการกิน</Text>
-                <Text style={styles.menuSubtitle}>ดูสถิติและรายงานการบริโภคอาหาร</Text>
+              <View className="flex-1">
+                <Text className="text-base font-medium text-gray-800">รายงานการกิน</Text>
+                <Text className="text-xs text-gray-500">ดูสถิติและรายงานการบริโภคอาหาร</Text>
               </View>
               <Icon name="chevron-forward" size={20} color="#9ca3af" />
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} onPress={handleEatingStyleSettingsPress}>
-              <View style={[styles.menuIcon, { backgroundColor: '#f3e8ff' }]}>
+            <TouchableOpacity 
+              className="flex-row items-center p-4 border-b border-gray-100"
+              onPress={handleEatingStyleSettingsPress}
+            >
+              <View className="w-10 h-10 bg-purple-100 rounded-full items-center justify-center mr-4">
                 <Icon name="options" size={20} color="#8b5cf6" />
               </View>
-              <View style={styles.menuContent}>
-                <Text style={styles.menuTitle}>ตั้งค่าการรูปแบบการกิน</Text>
-                <Text style={styles.menuSubtitle}>กำหนดรูปแบบการกินที่เหมาะสม</Text>
+              <View className="flex-1">
+                <Text className="text-base font-medium text-gray-800">ตั้งค่าการรูปแบบการกิน</Text>
+                <Text className="text-xs text-gray-500">กำหนดรูปแบบการกินที่เหมาะสม</Text>
               </View>
               <Icon name="chevron-forward" size={20} color="#9ca3af" />
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} onPress={handleNotificationSettingsPress}>
-              <View style={[styles.menuIcon, { backgroundColor: '#fed7aa' }]}>
+            <TouchableOpacity 
+              className="flex-row items-center p-4 border-b border-gray-100"
+              onPress={handleNotificationSettingsPress}
+            >
+              <View className="w-10 h-10 bg-orange-100 rounded-full items-center justify-center mr-4">
                 <Icon name="notifications" size={20} color="#f97316" />
               </View>
-              <View style={styles.menuContent}>
-                <Text style={styles.menuTitle}>ตั้งค่าการแจ้งเตือน</Text>
-                <Text style={styles.menuSubtitle}>จัดการการแจ้งเตือนต่างๆ</Text>
+              <View className="flex-1">
+                <Text className="text-base font-medium text-gray-800">ตั้งค่าการแจ้งเตือน</Text>
+                <Text className="text-xs text-gray-500">จัดการการแจ้งเตือนต่างๆ</Text>
               </View>
               <Icon name="chevron-forward" size={20} color="#9ca3af" />
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} onPress={handleRecordSettingsPress}>
-              <View style={[styles.menuIcon, { backgroundColor: '#e0e7ff' }]}>
+            <TouchableOpacity 
+              className="flex-row items-center p-4 border-b border-gray-100"
+              onPress={handleRecordSettingsPress}
+            >
+              <View className="w-10 h-10 bg-indigo-100 rounded-full items-center justify-center mr-4">
                 <Icon name="create" size={20} color="#6366f1" />
               </View>
-              <View style={styles.menuContent}>
-                <Text style={styles.menuTitle}>ตั้งค่าบันทึกการกิน</Text>
-                <Text style={styles.menuSubtitle}>กำหนดวิธีการบันทึกอาหาร</Text>
+              <View className="flex-1">
+                <Text className="text-base font-medium text-gray-800">ตั้งค่าบันทึกการกิน</Text>
+                <Text className="text-xs text-gray-500">กำหนดวิธีการบันทึกอาหาร</Text>
               </View>
               <Icon name="chevron-forward" size={20} color="#9ca3af" />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuItem} onPress={handleMealTimeSettingsPress}>
-              <View style={[styles.menuIcon, { backgroundColor: '#ccfbf1' }]}>
+            <TouchableOpacity 
+              className="flex-row items-center p-4"
+              onPress={handleMealTimeSettingsPress}
+            >
+              <View className="w-10 h-10 bg-teal-100 rounded-full items-center justify-center mr-4">
                 <Icon name="time" size={20} color="#14b8a6" />
               </View>
-              <View style={styles.menuContent}>
-                <Text style={styles.menuTitle}>ตั้งเวลามื้ออาหาร</Text>
-                <Text style={styles.menuSubtitle}>กำหนดเวลาสำหรับแต่ละมื้อ</Text>
+              <View className="flex-1">
+                <Text className="text-base font-medium text-gray-800">ตั้งเวลามื้ออาหาร</Text>
+                <Text className="text-xs text-gray-500">กำหนดเวลาสำหรับแต่ละมื้อ</Text>
               </View>
               <Icon name="chevron-forward" size={20} color="#9ca3af" />
             </TouchableOpacity>
@@ -218,16 +230,19 @@ const MenuScreen = () => {
         </View>
 
         {/* Additional Options */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>อื่นๆ</Text>
-          <View style={styles.menuCard}>
-            <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
-              <View style={[styles.menuIcon, { backgroundColor: '#fecaca' }]}>
+        <View className="mx-4 mt-6">
+          <Text className="text-lg font-bold text-gray-800 mb-3">อื่นๆ</Text>
+          <View className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <TouchableOpacity 
+              className="flex-row items-center p-4"
+              onPress={handleLogout}
+            >
+              <View className="w-10 h-10 bg-red-100 rounded-full items-center justify-center mr-4">
                 <Icon name="log-out" size={20} color="#ef4444" />
               </View>
-              <View style={styles.menuContent}>
-                <Text style={[styles.menuTitle, { color: '#ef4444' }]}>ออกจากระบบ</Text>
-                <Text style={[styles.menuSubtitle, { color: '#f87171' }]}>ลงชื่อออกจากบัญชี</Text>
+              <View className="flex-1">
+                <Text className="text-base font-medium text-red-500">ออกจากระบบ</Text>
+                <Text className="text-xs text-red-400">ลงชื่อออกจากบัญชี</Text>
               </View>
               <Icon name="chevron-forward" size={20} color="#ef4444" />
             </TouchableOpacity>
@@ -235,8 +250,8 @@ const MenuScreen = () => {
         </View>
 
         {/* App Version */}
-        <View style={styles.versionSection}>
-          <Text style={styles.versionText}>
+        <View className="mx-4 mt-6 mb-4">
+          <Text className="text-center text-sm text-gray-400">
             GoodMeal App v1.0.0
           </Text>
         </View>
@@ -244,188 +259,8 @@ const MenuScreen = () => {
 
       {/* Bottom Navigation */}
       <Menu />
-    </View>
+    </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f3f4f6',
-  },
-  content: {
-    flex: 1,
-  },
-  profileCard: {
-    backgroundColor: 'white',
-    marginHorizontal: 16,
-    marginTop: 24,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-    padding: 24,
-  },
-  profileRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatar: {
-    width: 64,
-    height: 64,
-    backgroundColor: '#6366f1',
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    color: 'white',
-    fontSize: 24,
-  },
-  profileInfo: {
-    marginLeft: 16,
-    flex: 1,
-  },
-  profileName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1f2937',
-  },
-  profileGreeting: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    backgroundColor: '#22c55e',
-    borderRadius: 4,
-    marginRight: 8,
-  },
-  statusText: {
-    fontSize: 12,
-    color: '#16a34a',
-  },
-  settingsButton: {
-    alignItems: 'center',
-  },
-  settingsIconContainer: {
-    width: 40,
-    height: 40,
-    backgroundColor: '#f3f4f6',
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  settingsText: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginTop: 4,
-  },
-  section: {
-    marginHorizontal: 16,
-    marginTop: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1f2937',
-    marginBottom: 12,
-  },
-  quickActionsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  quickActionCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    flex: 1,
-    marginHorizontal: 4,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  quickActionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  quickActionText: {
-    fontSize: 14,
-    color: '#374151',
-  },
-  menuCard: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-    overflow: 'hidden',
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-  },
-  menuItemBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-  },
-  menuIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  menuContent: {
-    flex: 1,
-  },
-  menuTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#1f2937',
-  },
-  menuSubtitle: {
-    fontSize: 12,
-    color: '#6b7280',
-  },
-  versionSection: {
-    marginHorizontal: 16,
-    marginTop: 24,
-    marginBottom: 16,
-  },
-  versionText: {
-    textAlign: 'center',
-    fontSize: 14,
-    color: '#9ca3af',
-  },
-});
 
 export default MenuScreen;
