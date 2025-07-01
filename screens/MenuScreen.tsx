@@ -25,7 +25,7 @@ const MenuScreen = () => {
   };
 
   const handleFirstTimeSetupPress = () => {
-    navigation.navigate('FirstTimeSetup');
+    navigation.navigate('PersonalSetup');
   };
 
   const handlePlanSelectionPress = () => {
@@ -75,10 +75,7 @@ const MenuScreen = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
-      {/* Header */}
-      <View className="bg-primary px-4 py-4 pt-10">
-        <Text className="text-2xl font-bold text-white text-center font-prompt">เมนูหลัก</Text>
-      </View>
+
       
       {/* Main Content */}
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }}>
@@ -143,6 +140,20 @@ const MenuScreen = () => {
           <Text className="text-lg font-bold text-gray-800 mb-3">เมนูหลัก</Text>
           <View className="bg-white rounded-xl shadow-sm overflow-hidden">
             
+             <TouchableOpacity 
+              className="flex-row items-center p-4 border-b border-gray-100"
+              onPress={handleEatingReportPress}
+            >
+              <View className="w-10 h-10 bg-yellow-100 rounded-full items-center justify-center mr-4">
+                <Icon name="analytics" size={20} color="#f59e0b" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-base font-medium text-gray-800">รายงานการกิน</Text>
+                <Text className="text-xs text-gray-500">ดูสถิติและรายงานการบริโภคอาหาร</Text>
+              </View>
+              <Icon name="chevron-forward" size={20} color="#9ca3af" />
+            </TouchableOpacity>
+
             <TouchableOpacity 
               className="flex-row items-center p-4 border-b border-gray-100"
               onPress={handlePlanSelectionPress}
@@ -157,19 +168,6 @@ const MenuScreen = () => {
               <Icon name="chevron-forward" size={20} color="#9ca3af" />
             </TouchableOpacity>
 
-            <TouchableOpacity 
-              className="flex-row items-center p-4 border-b border-gray-100"
-              onPress={handleEatingReportPress}
-            >
-              <View className="w-10 h-10 bg-yellow-100 rounded-full items-center justify-center mr-4">
-                <Icon name="analytics" size={20} color="#f59e0b" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-base font-medium text-gray-800">รายงานการกิน</Text>
-                <Text className="text-xs text-gray-500">ดูสถิติและรายงานการบริโภคอาหาร</Text>
-              </View>
-              <Icon name="chevron-forward" size={20} color="#9ca3af" />
-            </TouchableOpacity>
 
             <TouchableOpacity 
               className="flex-row items-center p-4 border-b border-gray-100"

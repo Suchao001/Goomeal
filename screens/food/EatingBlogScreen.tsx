@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Image, FlatList, Linking, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -10,7 +10,26 @@ const EatingBlogScreen = () => {
   const navigation = useTypedNavigation();
   const [selectedTab, setSelectedTab] = useState('แนะนำ');
 
-  const tabs = ['แนะนำ', 'โภชนาการ', 'สูตรอาหาร', 'สุขภาพ', 'ลดน้ำหนัก'];
+  const tabs = ['แนะนำ', 'ล่าสุด'];
+
+  // Function to open article URL
+  const openArticle = async (url: string) => {
+    if (!url) {
+      Alert.alert('ขออภัย', 'ไม่พบลิงก์บทความ');
+      return;
+    }
+
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert('ข้อผิดพลาด', 'ไม่สามารถเปิดลิงก์นี้ได้');
+      }
+    } catch (error) {
+      Alert.alert('ข้อผิดพลาด', 'เกิดข้อผิดพลาดในการเปิดลิงก์');
+    }
+  };
 
   // Mock data for featured article
   const featuredArticle = {
@@ -21,6 +40,7 @@ const EatingBlogScreen = () => {
     author: 'นักโภชนาการ GoodMeal',
     readTime: '5 นาที',
     date: '12 มิ.ย. 2567',
+    url: 'http://localhost:3000/article/1/view'
   };
 
   // Mock data for articles based on selected tab
@@ -33,6 +53,7 @@ const EatingBlogScreen = () => {
         image: require('../../assets/images/Foodtype_2.png'),
         readTime: '3 นาที',
         date: '10 มิ.ย. 2567',
+        url: 'http://10.10.34.187:3000/article/3/view'
       },
       {
         id: '2',
@@ -41,6 +62,7 @@ const EatingBlogScreen = () => {
         image: require('../../assets/images/Foodtype_3.png'),
         readTime: '4 นาที',
         date: '8 มิ.ย. 2567',
+        url: 'http://localhost:3000/article/2/view'
       },
       {
         id: '3',
@@ -49,6 +71,7 @@ const EatingBlogScreen = () => {
         image: require('../../assets/images/Foodtype_4.png'),
         readTime: '2 นาที',
         date: '5 มิ.ย. 2567',
+        url: 'http://localhost:3000/article/4/view'
       },
     ];
 
@@ -77,7 +100,10 @@ const EatingBlogScreen = () => {
   );
 
   const renderFeaturedArticle = () => (
-    <TouchableOpacity className="bg-white rounded-lg shadow-md overflow-hidden mb-6 mx-4">
+    <TouchableOpacity 
+      className="bg-white rounded-lg shadow-md overflow-hidden mb-6 mx-4"
+      onPress={() => openArticle(featuredArticle.url)}
+    >
       {/* Featured Badge */}
       <View className="absolute top-3 left-3 bg-yellow-500 px-3 py-1 rounded-full z-10">
         <Text className="text-white text-xs font-bold">แนะนำ</Text>
@@ -101,6 +127,12 @@ const EatingBlogScreen = () => {
           {featuredArticle.excerpt}
         </Text>
         
+        {/* Read More Indicator */}
+        <View className="flex-row items-center mb-3">
+          <Icon name="open-outline" size={16} color="#eab308" />
+          <Text className="text-yellow-600 text-sm ml-2 font-medium">แตะเพื่ออ่านบทความเต็ม</Text>
+        </View>
+        
         {/* Meta Info */}
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center">
@@ -111,6 +143,7 @@ const EatingBlogScreen = () => {
             <Text className="text-gray-500 text-xs ml-1">{featuredArticle.readTime}</Text>
             <Text className="text-gray-500 text-xs mx-2">•</Text>
             <Text className="text-gray-500 text-xs">{featuredArticle.date}</Text>
+            <Icon name="open-outline" size={16} color="#eab308" className="ml-2" />
           </View>
         </View>
       </View>
@@ -118,7 +151,10 @@ const EatingBlogScreen = () => {
   );
 
   const renderArticleItem = ({ item }: { item: any }) => (
-    <TouchableOpacity className="bg-white rounded-lg shadow-md overflow-hidden mb-4 mx-4">
+    <TouchableOpacity 
+      className="bg-white rounded-lg shadow-md overflow-hidden mb-4 mx-4"
+      onPress={() => openArticle(item.url)}
+    >
       <View className="flex-row">
         {/* Article Image */}
         <View className="w-24 h-24 bg-gray-200">
@@ -139,11 +175,16 @@ const EatingBlogScreen = () => {
           </Text>
           
           {/* Meta Info */}
-          <View className="flex-row items-center">
-            <Icon name="time-outline" size={12} color="#9ca3af" />
-            <Text className="text-gray-500 text-xs ml-1">{item.readTime}</Text>
-            <Text className="text-gray-500 text-xs mx-2">•</Text>
-            <Text className="text-gray-500 text-xs">{item.date}</Text>
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center">
+              <Icon name="time-outline" size={12} color="#9ca3af" />
+              <Text className="text-gray-500 text-xs ml-1">{item.readTime}</Text>
+              <Text className="text-gray-500 text-xs mx-2">•</Text>
+              <Text className="text-gray-500 text-xs">{item.date}</Text>
+            </View>
+            {item.url && (
+              <Icon name="open-outline" size={14} color="#eab308" />
+            )}
           </View>
         </View>
       </View>
