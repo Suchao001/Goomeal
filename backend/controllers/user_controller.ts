@@ -83,6 +83,7 @@ const getUserProfile = async (userId: number) => {
             email: user.email,
             age: user.age,
             weight: user.weight,
+            last_updated_weight: user.last_updated_weight,
             height: user.height,
             gender: user.gender,
             body_fat: user.body_fat,
@@ -93,6 +94,7 @@ const getUserProfile = async (userId: number) => {
             dietary_restrictions: user.dietary_restrictions,
             additional_requirements: user.additional_requirements,
             account_status: user.account_status,
+            suspend_reason: user.suspend_reason,
             created_date: user.created_date
         };
     } catch (error: any) {
@@ -105,6 +107,7 @@ const getUserProfile = async (userId: number) => {
 const updatePersonalData = async (userId: number, personalData: {
     age?: number;
     weight?: number;
+    last_updated_weight?: number;
     height?: number;
     gender?: 'male' | 'female' | 'other';
     body_fat?: 'high' | 'low' | 'normal' | 'don\'t know';
@@ -128,7 +131,11 @@ const updatePersonalData = async (userId: number, personalData: {
         };
 
         if (personalData.age !== undefined) updateObj.age = personalData.age;
-        if (personalData.weight !== undefined) updateObj.weight = personalData.weight;
+        if (personalData.weight !== undefined) {
+            updateObj.weight = personalData.weight;
+            updateObj.last_updated_weight = personalData.weight; // Auto-update last_updated_weight when weight changes
+        }
+        if (personalData.last_updated_weight !== undefined) updateObj.last_updated_weight = personalData.last_updated_weight;
         if (personalData.height !== undefined) updateObj.height = personalData.height;
         if (personalData.gender !== undefined) updateObj.gender = personalData.gender;
         if (personalData.body_fat !== undefined) updateObj.body_fat = personalData.body_fat;
@@ -153,6 +160,7 @@ const updatePersonalData = async (userId: number, personalData: {
             email: updatedUser.email,
             age: updatedUser.age,
             weight: updatedUser.weight,
+            last_updated_weight: updatedUser.last_updated_weight,
             height: updatedUser.height,
             gender: updatedUser.gender,
             body_fat: updatedUser.body_fat,
@@ -163,6 +171,7 @@ const updatePersonalData = async (userId: number, personalData: {
             dietary_restrictions: updatedUser.dietary_restrictions,
             additional_requirements: updatedUser.additional_requirements,
             account_status: updatedUser.account_status,
+            suspend_reason: updatedUser.suspend_reason,
             created_date: updatedUser.created_date
         };
     } catch (error: any) {

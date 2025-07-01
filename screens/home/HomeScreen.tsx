@@ -4,12 +4,78 @@ import { useTypedNavigation } from '../../hooks/Navigation';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Header from '../material/Header';
 import Menu from '../material/Menu';
+import CaloriesSummary from '../../components/CaloriesSummary';
+import TodayMeals, { MealData } from '../../components/TodayMeals';
 // import { useAuth } from 'AuthContext'; // ปิดการใช้งาน Auth ชั่วคราว
 // import { showConfirmAlert } from '../../components/Alert'; // ปิดการใช้งาน Alert ชั่วคราว
 
 const Home = () => {
   const navigation = useTypedNavigation<'Home'>();
   // const {logout,reloadUser} = useAuth(); // ปิดการใช้งาน Auth ชั่วคราว
+
+  // Mock data for calories and nutrition
+  const caloriesData = {
+    consumed: 800,
+    target: 1500,
+    protein: { current: 45, target: 75, unit: 'g', color: '#ef4444', icon: 'fitness' },
+    carbs: { current: 120, target: 200, unit: 'g', color: '#22c55e', icon: 'leaf' },
+    fat: { current: 30, target: 60, unit: 'g', color: '#f59e0b', icon: 'water' }
+  };
+
+  // Mock data for today's meals
+  const todayMeals: MealData[] = [
+    {
+      id: '1',
+      mealType: 'breakfast',
+      foodName: 'ข้าวโอ๊ตกับผลไม้',
+      calories: 250,
+      image: require('../../assets/images/Foodtype_1.png'),
+      time: '07:30'
+    },
+    {
+      id: '2',
+      mealType: 'breakfast',
+      foodName: 'กาแฟดำ',
+      calories: 5,
+      time: '07:35'
+    },
+    {
+      id: '3',
+      mealType: 'lunch',
+      foodName: 'สลัดไก่ย่าง',
+      calories: 320,
+      image: require('../../assets/images/Foodtype_3.png'),
+      time: '12:15'
+    },
+    {
+      id: '4',
+      mealType: 'snack',
+      foodName: 'โยเกิร์ตกรีก',
+      calories: 150,
+      time: '15:30'
+    },
+    {
+      id: '5',
+      mealType: 'dinner',
+      foodName: 'ปลาย่างกับผักโขม',
+      calories: 75,
+      image: require('../../assets/images/Foodtype_4.png'),
+      time: '19:00'
+    }
+  ];
+
+  // Handlers for meal actions
+  const handleAddMeal = (mealType: MealData['mealType']) => {
+    console.log('Add meal for:', mealType);
+    // Navigate to add meal screen or show modal
+    navigation.navigate('RecordFood');
+  };
+
+  const handleEditMeal = (meal: MealData) => {
+    console.log('Edit meal:', meal);
+    // Navigate to edit meal screen
+    navigation.navigate('RecordFood');
+  };
 
   // Mock data for food blog articles
   const blogArticles = [
@@ -57,12 +123,26 @@ const Home = () => {
 
   return (
     <View className="flex-1 bg-gray-100">
-      
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>     
+        <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>     
         <View style={{ paddingTop: 0 }}>
           <Header />
         </View>
 
+        {/* Calories Summary */}
+        <CaloriesSummary
+          caloriesConsumed={caloriesData.consumed}
+          caloriesTarget={caloriesData.target}
+          protein={caloriesData.protein}
+          carbs={caloriesData.carbs}
+          fat={caloriesData.fat}
+        />
+
+        {/* Today's Meals */}
+        <TodayMeals
+          meals={todayMeals}
+          onAddMeal={handleAddMeal}
+          onEditMeal={handleEditMeal}
+        />
         
         <View className="w-[90%] bg-white rounded-lg shadow-md p-6 mt-4 mx-auto items-center">
           <View className="flex-row items-center mb-4">
@@ -70,23 +150,16 @@ const Home = () => {
               <Text className="text-white font-bold">✎</Text>
             </View>
             <Text className="text-gray-600 text-center">
-              บันทึกสิ่งที่คุณกินในวันนี้{'\n'}เพื่อให้เราคำนวณแคลอรี่ให้คุณ
+              กรอกข้อมูลที่จำเป็น{'\n'}เพื่อให้สร้างแผนการกินที่เหมาะสมกับคุณ
             </Text>
           </View>
           <TouchableOpacity
             className="bg-orange-400 px-6 py-2 rounded-full"
-            onPress={() => navigation.navigate('RecordFood')}
+            onPress={() => navigation.navigate('PersonalPlan1')}
           >
-            <Text className="text-white font-semibold">บันทึกอาหารวันนี้</Text>
+            <Text className="text-white font-semibold">กรอกข้อมูลครั้งแรก</Text>
           </TouchableOpacity>
         </View>        
-        <TouchableOpacity
-          className="w-[90%] bg-green-400 rounded-lg shadow-md p-6 mt-4 mx-auto items-center"
-          onPress={() => navigation.navigate('PersonalPlan1')}
-        >
-          <Text className="text-white font-semibold">กรอกข้อมูลครั้งแรก</Text>
-        </TouchableOpacity>
-
        
         <View className="mt-6">          
             <View className="flex-row justify-between items-center px-4 mb-4">

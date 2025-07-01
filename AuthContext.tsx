@@ -1,9 +1,7 @@
 import React, { createContext, useEffect, useContext, useState, ReactNode } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { jwtDecode } from 'jwt-decode';
-import axios from 'axios'; // Missing import
-import { base_url } from './config'; // Missing import
-
+import { apiClient } from './utils/apiClient';
 
 interface User {
   id?: string;
@@ -35,7 +33,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const loadToken = async () => { // Fixed typo in function name
+  const loadToken = async () => {
     const accessToken = await SecureStore.getItemAsync('accessToken');
     const refreshToken = await SecureStore.getItemAsync('refreshToken');
     const userString = await SecureStore.getItemAsync('user');
@@ -46,24 +44,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
     }
 
-    if (accessToken) { 
-      interface JwtPayload {
-        exp: number;
-        [key: string]: any;
-      }
-      const decodedToken = jwtDecode<JwtPayload>(accessToken);
-      const currentTime = Date.now() / 1000;
-      if (decodedToken.exp < currentTime) {
-        try {
-          const response = await axios.post(`${base_url}/user/refresh`, { refreshToken });
-          const newAccessToken = response.data.accessToken;
-          await SecureStore.setItemAsync('accessToken', newAccessToken);
-        } catch (error) {
-          console.error('Error refreshing token:', error);
-          setUser(null);
-        }
-      }
-    }
+    // ApiClient will handle token validation and refresh automatically
+    // when API calls are made, so we don't need to manually check here
+    
     setLoading(false);
   };
 
@@ -73,14 +56,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchUserProfile = async (): Promise<User | null> => {
     try {
-      const accessToken = await SecureStore.getItemAsync('accessToken');
-      if (!accessToken) return null;
-
-      const response = await axios.get(`${base_url}/user/profile`, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
-      });
+      const response = await apiClient.get('/user/profile');
 
       if (response.data.success) {
         const userData = response.data.user;
@@ -108,15 +84,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    await SecureStore.deleteItemAsync('accessToken');
-    await SecureStore.deleteItemAsync('refreshToken');
-    await SecureStore.deleteItemAsync('user');
+    await apiClient.logout(); // This will clear all tokens
     setUser(null);
-    
   };
 
-  useEffect(() => { // Fixed capitalization
-    loadToken(); // Fixed function name
+  useEffect(() => {
+    loadToken();
   }, []);
 
   return (

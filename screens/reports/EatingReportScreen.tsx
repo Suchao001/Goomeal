@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTypedNavigation } from '../../hooks/Navigation';
@@ -10,10 +10,37 @@ import Menu from '../material/Menu';
  */
 const EatingReportScreen = () => {
   const navigation = useTypedNavigation<'EatingReport'>();
+  const [selectedDay, setSelectedDay] = useState(1);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  
 
   const handleBackPress = () => {
     navigation.goBack();
   };
+
+  const navigateDay = (direction: 'prev' | 'next') => {
+    if (direction === 'prev' && selectedDay > 1) {
+      setSelectedDay(selectedDay - 1);
+    } else if (direction === 'next' && selectedDay < 30) {
+      setSelectedDay(selectedDay + 1);
+    }
+  };
+
+  const getDayName = (day: number) => {
+    const today = new Date();
+    const targetDate = new Date(today);
+    targetDate.setDate(day);
+    
+    const dayNames = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+    const monthNames = [
+      'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+      'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+    ];
+    
+    return `${day} ${monthNames[targetDate.getMonth()]} ${targetDate.getFullYear()}`;
+  };
+
+  const dayName = getDayName(selectedDay);
 
   const reportData = [
     { label: 'แคลอรี่วันนี้', value: '1,250', unit: 'kcal', color: '#ef4444' },
@@ -37,16 +64,50 @@ const EatingReportScreen = () => {
           <Text className="text-xl font-semibold text-white">รายงานการกิน</Text>
         </View>
         
-        <Text className="text-base font-semibold text-gray-800"></Text>
+        <TouchableOpacity 
+          className="flex-row items-center"
+          onPress={() => navigation.navigate('WeeklyReport')}
+        >
+          <Icon name="calendar" size={20} color="#ffff" />
+        </TouchableOpacity>
       </View>
+      <View className="bg-white px-4 py-3 flex-row items-center justify-between border-b border-gray-100">
+              <TouchableOpacity
+                className={`w-8 h-8 items-center justify-center ${selectedDay <= 1 ? 'opacity-50' : ''}`}
+                onPress={() => navigateDay('prev')}
+                disabled={selectedDay <= 1}
+              >
+                <Icon name="chevron-back" size={20} color="#374151" />
+              </TouchableOpacity>
+              
+              <Text className="text-lg font-medium text-gray-800">
+                {dayName}
+              </Text>
+              
+              <TouchableOpacity
+                className={`w-8 h-8 items-center justify-center ${selectedDay >= 30 ? 'opacity-50' : ''}`}
+                onPress={() => navigateDay('next')}
+                disabled={selectedDay >= 30}
+              >
+                <Icon name="chevron-forward" size={20} color="#374151" />
+              </TouchableOpacity>
+            </View>
       
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }}>
         {/* Main Content */}
         <View className="flex-1 px-4 pt-6">
           <Text className="text-2xl font-bold text-gray-800 mb-2">สถิติการกินของคุณ</Text>
-          <Text className="text-base text-gray-600 leading-6 mb-8">
-            ดูสถิติและรายงานการบริโภคอาหารประจำวัน
-          </Text>
+          <View className="flex-row items-center justify-between mb-8">
+            <Text className="text-base text-gray-600 leading-6">
+              ดูสถิติและรายงานการบริโภคอาหารประจำวัน
+            </Text>
+            <TouchableOpacity
+              className="bg-primary px-3 py-1 rounded-full"
+              onPress={() => navigation.navigate('WeeklyReport')}
+            >
+              <Text className="text-white text-xs font-medium">ดูรายสัปดาห์</Text>
+            </TouchableOpacity>
+          </View>
 
           {/* Stats Cards */}
           <View className="flex-row flex-wrap gap-3 mb-6">

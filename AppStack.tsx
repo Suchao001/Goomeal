@@ -12,7 +12,7 @@ import PersonalPlanScreen3 from './screens/firstForm/PersonalPlanScreen3';
 import PersonalPlanScreen4 from './screens/firstForm/PersonalPlanScreen4';
 import PersonalDataSummaryScreen from './screens/firstForm/PersonalDataSummaryScreen';
 import { FirstTimeSetupScreen, PlanSelectionScreen } from './screens/setup';
-import { EatingReportScreen } from './screens/reports';
+import { EatingReportScreen ,WeeklyReportScreen} from './screens/reports';
 import { EatingStyleSettingsScreen, NotificationSettingsScreen, RecordSettingsScreen, MealTimeSettingsScreen } from './screens/settings';
 
 const Stack = createNativeStackNavigator();
@@ -38,6 +38,9 @@ export default function AppStack() {
       <Stack.Screen name="FirstTimeSetup" component={FirstTimeSetupScreen} />
       <Stack.Screen name="PlanSelection" component={PlanSelectionScreen} />
       <Stack.Screen name="EatingReport" component={EatingReportScreen} />
+      <Stack.Screen name="WeeklyReport" component={WeeklyReportScreen} />
+      
+      {/* Settings Screens */}
       <Stack.Screen name="EatingStyleSettings" component={EatingStyleSettingsScreen} />
       <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
       <Stack.Screen name="RecordSettings" component={RecordSettingsScreen} />

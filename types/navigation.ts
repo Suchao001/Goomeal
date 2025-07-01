@@ -34,6 +34,7 @@ export type RootStackParamList = {
     FirstTimeSetup: undefined;
     PlanSelection: undefined;
     EatingReport: undefined;
+    WeeklyReport: undefined;
     EatingStyleSettings: undefined;
     NotificationSettings: undefined;
     RecordSettings: undefined;

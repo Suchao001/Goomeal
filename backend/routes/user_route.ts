@@ -71,10 +71,17 @@ router.post("/refresh", async (req: Request, res: Response) => {
 
         jwt.verify(refreshToken, jwtSecret, (err: any, decoded: any) => {
             if (err) {
-                return res.status(403).json({ message: "Invalid refresh token" });
+                return res.status(403).json({ 
+                    success: false, 
+                    message: "Invalid refresh token" 
+                });
             }
             const accessToken = jwt.sign({ id: decoded.id }, jwtSecret, { expiresIn: '15m' });
-            res.status(200).json({ accessToken });
+            res.status(200).json({ 
+                success: true,
+                accessToken,
+                message: "Token refreshed successfully"
+            });
         });
     } catch (error: any) {
         res.status(500).json({
@@ -137,6 +144,7 @@ router.put("/update-personal-data", authenticateToken, async (req: Authenticated
         const {
             age,
             weight,
+            last_updated_weight,
             height,
             gender,
             body_fat,
@@ -159,6 +167,7 @@ router.put("/update-personal-data", authenticateToken, async (req: Authenticated
         const personalData = {
             age: age ? parseInt(age) : undefined,
             weight: weight ? parseFloat(weight) : undefined,
+            last_updated_weight: last_updated_weight ? parseFloat(last_updated_weight) : undefined,
             height: height ? parseFloat(height) : undefined,
             gender,
             body_fat,
