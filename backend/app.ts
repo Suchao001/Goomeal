@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import user from './routes/user_route';
+import article from './routes/article_route';
 import { verifyResetToken, resetPassword } from './controllers/forgotpassword';
 import { generateResetPasswordForm, generateErrorPage } from './utils/htmlTemplates';
 
@@ -20,6 +21,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use('/user',user);
+app.use('/api', article);
 
 app.get('/reset-password', async (req, res) => {
     try {
