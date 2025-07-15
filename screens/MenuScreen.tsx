@@ -112,7 +112,7 @@ const MenuScreen = () => {
               <View className="w-8 h-8 bg-blue-100 rounded-full items-center justify-center mr-3">
           <Icon name="person" size={16} color="#3b82f6" />
               </View>
-              <Text className="text-sm font-medium text-gray-700 flex-1">ข้อมูลโปรไฟล์</Text>
+              <Text className="text-sm font-medium text-gray-700 flex-1">ข้อมูลส่วนตัว</Text>
               <Icon name="chevron-forward" size={16} color="#9ca3af" />
             </TouchableOpacity>
           </View>

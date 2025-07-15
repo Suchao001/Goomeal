@@ -73,15 +73,9 @@ const EditProfileScreen = () => {
       if (response.data.success) {
         const userData = response.data.user;
         setUsername(userData.username || 'suchao');
-        
-        // Convert decimal values to integers for Picker compatibility
-        const heightValue = userData.height ? Math.round(parseFloat(userData.height)).toString() : '180';
-        const weightValue = userData.weight ? Math.round(parseFloat(userData.weight)).toString() : '75';
-        const ageValue = userData.age ? userData.age.toString() : '20';
-        
-        setHeight(heightValue);
-        setWeight(weightValue);
-        setAge(ageValue);
+        setHeight(userData.height?.toString() || '180');
+        setWeight(userData.weight?.toString() || '75');
+        setAge(userData.age?.toString() || '20');
         setGender(convertGenderToThai(userData.gender || 'other'));
         
         console.log('📋 Profile data loaded:', {
@@ -90,13 +84,6 @@ const EditProfileScreen = () => {
           weight: userData.weight,
           age: userData.age,
           gender: userData.gender
-        });
-        
-        console.log('🔄 Converted values for UI:', {
-          height: heightValue,
-          weight: weightValue,
-          age: ageValue,
-          gender: convertGenderToThai(userData.gender || 'other')
         });
       }
     } catch (error: any) {

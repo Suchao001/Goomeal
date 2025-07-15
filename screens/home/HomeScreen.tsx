@@ -6,12 +6,12 @@ import Header from '../material/Header';
 import Menu from '../material/Menu';
 import CaloriesSummary from '../../components/CaloriesSummary';
 import TodayMeals, { MealData } from '../../components/TodayMeals';
-// import { useAuth } from 'AuthContext'; // ปิดการใช้งาน Auth ชั่วคราว
-// import { showConfirmAlert } from '../../components/Alert'; // ปิดการใช้งาน Alert ชั่วคราว
+import { useAuth } from 'AuthContext';
+import { showConfirmAlert } from '../../components/Alert'; 
 
 const Home = () => {
   const navigation = useTypedNavigation<'Home'>();
-  // const {logout,reloadUser} = useAuth(); // ปิดการใช้งาน Auth ชั่วคราว
+  const {logout,reloadUser} = useAuth();
 
   // Mock data for calories and nutrition
   const caloriesData = {
@@ -109,17 +109,7 @@ const Home = () => {
     },
   ];
 
-  // ปิดการใช้งาน logout function ชั่วคราว
-  // const handleLogout = async () => {
-  //   showConfirmAlert({
-  //     title: 'ยืนยัน',
-  //     message: 'คุณต้องการออกจากระบบหรือไม่?',
-  //     onConfirm: async () => {
-  //       logout();
-  //       await reloadUser();
-  //     }
-  //   });
-  // }
+ 
 
   return (
     <View className="flex-1 bg-gray-100">
