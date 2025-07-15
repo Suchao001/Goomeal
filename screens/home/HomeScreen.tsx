@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, Image, ScrollView, FlatList } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, Image, ScrollView, FlatList, Linking } from 'react-native';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Header from '../material/Header';
@@ -7,11 +7,94 @@ import Menu from '../material/Menu';
 import CaloriesSummary from '../../components/CaloriesSummary';
 import TodayMeals, { MealData } from '../../components/TodayMeals';
 import { useAuth } from 'AuthContext';
-import { showConfirmAlert } from '../../components/Alert'; 
+import { showConfirmAlert } from '../../components/Alert';
+import { 
+  fetchFeaturedArticles, 
+  generateArticleUrl,
+  Article 
+} from '../../utils/articleApi';
+import { blog_url } from '../../config'; 
 
 const Home = () => {
   const navigation = useTypedNavigation<'Home'>();
   const {logout,reloadUser} = useAuth();
+  const [blogArticles, setBlogArticles] = useState<Article[]>([]);
+  const [loadingArticles, setLoadingArticles] = useState(false);
+
+  // Default image fallback
+  const defaultImage = require('../../assets/images/Foodtype_1.png');
+
+  // Load articles on component mount
+  useEffect(() => {
+    loadBlogArticles();
+  }, []);
+
+  // Load blog articles from API
+  const loadBlogArticles = async () => {
+    try {
+      setLoadingArticles(true);
+      const articles = await fetchFeaturedArticles(2); // ดึง 2 รายการ
+      setBlogArticles(articles);
+    } catch (error) {
+      console.error('Error loading blog articles:', error);
+      // Fallback to mock data if API fails
+      setBlogArticles([
+        {
+          id: 1,
+          title: '5 เทคนิคการทำอาหารเพื่อสุขภาพ',
+          excerpt_content: 'เรียนรู้วิธีการปรุงอาหารที่ดีต่อสุขภาพและอร่อยไปพร้อมกัน...',
+          img: '',
+          status: 'release' as const,
+          tags: []
+        },
+        {
+          id: 2,
+          title: 'ประโยชน์ของการกินผักผลไม้ในชีวิตประจำวัน',
+          excerpt_content: 'ผักผลไม้มีสารอาหารที่จำเป็นต่อร่างกาย ช่วยเสริมภูมิคุ้มกัน...',
+          img: '',
+          status: 'release' as const,
+          tags: []
+        }
+      ]);
+    } finally {
+      setLoadingArticles(false);
+    }
+  };
+
+  // Get image source for articles
+  const getImageSource = (imageUrl?: string, fallbackIndex: number = 0) => {
+    if (imageUrl && imageUrl.trim() !== '') {
+      // สร้าง URL รูปภาพจาก BLOG_URL + public/ + item.img
+      const fullImageUrl = `${blog_url}/${imageUrl}`;
+      console.log('Article image URL:', fullImageUrl);
+      return { uri: fullImageUrl };
+    }
+    console.log('Using fallback image for article');
+    // Use different fallback images
+    const fallbackImages = [
+      require('../../assets/images/Foodtype_1.png'),
+      require('../../assets/images/Foodtype_2.png'),
+      require('../../assets/images/Foodtype_3.png'),
+      require('../../assets/images/Foodtype_4.png')
+    ];
+    return fallbackImages[fallbackIndex % fallbackImages.length];
+  };
+
+  // Handle article click
+  const handleArticleClick = async (article: Article) => {
+    try {
+      const url = generateArticleUrl(article.id);
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        // Navigate to EatingBlog screen as fallback
+        console.log('Cannot open URL, navigate to EatingBlog instead');
+      }
+    } catch (error) {
+      console.error('Error opening article:', error);
+    }
+  };
 
   // Mock data for calories and nutrition
   const caloriesData = {
@@ -76,22 +159,6 @@ const Home = () => {
     // Navigate to edit meal screen
     navigation.navigate('RecordFood');
   };
-
-  // Mock data for food blog articles
-  const blogArticles = [
-    {
-      id: '1',
-      title: '5 เทคนิคการทำอาหารเพื่อสุขภาพ',
-      excerpt: 'เรียนรู้วิธีการปรุงอาหารที่ดีต่อสุขภาพและอร่อยไปพร้อมกัน...',
-      image: require('../../assets/images/Foodtype_1.png'),
-    },
-    {
-      id: '2',
-      title: 'ประโยชน์ของการกินผักผลไม้ในชีวิตประจำวัน',
-      excerpt: 'ผักผลไม้มีสารอาหารที่จำเป็นต่อร่างกาย ช่วยเสริมภูมิคุ้มกัน...',
-      image: require('../../assets/images/Foodtype_2.png'),
-    },
-  ];
 
   // Mock data for recommended meals
   const recommendedMeals = [
@@ -164,31 +231,34 @@ const Home = () => {
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: 16 }}
-            renderItem={({ item }) => (
-              <TouchableOpacity className="mr-4 w-72">
+            renderItem={({ item, index }) => (
+              <TouchableOpacity 
+                className="mr-4 w-72"
+                onPress={() => handleArticleClick(item)}
+              >
                 <View className="bg-white rounded-lg shadow-md overflow-hidden">
-                 
+                  {/* Article Image */}
                   <View className="h-40 bg-gray-200 items-center justify-center">
                     <Image
-                      source={item.image}
+                      source={getImageSource(item.img, index)}
                       className="w-full h-full"
                       resizeMode="cover"
                     />
                   </View>
                   
-                 
+                  {/* Article Content */}
                   <View className="p-4">
                     <Text className="text-lg font-semibold text-gray-800 mb-2" numberOfLines={2}>
                       {item.title}
                     </Text>
                     <Text className="text-gray-600 text-sm" numberOfLines={3}>
-                      {item.excerpt}
+                      {item.excerpt_content || 'ไม่มีคำอธิบาย'}
                     </Text>
                   </View>
                 </View>
               </TouchableOpacity>
             )}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.id.toString()}
           />
         </View>
 
