@@ -136,7 +136,7 @@ const CalendarScreen = () => {
         {/* Add Menu Button */}
         <TouchableOpacity 
           className="bg-primary rounded-xl px-8 py-4 flex-row items-center shadow-md"
-          onPress={() => navigation.navigate('MealPlan')}
+          onPress={() => navigation.navigate('OptionPlan')}
         >
           <Icon name="add-circle" size={24} color="white" />
           <Text className="text-white font-bold text-lg ml-2">เพิ่มเมนู</Text>

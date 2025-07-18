@@ -236,7 +236,7 @@ const Home = () => {
                 className="mr-4 w-72"
                 onPress={() => handleArticleClick(item)}
               >
-                <View className="bg-white rounded-lg shadow-md overflow-hidden">
+                <View className="bg-white rounded-lg shadow-md overflow-hidden h-64">
                   {/* Article Image */}
                   <View className="h-40 bg-gray-200 items-center justify-center">
                     <Image
@@ -247,13 +247,15 @@ const Home = () => {
                   </View>
                   
                   {/* Article Content */}
-                  <View className="p-4">
-                    <Text className="text-lg font-semibold text-gray-800 mb-2" numberOfLines={2}>
-                      {item.title}
-                    </Text>
-                    <Text className="text-gray-600 text-sm" numberOfLines={3}>
-                      {item.excerpt_content || 'ไม่มีคำอธิบาย'}
-                    </Text>
+                  <View className="flex-1 p-4 justify-between">
+                    <View>
+                      <Text className="text-lg font-semibold text-gray-800 mb-2" numberOfLines={2}>
+                        {item.title}
+                      </Text>
+                      <Text className="text-gray-600 text-sm" numberOfLines={3}>
+                        {item.excerpt_content || 'ไม่มีคำอธิบาย'}
+                      </Text>
+                    </View>
                   </View>
                 </View>
               </TouchableOpacity>

@@ -16,6 +16,7 @@ const MealPlanScreen = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [newMealName, setNewMealName] = useState('');
   const [newMealTime, setNewMealTime] = useState('');
+   const [showKebabMenu, setShowKebabMenu] = useState(false);
 
   // Generate days 1-30 for date picker
   const days = Array.from({ length: 30 }, (_, i) => i + 1);
@@ -92,8 +93,11 @@ const MealPlanScreen = () => {
 
   // Add food to meal
   const handleAddFoodToMeal = (mealId: string) => {
-    // Navigate to food selection or suggestion screen
-    navigation.navigate('SuggestionMenu');
+    navigation.navigate('SearchFoodForAdd', {
+      hideRecommended: true, // ซ่อนรายการอาหารที่แนะนำ
+      mealId: mealId, // ส่ง meal ID ไปด้วย
+      source: 'MealPlan' // ระบุแหล่งที่มา
+    }); 
   };
 
   const renderMealCard = (meal: any) => (
@@ -122,12 +126,8 @@ const MealPlanScreen = () => {
         <View className="bg-gray-50 rounded-lg p-3 mb-3">
           <Text className="text-gray-600">เมนูอาหารที่เลือกไว้จะแสดงที่นี่</Text>
         </View>
-      ) : (
-        <View className="border-2 border-dashed border-gray-200 rounded-lg p-4 items-center">
-          <Icon name="add-circle-outline" size={32} color="#9ca3af" />
-          <Text className="text-gray-500 mt-2 text-center">ยังไม่มีเมนูอาหาร</Text>
-        </View>
-      )}
+      ) : null}
+      
 
       {/* Add food button */}
       <TouchableOpacity
@@ -144,7 +144,6 @@ const MealPlanScreen = () => {
     <SafeAreaView className="flex-1 bg-gray-50">
       {/* Header */}
       <View className="bg-primary px-4 py-4 mt-6 flex-row items-center justify-between border-b border-gray-100">
-        {/* Back Button */}
         <TouchableOpacity 
           className="w-10 h-10 rounded-lg items-center justify-center"
           onPress={() => navigation.goBack()}
@@ -152,18 +151,23 @@ const MealPlanScreen = () => {
           <Icon name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         
-        {/* Title */}
         <Text className="text-xl font-bold text-white font-prompt">วางแผนเมนูอาหาร</Text>
         
-        {/* Calendar Button */}        <TouchableOpacity
-          className="flex-row items-center bg-opacity-20 rounded-lg px-3 py-2"
-          onPress={() => setShowDatePicker(true)}
-        >
-          <Icon name="calendar" size={20} color="white" />
-          <View className="ml-2">
-            
-          </View>
-        </TouchableOpacity>
+        <View className="flex-row items-center">
+          <TouchableOpacity
+            className="bg-opacity-20 rounded-lg px-3 py-2 mr-2"
+            onPress={() => setShowDatePicker(true)}
+          >
+            <Icon name="calendar" size={20} color="white" />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            className="w-8 h-8 items-center justify-center"
+            onPress={() => setShowKebabMenu(true)}
+          >
+            <Icon name="ellipsis-vertical" size={20} color="white" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Date Navigation Bar */}
@@ -224,11 +228,15 @@ const MealPlanScreen = () => {
       <Modal
         visible={showDatePicker}
         transparent={true}
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setShowDatePicker(false)}
       >
-        <View className="flex-1 bg-black bg-opacity-50 justify-center items-center">
-          <View className="bg-white rounded-2xl p-4 mx-8" style={{ width: 300 }}>
+        <TouchableOpacity 
+          className="flex-1"
+          activeOpacity={1}
+          onPress={() => setShowDatePicker(false)}
+        >
+          <View className="absolute top-20 left-4 right-4 bg-white rounded-xl shadow-lg p-4">
             <View className="flex-row justify-between items-center mb-4">
               <Text className="text-lg font-bold text-gray-800">เลือกวันที่</Text>
               <TouchableOpacity onPress={() => setShowDatePicker(false)}>
@@ -238,7 +246,6 @@ const MealPlanScreen = () => {
             
             <FlatList
               data={days}
-              className='ml-[-15]'
               renderItem={renderDatePickerItem}
               keyExtractor={(item) => item.toString()}
               numColumns={6}
@@ -251,13 +258,13 @@ const MealPlanScreen = () => {
             />
             
             <TouchableOpacity
-              className="bg-primary rounded-lg py-3 items-center"
+              className="bg-primary rounded-lg py-3 items-center mt-2"
               onPress={() => setShowDatePicker(false)}
             >
               <Text className="text-white font-semibold">ยืนยัน</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </TouchableOpacity>
       </Modal>
 
       {/* Add Meal Modal */}
@@ -267,7 +274,11 @@ const MealPlanScreen = () => {
         animationType="slide"
         onRequestClose={() => setShowAddMealModal(false)}
       >
-        <View className="flex-1 bg-black bg-opacity-50 justify-end">
+        <TouchableOpacity 
+          className="flex-1 justify-end"
+          activeOpacity={1}
+          onPress={() => setShowAddMealModal(false)}
+        >
           <View className="bg-white rounded-t-3xl p-6">
             <View className="flex-row justify-between items-center mb-6">
               <Text className="text-xl font-bold text-gray-800">เพิ่มมื้ออาหาร</Text>
@@ -316,7 +327,61 @@ const MealPlanScreen = () => {
             </View>
             
           </View>
-        </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Kebab Menu Modal */}
+      <Modal
+        visible={showKebabMenu}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowKebabMenu(false)}
+      >
+        <TouchableOpacity 
+          className="flex-1"
+          activeOpacity={1}
+          onPress={() => setShowKebabMenu(false)}
+        >
+          <View className="absolute top-20 right-4 bg-white rounded-xl shadow-lg py-2" style={{ minWidth: 180 }}>
+            {/* Save Data Option */}
+            <TouchableOpacity
+              className="flex-row items-center px-4 py-3 active:bg-gray-50"
+              onPress={() => {
+                setShowKebabMenu(false);
+                // Add save data logic here
+                Alert.alert('บันทึกข้อมูล', 'ฟีเจอร์บันทึกข้อมูลกำลังพัฒนา');
+              }}
+            >
+              <Icon name="save-outline" size={20} color="#059669" />
+              <Text className="text-gray-800 font-medium ml-3">บันทึกข้อมูล</Text>
+            </TouchableOpacity>
+            
+            {/* Divider */}
+            <View className="h-px bg-gray-200 mx-2" />
+            
+            {/* Clear Data Option */}
+            <TouchableOpacity
+              className="flex-row items-center px-4 py-3 active:bg-gray-50"
+              onPress={() => {
+                setShowKebabMenu(false);
+                // Add clear data logic here
+                Alert.alert(
+                  'เคลียร์ข้อมูล', 
+                  'คุณต้องการเคลียร์ข้อมูลทั้งหมดหรือไม่?',
+                  [
+                    { text: 'ยกเลิก', style: 'cancel' },
+                    { text: 'เคลียร์', style: 'destructive', onPress: () => {
+                      Alert.alert('เคลียร์ข้อมูล', 'ฟีเจอร์เคลียร์ข้อมูลกำลังพัฒนา');
+                    }}
+                  ]
+                );
+              }}
+            >
+              <Icon name="trash-outline" size={20} color="#dc2626" />
+              <Text className="text-gray-800 font-medium ml-3">เคลียร์ข้อมูล</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
       </Modal>
     </SafeAreaView>
   );

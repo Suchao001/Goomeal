@@ -1,95 +1,114 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, TextInput, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, TextInput, Image, ActivityIndicator } from 'react-native';
 import { useTypedNavigation } from '../../hooks/Navigation';
+import { useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Menu from '../material/Menu';
+import { ApiClient } from '../../utils/apiClient';
+import { base_url, seconde_url } from '../../config';
 
 interface FoodItem {
   id: string;
   name: string;
-  image: string;
-  calories: number;
-  carbs: number;
+  cal: number;
+  carb: number;
+  fat: number;
   protein: number;
-  tags: string[];
+  img: string | null;
+  ingredient: string;
+  source: 'user_food' | 'foods';
+  isUserFood: boolean;
 }
 
+interface RouteParams {
+  hideRecommended?: boolean;
+  mealId?: string;
+  source?: string;
+}
 
 const SearchFoodForAdd = () => {
   const navigation = useTypedNavigation();
+  const route = useRoute();
+  const params = route.params as RouteParams || {};
+  const apiClient = new ApiClient();
   
   const [searchQuery, setSearchQuery] = useState('');
+  const [userFoods, setUserFoods] = useState<FoodItem[]>([]);
+  const [globalFoods, setGlobalFoods] = useState<FoodItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
-  const [foodItems] = useState<FoodItem[]>([
-    {
-      id: '1',
-      name: 'น้ำแดง',
-      image: 'https://via.placeholder.com/60x60/ff6b6b/ffffff?text=🍛',
-      calories: 450,
-      carbs: 65,
-      protein: 20,
-      tags: ['เผ็ด', 'ไทย']
-    },
-    {
-      id: '2', 
-      name: 'น้ำแดงเผ็ด',
-      image: 'https://via.placeholder.com/60x60/ff6b6b/ffffff?text=🍜',
-      calories: 480,
-      carbs: 70,
-      protein: 22,
-      tags: ['เผ็ดมาก', 'ไทย']
-    },
-    {
-      id: '3',
-      name: 'ผัดกะเพรา',
-      image: 'https://via.placeholder.com/60x60/4ecdc4/ffffff?text=�',
-      calories: 420,
-      carbs: 55,
-      protein: 25,
-      tags: ['เผ็ด', 'ใส่ไข่']
+  const [showAllUserFoods, setShowAllUserFoods] = useState(false);
+  const [showAllGlobalFoods, setShowAllGlobalFoods] = useState(false);
+  
+  // Load foods from API
+  const loadFoods = async (query?: string) => {
+    setIsLoading(true);
+    try {
+      const result = await apiClient.searchFoods(query, query ? 50 : 8); // เริ่มต้น 8 รายการ, search 50 รายการ
+      
+      if (result.success && result.data) {
+        // แยกข้อมูลที่ได้จาก backend
+        setUserFoods(result.data.userFoods || []);
+        setGlobalFoods(result.data.globalFoods || []);
+      } else {
+        console.error('Failed to load foods:', result.error);
+        setUserFoods([]);
+        setGlobalFoods([]);
+      }
+    } catch (error) {
+      console.error('Error loading foods:', error);
+      setUserFoods([]);
+      setGlobalFoods([]);
+    } finally {
+      setIsLoading(false);
+      if (isInitialLoad) setIsInitialLoad(false);
     }
-  ]);  
-  const [recommendedFoods] = useState<FoodItem[]>([
-    {
-      id: '4',
-      name: 'ข้าวผัดกุ้ง',
-      image: 'https://via.placeholder.com/60x60/45b7d1/ffffff?text=�',
-      calories: 380,
-      carbs: 60,
-      protein: 18,
-      tags: ['ทะเล', 'ข้าว']
-    },
-    {
-      id: '5',
-      name: 'ต้มยำกุ้ง',
-      image: 'https://via.placeholder.com/60x60/f39c12/ffffff?text=�',
-      calories: 150,
-      carbs: 20,
-      protein: 12,
-      tags: ['เปรี้ยว', 'เผ็ด', 'ทะเล']
-    },
-    {
-      id: '6',
-      name: 'สลัดผักรวม',
-      image: 'https://via.placeholder.com/60x60/2ecc71/ffffff?text=🥗',
-      calories: 120,
-      carbs: 15,
-      protein: 8,
-      tags: ['ผัก', 'สุขภาพ']
-    }
-  ]);  
-  const filteredRecentFoods = foodItems.filter(item =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  };
 
-  const filteredRecommendedFoods = recommendedFoods.filter(item =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  // Load initial data
+  useEffect(() => {
+    loadFoods();
+  }, []);
+
+  // Search with debounce
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (!isInitialLoad) {
+        // Reset show all states when searching
+        setShowAllUserFoods(false);
+        setShowAllGlobalFoods(false);
+        loadFoods(searchQuery);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, isInitialLoad]);
+
+  // Get image URL based on source
+  const getImageUrl = (food: FoodItem): string => {
+    if (!food.img) return '';
+    
+    if (food.isUserFood) {
+      // User food images: base_url + img (img already contains /images/user_foods/)
+      return `${base_url}${food.img}`;
+    } else {
+      // Global food images: seconde_url + img
+      return `${seconde_url}${food.img}`;
+    }
+  };
 
   const handleAddFood = (food: FoodItem) => {
     console.log('เพิ่มอาหาร:', food.name);
+    
+    // ถ้ามีการส่ง mealId มา แสดงว่ามาจาก MealPlanScreen
+    if (params.mealId) {
+      console.log('เพิ่มอาหารเข้ามื้อ:', params.mealId, 'อาหาร:', food.name);
+      // TODO: ส่งข้อมูลกลับไปยัง MealPlanScreen
+      // คุณสามารถใช้ navigation.navigate กลับไปพร้อมข้อมูล
+      // หรือใช้ Context/State Management อื่นๆ
+    }
+    
     navigation.goBack();
   };
 
@@ -97,44 +116,80 @@ const SearchFoodForAdd = () => {
     navigation.navigate('AddNewFood');
   };
 
-  const renderFoodCard = (food: FoodItem) => (
-    <View key={food.id} className="bg-white rounded-lg p-4 mb-3 flex-row items-center shadow-sm">
-      <View className="w-16 h-16 rounded-lg bg-gray-100 items-center justify-center mr-4">
-        <Text className="text-2xl">🍽️</Text>
-      </View>
-      
-      <View className="flex-1">
-        <Text className="text-lg font-semibold text-gray-800 mb-1">{food.name}</Text>
-        <View className="flex-row items-center mb-2">
-          <Text className="text-sm text-gray-600 mr-4">{food.calories} kcal</Text>
-          <Text className="text-sm text-gray-600 mr-4">{food.carbs}g คาร์บ</Text>
-          <Text className="text-sm text-gray-600">{food.protein}g โปรตีน</Text>
+  const renderFoodCard = (food: FoodItem) => {
+    const imageUrl = getImageUrl(food);
+    
+    return (
+      <View key={food.id} className="bg-white rounded-lg p-4 mb-3 flex-row items-center shadow-sm">
+        <View className="w-16 h-16 rounded-lg bg-gray-100 items-center justify-center mr-4">
+          {imageUrl ? (
+            <Image
+              source={{ uri: imageUrl }}
+              className="w-16 h-16 rounded-lg"
+              resizeMode="cover"
+            />
+          ) : (
+            <Text className="text-2xl">🍽️</Text>
+          )}
         </View>
-        <View className="flex-row items-center">
-          {food.tags.map((tag, index) => (
-            <View key={index} className="bg-gray-100 rounded-full px-2 py-1 mr-2">
-              <Text className="text-xs text-gray-600">{tag}</Text>
-            </View>
-          ))}
+        
+        <View className="flex-1">
+          <View className="flex-row items-center mb-1">
+            <Text className="text-lg font-semibold text-gray-800 flex-1">{food.name}</Text>
+            {food.isUserFood && (
+              <View className="bg-blue-100 rounded-full px-2 py-1">
+                <Text className="text-xs text-blue-600">เมนูของฉัน</Text>
+              </View>
+            )}
+          </View>
+          <View className="flex-row items-center mb-2">
+            <Text className="text-sm text-gray-600 mr-4">{food.cal} kcal</Text>
+            <Text className="text-sm text-gray-600 mr-4">{food.carb}g คาร์บ</Text>
+            <Text className="text-sm text-gray-600">{food.protein}g โปรตีน</Text>
+          </View>
+          {food.ingredient && (
+            <Text className="text-xs text-gray-500" numberOfLines={1}>
+              {food.ingredient}
+            </Text>
+          )}
         </View>
+        
+        <TouchableOpacity
+          onPress={() => handleAddFood(food)}
+          className="w-10 h-10 bg-blue-300 rounded-full items-center justify-center"
+        >
+          <Icon name="add" size={20} color="blue" />
+        </TouchableOpacity>
       </View>
-      
-      <TouchableOpacity
-        onPress={() => handleAddFood(food)}
-        className="w-10 h-10 bg-blue-300 rounded-full items-center justify-center"
-      >
-        <Icon name="add" size={20} color="blue" />
-      </TouchableOpacity>
-    </View>
-  );
+    );
+  };
 
-  const renderFoodSection = (title: string, foods: FoodItem[]) => {
+  const renderFoodSection = (title: string, foods: FoodItem[], limit?: number, showAll?: boolean, onToggleShowAll?: () => void) => {
     if (foods.length === 0) return null;
+    
+    const shouldLimit = limit && !searchQuery && !showAll;
+    const displayFoods = shouldLimit ? foods.slice(0, limit) : foods;
     
     return (
       <View className="mb-6">
-        <Text className="text-lg font-semibold text-gray-800 mb-3 px-1">{title}</Text>
-        {foods.map(food => renderFoodCard(food))}
+        <View className="flex-row items-center justify-between mb-3 px-1">
+          <Text className="text-lg font-semibold text-gray-800">{title}</Text>
+          {shouldLimit && foods.length > limit && (
+            <TouchableOpacity onPress={onToggleShowAll}>
+              <Text className="text-sm text-blue-600 font-medium">
+                ดูทั้งหมด ({foods.length})
+              </Text>
+            </TouchableOpacity>
+          )}
+          {showAll && limit && (
+            <TouchableOpacity onPress={onToggleShowAll}>
+              <Text className="text-sm text-gray-600 font-medium">
+                ดูน้อยลง
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        {displayFoods.map(food => renderFoodCard(food))}
       </View>
     );
   };
@@ -149,7 +204,9 @@ const SearchFoodForAdd = () => {
           <Icon name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         
-        <Text className="text-xl font-bold text-white">เลือกอาหาร</Text>
+        <Text className="text-xl font-bold text-white">
+          {params.source === 'MealPlan' ? 'เลือกอาหารสำหรับมื้อ' : 'เลือกอาหาร'}
+        </Text>
         
         <View className="w-10 h-10" />
       </View>
@@ -168,15 +225,46 @@ const SearchFoodForAdd = () => {
       </View>
 
       <ScrollView className="flex-1 px-4 py-4" showsVerticalScrollIndicator={false}>
-        {renderFoodSection('รายการอาหารล่าสุด', filteredRecentFoods)}
-        {renderFoodSection('รายการอาหารที่แนะนำตามแผนการกิน', filteredRecommendedFoods)}
-        
-        {(filteredRecentFoods.length === 0 && filteredRecommendedFoods.length === 0) && (
-          <View className="flex-1 items-center justify-center py-20">
-            <Icon name="search" size={48} color="#9ca3af" />
-            <Text className="text-gray-500 mt-4 text-center">ไม่พบอาหารที่ค้นหา</Text>
-            <Text className="text-gray-400 text-center">ลองค้นหาด้วยคำอื่น</Text>
+        {isLoading && (
+          <View className="items-center justify-center py-8">
+            <ActivityIndicator size="large" color="#3B82F6" />
+            <Text className="text-gray-500 mt-2">กำลังค้นหา...</Text>
           </View>
+        )}
+
+        {!isLoading && (
+          <>
+            {/* อาหารของฉัน (User Foods) */}
+            {userFoods.length > 0 && renderFoodSection(
+              '🍽️ อาหารของฉัน', 
+              userFoods, 
+              4,
+              showAllUserFoods,
+              () => setShowAllUserFoods(!showAllUserFoods)
+            )}
+            
+            {/* รายการอาหารจาก GoodMeal (Global Foods) - แสดงเสมอ */}
+            {globalFoods.length > 0 && renderFoodSection(
+              '🥗 รายการอาหารจาก GoodMeal', 
+              globalFoods,
+              4,
+              showAllGlobalFoods,
+              () => setShowAllGlobalFoods(!showAllGlobalFoods)
+            )}
+            
+            {/* แสดงข้อความ "ไม่พบอาหาร" เฉพาะเมื่อไม่มีผลลัพธ์ใดๆ */}
+            {(userFoods.length === 0 && globalFoods.length === 0) && !isLoading && (
+              <View className="flex-1 items-center justify-center py-20">
+                <Icon name="search" size={48} color="#9ca3af" />
+                <Text className="text-gray-500 mt-4 text-center">
+                  {searchQuery ? 'ไม่พบอาหารที่ค้นหา' : 'ยังไม่มีข้อมูลอาหาร'}
+                </Text>
+                <Text className="text-gray-400 text-center">
+                  {searchQuery ? 'ลองค้นหาด้วยคำอื่น' : 'เริ่มต้นด้วยการเพิ่มเมนูใหม่'}
+                </Text>
+              </View>
+            )}
+          </>
         )}
 
         <TouchableOpacity
@@ -185,7 +273,7 @@ const SearchFoodForAdd = () => {
         >
           <View className="flex-row items-center">
             <Icon name="add" size={20} color="white" />
-            <Text className="text-white font-bold ml-2">+ เพิ่มเมนูใหม่</Text>
+            <Text className="text-white font-bold ml-2">เพิ่มเมนูใหม่</Text>
           </View>
         </TouchableOpacity>
       </ScrollView>

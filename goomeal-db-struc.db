@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: my_database:3306
--- Generation Time: Jul 15, 2025 at 06:37 AM
+-- Generation Time: Jul 18, 2025 at 01:12 PM
 -- Server version: 10.11.13-MariaDB-ubu2204
 -- PHP Version: 8.2.27
 
@@ -178,6 +178,24 @@ CREATE TABLE `users` (
   `last_password_reset` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_food`
+--
+
+CREATE TABLE `user_food` (
+  `id` int(11) NOT NULL,
+  `name` varchar(50) DEFAULT NULL,
+  `cal` decimal(8,2) DEFAULT NULL,
+  `carb` decimal(8,2) DEFAULT NULL,
+  `fat` decimal(8,2) DEFAULT NULL,
+  `protein` decimal(8,2) DEFAULT NULL,
+  `img` varchar(255) DEFAULT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `ingredient` text NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 --
 -- Indexes for dumped tables
 --
@@ -249,6 +267,12 @@ ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `username` (`username`),
   ADD UNIQUE KEY `email` (`email`);
+
+--
+-- Indexes for table `user_food`
+--
+ALTER TABLE `user_food`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
