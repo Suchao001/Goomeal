@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, TextInput, Image, ActivityIndicator } from 'react-native';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import { useRoute } from '@react-navigation/native';
@@ -30,7 +30,7 @@ const SearchFoodForAdd = () => {
   const navigation = useTypedNavigation();
   const route = useRoute();
   const params = route.params as RouteParams || {};
-  const apiClient = new ApiClient();
+  const apiClient = useMemo(() => new ApiClient(), []);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [userFoods, setUserFoods] = useState<FoodItem[]>([]);

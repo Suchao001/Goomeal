@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, TextInput, Alert, Image } from 'react-native';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -11,7 +11,7 @@ import { ApiClient } from '../../utils/apiClient';
  */
 const AddNewFoodScreen = () => {
   const navigation = useTypedNavigation();
-  const apiClient = new ApiClient();
+  const apiClient = useMemo(() => new ApiClient(), []);
   
   // Form states
   const [foodName, setFoodName] = useState('');
@@ -164,7 +164,7 @@ const AddNewFoodScreen = () => {
     );
   };
 
-  const InputField = ({ 
+  const InputField = useCallback(({ 
     label, 
     value, 
     onChangeText, 
@@ -195,7 +195,7 @@ const AddNewFoodScreen = () => {
         )}
       </View>
     </View>
-  );
+  ), []);
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
