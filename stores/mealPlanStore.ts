@@ -28,14 +28,30 @@ export interface MealPlanData {
   [day: number]: DayMeals;
 }
 
+export interface Meal {
+  id: string;
+  name: string;
+  icon: string;
+  time: string;
+}
+
+// Custom meals per day
+export interface CustomMealsPerDay {
+  [day: number]: Meal[];
+}
+
 interface MealPlanStore {
   mealPlanData: MealPlanData;
+  meals: Meal[]; // Default meals
+  customMeals: CustomMealsPerDay; // Custom meals per day
   
   // Actions
-  addFoodToMeal: (food: FoodItem, mealId: string, day: number) => void;
+  addFoodToMeal: (food: FoodItem, mealId: string, day: number, mealInfo?: { name: string; time: string }) => void;
   removeFoodFromMeal: (foodId: string, mealId: string, day: number) => void;
   clearMealPlan: () => void;
   clearDay: (day: number) => void;
+  addMeal: (meal: Meal, day: number) => void; // Updated to include day
+  getAllMealsForDay: (day: number) => Meal[]; // New function to get all meals for a specific day
   getMealData: (day: number, mealId: string) => MealData | undefined;
   getDayMeals: (day: number) => DayMeals;
   
@@ -55,13 +71,31 @@ export const useMealPlanStore = create<MealPlanStore>()(
   persist(
     (set, get) => ({
       mealPlanData: {},
+      meals: [
+        { id: 'breakfast', name: 'อาหารมื้อเช้า', icon: 'sunny', time: '07:00' },
+        { id: 'lunch', name: 'อาหารมื้อกลางวัน', icon: 'partly-sunny', time: '12:00' },
+        { id: 'dinner', name: 'อาหารมื้อเย็น', icon: 'moon', time: '18:00' },
+      ],
+      customMeals: {}, // Initialize custom meals
 
-      addFoodToMeal: (food: FoodItem, mealId: string, day: number) => {
-        console.log('=== Zustand: Adding Food to Meal ===');
-        console.log('Food:', food.name);
-        console.log('MealId:', mealId);
-        console.log('Day:', day);
+      getAllMealsForDay: (day: number) => {
+        const state = get();
+        const defaultMeals = state.meals;
+        const customMealsForDay = state.customMeals[day] || [];
+        return [...defaultMeals, ...customMealsForDay];
+      },
 
+      addMeal: (meal: Meal, day: number) => {
+        set((state) => ({
+          ...state,
+          customMeals: {
+            ...state.customMeals,
+            [day]: [...(state.customMeals[day] || []), meal],
+          },
+        }));
+      },
+
+      addFoodToMeal: (food: FoodItem, mealId: string, day: number, mealInfo?: { name: string; time: string }) => {
         set((state) => {
           // Get existing items for this meal and day
           const existingItems = state.mealPlanData[day]?.[mealId]?.items || [];
@@ -69,12 +103,37 @@ export const useMealPlanStore = create<MealPlanStore>()(
           // Check if food already exists (avoid duplicates)
           const existingIndex = existingItems.findIndex(item => item.id === food.id);
           if (existingIndex !== -1) {
-            console.log('Food already exists in meal, skipping');
             return state; // Don't change state if food already exists
           }
 
-          // Get meal info
-          const mealInfo = defaultMealInfo[mealId as keyof typeof defaultMealInfo] || { name: 'มื้ออาหาร', time: '00:00' };
+          // Get meal info - first try passed mealInfo, then existing data, then from all meals for this day, then default
+          let finalMealInfo = mealInfo;
+          if (!finalMealInfo) {
+            // Try to get existing meal data
+            finalMealInfo = {
+              name: state.mealPlanData[day]?.[mealId]?.name,
+              time: state.mealPlanData[day]?.[mealId]?.time
+            };
+            
+            // If no existing data, try to find in all meals for this day (default + custom)
+            if (!finalMealInfo.name || !finalMealInfo.time) {
+              const allMealsForDay = get().getAllMealsForDay(day);
+              const mealFromArray = allMealsForDay.find(m => m.id === mealId);
+              if (mealFromArray) {
+                finalMealInfo = {
+                  name: mealFromArray.name,
+                  time: mealFromArray.time
+                };
+              } else {
+                // Fallback to default
+                const defaultInfo = defaultMealInfo[mealId as keyof typeof defaultMealInfo] || { name: 'มื้ออาหาร', time: '00:00' };
+                finalMealInfo = {
+                  name: finalMealInfo.name || defaultInfo.name,
+                  time: finalMealInfo.time || defaultInfo.time
+                };
+              }
+            }
+          }
 
           // Create new state with immutable pattern
           const newMealPlanData = {
@@ -82,15 +141,12 @@ export const useMealPlanStore = create<MealPlanStore>()(
             [day]: {
               ...(state.mealPlanData[day] || {}),
               [mealId]: {
-                time: state.mealPlanData[day]?.[mealId]?.time || mealInfo.time,
-                name: state.mealPlanData[day]?.[mealId]?.name || mealInfo.name,
+                time: finalMealInfo.time,
+                name: finalMealInfo.name,
                 items: [...existingItems, food],
               },
             },
           };
-
-          console.log('New Zustand state - Total days:', Object.keys(newMealPlanData).length);
-          console.log('Items in meal after add:', newMealPlanData[day][mealId].items.length);
 
           return {
             ...state,
@@ -100,9 +156,6 @@ export const useMealPlanStore = create<MealPlanStore>()(
       },
 
       removeFoodFromMeal: (foodId: string, mealId: string, day: number) => {
-        console.log('=== Zustand: Removing Food from Meal ===');
-        console.log('FoodId:', foodId, 'MealId:', mealId, 'Day:', day);
-
         set((state) => {
           const existingItems = state.mealPlanData[day]?.[mealId]?.items || [];
           const updatedItems = existingItems.filter(item => item.id !== foodId);
@@ -147,7 +200,6 @@ export const useMealPlanStore = create<MealPlanStore>()(
       },
 
       clearMealPlan: () => {
-        console.log('=== Zustand: Clearing all meal plan data ===');
         set((state) => ({
           ...state,
           mealPlanData: {},
@@ -155,7 +207,6 @@ export const useMealPlanStore = create<MealPlanStore>()(
       },
 
       clearDay: (day: number) => {
-        console.log('=== Zustand: Clearing day', day, '===');
         set((state) => {
           const { [day]: removedDay, ...restDays } = state.mealPlanData;
           return {

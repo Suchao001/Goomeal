@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Modal, TextInput, Alert, FlatList, Image } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Modal, TextInput, Alert, FlatList, Image, Platform } from 'react-native';
 import { useTypedNavigation } from '../../hooks/Navigation';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { base_url, seconde_url } from '../../config';
 import { useMealPlanStore, type FoodItem } from '../../stores/mealPlanStore';
 
@@ -20,69 +21,54 @@ const MealPlanScreen = () => {
     addFoodToMeal,
     removeFoodFromMeal,
     clearMealPlan,
+    addMeal,
+    getAllMealsForDay,
     getDayMeals,
     getMealNutrition,
     getDayNutrition
   } = useMealPlanStore();
 
   // State for selected date and modals
-  const [selectedDay, setSelectedDay] = useState(12); // Default to day 12
+  const [selectedDay, setSelectedDay] = useState(1); // Default to day 1
   const [showAddMealModal, setShowAddMealModal] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [newMealName, setNewMealName] = useState('');
   const [newMealTime, setNewMealTime] = useState('');
   const [showKebabMenu, setShowKebabMenu] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [selectedTime, setSelectedTime] = useState(new Date());
 
   // Generate days 1-30 for date picker
   const days = Array.from({ length: 30 }, (_, i) => i + 1);
 
-  // Default meals
-  const [meals, setMeals] = useState([
-    { id: 'breakfast', name: 'อาหารมื้อเช้า', icon: 'sunny', time: '07:00' },
-    { id: 'lunch', name: 'อาหารมื้อกลางวัน', icon: 'partly-sunny', time: '12:00' },
-    { id: 'dinner', name: 'อาหารมื้อเย็น', icon: 'moon', time: '18:00' },
-  ]);
 
-  // Debug: Monitor state changes
-  useEffect(() => {
-    console.log('=== Meal Plan Data Updated (Zustand) ===');
-    console.log('Total days with data:', Object.keys(mealPlanData).length);
-    
-    // Only log detailed data when there's actual data to prevent spam
-    if (Object.keys(mealPlanData).length > 0) {
-      Object.keys(mealPlanData).forEach(day => {
-        const dayMeals = mealPlanData[parseInt(day)];
-        const mealCount = Object.keys(dayMeals).length;
-        const totalItems = Object.values(dayMeals).reduce((total, meal) => total + meal.items.length, 0);
-        console.log(`Day ${day}: ${mealCount} meals, ${totalItems} food items`);
-      });
-    }
-  }, [mealPlanData]);
 
   // Listen for navigation params (when returning from SearchFoodForAdd)
-  useEffect(() => {
-    const params = route.params as any;
-    if (params?.selectedFood && params?.mealId && params?.selectedDay) {
-      console.log('=== Adding Food to Meal ===');
-      console.log('Food:', params.selectedFood.name);
-      console.log('Meal ID:', params.mealId);
-      console.log('Day:', params.selectedDay);
-      
-      // Add food immediately using Zustand store
-      addFoodToMeal(params.selectedFood, params.mealId, params.selectedDay);
-      
-      // Clear the params to prevent re-execution
-      navigation.setParams({ selectedFood: undefined, mealId: undefined, selectedDay: undefined });
-    }
-  }, [route.params, navigation, addFoodToMeal]);
+  useFocusEffect(
+    React.useCallback(() => {
+      const params = route.params as any;
+      if (params?.selectedFood && params?.mealId && params?.selectedDay) {
+        // Set the selected day to match the params
+        setSelectedDay(params.selectedDay);
+        
+        // Add food immediately using Zustand store (no need to pass mealInfo, store will find it)
+        addFoodToMeal(params.selectedFood, params.mealId, params.selectedDay);
+        
+        // Clear the params to prevent re-execution
+        navigation.setParams({ selectedFood: undefined, mealId: undefined, selectedDay: undefined });
+      }
+    }, [route.params, navigation, addFoodToMeal])
+  );
 
   // Get image URL based on food source
   const getImageUrl = (food: FoodItem): string => {
     if (!food.img) return '';
     
-    if (food.isUserFood) {
+    // Check if food is from user_food table or isUserFood flag is true
+    if (food.isUserFood || food.source === 'user_food') {
       return `${base_url}${food.img}`;
     } else {
+      // For global foods from 'foods' table, use seconde_url
       return `${seconde_url}${food.img}`;
     }
   };
@@ -166,14 +152,39 @@ const MealPlanScreen = () => {
       id: `meal_${Date.now()}`,
       name: newMealName.trim(),
       icon: 'restaurant',
-      time: newMealTime.trim(),
-      hasFood: false
+      time: newMealTime.trim()
     };
 
-    setMeals([...meals, newMeal]);
+    addMeal(newMeal, selectedDay); // Pass selectedDay to add meal only for this day
     setNewMealName('');
     setNewMealTime('');
     setShowAddMealModal(false);
+  };
+
+  // Handle time picker change
+  const onTimeChange = (event: any, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowTimePicker(false);
+    }
+    
+    if (selectedDate) {
+      setSelectedTime(selectedDate);
+      const timeString = selectedDate.toLocaleTimeString('th-TH', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+      setNewMealTime(timeString);
+    }
+  };
+
+  // Format time for display
+  const formatTime = (date: Date): string => {
+    return date.toLocaleTimeString('th-TH', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
   };
 
   // Add food to meal
@@ -381,7 +392,7 @@ const MealPlanScreen = () => {
       {/* Main Content */}
       <ScrollView className="flex-1 px-4 py-6" showsVerticalScrollIndicator={false}>
         {/* Meal Cards */}
-        {meals.map(meal => renderMealCard(meal))}
+        {getAllMealsForDay(selectedDay).map(meal => renderMealCard(meal))}
 
         {/* Add More Meals Button */}
         <TouchableOpacity
@@ -473,12 +484,15 @@ const MealPlanScreen = () => {
             {/* Meal Time Input */}
             <View className="mb-6">
               <Text className="text-base font-medium text-gray-700 mb-2">เวลาของมื้ออาหาร</Text>
-              <TextInput
-                className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-gray-800"
-                placeholder="เช่น 15:00, 21:30..."
-                value={newMealTime}
-                onChangeText={setNewMealTime}
-              />
+              <TouchableOpacity
+                className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 flex-row items-center justify-between"
+                onPress={() => setShowTimePicker(true)}
+              >
+                <Text className={`${newMealTime ? 'text-gray-800' : 'text-gray-400'}`}>
+                  {newMealTime || 'เลือกเวลา'}
+                </Text>
+                <Icon name="time-outline" size={20} color="#6b7280" />
+              </TouchableOpacity>
             </View>
 
             {/* Action Buttons */}
@@ -501,6 +515,66 @@ const MealPlanScreen = () => {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* Time Picker Modal */}
+      {showTimePicker && (
+        <Modal
+          visible={showTimePicker}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowTimePicker(false)}
+        >
+          <TouchableOpacity 
+            className="flex-1 justify-end"
+            activeOpacity={1}
+            onPress={() => setShowTimePicker(false)}
+          >
+            <View className="bg-white rounded-t-3xl p-6">
+              <View className="flex-row justify-between items-center mb-6">
+                <Text className="text-xl font-bold text-gray-800">เลือกเวลา</Text>
+                <TouchableOpacity onPress={() => setShowTimePicker(false)}>
+                  <Icon name="close" size={24} color="#6b7280" />
+                </TouchableOpacity>
+              </View>
+              
+              <DateTimePicker
+                value={selectedTime}
+                mode="time"
+                is24Hour={true}
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={onTimeChange}
+                style={{ alignSelf: 'center' }}
+              />
+              
+              {Platform.OS === 'ios' && (
+                <View className="flex-row space-x-3 mt-6">
+                  <TouchableOpacity
+                    className="flex-1 bg-gray-200 rounded-lg py-3 items-center"
+                    onPress={() => setShowTimePicker(false)}
+                  >
+                    <Text className="text-gray-700 font-medium">ยกเลิก</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    className="flex-1 bg-primary rounded-lg py-3 items-center"
+                    onPress={() => {
+                      const timeString = selectedTime.toLocaleTimeString('th-TH', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                      });
+                      setNewMealTime(timeString);
+                      setShowTimePicker(false);
+                    }}
+                  >
+                    <Text className="text-white font-medium">ยืนยัน</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
+        </Modal>
+      )}
 
       {/* Kebab Menu Modal */}
       <Modal

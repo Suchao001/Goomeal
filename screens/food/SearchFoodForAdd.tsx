@@ -90,22 +90,28 @@ const SearchFoodForAdd = () => {
   const getImageUrl = (food: FoodItem): string => {
     if (!food.img) return '';
     
-    if (food.isUserFood) {
+    // Debug log to check image URL construction
+    console.log('Image URL construction for food:', food.name);
+    console.log('Food source:', food.source);
+    console.log('Food isUserFood:', food.isUserFood);
+    console.log('Food img:', food.img);
+    
+    if (food.isUserFood || food.source === 'user_food') {
       // User food images: base_url + img (img already contains /images/user_foods/)
-      return `${base_url}${food.img}`;
+      const fullUrl = `${base_url}${food.img}`;
+      console.log('User food URL:', fullUrl);
+      return fullUrl;
     } else {
       // Global food images: seconde_url + img
-      return `${seconde_url}${food.img}`;
+      const fullUrl = `${seconde_url}${food.img}`;
+      console.log('Global food URL:', fullUrl);
+      return fullUrl;
     }
   };
 
   const handleAddFood = (food: FoodItem) => {
-    console.log('เพิ่มอาหาร:', food.name);
-    
     // ถ้ามีการส่ง mealId มา แสดงว่ามาจาก MealPlanScreen
     if (params.mealId) {
-      console.log('เพิ่มอาหารเข้ามื้อ:', params.mealId, 'อาหาร:', food.name);
-      
       // ส่งข้อมูลอาหารแบบเต็มกลับไปยัง MealPlanScreen
       navigation.navigate('MealPlan', {
         selectedFood: food,
