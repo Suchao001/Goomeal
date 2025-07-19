@@ -13,6 +13,7 @@ interface MealPlanModeData {
   planName: string;
   planDescription: string;
   planImage: string | null;
+  setAsCurrentPlan: boolean;
 }
 
 export const useMealPlanMode = (initialMode: MealPlanMode = 'add', planId?: number) => {
@@ -26,7 +27,8 @@ export const useMealPlanMode = (initialMode: MealPlanMode = 'add', planId?: numb
     planId,
     planName: '',
     planDescription: '',
-    planImage: null
+    planImage: null,
+    setAsCurrentPlan: true // Default to true
   });
 
   // Load existing plan data when in edit mode
@@ -89,7 +91,7 @@ export const useMealPlanMode = (initialMode: MealPlanMode = 'add', planId?: numb
 
   // Save plan (create new or update existing)
   const savePlan = useCallback(async (mealPlanData: any) => {
-    const { mode, planId, planName, planDescription, planImage } = modeData;
+    const { mode, planId, planName, planDescription, planImage, setAsCurrentPlan } = modeData;
     
     if (!planName.trim()) {
       Alert.alert('ข้อผิดพลาด', 'กรุณาใส่ชื่อแผนอาหาร');
@@ -106,6 +108,11 @@ export const useMealPlanMode = (initialMode: MealPlanMode = 'add', planId?: numb
           image: planImage || undefined
         });
         
+        // If setAsCurrentPlan is true, update user_food_plan_using
+        if (result.success && setAsCurrentPlan) {
+          await apiClient.setCurrentFoodPlan(planId);
+        }
+        
         return result;
       } else {
         // Create new plan
@@ -116,6 +123,11 @@ export const useMealPlanMode = (initialMode: MealPlanMode = 'add', planId?: numb
           image: planImage || undefined
         });
         
+        // If setAsCurrentPlan is true, set as current plan
+        if (result.success && setAsCurrentPlan && result.data?.id) {
+          await apiClient.setCurrentFoodPlan(result.data.id);
+        }
+        
         return result;
       }
     } catch (error) {
@@ -125,7 +137,7 @@ export const useMealPlanMode = (initialMode: MealPlanMode = 'add', planId?: numb
   }, [modeData, apiClient]);
 
   // Update plan metadata
-  const updatePlanMetadata = useCallback((updates: Partial<Pick<MealPlanModeData, 'planName' | 'planDescription' | 'planImage'>>) => {
+  const updatePlanMetadata = useCallback((updates: Partial<Pick<MealPlanModeData, 'planName' | 'planDescription' | 'planImage' | 'setAsCurrentPlan'>>) => {
     setModeData(prev => ({ ...prev, ...updates }));
   }, []);
 

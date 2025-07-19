@@ -253,3 +253,143 @@ export const deleteUserFoodPlan = async (req: Request, res: Response): Promise<v
     });
   }
 };
+
+// Set current food plan for user
+export const setCurrentFoodPlan = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { food_plan_id } = req.body;
+    const userId = (req as any).user?.id;
+    
+    if (!userId) {
+      res.status(401).json({ 
+        success: false, 
+        error: 'ไม่พบข้อมูลผู้ใช้' 
+      });
+      return;
+    }
+
+    if (!food_plan_id) {
+      res.status(400).json({ 
+        success: false, 
+        error: 'กรุณาระบุ ID ของแผนอาหาร' 
+      });
+      return;
+    }
+
+    // Check if the food plan exists and belongs to user
+    const foodPlan = await db('user_food_plans')
+      .where({ id: food_plan_id, user_id: userId })
+      .first();
+
+    if (!foodPlan) {
+      res.status(404).json({ 
+        success: false, 
+        error: 'ไม่พบแผนอาหารที่ระบุ' 
+      });
+      return;
+    }
+
+    // Check if user already has a current plan
+    const existingCurrentPlan = await db('user_food_plan_using')
+      .where({ user_id: userId })
+      .first();
+
+    if (existingCurrentPlan) {
+      // Update existing record
+      await db('user_food_plan_using')
+        .where({ user_id: userId })
+        .update({
+          food_plan_id: food_plan_id,
+          start_date: db.fn.now(),
+          is_repeat: false
+        });
+    } else {
+      // Create new record
+      await db('user_food_plan_using').insert({
+        food_plan_id: food_plan_id,
+        user_id: userId,
+        start_date: db.fn.now(),
+        is_repeat: false
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'ตั้งเป็นแผนปัจจุบันเรียบร้อยแล้ว',
+      data: {
+        food_plan_id,
+        user_id: userId
+      }
+    });
+
+  } catch (error) {
+    console.error('Error setting current food plan:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'เกิดข้อผิดพลาดในการตั้งแผนปัจจุบัน' 
+    });
+  }
+};
+
+// Get current food plan for user
+export const getCurrentFoodPlan = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req as any).user?.id;
+    
+    if (!userId) {
+      res.status(401).json({ 
+        success: false, 
+        error: 'ไม่พบข้อมูลผู้ใช้' 
+      });
+      return;
+    }
+
+    // Get current food plan with plan details
+    const currentPlanUsage = await db('user_food_plan_using as ufpu')
+      .join('user_food_plans as ufp', 'ufpu.food_plan_id', 'ufp.id')
+      .where('ufpu.user_id', userId)
+      .select(
+        'ufpu.*',
+        'ufp.name',
+        'ufp.description',
+        'ufp.plan as plan_data',
+        'ufp.img',
+        'ufp.created_at as plan_created_at'
+      )
+      .first();
+
+    if (!currentPlanUsage) {
+      res.status(404).json({ 
+        success: false, 
+        error: 'ไม่พบแผนปัจจุบัน' 
+      });
+      return;
+    }
+
+    // Parse plan data if it's a string
+    let planData = currentPlanUsage.plan_data;
+    if (typeof planData === 'string') {
+      try {
+        planData = JSON.parse(planData);
+      } catch (e) {
+        console.error('Error parsing plan data:', e);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'ดึงข้อมูลแผนปัจจุบันสำเร็จ',
+      data: {
+        ...currentPlanUsage,
+        plan_data: planData
+      }
+    });
+
+  } catch (error) {
+    console.error('Error getting current food plan:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'เกิดข้อผิดพลาดในการดึงข้อมูลแผนปัจจุบัน' 
+    });
+  }
+};

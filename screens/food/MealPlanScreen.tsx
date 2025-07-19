@@ -449,6 +449,8 @@ const MealPlanScreen = () => {
         totalDays={totalDays}
         totalMenus={totalMenus}
         saveButtonText={mealPlanMode.getSaveButtonText()}
+        setAsCurrentPlan={mealPlanMode.setAsCurrentPlan}
+        setSetAsCurrentPlan={(value: boolean) => mealPlanMode.updatePlanMetadata({ setAsCurrentPlan: value })}
       />
     </SafeAreaView>
   );

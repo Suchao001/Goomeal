@@ -391,6 +391,50 @@ export class ApiClient {
     }
   }
 
+  /**
+   * Set a food plan as current plan for user
+   */
+  async setCurrentFoodPlan(foodPlanId: number) {
+    try {
+      const response = await this.axiosInstance.post('/user-food-plans/set-current', {
+        food_plan_id: foodPlanId
+      });
+
+      return {
+        success: true,
+        data: response.data?.data,
+        message: response.data?.message || 'ตั้งเป็นแผนปัจจุบันสำเร็จ'
+      };
+    } catch (error: any) {
+      console.error('Error setting current food plan:', error.response?.data || error.message);
+      return {
+        success: false,
+        error: error.response?.data?.message || 'เกิดข้อผิดพลาดในการตั้งแผนปัจจุบัน'
+      };
+    }
+  }
+
+  /**
+   * Get current food plan for user
+   */
+  async getCurrentFoodPlan() {
+    try {
+      const response = await this.axiosInstance.get('/user-food-plans/current');
+
+      return {
+        success: true,
+        data: response.data?.data,
+        message: response.data?.message
+      };
+    } catch (error: any) {
+      console.error('Error getting current food plan:', error.response?.data || error.message);
+      return {
+        success: false,
+        error: error.response?.data?.message || 'เกิดข้อผิดพลาดในการดึงข้อมูลแผนปัจจุบัน'
+      };
+    }
+  }
+
   // ===== ERROR HANDLING =====
   private getErrorInfo(error: any) {
     console.error('API Error:', error);

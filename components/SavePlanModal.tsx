@@ -16,6 +16,8 @@ interface SavePlanModalProps {
   totalDays: number;
   totalMenus: number;
   saveButtonText?: string;
+  setAsCurrentPlan: boolean;
+  setSetAsCurrentPlan: (value: boolean) => void;
 }
 
 export const SavePlanModal: React.FC<SavePlanModalProps> = ({
@@ -31,7 +33,9 @@ export const SavePlanModal: React.FC<SavePlanModalProps> = ({
   onRemoveImage,
   totalDays,
   totalMenus,
-  saveButtonText = 'บันทึกแผน'
+  saveButtonText = 'บันทึกแผน',
+  setAsCurrentPlan,
+  setSetAsCurrentPlan
 }) => {
   return (
     <Modal
@@ -115,6 +119,24 @@ export const SavePlanModal: React.FC<SavePlanModalProps> = ({
               <Text className="text-sm text-blue-700">• จำนวนวัน: {totalDays} วัน</Text>
               <Text className="text-sm text-blue-700">• รวมเมนูอาหาร: {totalMenus} เมนู</Text>
             </View>
+
+            {/* Set as Current Plan Checkbox */}
+            <TouchableOpacity 
+              className="flex-row items-center mb-6 p-3 bg-green-50 rounded-lg border border-green-200"
+              onPress={() => setSetAsCurrentPlan(!setAsCurrentPlan)}
+            >
+              <View className={`w-5 h-5 rounded border-2 mr-3 items-center justify-center ${
+                setAsCurrentPlan ? 'bg-green-500 border-green-500' : 'border-gray-300'
+              }`}>
+                {setAsCurrentPlan && (
+                  <Icon name="checkmark" size={12} color="white" />
+                )}
+              </View>
+              <View className="flex-1">
+                <Text className="text-base font-medium text-green-800">ตั้งเป็นแผนปัจจุบัน</Text>
+                <Text className="text-sm text-green-600">ใช้แผนนี้เป็นแผนอาหารหลักในการทำงานของแอป</Text>
+              </View>
+            </TouchableOpacity>
 
             {/* Action Buttons */}
             <View className="flex-row space-x-3">
