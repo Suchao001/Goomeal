@@ -24,6 +24,7 @@ interface RouteParams {
   hideRecommended?: boolean;
   mealId?: string;
   source?: string;
+  selectedDay?: number;
 }
 
 const SearchFoodForAdd = () => {
@@ -104,9 +105,14 @@ const SearchFoodForAdd = () => {
     // ถ้ามีการส่ง mealId มา แสดงว่ามาจาก MealPlanScreen
     if (params.mealId) {
       console.log('เพิ่มอาหารเข้ามื้อ:', params.mealId, 'อาหาร:', food.name);
-      // TODO: ส่งข้อมูลกลับไปยัง MealPlanScreen
-      // คุณสามารถใช้ navigation.navigate กลับไปพร้อมข้อมูล
-      // หรือใช้ Context/State Management อื่นๆ
+      
+      // ส่งข้อมูลอาหารแบบเต็มกลับไปยัง MealPlanScreen
+      navigation.navigate('MealPlan', {
+        selectedFood: food,
+        mealId: params.mealId,
+        selectedDay: (route.params as any)?.selectedDay || 1
+      });
+      return;
     }
     
     navigation.goBack();
@@ -263,7 +269,7 @@ const SearchFoodForAdd = () => {
                   {searchQuery ? 'ลองค้นหาด้วยคำอื่น' : 'เริ่มต้นด้วยการเพิ่มเมนูใหม่'}
                 </Text>
               </View>
-            )}
+            )}                                                                                                                                                                    
           </>
         )}
 
@@ -273,10 +279,10 @@ const SearchFoodForAdd = () => {
         >
           <View className="flex-row items-center">
             <Icon name="add" size={20} color="white" />
-            <Text className="text-white font-bold ml-2">เพิ่มเมนูใหม่</Text>
+            <Text className="text-white font-bold ml-2">เพิ่มเมนูใหม่</Text>                                                                                                                                                                                                          
           </View>
         </TouchableOpacity>
-      </ScrollView>
+      </ScrollView>                                       
 
       <View className="bg-white px-4 py-4 border-t border-gray-100">
         <TouchableOpacity

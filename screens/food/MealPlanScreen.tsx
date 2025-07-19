@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Modal, TextInput, Alert, FlatList } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Modal, TextInput, Alert, FlatList, Image } from 'react-native';
 import { useTypedNavigation } from '../../hooks/Navigation';
+import { useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { base_url, seconde_url } from '../../config';
+import { useMealPlanStore, type FoodItem } from '../../stores/mealPlanStore';
 
 /**
  * MealPlanScreen Component
@@ -9,6 +12,18 @@ import Icon from 'react-native-vector-icons/Ionicons';
  */
 const MealPlanScreen = () => {
   const navigation = useTypedNavigation();
+  const route = useRoute();
+
+  // Zustand store hooks
+  const {
+    mealPlanData,
+    addFoodToMeal,
+    removeFoodFromMeal,
+    clearMealPlan,
+    getDayMeals,
+    getMealNutrition,
+    getDayNutrition
+  } = useMealPlanStore();
 
   // State for selected date and modals
   const [selectedDay, setSelectedDay] = useState(12); // Default to day 12
@@ -16,17 +31,87 @@ const MealPlanScreen = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [newMealName, setNewMealName] = useState('');
   const [newMealTime, setNewMealTime] = useState('');
-   const [showKebabMenu, setShowKebabMenu] = useState(false);
+  const [showKebabMenu, setShowKebabMenu] = useState(false);
 
   // Generate days 1-30 for date picker
   const days = Array.from({ length: 30 }, (_, i) => i + 1);
 
   // Default meals
   const [meals, setMeals] = useState([
-    { id: 'breakfast', name: 'อาหารมื้อเช้า', icon: 'sunny', time: '07:00', hasFood: false },
-    { id: 'lunch', name: 'อาหารมื้อกลางวัน', icon: 'partly-sunny', time: '12:00', hasFood: false },
-    { id: 'dinner', name: 'อาหารมื้อเย็น', icon: 'moon', time: '18:00', hasFood: false },
+    { id: 'breakfast', name: 'อาหารมื้อเช้า', icon: 'sunny', time: '07:00' },
+    { id: 'lunch', name: 'อาหารมื้อกลางวัน', icon: 'partly-sunny', time: '12:00' },
+    { id: 'dinner', name: 'อาหารมื้อเย็น', icon: 'moon', time: '18:00' },
   ]);
+
+  // Debug: Monitor state changes
+  useEffect(() => {
+    console.log('=== Meal Plan Data Updated (Zustand) ===');
+    console.log('Total days with data:', Object.keys(mealPlanData).length);
+    
+    // Only log detailed data when there's actual data to prevent spam
+    if (Object.keys(mealPlanData).length > 0) {
+      Object.keys(mealPlanData).forEach(day => {
+        const dayMeals = mealPlanData[parseInt(day)];
+        const mealCount = Object.keys(dayMeals).length;
+        const totalItems = Object.values(dayMeals).reduce((total, meal) => total + meal.items.length, 0);
+        console.log(`Day ${day}: ${mealCount} meals, ${totalItems} food items`);
+      });
+    }
+  }, [mealPlanData]);
+
+  // Listen for navigation params (when returning from SearchFoodForAdd)
+  useEffect(() => {
+    const params = route.params as any;
+    if (params?.selectedFood && params?.mealId && params?.selectedDay) {
+      console.log('=== Adding Food to Meal ===');
+      console.log('Food:', params.selectedFood.name);
+      console.log('Meal ID:', params.mealId);
+      console.log('Day:', params.selectedDay);
+      
+      // Add food immediately using Zustand store
+      addFoodToMeal(params.selectedFood, params.mealId, params.selectedDay);
+      
+      // Clear the params to prevent re-execution
+      navigation.setParams({ selectedFood: undefined, mealId: undefined, selectedDay: undefined });
+    }
+  }, [route.params, navigation, addFoodToMeal]);
+
+  // Get image URL based on food source
+  const getImageUrl = (food: FoodItem): string => {
+    if (!food.img) return '';
+    
+    if (food.isUserFood) {
+      return `${base_url}${food.img}`;
+    } else {
+      return `${seconde_url}${food.img}`;
+    }
+  };
+
+  // Save meal plan data (console.log for now)
+  const handleSaveMealPlan = () => {
+    console.log('=== MEAL PLAN DATA ===');
+    console.log(JSON.stringify(mealPlanData, null, 2));
+    Alert.alert('บันทึกข้อมูล', 'ข้อมูลถูกบันทึกแล้ว (ดูใน console)');
+  };
+
+  // Clear all meal plan data
+  const handleClearMealPlan = () => {
+    Alert.alert(
+      'เคลียร์ข้อมูล', 
+      'คุณต้องการเคลียร์ข้อมูลทั้งหมดหรือไม่?',
+      [
+        { text: 'ยกเลิก', style: 'cancel' },
+        { 
+          text: 'เคลียร์', 
+          style: 'destructive', 
+          onPress: () => {
+            clearMealPlan();
+            Alert.alert('เคลียร์ข้อมูล', 'ข้อมูลทั้งหมดถูกลบแล้ว');
+          }
+        }
+      ]
+    );
+  };
 
   // Get current date info (simplified - just day numbers, no real dates)
   const getCurrentDate = () => {
@@ -96,49 +181,115 @@ const MealPlanScreen = () => {
     navigation.navigate('SearchFoodForAdd', {
       hideRecommended: true, // ซ่อนรายการอาหารที่แนะนำ
       mealId: mealId, // ส่ง meal ID ไปด้วย
-      source: 'MealPlan' // ระบุแหล่งที่มา
+      source: 'MealPlan', // ระบุแหล่งที่มา
+      selectedDay: selectedDay // ส่งวันที่เลือกไปด้วย
     }); 
   };
 
-  const renderMealCard = (meal: any) => (
-    <View key={meal.id} className="bg-white rounded-xl p-4 mb-4 shadow-sm">
-      <View className="flex-row items-center justify-between mb-3">
-        <View className="flex-row items-center">
-          <View className="w-12 h-12 bg-yellow-100 rounded-full items-center justify-center mr-3">
-            <Icon name={meal.icon} size={24} color="#eab308" />
+  const renderMealCard = (meal: any) => {
+    const currentDayMeals = getDayMeals(selectedDay);
+    const mealData = currentDayMeals[meal.id];
+    const hasFood = mealData && mealData.items.length > 0;
+    const nutrition = hasFood ? getMealNutrition(selectedDay, meal.id) : { cal: 0, carb: 0, fat: 0, protein: 0 };
+
+    return (
+      <View key={meal.id} className="bg-white rounded-xl p-4 mb-4 shadow-sm">
+        <View className="flex-row items-center justify-between mb-3">
+          <View className="flex-row items-center">
+            <View className="w-12 h-12 bg-yellow-100 rounded-full items-center justify-center mr-3">
+              <Icon name={meal.icon} size={24} color="#eab308" />
+            </View>
+            <View>
+              <Text className="text-lg font-semibold text-gray-800">{meal.name}</Text>
+              <Text className="text-sm text-gray-500">{meal.time}</Text>
+            </View>
           </View>
-          <View>
-            <Text className="text-lg font-semibold text-gray-800">{meal.name}</Text>
-            <Text className="text-sm text-gray-500">{meal.time}</Text>
+          
+          {/* Meal status */}
+          <View className="items-end">
+            <View className={`px-3 py-1 rounded-full ${hasFood ? 'bg-green-100' : 'bg-gray-100'}`}>
+              <Text className={`text-xs font-medium ${hasFood ? 'text-green-600' : 'text-gray-600'}`}>
+                {hasFood ? `${mealData.items.length} เมนู` : 'ยังไม่มีเมนู'}
+              </Text>
+            </View>
+            {hasFood && (
+              <Text className="text-xs text-gray-500 mt-1">{nutrition.cal} kcal</Text>
+            )}
           </View>
         </View>
+
+        {/* Nutrition Summary */}
+        {hasFood && (
+          <View className="bg-gray-50 rounded-lg p-3 mb-3">
+            <View className="flex-row justify-between items-center mb-2">
+              <Text className="text-sm font-medium text-gray-700">สรุปโภชนาการ</Text>
+              <Text className="text-sm font-bold text-blue-600">{nutrition.cal} kcal</Text>
+            </View>
+            <View className="flex-row justify-between">
+              <View className="items-center">
+                <Text className="text-xs text-gray-500">คาร์บ</Text>
+                <Text className="text-sm font-medium text-gray-700">{nutrition.carb}g</Text>
+              </View>
+              <View className="items-center">
+                <Text className="text-xs text-gray-500">โปรตีน</Text>
+                <Text className="text-sm font-medium text-gray-700">{nutrition.protein}g</Text>
+              </View>
+              <View className="items-center">
+                <Text className="text-xs text-gray-500">ไขมัน</Text>
+                <Text className="text-sm font-medium text-gray-700">{nutrition.fat}g</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Food items */}
+        {hasFood && (
+          <View className="bg-white border border-gray-200 rounded-lg p-3 mb-3">
+            <Text className="text-sm font-medium text-gray-700 mb-2">รายการอาหาร</Text>
+            {mealData.items.map((food: FoodItem, index: number) => (
+              <View key={`${food.id}-${index}`} className="flex-row items-center mb-2 last:mb-0">
+                <View className="w-8 h-8 rounded bg-gray-200 items-center justify-center mr-3">
+                  {food.img ? (
+                    <Image
+                      source={{ uri: getImageUrl(food) }}
+                      className="w-8 h-8 rounded"
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <Text className="text-xs">🍽️</Text>
+                  )}
+                </View>
+                <View className="flex-1">
+                  <Text className="text-sm font-medium text-gray-800">{food.name}</Text>
+                  <Text className="text-xs text-gray-500">{food.cal} kcal • {food.carb}g คาร์บ • {food.protein}g โปรตีน</Text>
+                </View>
+                {food.isUserFood && (
+                  <View className="bg-blue-100 rounded px-1 py-0.5 mr-2">
+                    <Text className="text-xs text-blue-600">เมนูของฉัน</Text>
+                  </View>
+                )}
+                <TouchableOpacity
+                  onPress={() => removeFoodFromMeal(food.id, meal.id, selectedDay)}
+                  className="w-6 h-6 rounded-full bg-red-100 items-center justify-center"
+                >
+                  <Icon name="close" size={12} color="#ef4444" />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        )}
         
-        {/* Meal status */}
-        <View className={`px-3 py-1 rounded-full ${meal.hasFood ? 'bg-green-100' : 'bg-gray-100'}`}>
-          <Text className={`text-xs font-medium ${meal.hasFood ? 'text-green-600' : 'text-gray-600'}`}>
-            {meal.hasFood ? 'มีเมนูแล้ว' : 'ยังไม่มีเมนู'}
-          </Text>
-        </View>
+        {/* Add food button */}
+        <TouchableOpacity
+          className="bg-primary rounded-lg py-3 flex-row items-center justify-center mt-3"
+          onPress={() => handleAddFoodToMeal(meal.id)}
+        >
+          <Icon name="add" size={20} color="white" />
+          <Text className="text-white font-medium ml-2">เพิ่มอาหาร</Text>
+        </TouchableOpacity>
       </View>
-
-      {/* Food items or add button */}
-      {meal.hasFood ? (
-        <View className="bg-gray-50 rounded-lg p-3 mb-3">
-          <Text className="text-gray-600">เมนูอาหารที่เลือกไว้จะแสดงที่นี่</Text>
-        </View>
-      ) : null}
-      
-
-      {/* Add food button */}
-      <TouchableOpacity
-        className="bg-primary rounded-lg py-3 flex-row items-center justify-center mt-3"
-        onPress={() => handleAddFoodToMeal(meal.id)}
-      >
-        <Icon name="add" size={20} color="white" />
-        <Text className="text-white font-medium ml-2">เพิ่มอาหาร</Text>
-      </TouchableOpacity>
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
@@ -202,8 +353,29 @@ const MealPlanScreen = () => {
           </TouchableOpacity>
         </View>
         
-        {/* Add Meal Button */}
-        
+        {/* Daily Calories Summary */}
+        {getDayNutrition(selectedDay).cal > 0 && (
+          <View className="bg-blue-50 rounded-lg p-3 mt-2">
+            <View className="flex-row justify-between items-center mb-2">
+              <Text className="text-sm font-medium text-blue-700">สรุปโภชนาการทั้งวัน</Text>
+              <Text className="text-sm font-bold text-blue-600">{getDayNutrition(selectedDay).cal} kcal</Text>
+            </View>
+            <View className="flex-row justify-between">
+              <View className="items-center">
+                <Text className="text-xs text-blue-600">คาร์บ</Text>
+                <Text className="text-sm font-medium text-blue-700">{getDayNutrition(selectedDay).carb}g</Text>
+              </View>
+              <View className="items-center">
+                <Text className="text-xs text-blue-600">โปรตีน</Text>
+                <Text className="text-sm font-medium text-blue-700">{getDayNutrition(selectedDay).protein}g</Text>
+              </View>
+              <View className="items-center">
+                <Text className="text-xs text-blue-600">ไขมัน</Text>
+                <Text className="text-sm font-medium text-blue-700">{getDayNutrition(selectedDay).fat}g</Text>
+              </View>
+            </View>
+          </View>
+        )}
       </View>
 
       {/* Main Content */}
@@ -348,8 +520,7 @@ const MealPlanScreen = () => {
               className="flex-row items-center px-4 py-3 active:bg-gray-50"
               onPress={() => {
                 setShowKebabMenu(false);
-                // Add save data logic here
-                Alert.alert('บันทึกข้อมูล', 'ฟีเจอร์บันทึกข้อมูลกำลังพัฒนา');
+                handleSaveMealPlan();
               }}
             >
               <Icon name="save-outline" size={20} color="#059669" />
@@ -364,17 +535,7 @@ const MealPlanScreen = () => {
               className="flex-row items-center px-4 py-3 active:bg-gray-50"
               onPress={() => {
                 setShowKebabMenu(false);
-                // Add clear data logic here
-                Alert.alert(
-                  'เคลียร์ข้อมูล', 
-                  'คุณต้องการเคลียร์ข้อมูลทั้งหมดหรือไม่?',
-                  [
-                    { text: 'ยกเลิก', style: 'cancel' },
-                    { text: 'เคลียร์', style: 'destructive', onPress: () => {
-                      Alert.alert('เคลียร์ข้อมูล', 'ฟีเจอร์เคลียร์ข้อมูลกำลังพัฒนา');
-                    }}
-                  ]
-                );
+                handleClearMealPlan();
               }}
             >
               <Icon name="trash-outline" size={20} color="#dc2626" />

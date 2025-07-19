@@ -33,7 +33,7 @@ export default function AppStack() {
       <Stack.Screen name="FoodMenu" component={FoodMenuScreen} />
       <Stack.Screen name="SuggestionMenu" component={SuggestionMenuScreen} />
       <Stack.Screen name="MealPlan" component={MealPlanScreen} />
-      <Stack.Screen name="SearchFoodForAdd" component={SearchFoodForAdd} />
+      <Stack.Screen name="SearchFoodForAdd" component={SearchFoodForAdd} /> 
       <Stack.Screen name="AddNewFood" component={AddNewFoodScreen} />
         {/* Menu Sub-screens */}
       <Stack.Screen name="FirstTimeSetup" component={FirstTimeSetupScreen} />

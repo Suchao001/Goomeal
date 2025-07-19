@@ -14,10 +14,16 @@ export type RootStackParamList = {
     PersonalPlan4: undefined;
    
     Home: undefined;
+    MealPlan: {
+        selectedFood?: any;
+        mealId?: string;
+        selectedDay?: number;
+    } | undefined;
     SearchFoodForAdd: {
         hideRecommended?: boolean;
         mealId?: string;
         source?: string;
+        selectedDay?: number;
     } | undefined;
     AddNewFood: undefined;
 

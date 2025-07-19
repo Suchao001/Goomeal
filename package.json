@@ -21,6 +21,7 @@
     "expo": "^52.0.46",
     "expo-app-loading": "^2.1.1",
     "expo-font": "~13.0.4",
+    "expo-image-picker": "~16.0.6",
     "expo-secure-store": "~14.0.1",
     "expo-status-bar": "~2.0.1",
     "jsonwebtoken": "^9.0.2",
@@ -42,7 +43,7 @@
     "react-native-swiper": "^1.6.0",
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.13",
-    "expo-image-picker": "~16.0.6"
+    "zustand": "^5.0.6"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
