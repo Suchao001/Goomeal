@@ -18,6 +18,9 @@ export type RootStackParamList = {
         selectedFood?: any;
         mealId?: string;
         selectedDay?: number;
+        mode?: 'add' | 'edit';
+        foodPlanId?: number;
+        planData?: any;
     } | undefined;
     SearchFoodForAdd: {
         hideRecommended?: boolean;

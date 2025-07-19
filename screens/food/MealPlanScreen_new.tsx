@@ -1,12 +1,11 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert, Image, ActivityIndicator } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert, Image } from 'react-native';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useMealPlanStore, type FoodItem } from '../../stores/mealPlanStore';
 import { useImagePicker } from '../../hooks/useImagePicker';
 import { useMealPlanActions } from '../../hooks/useMealPlanActions';
-import { useMealPlanMode, type MealPlanMode } from '../../hooks/useMealPlanMode';
 import { SavePlanModal } from '../../components/SavePlanModal';
 import { DatePickerModal } from '../../components/DatePickerModal';
 import { AddMealModal } from '../../components/AddMealModal';
@@ -15,24 +14,15 @@ import { getImageUrl, getCurrentDate, generateDays } from '../../utils/mealPlanU
 
 /**
  * MealPlanScreen Component
- * หน้าวางแผนเมนูอาหาร - รองรับทั้งโหมดสร้างใหม่และแก้ไข
- * Modes:
- * - add: สร้างแผนอาหารใหม่
- * - edit: แก้ไขแผนอาหารที่มีอยู่ (ส่ง foodPlanId มาด้วย)
+ * หน้าวางแผนเมนูอาหาร - แสดงการจัดการเมนูอาหารในแต่ละมื้อ
  */
 const MealPlanScreen = () => {
   const navigation = useTypedNavigation();
   const route = useRoute();
 
-  // Get route parameters
-  const routeParams = route.params as any;
-  const mode: MealPlanMode = routeParams?.mode || 'add';
-  const foodPlanId = routeParams?.foodPlanId;
-
   // Custom hooks
   const { showImagePicker } = useImagePicker();
-  const { handleClearMealPlan, canSave } = useMealPlanActions();
-  const mealPlanMode = useMealPlanMode(mode, foodPlanId);
+  const { saveMealPlan, handleClearMealPlan, canSave } = useMealPlanActions();
 
   // Zustand store hooks
   const {
@@ -53,6 +43,11 @@ const MealPlanScreen = () => {
   const [showKebabMenu, setShowKebabMenu] = useState(false);
   const [showSavePlanModal, setShowSavePlanModal] = useState(false);
 
+  // State for SavePlanModal
+  const [planName, setPlanName] = useState('');
+  const [planDescription, setPlanDescription] = useState('');
+  const [selectedPlanImage, setSelectedPlanImage] = useState<string | null>(null);
+
   // Calculate totals for SavePlanModal
   const totalDays = Object.keys(mealPlanData).length;
   const totalMenus = Object.values(mealPlanData).reduce((total, day: any) => 
@@ -66,57 +61,28 @@ const MealPlanScreen = () => {
       'เลือกวิธีการเพิ่มรูปภาพแผนอาหาร'
     );
     if (imageUri) {
-      mealPlanMode.updatePlanMetadata({ planImage: imageUri });
+      setSelectedPlanImage(imageUri);
     }
   };
 
   const handleSavePlan = async () => {
-    // Prepare meal plan data with enhanced nutrition info
-    const enhancedMealPlan = Object.keys(mealPlanData).reduce((acc, dayKey) => {
-      const day = parseInt(dayKey);
-      const dayMeals = mealPlanData[day];
-      let dayTotalCal = 0;
-      
-      const enhancedDayMeals = Object.keys(dayMeals).reduce((mealAcc, mealId) => {
-        const meal = dayMeals[mealId];
-        const mealTotalCal = meal.items.reduce((total, item) => total + item.cal, 0);
-        dayTotalCal += mealTotalCal;
-        
-        mealAcc[mealId] = {
-          ...meal,
-          totalCal: mealTotalCal
-        };
-        
-        return mealAcc;
-      }, {} as any);
-      
-      acc[dayKey] = {
-        totalCal: dayTotalCal,
-        meals: enhancedDayMeals
-      };
-      
-      return acc;
-    }, {} as any);
-
-    const result = await mealPlanMode.savePlan(enhancedMealPlan);
+    const result = await saveMealPlan(planName, planDescription, selectedPlanImage);
     
     if (result.success) {
+      setPlanName('');
+      setPlanDescription('');
+      setSelectedPlanImage(null);
       setShowSavePlanModal(false);
-      Alert.alert(
-        'บันทึกข้อมูลสำเร็จ', 
-        `แผนอาหาร "${mealPlanMode.planName}" ${mealPlanMode.mode === 'edit' ? 'ถูกอัพเดท' : 'ถูกบันทึก'}เรียบร้อยแล้ว\n${result.message || ''}`
-      );
-      
-      // Navigate back if in edit mode
-      if (mealPlanMode.mode === 'edit') {
-        navigation.goBack();
-      }
+      Alert.alert('บันทึกข้อมูลสำเร็จ', result.message);
     } else {
       Alert.alert('เกิดข้อผิดพลาด', result.error);
     }
   };
 
   const handleCloseSavePlanModal = () => {
+    setPlanName('');
+    setPlanDescription('');
+    setSelectedPlanImage(null);
     setShowSavePlanModal(false);
   };
 
@@ -133,7 +99,7 @@ const MealPlanScreen = () => {
         addFoodToMeal(params.selectedFood, params.mealId, params.selectedDay);
         navigation.setParams({ selectedFood: undefined, mealId: undefined, selectedDay: undefined });
       }
-    }, [route.params, navigation]) // Remove addFoodToMeal from dependency
+    }, [route.params, navigation, addFoodToMeal])
   );
 
   // Handlers
@@ -277,31 +243,6 @@ const MealPlanScreen = () => {
     );
   };
 
-  // Show loading screen when loading plan data
-  if (mealPlanMode.isLoading) {
-    return (
-      <SafeAreaView className="flex-1 bg-gray-50">
-        <View className="bg-primary px-4 py-4 mt-6 flex-row items-center justify-between border-b border-gray-100">
-          <TouchableOpacity 
-            className="w-10 h-10 rounded-lg items-center justify-center"
-            onPress={() => navigation.goBack()}
-          >
-            <Icon name="arrow-back" size={24} color="white" />
-          </TouchableOpacity>
-          
-          <Text className="text-xl font-bold text-white font-prompt">{mealPlanMode.getScreenTitle()}</Text>
-          
-          <View className="w-10 h-10" />
-        </View>
-        
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#f59e0b" />
-          <Text className="text-gray-600 mt-4 text-lg">กำลังโหลดข้อมูลแผนอาหาร...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       {/* Header */}
@@ -313,7 +254,7 @@ const MealPlanScreen = () => {
           <Icon name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         
-        <Text className="text-xl font-bold text-white font-prompt">{mealPlanMode.getScreenTitle()}</Text>
+        <Text className="text-xl font-bold text-white font-prompt">วางแผนเมนูอาหาร</Text>
         
         <View className="flex-row items-center">
           <TouchableOpacity
@@ -439,16 +380,15 @@ const MealPlanScreen = () => {
         visible={showSavePlanModal}
         onClose={handleCloseSavePlanModal}
         onSave={handleSavePlan}
-        planName={mealPlanMode.planName}
-        setPlanName={(name: string) => mealPlanMode.updatePlanMetadata({ planName: name })}
-        planDescription={mealPlanMode.planDescription}
-        setPlanDescription={(desc: string) => mealPlanMode.updatePlanMetadata({ planDescription: desc })}
-        selectedPlanImage={mealPlanMode.planImage}
+        planName={planName}
+        setPlanName={setPlanName}
+        planDescription={planDescription}
+        setPlanDescription={setPlanDescription}
+        selectedPlanImage={selectedPlanImage}
         onImagePicker={handlePlanImagePicker}
-        onRemoveImage={() => mealPlanMode.updatePlanMetadata({ planImage: null })}
+        onRemoveImage={() => setSelectedPlanImage(null)}
         totalDays={totalDays}
         totalMenus={totalMenus}
-        saveButtonText={mealPlanMode.getSaveButtonText()}
       />
     </SafeAreaView>
   );
