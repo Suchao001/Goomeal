@@ -86,6 +86,10 @@ export const useMealPlanStore = create<MealPlanStore>()(
       },
 
       addMeal: (meal: Meal, day: number) => {
+        console.log('=== Zustand: Adding Custom Meal ===');
+        console.log('Meal:', meal);
+        console.log('Day:', day);
+        
         set((state) => ({
           ...state,
           customMeals: {
@@ -96,6 +100,12 @@ export const useMealPlanStore = create<MealPlanStore>()(
       },
 
       addFoodToMeal: (food: FoodItem, mealId: string, day: number, mealInfo?: { name: string; time: string }) => {
+        console.log('=== Zustand: Adding Food to Meal ===');
+        console.log('Food:', food.name);
+        console.log('MealId:', mealId);
+        console.log('Day:', day);
+        console.log('MealInfo:', mealInfo);
+
         set((state) => {
           // Get existing items for this meal and day
           const existingItems = state.mealPlanData[day]?.[mealId]?.items || [];
@@ -103,6 +113,7 @@ export const useMealPlanStore = create<MealPlanStore>()(
           // Check if food already exists (avoid duplicates)
           const existingIndex = existingItems.findIndex(item => item.id === food.id);
           if (existingIndex !== -1) {
+            console.log('Food already exists in meal, skipping');
             return state; // Don't change state if food already exists
           }
 
@@ -148,6 +159,10 @@ export const useMealPlanStore = create<MealPlanStore>()(
             },
           };
 
+          console.log('New Zustand state - Total days:', Object.keys(newMealPlanData).length);
+          console.log('Items in meal after add:', newMealPlanData[day][mealId].items.length);
+          console.log('Final meal info used:', finalMealInfo);
+
           return {
             ...state,
             mealPlanData: newMealPlanData,
@@ -156,6 +171,9 @@ export const useMealPlanStore = create<MealPlanStore>()(
       },
 
       removeFoodFromMeal: (foodId: string, mealId: string, day: number) => {
+        console.log('=== Zustand: Removing Food from Meal ===');
+        console.log('FoodId:', foodId, 'MealId:', mealId, 'Day:', day);
+
         set((state) => {
           const existingItems = state.mealPlanData[day]?.[mealId]?.items || [];
           const updatedItems = existingItems.filter(item => item.id !== foodId);
@@ -200,6 +218,7 @@ export const useMealPlanStore = create<MealPlanStore>()(
       },
 
       clearMealPlan: () => {
+        console.log('=== Zustand: Clearing all meal plan data ===');
         set((state) => ({
           ...state,
           mealPlanData: {},
@@ -207,6 +226,7 @@ export const useMealPlanStore = create<MealPlanStore>()(
       },
 
       clearDay: (day: number) => {
+        console.log('=== Zustand: Clearing day', day, '===');
         set((state) => {
           const { [day]: removedDay, ...restDays } = state.mealPlanData;
           return {

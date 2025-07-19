@@ -110,8 +110,12 @@ const SearchFoodForAdd = () => {
   };
 
   const handleAddFood = (food: FoodItem) => {
+    console.log('เพิ่มอาหาร:', food.name);
+    
     // ถ้ามีการส่ง mealId มา แสดงว่ามาจาก MealPlanScreen
     if (params.mealId) {
+      console.log('เพิ่มอาหารเข้ามื้อ:', params.mealId, 'อาหาร:', food.name);
+      
       // ส่งข้อมูลอาหารแบบเต็มกลับไปยัง MealPlanScreen
       navigation.navigate('MealPlan', {
         selectedFood: food,

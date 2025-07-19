@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Modal, TextInput, Alert, FlatList, Image, Platform } from 'react-native';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as FileSystem from 'expo-file-system';
+import * as ImagePicker from 'expo-image-picker';
 import { base_url, seconde_url } from '../../config';
 import { useMealPlanStore, type FoodItem } from '../../stores/mealPlanStore';
+import { ApiClient } from '../../utils/apiClient';
 
 /**
  * MealPlanScreen Component
@@ -14,6 +17,7 @@ import { useMealPlanStore, type FoodItem } from '../../stores/mealPlanStore';
 const MealPlanScreen = () => {
   const navigation = useTypedNavigation();
   const route = useRoute();
+  const apiClient = useMemo(() => new ApiClient(), []);
 
   // Zustand store hooks
   const {
@@ -37,17 +41,40 @@ const MealPlanScreen = () => {
   const [showKebabMenu, setShowKebabMenu] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [selectedTime, setSelectedTime] = useState(new Date());
+  const [showSavePlanModal, setShowSavePlanModal] = useState(false);
+  const [planName, setPlanName] = useState('');
+  const [planDescription, setPlanDescription] = useState('');
+  const [selectedPlanImage, setSelectedPlanImage] = useState<string | null>(null);
 
   // Generate days 1-30 for date picker
   const days = Array.from({ length: 30 }, (_, i) => i + 1);
 
-
+  // Debug: Monitor state changes
+  useEffect(() => {
+    console.log('=== Meal Plan Data Updated (Zustand) ===');
+    console.log('Total days with data:', Object.keys(mealPlanData).length);
+    
+    // Only log detailed data when there's actual data to prevent spam
+    if (Object.keys(mealPlanData).length > 0) {
+      Object.keys(mealPlanData).forEach(day => {
+        const dayMeals = mealPlanData[parseInt(day)];
+        const mealCount = Object.keys(dayMeals).length;
+        const totalItems = Object.values(dayMeals).reduce((total, meal) => total + meal.items.length, 0);
+        console.log(`Day ${day}: ${mealCount} meals, ${totalItems} food items`);
+      });
+    }
+  }, [mealPlanData]);
 
   // Listen for navigation params (when returning from SearchFoodForAdd)
   useFocusEffect(
     React.useCallback(() => {
       const params = route.params as any;
       if (params?.selectedFood && params?.mealId && params?.selectedDay) {
+        console.log('=== Adding Food to Meal ===');
+        console.log('Food:', params.selectedFood.name);
+        console.log('Meal ID:', params.mealId);
+        console.log('Day:', params.selectedDay);
+        
         // Set the selected day to match the params
         setSelectedDay(params.selectedDay);
         
@@ -64,20 +91,192 @@ const MealPlanScreen = () => {
   const getImageUrl = (food: FoodItem): string => {
     if (!food.img) return '';
     
-    // Check if food is from user_food table or isUserFood flag is true
+    // Debug log to check image URL construction
+    console.log('MealPlan - Image URL construction for food:', food.name);
+    console.log('Food source:', food.source);
+    console.log('Food isUserFood:', food.isUserFood);
+    console.log('Food img:', food.img);
+    
     if (food.isUserFood || food.source === 'user_food') {
-      return `${base_url}${food.img}`;
+      const fullUrl = `${base_url}${food.img}`;
+      console.log('MealPlan - User food URL:', fullUrl);
+      return fullUrl;
     } else {
-      // For global foods from 'foods' table, use seconde_url
-      return `${seconde_url}${food.img}`;
+      const fullUrl = `${seconde_url}${food.img}`;
+      console.log('MealPlan - Global food URL:', fullUrl);
+      return fullUrl;
     }
   };
 
-  // Save meal plan data (console.log for now)
-  const handleSaveMealPlan = () => {
-    console.log('=== MEAL PLAN DATA ===');
-    console.log(JSON.stringify(mealPlanData, null, 2));
-    Alert.alert('บันทึกข้อมูล', 'ข้อมูลถูกบันทึกแล้ว (ดูใน console)');
+  // Save meal plan data
+  const handleSaveMealPlan = async () => {
+    // Check if there's any data to save
+    if (Object.keys(mealPlanData).length === 0) {
+      Alert.alert('ไม่มีข้อมูลให้บันทึก', 'กรุณาเพิ่มอาหารลงในแผนก่อนบันทึก');
+      return;
+    }
+
+    // Show save plan modal for naming the plan
+    setShowSavePlanModal(true);
+  };
+
+  // Function to handle closing save plan modal and reset form
+  const handleCloseSavePlanModal = () => {
+    setShowSavePlanModal(false);
+    setPlanName('');
+    setPlanDescription('');
+    setSelectedPlanImage(null);
+  };
+
+  // Image picker functions for plan image
+  const requestPermissions = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        'ต้องการสิทธิ์เข้าถึง',
+        'แอปต้องการสิทธิ์เข้าถึงรูปภาพเพื่อเลือกรูปแผนอาหาร',
+        [
+          { text: 'ยกเลิก', style: 'cancel' },
+          { text: 'ตั้งค่า', onPress: () => ImagePicker.requestMediaLibraryPermissionsAsync() }
+        ]
+      );
+      return false;
+    }
+    return true;
+  };
+
+  const handlePlanImagePicker = async () => {
+    const hasPermission = await requestPermissions();
+    if (!hasPermission) return;
+
+    Alert.alert(
+      'เลือกรูปภาพ',
+      'เลือกวิธีการเพิ่มรูปภาพแผนอาหาร',
+      [
+        { text: 'ยกเลิก', style: 'cancel' },
+        { text: 'ถ่ายรูป', onPress: openPlanCamera },
+        { text: 'เลือกจากอัลบั้ม', onPress: openPlanImageLibrary }
+      ]
+    );
+  };
+
+  const openPlanCamera = async () => {
+    const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
+    if (cameraPermission.status !== 'granted') {
+      Alert.alert('ข้อผิดพลาด', 'ต้องการสิทธิ์เข้าถึงกล้องเพื่อถ่ายรูป');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: 'images',
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setSelectedPlanImage(result.assets[0].uri);
+    }
+  };
+
+  const openPlanImageLibrary = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: 'images',
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setSelectedPlanImage(result.assets[0].uri);
+    }
+  };
+
+  // Confirm save plan with details
+  const handleConfirmSavePlan = async () => {
+    if (!planName.trim()) {
+      Alert.alert('กรุณาใส่ชื่อแผน', 'โปรดระบุชื่อแผนอาหารก่อนบันทึก');
+      return;
+    }
+
+    try {
+      // Create enhanced data with total calories
+      const enhancedMealPlan = Object.keys(mealPlanData).reduce((acc, dayKey) => {
+        const day = parseInt(dayKey);
+        const dayMeals = mealPlanData[day];
+        let dayTotalCal = 0;
+        
+        const enhancedDayMeals = Object.keys(dayMeals).reduce((mealAcc, mealId) => {
+          const meal = dayMeals[mealId];
+          const mealTotalCal = meal.items.reduce((total, item) => total + item.cal, 0);
+          dayTotalCal += mealTotalCal;
+          
+          mealAcc[mealId] = {
+            ...meal,
+            totalCal: mealTotalCal
+          };
+          
+          return mealAcc;
+        }, {} as any);
+        
+        acc[dayKey] = {
+          totalCal: dayTotalCal,
+          meals: enhancedDayMeals
+        };
+        
+        return acc;
+      }, {} as any);
+
+      // Add plan metadata
+      const planData = {
+        planName: planName.trim(),
+        planDescription: planDescription.trim(),
+        planImage: selectedPlanImage,
+        createdAt: new Date().toISOString(),
+        totalDays: Object.keys(enhancedMealPlan).length,
+        data: enhancedMealPlan
+      };
+
+      console.log('=== MEAL PLAN DATA WITH TOTAL CALORIES ===');
+      console.log(JSON.stringify(planData, null, 2));
+
+      // Save to backend via API
+      const result = await apiClient.saveFoodPlan({
+        name: planName.trim(),
+        description: planDescription.trim(),
+        plan: enhancedMealPlan,
+        image: selectedPlanImage || undefined
+      });
+
+      if (result.success) {
+        // Also save to JSON file for backup/debugging
+        const jsonString = JSON.stringify(planData, null, 2);
+        const fileName = `meal-plan-${planName.replace(/[^a-zA-Z0-9]/g, '-')}-${new Date().toISOString().split('T')[0]}.json`;
+        const fileUri = FileSystem.documentDirectory + fileName;
+        
+        try {
+          await FileSystem.writeAsStringAsync(fileUri, jsonString);
+        } catch (fileError) {
+          console.warn('Failed to save backup JSON file:', fileError);
+        }
+        
+        // Close modal and reset form
+        setShowSavePlanModal(false);
+        setPlanName('');
+        setPlanDescription('');
+        setSelectedPlanImage(null);
+        
+        Alert.alert(
+          'บันทึกข้อมูลสำเร็จ', 
+          `แผนอาหาร "${planName}" ถูกบันทึกเรียบร้อยแล้ว\n${result.message || ''}`
+        );
+      } else {
+        Alert.alert('เกิดข้อผิดพลาด', result.error || 'ไม่สามารถบันทึกแผนอาหารได้');
+      }
+    } catch (error) {
+      console.error('Error saving meal plan:', error);
+      Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้');
+    }
   };
 
   // Clear all meal plan data
@@ -365,28 +564,33 @@ const MealPlanScreen = () => {
         </View>
         
         {/* Daily Calories Summary */}
-        {getDayNutrition(selectedDay).cal > 0 && (
-          <View className="bg-blue-50 rounded-lg p-3 mt-2">
-            <View className="flex-row justify-between items-center mb-2">
-              <Text className="text-sm font-medium text-blue-700">สรุปโภชนาการทั้งวัน</Text>
-              <Text className="text-sm font-bold text-blue-600">{getDayNutrition(selectedDay).cal} kcal</Text>
-            </View>
-            <View className="flex-row justify-between">
-              <View className="items-center">
-                <Text className="text-xs text-blue-600">คาร์บ</Text>
-                <Text className="text-sm font-medium text-blue-700">{getDayNutrition(selectedDay).carb}g</Text>
-              </View>
-              <View className="items-center">
-                <Text className="text-xs text-blue-600">โปรตีน</Text>
-                <Text className="text-sm font-medium text-blue-700">{getDayNutrition(selectedDay).protein}g</Text>
-              </View>
-              <View className="items-center">
-                <Text className="text-xs text-blue-600">ไขมัน</Text>
-                <Text className="text-sm font-medium text-blue-700">{getDayNutrition(selectedDay).fat}g</Text>
-              </View>
-            </View>
+        <View className="bg-blue-50 rounded-lg p-4 mt-2">
+          <View className="flex-row justify-between items-center mb-3">
+            <Text className="text-lg font-bold text-blue-800">รวมแคลอรี่วันนี้</Text>
+            <Text className="text-xl font-bold text-blue-600">{getDayNutrition(selectedDay).cal} kcal</Text>
           </View>
-        )}
+          
+          {getDayNutrition(selectedDay).cal > 0 && (
+            <View className="flex-row justify-between bg-white rounded-lg p-3">
+              <View className="items-center flex-1">
+                <Text className="text-xs text-blue-600 font-medium">คาร์โบไฮเดรต</Text>
+                <Text className="text-sm font-bold text-blue-700">{getDayNutrition(selectedDay).carb}g</Text>
+              </View>
+              <View className="items-center flex-1">
+                <Text className="text-xs text-blue-600 font-medium">โปรตีน</Text>
+                <Text className="text-sm font-bold text-blue-700">{getDayNutrition(selectedDay).protein}g</Text>
+              </View>
+              <View className="items-center flex-1">
+                <Text className="text-xs text-blue-600 font-medium">ไขมัน</Text>
+                <Text className="text-sm font-bold text-blue-700">{getDayNutrition(selectedDay).fat}g</Text>
+              </View>
+            </View>
+          )}
+          
+          {getDayNutrition(selectedDay).cal === 0 && (
+            <Text className="text-center text-blue-600 text-sm">ยังไม่มีข้อมูลอาหารสำหรับวันนี้</Text>
+          )}
+        </View>
       </View>
 
       {/* Main Content */}
@@ -575,6 +779,117 @@ const MealPlanScreen = () => {
           </TouchableOpacity>
         </Modal>
       )}
+
+      {/* Save Plan Modal */}
+      <Modal
+        visible={showSavePlanModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={handleCloseSavePlanModal}
+      >
+        <View className="flex-1" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
+          <TouchableOpacity 
+            className="flex-1 justify-end"
+            activeOpacity={1}
+            onPress={handleCloseSavePlanModal}
+          >
+            <View className="bg-white rounded-t-3xl p-6">
+              <View className="flex-row justify-between items-center mb-6">
+                <Text className="text-xl font-bold text-gray-800">บันทึกแผนอาหาร</Text>
+                <TouchableOpacity onPress={handleCloseSavePlanModal}>
+                  <Icon name="close" size={24} color="#6b7280" />
+                </TouchableOpacity>
+              </View>
+              
+              {/* Plan Name Input */}
+              <View className="mb-4">
+                <Text className="text-base font-medium text-gray-700 mb-2">ชื่อแผนอาหาร</Text>
+                <TextInput
+                  className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-gray-800"
+                  placeholder="เช่น แผนลดน้ำหนัก 7 วัน, เมนูเพิ่มกล้าม..."
+                  value={planName}
+                  onChangeText={setPlanName}
+                />
+              </View>
+
+              {/* Plan Image Placeholder */}
+              <View className="mb-4">
+                <Text className="text-base font-medium text-gray-700 mb-2">รูปภาพแผน</Text>
+                <TouchableOpacity 
+                  className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-6 items-center justify-center h-32"
+                  onPress={handlePlanImagePicker}
+                >
+                  {selectedPlanImage ? (
+                    <Image
+                      source={{ uri: selectedPlanImage }}
+                      className="w-full h-full rounded-lg"
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <>
+                      <Icon name="camera-outline" size={32} color="#9ca3af" />
+                      <Text className="text-gray-500 mt-2">แตะเพื่อเพิ่มรูปภาพ</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+                {selectedPlanImage && (
+                  <TouchableOpacity
+                    className="mt-2 self-center"
+                    onPress={() => setSelectedPlanImage(null)}
+                  >
+                    <Text className="text-red-500 text-sm">ลบรูปภาพ</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Plan Description Input */}
+              <View className="mb-6">
+                <Text className="text-base font-medium text-gray-700 mb-2">คำอธิบาย</Text>
+                <TextInput
+                  className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-gray-800"
+                  placeholder="อธิบายเกี่ยวกับแผนอาหารนี้..."
+                  value={planDescription}
+                  onChangeText={setPlanDescription}
+                  multiline
+                  numberOfLines={3}
+                  style={{ textAlignVertical: 'top' }}
+                />
+              </View>
+
+              {/* Summary Info */}
+              <View className="bg-blue-50 rounded-lg p-4 mb-6">
+                <Text className="text-sm font-medium text-blue-800 mb-2">สรุปแผนอาหาร</Text>
+                <Text className="text-sm text-blue-700">
+                  • จำนวนวัน: {Object.keys(mealPlanData).length} วัน
+                </Text>
+                <Text className="text-sm text-blue-700">
+                  • รวมเมนูอาหาร: {Object.values(mealPlanData).reduce((total, day) => 
+                    total + Object.values(day).reduce((mealTotal, meal: any) => mealTotal + meal.items.length, 0), 0
+                  )} เมนู
+                </Text>
+              </View>
+
+              {/* Action Buttons */}
+              <View className="flex-row space-x-3">
+                <TouchableOpacity
+                  className="flex-1 bg-gray-200 rounded-lg py-3 items-center"
+                  onPress={handleCloseSavePlanModal}
+                >
+                  <Text className="text-gray-700 font-medium">ยกเลิก</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  className="flex-1 bg-primary rounded-lg py-3 items-center"
+                  onPress={handleConfirmSavePlan}
+                >
+                  <Text className="text-white font-medium">บันทึกแผน</Text>
+                </TouchableOpacity>
+              </View>
+              
+            </View>
+          </TouchableOpacity>
+        </View>
+      </Modal>
 
       {/* Kebab Menu Modal */}
       <Modal

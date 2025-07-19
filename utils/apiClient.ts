@@ -239,6 +239,159 @@ export class ApiClient {
     }
   }
 
+  // ===== USER FOOD PLANS =====
+  
+  /**
+   * Create a new user food plan
+   */
+  async saveFoodPlan(data: {
+    name: string;
+    description?: string;
+    plan: any;
+    image?: string;
+  }) {
+    try {
+      const formData = new FormData();
+      formData.append('name', data.name);
+      if (data.description) {
+        formData.append('description', data.description);
+      }
+      formData.append('plan', JSON.stringify(data.plan));
+      
+      // Handle image upload
+      if (data.image) {
+        // Extract filename from URI
+        const filename = data.image.split('/').pop() || 'plan-image.jpg';
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : 'image/jpeg';
+        
+        formData.append('image', {
+          uri: data.image,
+          name: filename,
+          type: type,
+        } as any);
+      }
+
+      const response = await this.axiosInstance.post('/user-food-plans', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    } catch (error: any) {
+      console.error('Error saving food plan:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || 'เกิดข้อผิดพลาดในการบันทึกแผนอาหาร'
+      };
+    }
+  }
+
+  /**
+   * Get all user food plans
+   */
+  async getUserFoodPlans() {
+    try {
+      const response = await this.axiosInstance.get('/user-food-plans');
+      return {
+        success: true,
+        data: response.data.data
+      };
+    } catch (error: any) {
+      console.error('Error fetching user food plans:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || 'เกิดข้อผิดพลาดในการดึงข้อมูลแผนอาหาร'
+      };
+    }
+  }
+
+  /**
+   * Get user food plan by ID
+   */
+  async getUserFoodPlanById(id: number) {
+    try {
+      const response = await this.axiosInstance.get(`/user-food-plans/${id}`);
+      return {
+        success: true,
+        data: response.data.data
+      };
+    } catch (error: any) {
+      console.error('Error fetching user food plan:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || 'เกิดข้อผิดพลาดในการดึงข้อมูลแผนอาหาร'
+      };
+    }
+  }
+
+  /**
+   * Update user food plan
+   */
+  async updateUserFoodPlan(id: number, data: {
+    name?: string;
+    description?: string;
+    plan?: any;
+    image?: string;
+  }) {
+    try {
+      const formData = new FormData();
+      if (data.name) formData.append('name', data.name);
+      if (data.description !== undefined) formData.append('description', data.description);
+      if (data.plan) formData.append('plan', JSON.stringify(data.plan));
+      
+      if (data.image) {
+        // Convert image URI to file for upload
+        const response = await fetch(data.image);
+        const blob = await response.blob();
+        formData.append('image', blob as any, 'plan-image.jpg');
+      }
+
+      const response = await this.axiosInstance.put(`/user-food-plans/${id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    } catch (error: any) {
+      console.error('Error updating food plan:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || 'เกิดข้อผิดพลาดในการอัพเดทแผนอาหาร'
+      };
+    }
+  }
+
+  /**
+   * Delete user food plan
+   */
+  async deleteUserFoodPlan(id: number) {
+    try {
+      const response = await this.axiosInstance.delete(`/user-food-plans/${id}`);
+      return {
+        success: true,
+        message: response.data.message
+      };
+    } catch (error: any) {
+      console.error('Error deleting food plan:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || 'เกิดข้อผิดพลาดในการลบแผนอาหาร'
+      };
+    }
+  }
+
+  // ===== ERROR HANDLING =====
   private getErrorInfo(error: any) {
     console.error('API Error:', error);
     
