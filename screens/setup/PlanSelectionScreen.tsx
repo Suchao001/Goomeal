@@ -100,7 +100,7 @@ const PlanSelectionScreen = () => {
       setShowEditModal(true);
     }
   };
-
+                  
   const handleEditMealPlan = () => {
     if (selectedPlan) {
       setShowActionSheet(false);

@@ -45,6 +45,7 @@ interface MealPlanStore {
   mealPlanData: MealPlanData;
   meals: Meal[]; // Default meals
   customMeals: CustomMealsPerDay; // Custom meals per day
+  isEditMode: boolean; // Track if we're in edit mode to prevent unwanted clearing
   
   // Actions
   addFoodToMeal: (food: FoodItem, mealId: string, day: number, mealInfo?: { name: string; time: string }) => void;
@@ -56,6 +57,7 @@ interface MealPlanStore {
   getMealData: (day: number, mealId: string) => MealData | undefined;
   getDayMeals: (day: number) => DayMeals;
   loadMealPlanData: (planData: any) => void; // New function to load meal plan data from API
+  setEditMode: (isEdit: boolean) => void; // New function to set edit mode
   
   // Nutrition calculations
   getMealNutrition: (day: number, mealId: string) => { cal: number; carb: number; fat: number; protein: number };
@@ -79,6 +81,14 @@ export const useMealPlanStore = create<MealPlanStore>()(
         { id: 'dinner', name: 'อาหารมื้อเย็น', icon: 'moon', time: '18:00' },
       ],
       customMeals: {}, // Initialize custom meals
+      isEditMode: false, // Initialize edit mode flag
+
+      setEditMode: (isEdit: boolean) => {
+        set((state) => ({
+          ...state,
+          isEditMode: isEdit
+        }));
+      },
 
       getAllMealsForDay: (day: number) => {
         const state = get();
@@ -220,16 +230,9 @@ export const useMealPlanStore = create<MealPlanStore>()(
 
       loadMealPlanData: (planData: any) => {
         set((state) => {
-          // Clear existing data first
-          const newState = {
-            ...state,
-            mealPlanData: {},
-            customMeals: {}
-          };
-
-          // If no plan data provided, return cleared state
+          // If no plan data provided, return unchanged state
           if (!planData || !planData.plan_data) {
-            return newState;
+            return state;
           }
 
           try {
@@ -248,11 +251,13 @@ export const useMealPlanStore = create<MealPlanStore>()(
               
               if (dayData && dayData.meals) {
                 convertedMealPlanData[dayNumber] = {};
+                convertedCustomMeals[dayNumber] = [];
                 
                 Object.keys(dayData.meals).forEach(mealId => {
                   const mealData = dayData.meals[mealId];
                   
                   if (mealData && mealData.items && Array.isArray(mealData.items)) {
+                    // Add to meal plan data
                     convertedMealPlanData[dayNumber][mealId] = {
                       name: mealData.name || 'มื้ออาหาร',
                       time: mealData.time || '00:00',
@@ -269,13 +274,23 @@ export const useMealPlanStore = create<MealPlanStore>()(
                         isUserFood: Boolean(item.isUserFood || item.is_user_food || false)
                       }))
                     };
+                    
+                    // Add to custom meals if not a default meal
+                    if (!['breakfast', 'lunch', 'dinner', 'snack'].includes(mealId)) {
+                      convertedCustomMeals[dayNumber].push({
+                        id: mealId,
+                        name: mealData.name || 'มื้ออาหาร',
+                        icon: 'restaurant',
+                        time: mealData.time || '00:00'
+                      });
+                    }
                   }
                 });
               }
             });
 
             return {
-              ...newState,
+              ...state,
               mealPlanData: convertedMealPlanData,
               customMeals: convertedCustomMeals
             };
@@ -283,7 +298,7 @@ export const useMealPlanStore = create<MealPlanStore>()(
           } catch (error) {
             console.error('Error loading meal plan data:', error);
             Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลแผนอาหารได้');
-            return newState;
+            return state;
           }
         });
       },

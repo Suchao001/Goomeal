@@ -136,9 +136,28 @@ const MealPlanScreen = () => {
     }, [route.params, navigation]) // Remove addFoodToMeal from dependency
   );
 
+  // Handle loading errors - only show error if we actually tried to load and failed
+  useEffect(() => {
+    if (mode === 'edit' && foodPlanId && !mealPlanMode.isLoading) {
+      // Check if we have attempted to load but failed
+      // We only show error if originalPlanData is explicitly null (indicating a failed load)
+      // If originalPlanData is undefined, we haven't attempted to load yet
+      // If originalPlanData has data, the load was successful
+      if (mealPlanMode.originalPlanData === null) {
+        Alert.alert(
+          'ไม่พบข้อมูลแผนอาหาร',
+          'ไม่สามารถโหลดข้อมูลแผนอาหารได้ กรุณาลองใหม่',
+          [{ text: 'ตกลง', onPress: () => navigation.goBack() }]
+        );
+      }
+    }
+  }, [mode, foodPlanId, mealPlanMode.isLoading, mealPlanMode.originalPlanData, navigation]);
+
+
+
   // Handlers
   const handleSaveMealPlan = () => {
-    if (!canSave) {
+    if (!canSave()) {
       Alert.alert('ไม่มีข้อมูลให้บันทึก', 'กรุณาเพิ่มอาหารลงในแผนก่อนบันทึก');
       return;
     }

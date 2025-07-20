@@ -18,7 +18,7 @@ interface MealPlanModeData {
 
 export const useMealPlanMode = (initialMode: MealPlanMode = 'add', planId?: number) => {
   const apiClient = new ApiClient();
-  const { clearMealPlan, loadMealPlanData } = useMealPlanStore();
+  const { clearMealPlan, loadMealPlanData, setEditMode } = useMealPlanStore();
   const isInitialized = useRef(false);
   
   const [modeData, setModeData] = useState<MealPlanModeData>({
@@ -48,22 +48,22 @@ export const useMealPlanMode = (initialMode: MealPlanMode = 'add', planId?: numb
           originalPlanData: plan,
           planName: plan.name || '',
           planDescription: plan.description || '',
-          planImage: plan.image ? `${plan.image}` : null
+          planImage: plan.img ? plan.img : null
         }));
 
         // Load meal plan data into store
-        if (plan.plan_data) {
-          loadMealPlanData(plan);
+        if (plan.plan) {
+          setEditMode(true); // Set edit mode before loading data
+          loadMealPlanData({ plan_data: plan.plan });
         }
         
         return { success: true };
       } else {
-        setModeData(prev => ({ ...prev, isLoading: false }));
+        setModeData(prev => ({ ...prev, isLoading: false, originalPlanData: null }));
         return { success: false, error: result.error };
       }
     } catch (error) {
-      console.error('Error loading plan data:', error);
-      setModeData(prev => ({ ...prev, isLoading: false }));
+      setModeData(prev => ({ ...prev, isLoading: false, originalPlanData: null }));
       return { success: false, error: 'เกิดข้อผิดพลาดในการโหลดข้อมูล' };
     }
   }, [apiClient, loadMealPlanData]);
@@ -72,12 +72,13 @@ export const useMealPlanMode = (initialMode: MealPlanMode = 'add', planId?: numb
   useEffect(() => {
     if (isInitialized.current) return; // Prevent re-initialization
     
-    if (modeData.mode === 'edit' && planId) {
+    if (initialMode === 'edit' && planId) {
       isInitialized.current = true;
       loadPlanData(planId);
-    } else if (modeData.mode === 'add') {
+    } else if (initialMode === 'add') {
       isInitialized.current = true;
-      // Clear any existing data for new plan
+      // Clear any existing data for new plan and set to add mode
+      setEditMode(false);
       clearMealPlan();
       setModeData(prev => ({
         ...prev,
@@ -87,7 +88,7 @@ export const useMealPlanMode = (initialMode: MealPlanMode = 'add', planId?: numb
         originalPlanData: null
       }));
     }
-  }, [modeData.mode, planId]); // Remove clearMealPlan and loadPlanData from dependencies
+  }, [initialMode, planId, loadPlanData, clearMealPlan]);
 
   // Save plan (create new or update existing)
   const savePlan = useCallback(async (mealPlanData: any) => {

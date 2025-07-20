@@ -127,7 +127,8 @@ export const getUserFoodPlanById = async (req: Request, res: Response): Promise<
 
     const formattedPlan = {
       ...plan,
-      plan: typeof plan.plan === 'string' ? JSON.parse(plan.plan) : plan.plan
+      plan: typeof plan.plan === 'string' ? JSON.parse(plan.plan) : plan.plan,
+      img: plan.img ? `${process.env.BASE_URL || `${req.protocol}://${req.get('host')}`}${plan.img}` : null
     };
 
     res.json({
