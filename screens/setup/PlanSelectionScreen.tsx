@@ -4,6 +4,8 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import { ApiClient } from '../../utils/apiClient';
 import { useFocusEffect } from '@react-navigation/native';
+import { EditPlanModal } from '../../components/EditPlanModal';
+import { useImagePicker } from '../../hooks/useImagePicker';
 
 const PlanSelectionScreen = () => {
   const navigation = useTypedNavigation();
@@ -13,15 +15,20 @@ const PlanSelectionScreen = () => {
   const [currentPlanId, setCurrentPlanId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showActionSheet, setShowActionSheet] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [editImage, setEditImage] = useState<string | null>(null);
+
+  // Image picker hook
+  const { showImagePicker } = useImagePicker();
 
   // Load user food plans and current plan on component mount
   useEffect(() => {
-    console.log('🚀 [PlanSelection] Component mounted, starting initial load...');
     loadUserFoodPlans();
     loadCurrentPlan();
     setIsInitialLoad(false);
@@ -31,57 +38,37 @@ const PlanSelectionScreen = () => {
   useFocusEffect(
     React.useCallback(() => {
       if (!isInitialLoad) {
-        console.log('👁️ [PlanSelection] Screen focused, refreshing...');
         refreshPlans();
       }
     }, [isInitialLoad])
   );
 
-  // Log state changes
-  useEffect(() => {
-    console.log('📊 [PlanSelection] State update - plans:', plans);
-    console.log('📊 [PlanSelection] State update - plans length:', plans.length);
-    console.log('📊 [PlanSelection] State update - currentPlanId:', currentPlanId);
-    console.log('📊 [PlanSelection] State update - isLoading:', isLoading);
-  }, [plans, currentPlanId, isLoading]);
-
   const loadUserFoodPlans = async () => {
-    console.log('🔄 [PlanSelection] Loading user food plans...');
     try {
       const result = await apiClient.getUserFoodPlansList();
-      console.log('📊 [PlanSelection] API result:', result);
       
       if (result.success) {
-        console.log('✅ [PlanSelection] Plans loaded successfully:', result.data);
-        console.log('📝 [PlanSelection] Number of plans:', result.data?.length || 0);
         setPlans(result.data);
       } else {
-        console.error('❌ [PlanSelection] Failed to load plans:', result.error);
         Alert.alert('ข้อผิดพลาด', result.error);
       }
     } catch (error) {
-      console.error('💥 [PlanSelection] Exception loading user food plans:', error);
+      console.error('Error loading user food plans:', error);
       Alert.alert('ข้อผิดพลาด', 'เกิดข้อผิดพลาดในการโหลดรายการแผนอาหาร');
     } finally {
       setIsLoading(false);
-      console.log('🏁 [PlanSelection] Loading finished, isLoading set to false');
     }
   };
 
   const loadCurrentPlan = async () => {
-    console.log('🔄 [PlanSelection] Loading current plan...');
     try {
       const result = await apiClient.knowCurrentFoodPlan();
-      console.log('📊 [PlanSelection] Current plan API result:', result);
       
       if (result.success) {
-        console.log('✅ [PlanSelection] Current plan loaded:', result.data);
         setCurrentPlanId(result.data.food_plan_id);
-      } else {
-        console.log('⚠️ [PlanSelection] No current plan found:', result.error);
       }
     } catch (error) {
-      console.error('💥 [PlanSelection] Exception loading current plan:', error);
+      console.error('Error loading current plan:', error);
       // Don't show error for this as user might not have current plan set
     }
   };
@@ -90,20 +77,102 @@ const PlanSelectionScreen = () => {
     navigation.goBack();
   };
 
-  const handlePlanOptions = (plan: any) => {
+  const handlePlanOptions = (plan: any, event: any) => {
     setSelectedPlan(plan);
+    
+    // Get the position of the button that was pressed
+    const { pageX, pageY } = event.nativeEvent;
+    setDropdownPosition({
+      x: Math.max(10, pageX - 170), // Keep dropdown within screen, 180 is dropdown width
+      y: pageY -15 // Position slightly below the touch point
+    });
+    
     setShowActionSheet(true);
   };
 
   const handleEditPlan = () => {
     if (selectedPlan) {
       setShowActionSheet(false);
-      // Navigate to MealPlan screen in edit mode
+      // Set edit modal data
+      setEditName(selectedPlan.name);
+      setEditDescription(selectedPlan.description || '');
+      setEditImage(selectedPlan.img);
+      setShowEditModal(true);
+    }
+  };
+
+  const handleEditMealPlan = () => {
+    if (selectedPlan) {
+      setShowActionSheet(false);
+      // Navigate to MealPlan screen in edit mode with the selected plan ID
       navigation.navigate('MealPlan', {
         mode: 'edit',
         foodPlanId: selectedPlan.id
       });
     }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editName.trim()) {
+      Alert.alert('ข้อผิดพลาด', 'กรุณาระบุชื่อแผน');
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+     
+
+      const result = await apiClient.updateUserFoodPlan(selectedPlan.id, {
+        name: editName.trim(),
+        description: editDescription.trim(),
+        image: editImage || undefined
+      });
+
+    
+
+      if (result.success) {
+        // Update local state
+        setPlans(plans.map(p => 
+          p.id === selectedPlan.id 
+            ? { ...p, name: editName.trim(), description: editDescription.trim(), img: editImage }
+            : p
+        ));
+        
+        setShowEditModal(false);
+        setSelectedPlan(null);
+        setEditName('');
+        setEditDescription('');
+        setEditImage(null);
+        Alert.alert('สำเร็จ', 'อัพเดทแผนอาหารเรียบร้อยแล้ว');
+      } else {
+        Alert.alert('ข้อผิดพลาด', result.error);
+      }
+    } catch (error) {
+      console.error('Error updating plan:', error);
+      
+      Alert.alert('ข้อผิดพลาด', 'เกิดข้อผิดพลาดในการอัพเดทแผนอาหาร');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleImagePicker = async () => {
+    const result = await showImagePicker('เลือกรูปภาพ', 'เลือกรูปภาพสำหรับแผนอาหาร');
+    if (result) {
+      setEditImage(result);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setEditImage(null);
+  };
+
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
+    setEditName('');
+    setEditDescription('');
+    setEditImage(null);
+    setSelectedPlan(null);
   };
 
   const handleCreateNewPlan = () => {
@@ -114,10 +183,8 @@ const PlanSelectionScreen = () => {
   };
 
   const refreshPlans = async () => {
-    console.log('🔄 [PlanSelection] Refreshing plans...');
     await loadUserFoodPlans();
     await loadCurrentPlan();
-    console.log('✅ [PlanSelection] Refresh completed');
   };
 
   const handleSetAsCurrent = async () => {
@@ -196,19 +263,7 @@ const PlanSelectionScreen = () => {
 
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }}>
         <View className="flex-1 px-4 pt-6">
-          {/* Debug Section - Remove in production */}
-          {__DEV__ && (
-            <View className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 mb-4" style={{ backgroundColor: '#fefce8', borderColor: '#fde047', borderWidth: 1, borderRadius: 12, padding: 12, marginBottom: 16 }}>
-              <Text className="text-xs font-bold text-yellow-800 mb-1" style={{ fontSize: 12, fontWeight: 'bold', color: '#92400e', marginBottom: 4 }}>🐛 Debug Info:</Text>
-              <Text className="text-xs text-yellow-700" style={{ fontSize: 12, color: '#a16207' }}>Loading: {isLoading ? 'true' : 'false'}</Text>
-              <Text className="text-xs text-yellow-700" style={{ fontSize: 12, color: '#a16207' }}>Plans count: {plans?.length || 0}</Text>
-              <Text className="text-xs text-yellow-700" style={{ fontSize: 12, color: '#a16207' }}>Current plan ID: {currentPlanId || 'none'}</Text>
-              <Text className="text-xs text-yellow-700" style={{ fontSize: 12, color: '#a16207' }}>First plan: {plans[0] ? `${plans[0].name} (ID: ${plans[0].id})` : 'none'}</Text>
-              {plans[0] && plans[0].img && (
-                <Text className="text-xs text-yellow-700" style={{ fontSize: 12, color: '#a16207' }}>First img: {plans[0].img}</Text>
-              )}
-            </View>
-          )}
+          
           
           {isLoading ? (
             <View className="flex-1 items-center justify-center py-20">
@@ -221,9 +276,6 @@ const PlanSelectionScreen = () => {
                 <>
                   <View className="gap-4">
                     {plans.map((plan) => {
-                      console.log('🎨 [PlanSelection] Rendering plan:', plan.id, plan.name, 'Current?', currentPlanId === plan.id);
-                      console.log('🖼️ [PlanSelection] Plan image URL:', plan.img);
-                      console.log('📝 [PlanSelection] Plan description:', plan.description);
                       return (
                         <View key={plan.id} className="bg-white rounded-2xl p-4 flex-row items-center justify-between shadow-lg shadow-slate-800" style={{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 16, padding: 16 }}>
                           <View className="flex-row items-center flex-1" style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
@@ -234,19 +286,9 @@ const PlanSelectionScreen = () => {
                                   className="w-full h-full"
                                   style={{ width: '100%', height: '100%' }}
                                   resizeMode="cover"
-                                  onLoad={() => console.log('🖼️ [PlanSelection] Image loaded:', plan.img)}
-                                  onError={(error) => console.error('❌ [PlanSelection] Image error:', plan.img, error.nativeEvent.error)}
                                 />
                               ) : (
                                 <Text className="text-3xl" style={{ fontSize: 32 }}>🍽️</Text>
-                              )}
-                              {/* Debug overlay for image URL */}
-                              {__DEV__ && plan.img && (
-                                <View className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 px-1" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 4 }}>
-                                  <Text className="text-xs text-white" style={{ fontSize: 10, color: 'white' }} numberOfLines={1}>
-                                    {plan.img.split('/').pop()}
-                                  </Text>
-                                </View>
                               )}
                             </View>
                             <View className="flex-1" style={{ flex: 1 }}>
@@ -264,7 +306,7 @@ const PlanSelectionScreen = () => {
                           <TouchableOpacity 
                             className="p-2"
                             style={{ padding: 8 }}
-                            onPress={() => handlePlanOptions(plan)}
+                            onPress={(event) => handlePlanOptions(plan, event)}
                           >
                             <Icon name="ellipsis-vertical" size={20} color="#eab308" />
                           </TouchableOpacity>
@@ -301,50 +343,77 @@ const PlanSelectionScreen = () => {
         </View>
       </ScrollView>
 
-      {/* Action Sheet Modal */}
+      {/* Dropdown Menu */}
       <Modal
         visible={showActionSheet}
         transparent={true}
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setShowActionSheet(false)}
       >
-        <View className="flex-1 bg-black bg-opacity-50 justify-end">
-          <View className="bg-white rounded-t-3xl pb-10">
-            <TouchableOpacity 
-              className="py-4 px-5 border-b border-gray-200"
-              onPress={() => setShowActionSheet(false)}
-            >
-              <Text className="text-base text-gray-800 text-center">ยกเลิก</Text>
-            </TouchableOpacity>
+        <TouchableOpacity 
+          className="flex-1"
+          style={{ flex: 1 }}
+          activeOpacity={1}
+          onPress={() => setShowActionSheet(false)}
+        >
+          <View 
+            className="absolute bg-white rounded-lg shadow-lg border border-gray-200"
+            style={{
+              position: 'absolute',
+              left: dropdownPosition.x,
+              top: dropdownPosition.y,
+              width: 180,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.25,
+              shadowRadius: 3.84,
+              elevation: 5,
+            }}
+          >
             {currentPlanId !== selectedPlan?.id && (
               <TouchableOpacity 
-                className="py-4 px-5 border-b border-gray-200 bg-green-50"
+                className="py-3 px-4 border-b border-gray-200"
                 onPress={handleSetAsCurrent}
               >
-                <Text className="text-base text-green-600 text-center">ตั้งเป็นแผนปัจจุบัน</Text>
+                <Text className="text-sm text-green-600">✓ ตั้งเป็นแผนปัจจุบัน</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity 
-              className="py-4 px-5 border-b border-gray-200"
+              className="py-3 px-4 border-b border-gray-200"
+              onPress={handleEditMealPlan}
+            >
+              <Text className="text-sm text-blue-600">📝 แก้ไขแผนการกิน</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              className="py-3 px-4 border-b border-gray-200"
               onPress={handleEditPlan}
             >
-              <Text className="text-base text-gray-800 text-center">แก้ไขแผน</Text>
+              <Text className="text-sm text-gray-800">✏️ แก้ไขข้อมูลแผน</Text>
             </TouchableOpacity>
             <TouchableOpacity 
-              className="py-4 px-5 border-b border-gray-200 bg-red-50"
+              className="py-3 px-4"
               onPress={handleDelete}
             >
-              <Text className="text-base text-red-500 text-center">ลบ</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              className="py-4 px-5 bg-gray-100 mt-2"
-              onPress={() => setShowActionSheet(false)}
-            >
-              <Text className="text-base text-gray-800 text-center">ยกเลิก</Text>
+              <Text className="text-sm text-red-500">🗑️ ลบ</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </TouchableOpacity>
       </Modal>
+
+      {/* Edit Plan Modal */}
+      <EditPlanModal
+        visible={showEditModal}
+        onClose={handleCloseEditModal}
+        onSave={handleSaveEdit}
+        planName={editName}
+        setPlanName={setEditName}
+        planDescription={editDescription}
+        setPlanDescription={setEditDescription}
+        selectedPlanImage={editImage}
+        onImagePicker={handleImagePicker}
+        onRemoveImage={handleRemoveImage}
+        isLoading={isUpdating}
+      />
     </View>
   );
 };

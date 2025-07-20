@@ -12,7 +12,6 @@ export class ApiClient {
   private axiosInstance: AxiosInstance;
 
   constructor() {
-    console.log('🔧 [ApiClient] Initializing with base URL:', base_url);
     this.axiosInstance = axios.create({
       baseURL: base_url,
     });
@@ -20,18 +19,14 @@ export class ApiClient {
     // Add request interceptor to include token
     this.axiosInstance.interceptors.request.use(
       async (config) => {
-        console.log('📡 [ApiClient] Making request to:', config.url);
         const token = await this.getValidToken();
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
-          console.log('🔑 [ApiClient] Token added to request');
-        } else {
-          console.log('⚠️ [ApiClient] No token available');
         }
         return config;
       },
       (error) => {
-        console.error('💥 [ApiClient] Request interceptor error:', error);
+        console.error('Request interceptor error:', error);
         return Promise.reject(error);
       }
     );
@@ -39,30 +34,24 @@ export class ApiClient {
     // Add response interceptor to handle 401 errors and retry
     this.axiosInstance.interceptors.response.use(
       (response) => {
-        console.log('✅ [ApiClient] Response received:', response.status, response.config.url);
         return response;
       },
       async (error) => {
-        console.error('❌ [ApiClient] Response error:', error.response?.status, error.config?.url);
-        console.error('❌ [ApiClient] Error details:', error.response?.data);
-        
         const originalRequest = error.config;
 
         if (error.response?.status === 401 && !originalRequest._retry) {
-          console.log('🔄 [ApiClient] 401 error, attempting token refresh...');
           originalRequest._retry = true;
 
           try {
             // Try to refresh token
             const newToken = await this.refreshToken();
             if (newToken) {
-              console.log('✅ [ApiClient] Token refreshed, retrying request...');
               // Retry original request with new token
               originalRequest.headers.Authorization = `Bearer ${newToken}`;
               return this.axiosInstance(originalRequest);
             }
           } catch (refreshError) {
-            console.error('💥 [ApiClient] Token refresh failed:', refreshError);
+            console.error('Token refresh failed:', refreshError);
             // Clear all tokens and throw the original error
             await this.clearTokens();
             throw error;
@@ -88,7 +77,6 @@ export class ApiClient {
       
       // If token expires within 30 seconds, refresh it
       if (decodedToken.exp - currentTime < 30) {
-        console.log('🔄 Token will expire soon, refreshing...');
         const newToken = await this.refreshToken();
         return newToken || accessToken;
       }
@@ -108,8 +96,6 @@ export class ApiClient {
         throw new Error('No refresh token available');
       }
 
-      console.log('🔄 Refreshing access token...');
-      
       const response = await axios.post(`${base_url}/user/refresh`, {
         refreshToken: refreshToken
       });
@@ -117,13 +103,12 @@ export class ApiClient {
       if (response.data.success && response.data.accessToken) {
         const newAccessToken = response.data.accessToken;
         await SecureStore.setItemAsync('accessToken', newAccessToken);
-        console.log('✅ Token refreshed successfully');
         return newAccessToken;
       } else {
         throw new Error('Invalid refresh response');
       }
     } catch (error) {
-      console.error('❌ Token refresh failed:', error);
+      console.error('Token refresh failed:', error);
       throw error;
     }
   }
@@ -133,7 +118,6 @@ export class ApiClient {
       await SecureStore.deleteItemAsync('accessToken');
       await SecureStore.deleteItemAsync('refreshToken');
       await SecureStore.deleteItemAsync('user');
-      console.log('🧹 Tokens cleared');
     } catch (error) {
       console.error('Error clearing tokens:', error);
     }
@@ -354,31 +338,59 @@ export class ApiClient {
     image?: string;
   }) {
     try {
-      const formData = new FormData();
-      if (data.name) formData.append('name', data.name);
-      if (data.description !== undefined) formData.append('description', data.description);
-      if (data.plan) formData.append('plan', JSON.stringify(data.plan));
-      
-      if (data.image) {
-        // Convert image URI to file for upload
-        const response = await fetch(data.image);
-        const blob = await response.blob();
-        formData.append('image', blob as any, 'plan-image.jpg');
+      // If there's a new image (file URI), use FormData
+      if (data.image && data.image.startsWith('file://')) {
+        const formData = new FormData();
+        if (data.name) formData.append('name', data.name);
+        if (data.description !== undefined) formData.append('description', data.description);
+        if (data.plan) formData.append('plan', JSON.stringify(data.plan));
+        
+        formData.append('image', {
+          uri: data.image,
+          type: 'image/jpeg',
+          name: 'plan-image.jpg',
+        } as any);
+
+        const response = await this.axiosInstance.put(`/user-food-plans/${id}`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          timeout: 30000,
+        });
+
+        return {
+          success: true,
+          data: response.data.data,
+          message: response.data.message
+        };
+      } else {
+        // If no new image or existing image URL, use regular JSON
+        const requestData: any = {};
+        if (data.name) requestData.name = data.name;
+        if (data.description !== undefined) requestData.description = data.description;
+        if (data.plan) requestData.plan = data.plan;
+
+        const response = await this.axiosInstance.put(`/user-food-plans/${id}`, requestData, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          timeout: 30000,
+        });
+
+        return {
+          success: true,
+          data: response.data.data,
+          message: response.data.message
+        };
       }
-
-      const response = await this.axiosInstance.put(`/user-food-plans/${id}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      return {
-        success: true,
-        data: response.data.data,
-        message: response.data.message
-      };
     } catch (error: any) {
       console.error('Error updating food plan:', error);
+      if (error.code === 'NETWORK_ERROR' || error.message === 'Network Error') {
+        return {
+          success: false,
+          error: 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาตรวจสอบอินเทอร์เน็ต'
+        };
+      }
       return {
         success: false,
         error: error.response?.data?.error || 'เกิดข้อผิดพลาดในการอัพเดทแผนอาหาร'
@@ -453,10 +465,8 @@ export class ApiClient {
    * Get list of user food plans (without plan data)
    */
   async getUserFoodPlansList() {
-    console.log('🔄 [ApiClient] Getting user food plans list...');
     try {
       const response = await this.axiosInstance.get('/user-food-plans');
-      console.log('📊 [ApiClient] getUserFoodPlansList response:', response.data);
 
       return {
         success: true,
@@ -464,8 +474,7 @@ export class ApiClient {
         message: response.data?.message
       };
     } catch (error: any) {
-      console.error('💥 [ApiClient] Error getting user food plans list:', error.response?.data || error.message);
-      console.error('💥 [ApiClient] Full error object:', error);
+      console.error('Error getting user food plans list:', error.response?.data || error.message);
       return {
         success: false,
         error: error.response?.data?.message || 'เกิดข้อผิดพลาดในการดึงรายการแผนอาหาร'
@@ -477,10 +486,8 @@ export class ApiClient {
    * Get active current food plan ID only
    */
   async knowCurrentFoodPlan() {
-    console.log('🔄 [ApiClient] Getting current food plan ID...');
     try {
       const response = await this.axiosInstance.get('/user-food-plans/know-current');
-      console.log('📊 [ApiClient] knowCurrentFoodPlan response:', response.data);
 
       return {
         success: true,
@@ -488,8 +495,7 @@ export class ApiClient {
         message: response.data?.message
       };
     } catch (error: any) {
-      console.error('💥 [ApiClient] Error getting current food plan ID:', error.response?.data || error.message);
-      console.error('💥 [ApiClient] Full error object:', error);
+      console.error('Error getting current food plan ID:', error.response?.data || error.message);
       return {
         success: false,
         error: error.response?.data?.message || 'เกิดข้อผิดพลาดในการดึงข้อมูลแผนปัจจุบัน'

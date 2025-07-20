@@ -123,7 +123,7 @@ const EatingBlogScreen = () => {
     if (imageUrl && imageUrl.trim() !== '') {
       // สร้าง URL รูปภาพจาก BLOG_URL + public/ + item.img
       const fullImageUrl = `${blog_url}/${imageUrl}`;
-      console.log('Article image URL:', fullImageUrl);
+      
       return { uri: fullImageUrl };
     }
     return defaultImage;
