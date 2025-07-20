@@ -6,7 +6,8 @@ import {
   updateUserFoodPlan,
   deleteUserFoodPlan,
   setCurrentFoodPlan,
-  getCurrentFoodPlan
+  getCurrentFoodPlan,
+  knowCurrentFoodPlan
 } from '../controllers/user_food_plan_controller';
 import authenticateToken from '../middlewares/authenticateToken';
 import { uploadUserFoodPlan } from '../middlewares/uploadMiddleware';
@@ -22,6 +23,15 @@ router.post('/', uploadUserFoodPlan.single('image'), createUserFoodPlan);
 // Get all user food plans for the authenticated user
 router.get('/', getUserFoodPlans);
 
+// Set current food plan for user
+router.post('/set-current', setCurrentFoodPlan);
+
+// Get current food plan for user
+router.get('/current', getCurrentFoodPlan);
+
+// Get active current food plan ID only
+router.get('/know-current', knowCurrentFoodPlan);
+
 // Get a specific user food plan by ID
 router.get('/:id', getUserFoodPlanById);
 
@@ -30,11 +40,5 @@ router.put('/:id', uploadUserFoodPlan.single('image'), updateUserFoodPlan);
 
 // Delete a user food plan
 router.delete('/:id', deleteUserFoodPlan);
-
-// Set current food plan for user
-router.post('/set-current', setCurrentFoodPlan);
-
-// Get current food plan for user
-router.get('/current', getCurrentFoodPlan);
 
 export default router;

@@ -59,12 +59,15 @@ export const createUserFoodPlan = async (req: Request, res: Response): Promise<v
   }
 };
 
-// Get user food plans
+
 export const getUserFoodPlans = async (req: Request, res: Response): Promise<void> => {
+  console.log('🔄 [Backend] getUserFoodPlans called');
   try {
     const userId = (req as any).user?.id;
+    console.log('👤 [Backend] User ID:', userId);
     
     if (!userId) {
+      console.log('❌ [Backend] No user ID found');
       res.status(401).json({ 
         success: false, 
         error: 'ไม่พบข้อมูลผู้ใช้' 
@@ -72,22 +75,35 @@ export const getUserFoodPlans = async (req: Request, res: Response): Promise<voi
       return;
     }
 
+    console.log('🔍 [Backend] Querying database for user_food_plans...');
     const plans = await db('user_food_plans')
       .where('user_id', userId)
+      .select('id', 'name', 'description', 'img')
       .orderBy('id', 'desc');
 
-    const formattedPlans = plans.map(row => ({
-      ...row,
-      plan: typeof row.plan === 'string' ? JSON.parse(row.plan) : row.plan
+    console.log('📊 [Backend] Raw plans from database:', plans);
+    console.log('📝 [Backend] Number of plans found:', plans.length);
+
+    // Add base_url to image path
+    const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+    console.log('🌐 [Backend] Base URL:', baseUrl);
+    
+    const formattedPlans = plans.map(plan => ({
+      ...plan,
+      img: plan.img ? `${baseUrl}${plan.img}` : null
     }));
+
+    console.log('✨ [Backend] Formatted plans:', formattedPlans);
 
     res.json({
       success: true,
       data: formattedPlans
     });
 
+    console.log('✅ [Backend] getUserFoodPlans completed successfully');
+
   } catch (error) {
-    console.error('Error fetching user food plans:', error);
+    console.error('💥 [Backend] Error fetching user food plans:', error);
     res.status(500).json({ 
       success: false, 
       error: 'เกิดข้อผิดพลาดในการดึงข้อมูลแผนอาหาร' 
@@ -208,7 +224,7 @@ export const updateUserFoodPlan = async (req: Request, res: Response): Promise<v
   }
 };
 
-// Delete user food plan
+
 export const deleteUserFoodPlan = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -254,7 +270,7 @@ export const deleteUserFoodPlan = async (req: Request, res: Response): Promise<v
   }
 };
 
-// Set current food plan for user
+
 export const setCurrentFoodPlan = async (req: Request, res: Response): Promise<void> => {
   try {
     const { food_plan_id } = req.body;
@@ -331,7 +347,7 @@ export const setCurrentFoodPlan = async (req: Request, res: Response): Promise<v
   }
 };
 
-// Get current food plan for user
+
 export const getCurrentFoodPlan = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = (req as any).user?.id;
@@ -387,6 +403,63 @@ export const getCurrentFoodPlan = async (req: Request, res: Response): Promise<v
 
   } catch (error) {
     console.error('Error getting current food plan:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'เกิดข้อผิดพลาดในการดึงข้อมูลแผนปัจจุบัน' 
+    });
+  }
+};
+
+// Get active current food plan ID only (without join)
+export const knowCurrentFoodPlan = async (req: Request, res: Response): Promise<void> => {
+  console.log('🔄 [Backend] knowCurrentFoodPlan called');
+  try {
+    const userId = (req as any).user?.id;
+    console.log('👤 [Backend] User ID:', userId);
+    
+    if (!userId) {
+      console.log('❌ [Backend] No user ID found for current plan');
+      res.status(401).json({ 
+        success: false, 
+        error: 'ไม่พบข้อมูลผู้ใช้' 
+      });
+      return;
+    }
+
+    console.log('🔍 [Backend] Querying user_food_plan_using table...');
+    // Get only the active food plan ID from user_food_plan_using
+    const currentPlanUsage = await db('user_food_plan_using')
+      .where('user_id', userId)
+      .select('food_plan_id', 'start_date', 'is_repeat')
+      .first();
+
+    console.log('📊 [Backend] Current plan usage result:', currentPlanUsage);
+
+    if (!currentPlanUsage) {
+      console.log('⚠️ [Backend] No current plan found for user');
+      res.status(404).json({ 
+        success: false, 
+        error: 'ไม่พบแผนปัจจุบัน' 
+      });
+      return;
+    }
+
+    console.log('✅ [Backend] Current plan found:', currentPlanUsage);
+
+    res.json({
+      success: true,
+      message: 'ดึงข้อมูลแผนปัจจุบันสำเร็จ',
+      data: {
+        food_plan_id: currentPlanUsage.food_plan_id,
+        start_date: currentPlanUsage.start_date,
+        is_repeat: currentPlanUsage.is_repeat
+      }
+    });
+
+    console.log('✅ [Backend] knowCurrentFoodPlan completed successfully');
+
+  } catch (error) {
+    console.error('💥 [Backend] Error getting current food plan ID:', error);
     res.status(500).json({ 
       success: false, 
       error: 'เกิดข้อผิดพลาดในการดึงข้อมูลแผนปัจจุบัน' 

@@ -12,6 +12,7 @@ export class ApiClient {
   private axiosInstance: AxiosInstance;
 
   constructor() {
+    console.log('🔧 [ApiClient] Initializing with base URL:', base_url);
     this.axiosInstance = axios.create({
       baseURL: base_url,
     });
@@ -19,36 +20,49 @@ export class ApiClient {
     // Add request interceptor to include token
     this.axiosInstance.interceptors.request.use(
       async (config) => {
+        console.log('📡 [ApiClient] Making request to:', config.url);
         const token = await this.getValidToken();
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
+          console.log('🔑 [ApiClient] Token added to request');
+        } else {
+          console.log('⚠️ [ApiClient] No token available');
         }
         return config;
       },
       (error) => {
+        console.error('💥 [ApiClient] Request interceptor error:', error);
         return Promise.reject(error);
       }
     );
 
     // Add response interceptor to handle 401 errors and retry
     this.axiosInstance.interceptors.response.use(
-      (response) => response,
+      (response) => {
+        console.log('✅ [ApiClient] Response received:', response.status, response.config.url);
+        return response;
+      },
       async (error) => {
+        console.error('❌ [ApiClient] Response error:', error.response?.status, error.config?.url);
+        console.error('❌ [ApiClient] Error details:', error.response?.data);
+        
         const originalRequest = error.config;
 
         if (error.response?.status === 401 && !originalRequest._retry) {
+          console.log('🔄 [ApiClient] 401 error, attempting token refresh...');
           originalRequest._retry = true;
 
           try {
             // Try to refresh token
             const newToken = await this.refreshToken();
             if (newToken) {
+              console.log('✅ [ApiClient] Token refreshed, retrying request...');
               // Retry original request with new token
               originalRequest.headers.Authorization = `Bearer ${newToken}`;
               return this.axiosInstance(originalRequest);
             }
           } catch (refreshError) {
-            console.error('Token refresh failed:', refreshError);
+            console.error('💥 [ApiClient] Token refresh failed:', refreshError);
             // Clear all tokens and throw the original error
             await this.clearTokens();
             throw error;
@@ -428,6 +442,54 @@ export class ApiClient {
       };
     } catch (error: any) {
       console.error('Error getting current food plan:', error.response?.data || error.message);
+      return {
+        success: false,
+        error: error.response?.data?.message || 'เกิดข้อผิดพลาดในการดึงข้อมูลแผนปัจจุบัน'
+      };
+    }
+  }
+
+  /**
+   * Get list of user food plans (without plan data)
+   */
+  async getUserFoodPlansList() {
+    console.log('🔄 [ApiClient] Getting user food plans list...');
+    try {
+      const response = await this.axiosInstance.get('/user-food-plans');
+      console.log('📊 [ApiClient] getUserFoodPlansList response:', response.data);
+
+      return {
+        success: true,
+        data: response.data?.data || [],
+        message: response.data?.message
+      };
+    } catch (error: any) {
+      console.error('💥 [ApiClient] Error getting user food plans list:', error.response?.data || error.message);
+      console.error('💥 [ApiClient] Full error object:', error);
+      return {
+        success: false,
+        error: error.response?.data?.message || 'เกิดข้อผิดพลาดในการดึงรายการแผนอาหาร'
+      };
+    }
+  }
+
+  /**
+   * Get active current food plan ID only
+   */
+  async knowCurrentFoodPlan() {
+    console.log('🔄 [ApiClient] Getting current food plan ID...');
+    try {
+      const response = await this.axiosInstance.get('/user-food-plans/know-current');
+      console.log('📊 [ApiClient] knowCurrentFoodPlan response:', response.data);
+
+      return {
+        success: true,
+        data: response.data?.data,
+        message: response.data?.message
+      };
+    } catch (error: any) {
+      console.error('💥 [ApiClient] Error getting current food plan ID:', error.response?.data || error.message);
+      console.error('💥 [ApiClient] Full error object:', error);
       return {
         success: false,
         error: error.response?.data?.message || 'เกิดข้อผิดพลาดในการดึงข้อมูลแผนปัจจุบัน'
