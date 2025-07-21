@@ -14,6 +14,16 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
+
+// Add request logging middleware
+app.use((req, res, next) => {
+  console.log(`📥 [${new Date().toISOString()}] ${req.method} ${req.path}`);
+  if (req.body && Object.keys(req.body).length > 0) {
+    console.log('📄 Request body keys:', Object.keys(req.body));
+  }
+  next();
+});
+
 const port = 3001;
 
 const corsOptions = {

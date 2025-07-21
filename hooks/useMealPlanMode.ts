@@ -41,6 +41,8 @@ export const useMealPlanMode = (initialMode: MealPlanMode = 'add', planId?: numb
       if (result.success && result.data) {
         const plan = result.data;
         
+        console.log('✅ [useMealPlanMode] API response successful:', plan);
+        
         // Set plan metadata
         setModeData(prev => ({
           ...prev,
@@ -51,18 +53,18 @@ export const useMealPlanMode = (initialMode: MealPlanMode = 'add', planId?: numb
           planImage: plan.img ? plan.img : null
         }));
 
-        // Load meal plan data into store
-        if (plan.plan) {
-          setEditMode(true); // Set edit mode before loading data
-          loadMealPlanData({ plan_data: plan.plan });
-        }
+        // Note: ไม่โหลดข้อมูลลง store ที่นี่ เพราะจะโหลดใน MealPlanScreenEdit แทน
+        // เพื่อหลีกเลี่ยงการโหลดซ้ำ
+        console.log('📝 [useMealPlanMode] Plan data ready for screen to load');
         
         return { success: true };
       } else {
+        console.log('❌ [useMealPlanMode] API response failed:', result.error);
         setModeData(prev => ({ ...prev, isLoading: false, originalPlanData: null }));
         return { success: false, error: result.error };
       }
     } catch (error) {
+      console.log('💥 [useMealPlanMode] Exception in loadPlanData:', error);
       setModeData(prev => ({ ...prev, isLoading: false, originalPlanData: null }));
       return { success: false, error: 'เกิดข้อผิดพลาดในการโหลดข้อมูล' };
     }
@@ -94,13 +96,21 @@ export const useMealPlanMode = (initialMode: MealPlanMode = 'add', planId?: numb
   const savePlan = useCallback(async (mealPlanData: any) => {
     const { mode, planId, planName, planDescription, planImage, setAsCurrentPlan } = modeData;
     
+    console.log('💾 [useMealPlanMode] Starting savePlan process...');
+    console.log('🏷️ [useMealPlanMode] Mode:', mode, 'Plan ID:', planId);
+    console.log('📝 [useMealPlanMode] Plan metadata:', { planName, planDescription, planImage, setAsCurrentPlan });
+    console.log('🍽️ [useMealPlanMode] Meal plan data:', mealPlanData);
+    
     if (!planName.trim()) {
+      console.log('❌ [useMealPlanMode] Plan name is empty');
       Alert.alert('ข้อผิดพลาด', 'กรุณาใส่ชื่อแผนอาหาร');
       return { success: false, error: 'กรุณาใส่ชื่อแผนอาหาร' };
     }
 
     try {
       if (mode === 'edit' && planId) {
+        console.log('🔄 [useMealPlanMode] Updating existing plan with ID:', planId);
+        
         // Update existing plan
         const result = await apiClient.updateUserFoodPlan(planId, {
           name: planName.trim(),
@@ -109,13 +119,18 @@ export const useMealPlanMode = (initialMode: MealPlanMode = 'add', planId?: numb
           image: planImage || undefined
         });
         
+        console.log('📤 [useMealPlanMode] Update result:', result);
+        
         // If setAsCurrentPlan is true, update user_food_plan_using
         if (result.success && setAsCurrentPlan) {
+          console.log('⭐ [useMealPlanMode] Setting as current plan...');
           await apiClient.setCurrentFoodPlan(planId);
         }
         
         return result;
       } else {
+        console.log('➕ [useMealPlanMode] Creating new plan');
+        
         // Create new plan
         const result = await apiClient.saveFoodPlan({
           name: planName.trim(),
@@ -124,15 +139,18 @@ export const useMealPlanMode = (initialMode: MealPlanMode = 'add', planId?: numb
           image: planImage || undefined
         });
         
+        console.log('📤 [useMealPlanMode] Create result:', result);
+        
         // If setAsCurrentPlan is true, set as current plan
         if (result.success && setAsCurrentPlan && result.data?.id) {
+          console.log('⭐ [useMealPlanMode] Setting new plan as current plan...');
           await apiClient.setCurrentFoodPlan(result.data.id);
         }
         
         return result;
       }
     } catch (error) {
-      console.error('Error saving plan:', error);
+      console.error('💥 [useMealPlanMode] Error saving plan:', error);
       return { success: false, error: 'เกิดข้อผิดพลาดในการบันทึก' };
     }
   }, [modeData, apiClient]);

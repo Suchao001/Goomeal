@@ -2,7 +2,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { HomeScreen, ChatScreen, CalendarScreen } from './screens/home';
-import { RecordFoodScreen, EatingBlogScreen, FoodMenuScreen, SuggestionMenuScreen, MealPlanScreen, SearchFoodForAdd, AddNewFoodScreen } from './screens/food';
+import { RecordFoodScreen, EatingBlogScreen, FoodMenuScreen, SuggestionMenuScreen, MealPlanScreen,MealPlanEditScreen, SearchFoodForAdd, AddNewFoodScreen } from './screens/food';
 import MenuScreen from './screens/MenuScreen';
 import { ProfileDetailScreen, EditProfileScreen, EditAccountSettingsScreen } from './screens/profile';
 import PersonalSetupScreen from './screens/firstForm/PersonalSetupScreen';
@@ -33,6 +33,7 @@ export default function AppStack() {
       <Stack.Screen name="FoodMenu" component={FoodMenuScreen} />
       <Stack.Screen name="SuggestionMenu" component={SuggestionMenuScreen} />
       <Stack.Screen name="MealPlan" component={MealPlanScreen} />
+      <Stack.Screen name="MealPlanEdit" component={MealPlanEditScreen} />
       <Stack.Screen name="SearchFoodForAdd" component={SearchFoodForAdd} /> 
       <Stack.Screen name="AddNewFood" component={AddNewFoodScreen} />
         {/* Menu Sub-screens */}

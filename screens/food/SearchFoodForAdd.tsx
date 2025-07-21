@@ -110,13 +110,24 @@ const SearchFoodForAdd = () => {
   };
 
   const handleAddFood = (food: FoodItem) => {
-    console.log('เพิ่มอาหาร:', food.name);
-    
-    // ถ้ามีการส่ง mealId มา แสดงว่ามาจาก MealPlanScreen
+  
     if (params.mealId) {
-      console.log('เพิ่มอาหารเข้ามื้อ:', params.mealId, 'อาหาร:', food.name);
+      console.log('🍽️ [SearchFoodForAdd] เพิ่มอาหารเข้ามื้อ:', params.mealId, 'อาหาร:', food.name);
+      console.log('🔄 [SearchFoodForAdd] Source:', params.source);
+      console.log('📅 [SearchFoodForAdd] Selected day:', (route.params as any)?.selectedDay);
       
-      // ส่งข้อมูลอาหารแบบเต็มกลับไปยัง MealPlanScreen
+      if(params.source === 'MealPlanEdit') {
+        console.log('➡️ [SearchFoodForAdd] Navigating back to MealPlanEdit with food');
+        navigation.navigate('MealPlanEdit', {
+          mode: 'edit',
+          selectedFood: food,
+          mealId: params.mealId,
+          selectedDay: (route.params as any)?.selectedDay || 1
+        });
+        return;
+      }
+      
+      console.log('➡️ [SearchFoodForAdd] Navigating back to MealPlan with food');
       navigation.navigate('MealPlan', {
         selectedFood: food,
         mealId: params.mealId,
@@ -125,6 +136,7 @@ const SearchFoodForAdd = () => {
       return;
     }
     
+    console.log('⬅️ [SearchFoodForAdd] Going back without food selection');
     navigation.goBack();
   };
 

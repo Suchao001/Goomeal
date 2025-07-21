@@ -152,7 +152,17 @@ export const updateUserFoodPlan = async (req: Request, res: Response): Promise<v
     const { name, description, plan } = req.body;
     const userId = (req as any).user?.id;
     
+    console.log('🔄 [updateUserFoodPlan] Request received:', {
+      planId: id,
+      userId,
+      name,
+      description: description ? description.substring(0, 50) + '...' : description,
+      plan: plan ? 'plan data provided' : 'no plan data',
+      hasFile: !!req.file
+    });
+    
     if (!userId) {
+      console.log('❌ [updateUserFoodPlan] No user ID found');
       res.status(401).json({ 
         success: false, 
         error: 'ไม่พบข้อมูลผู้ใช้' 
@@ -165,7 +175,10 @@ export const updateUserFoodPlan = async (req: Request, res: Response): Promise<v
       .where({ id, user_id: userId })
       .first();
       
+    console.log('🔍 [updateUserFoodPlan] Existing plan found:', !!existingPlan);
+      
     if (!existingPlan) {
+      console.log('❌ [updateUserFoodPlan] Plan not found for user');
       res.status(404).json({ 
         success: false, 
         error: 'ไม่พบแผนอาหารที่ระบุ' 
@@ -187,9 +200,13 @@ export const updateUserFoodPlan = async (req: Request, res: Response): Promise<v
     if (imagePath !== existingPlan.img) updateData.img = imagePath;
 
     // Update the plan
+    console.log('📝 [updateUserFoodPlan] Update data:', updateData);
+    
     await db('user_food_plans')
       .where({ id, user_id: userId })
       .update(updateData);
+      
+    console.log('✅ [updateUserFoodPlan] Plan updated successfully');
 
     res.json({
       success: true,
@@ -205,7 +222,7 @@ export const updateUserFoodPlan = async (req: Request, res: Response): Promise<v
     });
 
   } catch (error) {
-    console.error('Error updating user food plan:', error);
+    console.error('💥 [updateUserFoodPlan] Error:', error);
     res.status(500).json({ 
       success: false, 
       error: 'เกิดข้อผิดพลาดในการอัพเดทแผนอาหาร' 

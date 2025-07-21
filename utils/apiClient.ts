@@ -399,6 +399,65 @@ export class ApiClient {
   }
 
   /**
+   * Update an existing user food plan
+   */
+  async updateUserFoodPlan(planId: number, data: {
+    name: string;
+    description?: string;
+    plan: any;
+    image?: string;
+  }) {
+    try {
+      console.log('🔄 [apiClient] Updating food plan:', { planId, name: data.name });
+      
+      const formData = new FormData();
+      formData.append('name', data.name);
+      if (data.description) {
+        formData.append('description', data.description);
+      }
+      formData.append('plan', JSON.stringify(data.plan));
+      
+      // Handle image upload
+      if (data.image) {
+        // Extract filename from URI
+        const filename = data.image.split('/').pop() || 'plan-image.jpg';
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : 'image/jpeg';
+        
+        formData.append('image', {
+          uri: data.image,
+          name: filename,
+          type: type,
+        } as any);
+      }
+
+      console.log('📤 [apiClient] Sending PUT request to:', `/user-food-plans/${planId}`);
+      
+      const response = await this.axiosInstance.put(`/user-food-plans/${planId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      console.log('✅ [apiClient] Food plan updated successfully:', response.data);
+
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    } catch (error: any) {
+      console.error('💥 [apiClient] Error updating food plan:', error);
+      console.error('💥 [apiClient] Error response:', error.response?.data);
+      
+      return {
+        success: false,
+        error: error.response?.data?.error || 'เกิดข้อผิดพลาดในการอัพเดทแผนอาหาร'
+      };
+    }
+  }
+
+  /**
    * Delete user food plan
    */
   async deleteUserFoodPlan(id: number) {

@@ -32,6 +32,7 @@ const PlanSelectionScreen = () => {
     loadUserFoodPlans();
     loadCurrentPlan();
     setIsInitialLoad(false);
+    
   }, []);
 
   // Refresh data when screen comes into focus (but not on initial load)
@@ -105,7 +106,7 @@ const PlanSelectionScreen = () => {
     if (selectedPlan) {
       setShowActionSheet(false);
       // Navigate to MealPlan screen in edit mode with the selected plan ID
-      navigation.navigate('MealPlan', {
+      navigation.navigate('MealPlanEdit', {
         mode: 'edit',
         foodPlanId: selectedPlan.id
       });
