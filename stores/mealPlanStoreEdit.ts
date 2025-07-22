@@ -42,6 +42,12 @@ export interface CustomMealsPerDay {
 }
 
 interface MealPlanStoreEdit {
+  planId: number | null;
+  planName: string;
+  planDescription: string;
+  planImage: string | null;
+  setAsCurrentPlan: boolean;
+
   mealPlanData: MealPlanData;
   meals: Meal[]; // Default meals
   customMeals: CustomMealsPerDay; // Custom meals per day
@@ -49,7 +55,7 @@ interface MealPlanStoreEdit {
   
   // เพิ่ม state สำหรับเก็บข้อมูลเดิมจาก API
   originalPlanData: any | null; // ข้อมูลเดิมจาก API
-  planId: number | null; // ID ของ plan ที่กำลัง edit
+
   
   // Actions
   addFoodToMeal: (food: FoodItem, mealId: string, day: number, mealInfo?: { name: string; time: string }) => void;
@@ -64,6 +70,7 @@ interface MealPlanStoreEdit {
   loadMealPlanData: (planData: any) => void; // New function to load meal plan data from API
   setEditMode: (isEdit: boolean) => void; // New function to set edit mode
   setPlanId: (id: number | null) => void; // เซ็ต plan ID
+  setPlanMetadata: (data: any) => void; // Action ใหม่สำหรับอัปเดตข้อมูลเมตาของแผน
   
   // Nutrition calculations
   getMealNutrition: (day: number, mealId: string) => { cal: number; carb: number; fat: number; protein: number };
@@ -77,7 +84,15 @@ const defaultMealInfo = {
   'dinner': { name: 'อาหารมื้อเย็น', time: '18:00' }
 };
 
-export const useMealPlanStore = create<MealPlanStoreEdit>()((set, get) => ({
+// Rename store hook for edit mode
+export const useMealPlanStoreEdit = create<MealPlanStoreEdit>()((set, get) => ({
+
+  planId: null,
+  planName: '',
+  planDescription: '',
+  planImage: null,
+  setAsCurrentPlan: true,
+
   mealPlanData: {},
   meals: [
     { id: 'breakfast', name: 'อาหารมื้อเช้า', icon: 'sunny', time: '07:00' },
@@ -87,8 +102,7 @@ export const useMealPlanStore = create<MealPlanStoreEdit>()((set, get) => ({
   customMeals: {}, // Initialize custom meals
   isEditMode: false, // Initialize edit mode flag
   originalPlanData: null, // เก็บข้อมูลเดิมจาก API
-  planId: null, // เก็บ plan ID
-
+  
       setEditMode: (isEdit: boolean) => {
         set((state) => ({
           ...state,
@@ -102,6 +116,8 @@ export const useMealPlanStore = create<MealPlanStoreEdit>()((set, get) => ({
           planId: id
         }));
       },
+      
+      setPlanMetadata: (data) => set((state) => ({ ...state, ...data })),
 
       getAllMealsForDay: (day: number) => {
         const state = get();
@@ -256,14 +272,17 @@ export const useMealPlanStore = create<MealPlanStoreEdit>()((set, get) => ({
       },
 
       clearEditSession: () => {
-        set((state) => ({
-          ...state,
+        set({
           mealPlanData: {},
           customMeals: {},
           isEditMode: false,
           originalPlanData: null,
-          planId: null
-        }));
+          planId: null,
+          planName: '',
+          planDescription: '',
+          planImage: null,
+          setAsCurrentPlan: true,
+        });
       },
 
       clearDay: (day: number) => {
@@ -278,120 +297,26 @@ export const useMealPlanStore = create<MealPlanStoreEdit>()((set, get) => ({
 
       loadMealPlanData: (planData: any) => {
         console.log('🔥 [mealPlanStoreEdit] loadMealPlanData called with:', planData);
-        
-        set((state) => {
-          // เก็บข้อมูลเดิมเอาไว้
-          const newState = {
-            ...state,
-            originalPlanData: planData
-          };
-
-          console.log('📝 [mealPlanStoreEdit] Current state before loading:', {
-            mealPlanData: state.mealPlanData,
-            customMeals: state.customMeals,
-            isEditMode: state.isEditMode
-          });
-
-          // If no plan data provided, return unchanged state
-          if (!planData || !planData.plan_data) {
-            console.log('❌ [mealPlanStoreEdit] No plan data or plan_data provided');
-            return newState;
-          }
-
-          try {
-            console.log('🔍 [mealPlanStoreEdit] Raw plan_data:', planData.plan_data);
-            
-            // Parse plan data if it's a string
-            const parsedPlanData = typeof planData.plan_data === 'string' 
-              ? JSON.parse(planData.plan_data) 
-              : planData.plan_data;
-
-            console.log('📊 [mealPlanStoreEdit] Parsed plan data:', parsedPlanData);
-
-            // Convert API data format to our internal format
-            const convertedMealPlanData: MealPlanData = {};
-            const convertedCustomMeals: CustomMealsPerDay = {};
-
-            Object.keys(parsedPlanData).forEach(dayKey => {
-              const dayNumber = parseInt(dayKey);
-              const dayData = parsedPlanData[dayKey];
-              
-              console.log(`📅 [mealPlanStoreEdit] Processing day ${dayNumber}:`, dayData);
-              
-              if (dayData && dayData.meals) {
-                convertedMealPlanData[dayNumber] = {};
-                convertedCustomMeals[dayNumber] = [];
-                
-                Object.keys(dayData.meals).forEach(mealId => {
-                  const mealData = dayData.meals[mealId];
-                  
-                  console.log(`🍽️ [mealPlanStoreEdit] Processing meal ${mealId}:`, mealData);
-                  
-                  if (mealData && mealData.items && Array.isArray(mealData.items)) {
-                    // Add to meal plan data
-                    convertedMealPlanData[dayNumber][mealId] = {
-                      name: mealData.name || 'มื้ออาหาร',
-                      time: mealData.time || '00:00',
-                      items: mealData.items.map((item: any) => {
-                        const convertedItem = {
-                          id: item.id || item.food_id || `${Date.now()}_${Math.random()}`,
-                          name: item.name || item.food_name || 'Unknown Food',
-                          cal: parseFloat(item.cal || item.calories || 0),
-                          carb: parseFloat(item.carb || item.carbohydrates || 0),
-                          fat: parseFloat(item.fat || item.fats || 0),
-                          protein: parseFloat(item.protein || item.proteins || 0),
-                          img: item.img || item.image || null,
-                          ingredient: item.ingredient || item.ingredients || '',
-                          source: item.source || (item.isUserFood ? 'user_food' : 'foods'),
-                          isUserFood: Boolean(item.isUserFood || item.is_user_food || false)
-                        };
-                        console.log(`🥘 [mealPlanStoreEdit] Converted food item:`, convertedItem);
-                        return convertedItem;
-                      })
-                    };
-                    
-                    console.log(`✅ [mealPlanStoreEdit] Added meal ${mealId} to day ${dayNumber} with ${mealData.items.length} items`);
-                    
-                    // Add to custom meals if not a default meal
-                    if (!['breakfast', 'lunch', 'dinner', 'snack'].includes(mealId)) {
-                      convertedCustomMeals[dayNumber].push({
-                        id: mealId,
-                        name: mealData.name || 'มื้ออาหาร',
-                        icon: 'restaurant',
-                        time: mealData.time || '00:00'
-                      });
-                      console.log(`🆕 [mealPlanStoreEdit] Added custom meal ${mealId} to day ${dayNumber}`);
-                    }
-                  } else {
-                    console.log(`⚠️ [mealPlanStoreEdit] Skipping meal ${mealId} - no items or invalid data`);
-                  }
-                });
-              } else {
-                console.log(`⚠️ [mealPlanStoreEdit] Skipping day ${dayNumber} - no meals data`);
-              }
-            });
-
-            console.log('🎯 [mealPlanStoreEdit] Final converted data:', {
-              convertedMealPlanData,
-              convertedCustomMeals
-            });
-
-            const finalState = {
-              ...newState,
-              mealPlanData: convertedMealPlanData,
-              customMeals: convertedCustomMeals
-            };
-
-            console.log('🏁 [mealPlanStoreEdit] Final state after loading:', finalState);
-
-            return finalState;
-
-          } catch (error) {
-            console.error('💥 [mealPlanStoreEdit] Error loading meal plan data:', error);
-            Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลแผนอาหารได้');
-            return newState;
-          }
+        if (!planData || !planData.plan) {
+          console.log('❌ [mealPlanStoreEdit] No full plan object provided');
+          return;
+        }
+        const fullPlan = planData.plan;
+        const planContents = typeof fullPlan.plan === 'string'
+          ? JSON.parse(fullPlan.plan)
+          : fullPlan.plan;
+        const { convertedMealPlanData, convertedCustomMeals } = parsePlanContents(planContents);
+        set({
+          originalPlanData: fullPlan,
+          planId: fullPlan.id,
+          planName: fullPlan.name || '',
+          planDescription: fullPlan.description || '',
+          planImage: fullPlan.img || null,
+          mealPlanData: convertedMealPlanData,
+          customMeals: convertedCustomMeals,
+          isEditMode: true,
         });
+        console.log('🏁 [mealPlanStoreEdit] Final state after loading:', get());
       },
 
       getMealData: (day: number, mealId: string) => {
@@ -442,5 +367,74 @@ export const useMealPlanStore = create<MealPlanStoreEdit>()((set, get) => ({
       },
     }));
 
-// ปิดการ persist ชั่วคราวเพื่อแก้ปัญหา storage warning
-// จะนำกลับมาใช้หลังจากแก้ปัญหาแล้ว
+// Helper function for parsing plan contents
+function parsePlanContents(parsedPlanData: any) {
+  const convertedMealPlanData: MealPlanData = {};
+  const convertedCustomMeals: CustomMealsPerDay = {};
+
+  Object.keys(parsedPlanData).forEach(dayKey => {
+    const dayNumber = parseInt(dayKey);
+    const dayData = parsedPlanData[dayKey];
+    
+    console.log(`📅 [mealPlanStoreEdit] Processing day ${dayNumber}:`, dayData);
+    
+    if (dayData && dayData.meals) {
+      convertedMealPlanData[dayNumber] = {};
+      convertedCustomMeals[dayNumber] = [];
+      
+      Object.keys(dayData.meals).forEach(mealId => {
+        const mealData = dayData.meals[mealId];
+        
+        console.log(`🍽️ [mealPlanStoreEdit] Processing meal ${mealId}:`, mealData);
+        
+        if (mealData && mealData.items && Array.isArray(mealData.items)) {
+          // Add to meal plan data
+          convertedMealPlanData[dayNumber][mealId] = {
+            name: mealData.name || 'มื้ออาหาร',
+            time: mealData.time || '00:00',
+            items: mealData.items.map((item: any) => {
+              const convertedItem = {
+                id: item.id || item.food_id || `${Date.now()}_${Math.random()}`,
+                name: item.name || item.food_name || 'Unknown Food',
+                cal: parseFloat(item.cal || item.calories || 0),
+                carb: parseFloat(item.carb || item.carbohydrates || 0),
+                fat: parseFloat(item.fat || item.fats || 0),
+                protein: parseFloat(item.protein || item.proteins || 0),
+                img: item.img || item.image || null,
+                ingredient: item.ingredient || item.ingredients || '',
+                source: item.source || (item.isUserFood ? 'user_food' : 'foods'),
+                isUserFood: Boolean(item.isUserFood || item.is_user_food || false)
+              };
+              console.log(`🥘 [mealPlanStoreEdit] Converted food item:`, convertedItem);
+              return convertedItem;
+            })
+          };
+          
+          console.log(`✅ [mealPlanStoreEdit] Added meal ${mealId} to day ${dayNumber} with ${mealData.items.length} items`);
+          
+          // Add to custom meals if not a default meal
+          if (!['breakfast', 'lunch', 'dinner', 'snack'].includes(mealId)) {
+            convertedCustomMeals[dayNumber].push({
+              id: mealId,
+              name: mealData.name || 'มื้ออาหาร',
+              icon: 'restaurant',
+              time: mealData.time || '00:00'
+            });
+            console.log(`🆕 [mealPlanStoreEdit] Added custom meal ${mealId} to day ${dayNumber}`);
+          }
+        } else {
+          console.log(`⚠️ [mealPlanStoreEdit] Skipping meal ${mealId} - no items or invalid data`);
+        }
+      });
+    } else {
+      console.log(`⚠️ [mealPlanStoreEdit] Skipping day ${dayNumber} - no meals data`);
+    }
+  });
+
+  console.log('🎯 [mealPlanStoreEdit] Final converted data:', {
+    convertedMealPlanData,
+    convertedCustomMeals
+  });
+
+  return { convertedMealPlanData, convertedCustomMeals };
+}

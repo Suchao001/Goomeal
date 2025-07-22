@@ -405,21 +405,21 @@ export class ApiClient {
     name: string;
     description?: string;
     plan: any;
-    image?: string;
+    image?: string; // Can be a new file URI or an existing relative path
   }) {
     try {
-      console.log('🔄 [apiClient] Updating food plan:', { planId, name: data.name });
-      
-      const formData = new FormData();
-      formData.append('name', data.name);
-      if (data.description) {
-        formData.append('description', data.description);
-      }
-      formData.append('plan', JSON.stringify(data.plan));
-      
-      // Handle image upload
-      if (data.image) {
-        // Extract filename from URI
+      console.log('🔄 [apiClient] Updating food plan:', { planId, name: data.name, image: data.image });
+
+      // If the image is a new file to upload (e.g., starts with 'file://')
+      if (data.image && data.image.startsWith('file://')) {
+        console.log('📤 [apiClient] Updating with new image using FormData.');
+        const formData = new FormData();
+        formData.append('name', data.name);
+        if (data.description) {
+          formData.append('description', data.description);
+        }
+        formData.append('plan', JSON.stringify(data.plan));
+
         const filename = data.image.split('/').pop() || 'plan-image.jpg';
         const match = /\.(\w+)$/.exec(filename);
         const type = match ? `image/${match[1]}` : 'image/jpeg';
@@ -429,26 +429,48 @@ export class ApiClient {
           name: filename,
           type: type,
         } as any);
+
+        const response = await this.axiosInstance.put(`/user-food-plans/${planId}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+
+        return {
+          success: true,
+          data: response.data.data,
+          message: response.data.message
+        };
+
+      } else {
+        // If no new image, or if the image is an existing URL/path, use application/json
+        console.log('📤 [apiClient] Updating with JSON (no new image).');
+        const payload: any = {
+          name: data.name,
+          description: data.description,
+          plan: data.plan,
+          // The backend should handle the image path. If data.image is a full URL,
+          // we need to strip the base URL as requested by the user.
+          image: data.image ? data.image.replace(/^(http?:\/\/[^\/]+)/, '') : undefined
+        };
+        
+        console.log('📤 [apiClient] Sending JSON payload:', JSON.stringify(payload, null, 2));
+
+        const response = await this.axiosInstance.put(`/user-food-plans/${planId}`, payload, {
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        return {
+          success: true,
+          data: response.data.data,
+          message: response.data.message
+        };
       }
-
-      console.log('📤 [apiClient] Sending PUT request to:', `/user-food-plans/${planId}`);
-      
-      const response = await this.axiosInstance.put(`/user-food-plans/${planId}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      console.log('✅ [apiClient] Food plan updated successfully:', response.data);
-
-      return {
-        success: true,
-        data: response.data.data,
-        message: response.data.message
-      };
     } catch (error: any) {
       console.error('💥 [apiClient] Error updating food plan:', error);
-      console.error('💥 [apiClient] Error response:', error.response?.data);
+      if (error.response) {
+        console.error('💥 [apiClient] Error response data:', error.response.data);
+      } else {
+        console.error('💥 [apiClient] Error has no response object, likely a network issue.');
+      }
       
       return {
         success: false,

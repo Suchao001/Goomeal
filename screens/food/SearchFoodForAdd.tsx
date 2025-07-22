@@ -90,21 +90,16 @@ const SearchFoodForAdd = () => {
   const getImageUrl = (food: FoodItem): string => {
     if (!food.img) return '';
     
-    // Debug log to check image URL construction
-    console.log('Image URL construction for food:', food.name);
-    console.log('Food source:', food.source);
-    console.log('Food isUserFood:', food.isUserFood);
-    console.log('Food img:', food.img);
-    
+
     if (food.isUserFood || food.source === 'user_food') {
       // User food images: base_url + img (img already contains /images/user_foods/)
       const fullUrl = `${base_url}${food.img}`;
-      console.log('User food URL:', fullUrl);
+     
       return fullUrl;
     } else {
       // Global food images: seconde_url + img
       const fullUrl = `${seconde_url}${food.img}`;
-      console.log('Global food URL:', fullUrl);
+   
       return fullUrl;
     }
   };
@@ -112,22 +107,23 @@ const SearchFoodForAdd = () => {
   const handleAddFood = (food: FoodItem) => {
   
     if (params.mealId) {
-      console.log('🍽️ [SearchFoodForAdd] เพิ่มอาหารเข้ามื้อ:', params.mealId, 'อาหาร:', food.name);
-      console.log('🔄 [SearchFoodForAdd] Source:', params.source);
-      console.log('📅 [SearchFoodForAdd] Selected day:', (route.params as any)?.selectedDay);
-      
+  
       if(params.source === 'MealPlanEdit') {
-        console.log('➡️ [SearchFoodForAdd] Navigating back to MealPlanEdit with food');
-        navigation.navigate('MealPlanEdit', {
-          mode: 'edit',
-          selectedFood: food,
-          mealId: params.mealId,
-          selectedDay: (route.params as any)?.selectedDay || 1
+        // [REFACTOR] เปลี่ยนวิธีส่งข้อมูลกลับไปที่ MealPlanEdit
+        // ใช้ navigate + merge: true เพื่อให้ state ของหน้าก่อนหน้าไม่หาย
+        navigation.navigate({
+          name: 'MealPlanEdit',
+          params: {
+            selectedFood: food,
+            mealId: params.mealId,
+            selectedDay: (route.params as any)?.selectedDay || 1,
+          },
+          merge: true, // สำคัญมาก: จะรวม params แทนที่จะเขียนทับ
         });
         return;
       }
       
-      console.log('➡️ [SearchFoodForAdd] Navigating back to MealPlan with food');
+     
       navigation.navigate('MealPlan', {
         selectedFood: food,
         mealId: params.mealId,
@@ -136,7 +132,7 @@ const SearchFoodForAdd = () => {
       return;
     }
     
-    console.log('⬅️ [SearchFoodForAdd] Going back without food selection');
+ 
     navigation.goBack();
   };
 

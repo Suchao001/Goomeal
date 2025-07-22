@@ -1,13 +1,10 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert, Image, ActivityIndicator } from 'react-native';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useMealPlanStore as useMealPlanStoreEdit, type FoodItem } from '../../stores/mealPlanStoreEdit';
-import { useImagePicker } from '../../hooks/useImagePicker';
-import { useMealPlanActions } from '../../hooks/useMealPlanActions';
-import { useMealPlanMode, type MealPlanMode } from '../../hooks/useMealPlanMode';
-import { SavePlanModal } from '../../components/SavePlanModal';
+import { useMealPlanStoreEdit, type FoodItem } from '../../stores/mealPlanStoreEdit';
+import { useMealPlanMode } from '../../hooks/useMealPlanEdit';
 import { DatePickerModal } from '../../components/DatePickerModal';
 import { AddMealModal } from '../../components/AddMealModal';
 import { KebabMenuModal } from '../../components/KebabMenuModal';
@@ -17,20 +14,27 @@ import { getImageUrl, getCurrentDate, generateDays } from '../../utils/mealPlanU
 const MealPlanEditScreen = () => {
   const navigation = useTypedNavigation();
   const route = useRoute();
+  
+  // Get foodPlanId from route params and keep it constant
+  const [foodPlanId] = useState(() => (route.params as any)?.foodPlanId);
 
-  // Get route parameters
-  const routeParams = route.params as any;
-  const mode: MealPlanMode = routeParams?.mode || 'add';
-  const foodPlanId = routeParams?.foodPlanId;
+  // Use the refactored hook - edit-only mode
+  const { 
+    isLoading, 
+    isSaving,
+    initializeEditMode,
+    savePlan, 
+    clearEditSession: clearEditSessionFromHook
+  } = useMealPlanMode();
 
-  // Custom hooks
-  const { showImagePicker } = useImagePicker();
-  const { handleClearMealPlan } = useMealPlanActions(); // เอาแค่ handleClearMealPlan ออกมา
-  const mealPlanMode = useMealPlanMode(mode, foodPlanId);
-
-  // Zustand store hooks
+  // Get all state and actions from the edit store
   const {
+    planId,
     mealPlanData,
+    planName,
+    planDescription,
+    planImage,
+    setAsCurrentPlan,
     addMeal,
     addFoodToMeal,
     removeFoodFromMeal,
@@ -38,130 +42,66 @@ const MealPlanEditScreen = () => {
     getDayMeals,
     getMealNutrition,
     getDayNutrition,
-    setEditMode,
+    setPlanMetadata,
     loadMealPlanData,
-    setPlanId,
-    clearEditSession
+    clearEditSession,
   } = useMealPlanStoreEdit();
 
-  // Local canSave function ที่ใช้ข้อมูลจาก edit store
-  const canSaveResult = useMemo(() => {
-    const result = Object.keys(mealPlanData).length > 0;
-    console.log('🔍 [MealPlanScreenEdit] canSave recalculated:', {
+  // Local state for UI
+  const [selectedDay, setSelectedDay] = useState(1);
+  const [showAddMealModal, setShowAddMealModal] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showKebabMenu, setShowKebabMenu] = useState(false);
+
+  // Generate days and current date
+  const days = useMemo(() => generateDays(), []);
+  const currentDate = useMemo(() => getCurrentDate(selectedDay), [selectedDay]);
+
+  // Check if we can save (has meal plan data and planId)
+  const canSave = useMemo(() => {
+    const hasData = Object.keys(mealPlanData).length > 0;
+    const hasPlanId = Boolean(planId);
+    const result = hasData && hasPlanId;
+    console.log('🔍 [MealPlanScreenEdit] canSave:', {
+      hasData,
+      hasPlanId,
+      planId,
       mealPlanDataKeys: Object.keys(mealPlanData),
       totalDays: Object.keys(mealPlanData).length,
       canSave: result
     });
     return result;
-  }, [mealPlanData]);
+  }, [mealPlanData, planId]);
 
-  // State for selected date and modals
-  const [selectedDay, setSelectedDay] = useState(1);
-  const [showAddMealModal, setShowAddMealModal] = useState(false);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showKebabMenu, setShowKebabMenu] = useState(false);
-  const [showSavePlanModal, setShowSavePlanModal] = useState(false);
-
-  // Calculate totals for SavePlanModal
-  const totalDays = Object.keys(mealPlanData).length;
-  const totalMenus = Object.values(mealPlanData).reduce((total: number, day: any) => 
-    total + Object.values(day).reduce((mealTotal: number, meal: any) => mealTotal + meal.items.length, 0), 0
-  );
-
-  // Handlers for SavePlanModal
-  const handlePlanImagePicker = async () => {
-    const imageUri = await showImagePicker(
-      'เลือกรูปภาพ',
-      'เลือกวิธีการเพิ่มรูปภาพแผนอาหาร'
-    );
-    if (imageUri) {
-      mealPlanMode.updatePlanMetadata({ planImage: imageUri });
-    }
-  };
-
-  const handleSavePlan = async () => {
-    console.log('💾 [MealPlanScreenEdit] Starting save plan process...');
-    console.log('📊 [MealPlanScreenEdit] Current meal plan data:', mealPlanData);
-    
-    // Prepare meal plan data with enhanced nutrition info
-    const enhancedMealPlan = Object.keys(mealPlanData).reduce((acc, dayKey) => {
-      const day = parseInt(dayKey);
-      const dayMeals = mealPlanData[day];
-      let dayTotalCal = 0;
-      
-      const enhancedDayMeals = Object.keys(dayMeals).reduce((mealAcc, mealId) => {
-        const meal = dayMeals[mealId];
-        const mealTotalCal = meal.items.reduce((total: number, item: any) => total + item.cal, 0);
-        dayTotalCal += mealTotalCal;
-        
-        mealAcc[mealId] = {
-          ...meal,
-          totalCal: mealTotalCal
-        };
-        
-        return mealAcc;
-      }, {} as any);
-      
-      acc[dayKey] = {
-        totalCal: dayTotalCal,
-        meals: enhancedDayMeals
-      };
-      
-      return acc;
-    }, {} as any);
-
-    console.log('🍽️ [MealPlanScreenEdit] Enhanced meal plan for save:', enhancedMealPlan);
-    console.log('📝 [MealPlanScreenEdit] Plan metadata:', {
-      mode: mealPlanMode.mode,
-      planName: mealPlanMode.planName,
-      planDescription: mealPlanMode.planDescription,
-      planImage: mealPlanMode.planImage
-    });
-
-    const result = await mealPlanMode.savePlan(enhancedMealPlan);
-    
-    console.log('📤 [MealPlanScreenEdit] Save result:', result);
-    
-    if (result.success) {
-      setShowSavePlanModal(false);
-      Alert.alert(
-        'บันทึกข้อมูลสำเร็จ', 
-        `แผนอาหาร "${mealPlanMode.planName}" ${mealPlanMode.mode === 'edit' ? 'ถูกอัพเดท' : 'ถูกบันทึก'}เรียบร้อยแล้ว\n${result.message || ''}`
-      );
-      
-      // Navigate back if in edit mode
-      if (mealPlanMode.mode === 'edit') {
-        navigation.goBack();
-      }
-    } else {
-      console.log('❌ [MealPlanScreenEdit] Save failed:', result.error);
-      Alert.alert('เกิดข้อผิดพลาด', result.error);
-    }
-  };
-
-  const handleCloseSavePlanModal = () => {
-    setShowSavePlanModal(false);
-  };
-
-  // Debug: Log state changes
+  // Load meal plan data when component mounts
   useEffect(() => {
-    console.log('📊 [MealPlanScreenEdit] Edit store state changed:', {
-      mealPlanDataKeys: Object.keys(mealPlanData),
-      selectedDay,
-      dayData: mealPlanData[selectedDay],
-      totalDays: Object.keys(mealPlanData).length
-    });
-  }, [mealPlanData, selectedDay]);
+    if (foodPlanId) {
+      console.log('🔄 [MealPlanScreenEdit] Component Mount/foodPlanId Change. foodPlanId:', foodPlanId);
+      console.log('🔄 [MealPlanScreenEdit] Current planId in store:', planId);
+      
+      // เงื่อนไข: โหลดข้อมูลก็ต่อเมื่อ planId ใน store ยังไม่ใช่ตัวที่ถูกต้อง
+      // หรือยังไม่มีข้อมูลแผนอาหารเลย
+      if (planId !== foodPlanId) {
+        console.log(`🔄 [MealPlanScreenEdit] Initializing edit mode because planId is different. Store: ${planId}, Route: ${foodPlanId}`);
+        initializeEditMode(foodPlanId);
+      } else {
+        console.log('✅ [MealPlanScreenEdit] Plan already loaded, skipping initialization');
+      }
+    }
+    
+    // ไม่ต้องมี cleanup function ที่นี่ เพราะเราต้องการให้ state คงอยู่
+  }, [foodPlanId, initializeEditMode, planId]);
 
-  // Memoized values
-  const days = useMemo(() => generateDays(30), []);
-  const currentDate = useMemo(() => getCurrentDate(selectedDay), [selectedDay]);
-
-  // Listen for navigation params (when returning from SearchFoodForAdd)
+  // Handle food addition from SearchFoodForAdd navigation
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       const params = route.params as any;
       console.log('🔄 [MealPlanScreenEdit] useFocusEffect triggered with params:', params);
+      console.log('🔄 [MealPlanScreenEdit] Current store state:', {
+        planId,
+        planName,
+        hasData: Object.keys(mealPlanData).length > 0
+      });
       
       if (params?.selectedFood && params?.mealId && params?.selectedDay) {
         console.log('🍽️ [MealPlanScreenEdit] Processing food addition from params:', {
@@ -169,100 +109,78 @@ const MealPlanEditScreen = () => {
           foodId: params.selectedFood.id,
           mealId: params.mealId,
           selectedDay: params.selectedDay,
-          currentMealData: getDayMeals(params.selectedDay)[params.mealId]
         });
         
         setSelectedDay(params.selectedDay);
         addFoodToMeal(params.selectedFood, params.mealId, params.selectedDay);
         
-        // Clear params
-        navigation.setParams({ selectedFood: undefined, mealId: undefined, selectedDay: undefined });
+        // Clear params to prevent re-adding on next focus
+        navigation.setParams({ 
+          selectedFood: undefined, 
+          mealId: undefined, 
+          selectedDay: undefined,
+          //สำคัญ: ต้องคง foodPlanId ไว้ใน params
+          foodPlanId: foodPlanId 
+        });
         console.log('✅ [MealPlanScreenEdit] Params cleared after food addition');
       } else {
         console.log('ℹ️ [MealPlanScreenEdit] No food addition params found');
       }
-    }, [route.params, navigation]) // Remove addFoodToMeal from dependency
+    }, [route.params, addFoodToMeal, navigation, getDayMeals, planId, planName, mealPlanData])
   );
 
-  // Set edit mode และโหลดข้อมูลจาก API เมื่อเข้า edit mode
-  useEffect(() => {
-    setEditMode(true); // เซ็ตให้ store รู้ว่าอยู่ใน edit mode
+  // Handle back navigation - clear edit session when leaving
+  const handleBack = useCallback(() => {
+    console.log('⬅️ [MealPlanScreenEdit] Going back - clearing edit session');
+    clearEditSession();
+    navigation.goBack();
+  }, [clearEditSession, navigation]);
+
+  // Handle save plan
+  const handleSavePlan = async () => {
+    console.log('💾 [MealPlanScreenEdit] Current state:', {
+      planId,
+      planName,
+      canSave,
+      mealPlanDataKeys: Object.keys(mealPlanData)
+    });
     
-    // เซ็ต plan ID
-    if (foodPlanId) {
-      setPlanId(foodPlanId);
-    }
-    
-    if (mode === 'edit' && mealPlanMode.originalPlanData) {
-      // โหลดข้อมูลจาก API ที่ได้มาจาก mealPlanMode
-      console.log('🔥 [MealPlanScreenEdit] Loading meal plan data for edit:', mealPlanMode.originalPlanData);
-      console.log('🔥 [MealPlanScreenEdit] Plan data structure:', mealPlanMode.originalPlanData.plan);
-      
-      // ใช้ originalPlanData.plan เพราะ originalPlanData คือ plan object ทั้งหมด
-      if (mealPlanMode.originalPlanData.plan) {
-        loadMealPlanData({ plan_data: mealPlanMode.originalPlanData.plan });
-      } else {
-        console.log('⚠️ [MealPlanScreenEdit] No plan data found in originalPlanData');
-      }
-    }
-  }, [mode, mealPlanMode.originalPlanData, setEditMode, loadMealPlanData, setPlanId, foodPlanId]);
-
-  // Cleanup เมื่อออกจากหน้า
-  useEffect(() => {
-    return () => {
-      // ล้างข้อมูล edit session เมื่อ component unmount
-      if (mode === 'edit') {
-        clearEditSession();
-      }
-    };
-  }, [mode, clearEditSession]);
-
-  useEffect(() => {
-    
-    if (mode === 'edit' && foodPlanId && !mealPlanMode.isLoading) {
-      if (mealPlanMode.originalPlanData === null) {
-        Alert.alert(
-          'ไม่พบข้อมูลแผนอาหาร',
-          'ไม่สามารถโหลดข้อมูลแผนอาหารได้ กรุณาลองใหม่',
-          [{ text: 'ตกลง', onPress: () => navigation.goBack() }]
-        );
-      }
-    }
-
-  }, [mode, foodPlanId, mealPlanMode.isLoading, mealPlanMode.originalPlanData, navigation]);
-
-
-
-  // Handlers
-  const handleSaveMealPlan = async () => {
-    console.log('💾 [MealPlanScreenEdit] handleSaveMealPlan called, canSave result:', canSaveResult);
-    
-    if (!canSaveResult) {
+    if (!canSave) {
       Alert.alert('ไม่มีข้อมูลให้บันทึก', 'กรุณาเพิ่มอาหารลงในแผนก่อนบันทึก');
       return;
     }
 
-    // For edit mode, save directly with confirmation
-    if (mode === 'edit') {
-      Alert.alert(
-        'ยืนยันการอัพเดท',
-        `คุณต้องการอัพเดทแผนอาหาร "${mealPlanMode.planName}" หรือไม่?`,
-        [
-          {
-            text: 'ยกเลิก',
-            style: 'cancel'
-          },
-          {
-            text: 'อัพเดท',
-            onPress: async () => await handleSavePlan()
-          }
-        ]
-      );
-    } else {
-     
+    if (!planId) {
+      Alert.alert('ข้อผิดพลาด', 'ไม่พบ ID ของแผนอาหาร กรุณาลองใหม่');
+      return;
     }
+
+    Alert.alert(
+      'ยืนยันการอัพเดท',
+      `คุณต้องการอัพเดทแผนอาหาร "${planName}" หรือไม่?`,
+      [
+        {
+          text: 'ยกเลิก',
+          style: 'cancel'
+        },
+        {
+          text: 'อัพเดท',
+          onPress: async () => {
+            console.log('💾 [MealPlanScreenEdit] Calling savePlan with planId:', planId);
+            const result = await savePlan();
+            if (result.success) {
+              Alert.alert('สำเร็จ', `แผนอาหาร "${planName}" ถูกอัพเดทเรียบร้อยแล้ว`);
+              handleBack(); // Use handleBack to clear edit session
+            } else {
+              Alert.alert('ข้อผิดพลาด', result.error);
+            }
+          }
+        }
+      ]
+    );
   };
 
+  // Handle add new meal
   const handleAddNewMeal = (name: string, time: string) => {
     const newMeal = {
       id: `meal_${Date.now()}`,
@@ -273,6 +191,26 @@ const MealPlanEditScreen = () => {
     addMeal(newMeal, selectedDay);
   };
 
+  // Handle clear meal plan
+  const handleClearMealPlan = () => {
+    Alert.alert(
+      'ยืนยันการล้างข้อมูล',
+      'คุณต้องการล้างอาหารทั้งหมดในแผนนี้หรือไม่?',
+      [
+        { text: 'ยกเลิก', style: 'cancel' },
+        { 
+          text: 'ล้างข้อมูล', 
+          style: 'destructive',
+          onPress: () => {
+            // Clear all meal data in the store
+            clearEditSession();
+          }
+        }
+      ]
+    );
+  };
+
+  // Navigation functions
   const navigateDay = (direction: 'prev' | 'next') => {
     if (direction === 'prev' && selectedDay > 1) {
       setSelectedDay(selectedDay - 1);
@@ -283,11 +221,11 @@ const MealPlanEditScreen = () => {
 
   const handleAddFoodToMeal = (mealId: string) => {
     navigation.navigate('SearchFoodForAdd', {
-      
       hideRecommended: true,
       mealId: mealId,
       source: 'MealPlanEdit',
-      selectedDay: selectedDay
+      selectedDay: selectedDay,
+      foodPlanId: foodPlanId
     }); 
   };
 
@@ -397,7 +335,7 @@ const MealPlanEditScreen = () => {
   };
 
   // Show loading screen when loading plan data
-  if (mealPlanMode.isLoading) {
+  if (isLoading) {
     return (
       <SafeAreaView className="flex-1 bg-gray-50">
         <View className="bg-primary px-4 py-4 mt-6 flex-row items-center justify-between border-b border-gray-100">
@@ -408,7 +346,7 @@ const MealPlanEditScreen = () => {
             <Icon name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
           
-          <Text className="text-xl font-bold text-white font-prompt">{mealPlanMode.getScreenTitle()}</Text>
+          <Text className="text-xl font-bold text-white font-prompt">แก้ไขแผนอาหาร</Text>
           
           <View className="w-10 h-10" />
         </View>
@@ -427,12 +365,12 @@ const MealPlanEditScreen = () => {
       <View className="bg-primary px-4 py-4 mt-6 flex-row items-center justify-between border-b border-gray-100">
         <TouchableOpacity 
           className="w-10 h-10 rounded-lg items-center justify-center"
-          onPress={() => navigation.goBack()}
+          onPress={handleBack}
         >
           <Icon name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         
-        <Text className="text-xl font-bold text-white font-prompt">{mealPlanMode.getScreenTitle()}</Text>
+        <Text className="text-xl font-bold text-white font-prompt">แก้ไขแผนอาหาร</Text>
         
         <View className="flex-row items-center">
           <TouchableOpacity
@@ -549,31 +487,10 @@ const MealPlanEditScreen = () => {
       <KebabMenuModal
         visible={showKebabMenu}
         onClose={() => setShowKebabMenu(false)}
-        onSave={handleSaveMealPlan}
+        onSave={handleSavePlan}
         onClear={handleClearMealPlan}
-        canSave={canSaveResult}
+        canSave={canSave}
       />
-
-      {/* Show SavePlanModal only for add mode */}
-      {mode === 'add' && (
-        <SavePlanModal
-          visible={showSavePlanModal}
-          onClose={handleCloseSavePlanModal}
-          onSave={handleSavePlan}
-          planName={mealPlanMode.planName}
-          setPlanName={(name: string) => mealPlanMode.updatePlanMetadata({ planName: name })}
-          planDescription={mealPlanMode.planDescription}
-          setPlanDescription={(desc: string) => mealPlanMode.updatePlanMetadata({ planDescription: desc })}
-          selectedPlanImage={mealPlanMode.planImage}
-          onImagePicker={handlePlanImagePicker}
-          onRemoveImage={() => mealPlanMode.updatePlanMetadata({ planImage: null })}
-          totalDays={totalDays}
-          totalMenus={totalMenus}
-          saveButtonText={mealPlanMode.getSaveButtonText()}
-          setAsCurrentPlan={mealPlanMode.setAsCurrentPlan}
-          setSetAsCurrentPlan={(value: boolean) => mealPlanMode.updatePlanMetadata({ setAsCurrentPlan: value })}
-        />
-      )}
     </SafeAreaView>
   );
 };
