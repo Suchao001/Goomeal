@@ -12,7 +12,10 @@ export type RootStackParamList = {
     PersonalPlan2: undefined;
     PersonalPlan3: undefined;
     PersonalPlan4: undefined;
-   
+
+    PlanSelection: undefined;
+    Menu: undefined;
+
     Home: undefined;
     MealPlan: {
         selectedFood?: any;

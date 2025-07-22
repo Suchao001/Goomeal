@@ -13,6 +13,7 @@ import { getImageUrl, getCurrentDate, generateDays } from '../../utils/mealPlanU
 
 const MealPlanEditScreen = () => {
   const navigation = useTypedNavigation();
+  
   const route = useRoute();
   
   // Get foodPlanId from route params and keep it constant
@@ -129,13 +130,16 @@ const MealPlanEditScreen = () => {
     }, [route.params, addFoodToMeal, navigation, getDayMeals, planId, planName, mealPlanData])
   );
 
-  // Handle back navigation - clear edit session when leaving
+  
   const handleBack = useCallback(() => {
     console.log('⬅️ [MealPlanScreenEdit] Going back - clearing edit session');
     clearEditSession();
-    navigation.goBack();
+    navigation.reset({
+    index: 0,
+    routes: [{ name: 'PlanSelection' }],
+  });
   }, [clearEditSession, navigation]);
-
+  
   // Handle save plan
   const handleSavePlan = async () => {
     console.log('💾 [MealPlanScreenEdit] Current state:', {

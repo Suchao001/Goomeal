@@ -75,7 +75,7 @@ const PlanSelectionScreen = () => {
   };
 
   const handleBackPress = () => {
-    navigation.goBack();
+    navigation.navigate('Menu');
   };
 
   const handlePlanOptions = (plan: any, event: any) => {
