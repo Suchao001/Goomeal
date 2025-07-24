@@ -99,7 +99,7 @@ const SeeMoreGlobalPlans = () => {
 
   const handlePlanPress = (planId: number) => {
     console.log('Selected plan:', planId);
-    navigation.navigate('GlobalPlanMeal');
+    navigation.navigate('GlobalPlanMeal', { planId });
   };
 
   const renderPlanCard = ({ item: plan }: { item: GlobalFoodPlan }) => (

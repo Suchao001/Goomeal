@@ -1,70 +1,113 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTypedNavigation } from '../hooks/Navigation';
+import { useRoute } from '@react-navigation/native';
+import { apiClient } from '../utils/apiClient';
 
 const GlobalPlanMeal = () => {
   const navigation = useTypedNavigation();
+  const route = useRoute();
+  const { planId } = route.params as { planId: number };
+  
+  const [mealPlanData, setMealPlanData] = useState<any[]>([]);
+  const [planInfo, setPlanInfo] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const mealPlanData = [
-    {
-      day: 1,
-      totalCalories: 1200,
-      protein: 45,
-      carbs: 150,
-      fat: 35,
-      meals: [
-        { type: 'breakfast', icon: 'sunny-outline', name: 'ข้าวโพดต้มกับไข่ต้ม' },
-        { type: 'lunch', icon: 'restaurant-outline', name: 'ข้าวกล้องผัดผักรวม' },
-        { type: 'dinner', icon: 'moon-outline', name: 'ปลาย่างกับสลัดผัก' }
-      ]
-    },
-    {
-      day: 2,
-      totalCalories: 1150,
-      protein: 42,
-      carbs: 140,
-      fat: 38,
-      meals: [
-        { type: 'breakfast', icon: 'sunny-outline', name: 'โอ๊ตมีลกับผลไม้' },
-        { type: 'lunch', icon: 'restaurant-outline', name: 'ข้าวหอมมะลิกับแกงเขียวหวาน' },
-        { type: 'dinner', icon: 'moon-outline', name: 'ไก่ย่างกับผักต้มน้ำใส' }
-      ]
-    },
-    {
-      day: 3,
-      totalCalories: 1300,
-      protein: 50,
-      carbs: 160,
-      fat: 40,
-      meals: [
-        { type: 'breakfast', icon: 'sunny-outline', name: 'ขนมปังโฮลวีทกับอโวคาโด' },
-        { type: 'lunch', icon: 'restaurant-outline', name: 'ข้าวผัดกุ้งใส่ผัก' },
-        { type: 'dinner', icon: 'moon-outline', name: 'เต้าหู้ทอดกับผัดผักกาด' }
-      ]
-    },
-    {
-      day: 4,
-      totalCalories: 1100,
-      protein: 40,
-      carbs: 130,
-      fat: 32,
-      meals: [
-        { type: 'breakfast', icon: 'sunny-outline', name: 'สมูทตี้ผลไม้รวม' },
-        { type: 'lunch', icon: 'restaurant-outline', name: 'ส้มตำกับข้าวเหนียว' },
-        { type: 'dinner', icon: 'moon-outline', name: 'ซุปผักใส่เห็ด' }
-      ]
+  useEffect(() => {
+    fetchMealPlanDetails();
+  }, [planId]);
+
+  const fetchMealPlanDetails = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await apiClient.get(`/api/meal-plan-details/${planId}`);
+      
+      if (response.data.success) {
+        const { planInfo, mealPlan } = response.data.data;
+        setPlanInfo(planInfo);
+        
+        // Transform API data to component format
+        const transformedData = Object.keys(mealPlan).map(dayKey => {
+          const dayData = mealPlan[dayKey];
+          const dayNumber = parseInt(dayKey);
+          
+          // Calculate nutrition totals for the day
+          let totalCalories = 0;
+          let totalProtein = 0;
+          let totalCarbs = 0;
+          let totalFat = 0;
+          
+          const meals: any[] = [];
+          
+          // Process each meal type
+          Object.keys(dayData.meals).forEach(mealType => {
+            const mealData = dayData.meals[mealType];
+            totalCalories += mealData.totalCal;
+            
+            // Add individual meal items
+            mealData.items.forEach((item: any) => {
+              totalProtein += item.protein;
+              totalCarbs += item.carb;
+              totalFat += item.fat;
+              
+              // Map meal type to display format
+              const mealTypeDisplay = {
+                breakfast: { type: 'breakfast', icon: 'sunny-outline' },
+                lunch: { type: 'lunch', icon: 'restaurant-outline' },
+                dinner: { type: 'dinner', icon: 'moon-outline' }
+              };
+              
+              meals.push({
+                type: mealType,
+                icon: mealTypeDisplay[mealType as keyof typeof mealTypeDisplay]?.icon || 'restaurant-outline',
+                name: item.name
+              });
+            });
+          });
+          
+          return {
+            day: dayNumber,
+            totalCalories: Math.round(totalCalories),
+            protein: Math.round(totalProtein),
+            carbs: Math.round(totalCarbs),
+            fat: Math.round(totalFat),
+            meals: meals
+          };
+        });
+        
+        // Sort by day number
+        transformedData.sort((a, b) => a.day - b.day);
+        setMealPlanData(transformedData);
+      } else {
+        setError('ไม่สามารถดึงข้อมูลแผนอาหารได้');
+      }
+    } catch (err) {
+      console.error('Error fetching meal plan details:', err);
+      setError('เกิดข้อผิดพลาดในการดึงข้อมูล');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const handleDayPress = (day: number) => {
     console.log('View details for day:', day);
     // Navigate to daily meal details
   };
 
-  const handleSavePlan = () => {
-    console.log('Save this plan');
-    // Save plan logic here
+  const handleSavePlan = async () => {
+    try {
+      // TODO: Implement save plan to user's meal plan
+      console.log('Saving plan:', planId);
+      // You can implement this to save the plan to user's personal meal plan
+      alert('แผนอาหารถูกบันทึกแล้ว');
+    } catch (error) {
+      console.error('Error saving plan:', error);
+      alert('เกิดข้อผิดพลาดในการบันทึกแผน');
+    }
   };
 
   const renderMealCard = (dayData: any) => (
@@ -165,31 +208,53 @@ const GlobalPlanMeal = () => {
             <Icon name="arrow-back" size={24} color="#4A4A4A" />
           </TouchableOpacity>
           <Text className="text-xl font-promptSemiBold text-[#4A4A4A]">
-            พรีวิวแผนอาหาร
+            {planInfo?.plan_name || 'พรีวิวแผนอาหาร'}
           </Text>
         </View>
       </View>
 
       {/* Content */}
-      <ScrollView className="flex-1 pt-4" showsVerticalScrollIndicator={false}>
-        {mealPlanData.map(dayData => renderMealCard(dayData))}
-        
-        {/* Bottom spacing */}
-        <View className="h-6" />
-      </ScrollView>
-
-      {/* Fixed Save Button */}
-      <View className="bg-white px-4 py-4 border-t border-gray-200">
-        <TouchableOpacity
-          onPress={handleSavePlan}
-          className="bg-primary rounded-lg py-4 items-center justify-center"
-          activeOpacity={0.8}
-        >
-          <Text className="text-white text-lg font-promptSemiBold">
-            บันทึกแผนนี้
+      {loading ? (
+        <View className="flex-1 justify-center items-center">
+          <ActivityIndicator size="large" color="#f59e0b" />
+          <Text className="text-gray-500 mt-2">กำลังโหลดข้อมูล...</Text>
+        </View>
+      ) : error ? (
+        <View className="flex-1 justify-center items-center px-4">
+          <Icon name="alert-circle-outline" size={64} color="#ef4444" />
+          <Text className="text-red-500 text-center mt-4 text-lg font-promptMedium">
+            {error}
           </Text>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity
+            onPress={fetchMealPlanDetails}
+            className="bg-primary rounded-lg px-6 py-3 mt-4"
+          >
+            <Text className="text-white font-promptMedium">ลองใหม่</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <ScrollView className="flex-1 pt-4" showsVerticalScrollIndicator={false}>
+          {mealPlanData.map(dayData => renderMealCard(dayData))}
+          
+          {/* Bottom spacing */}
+          <View className="h-6" />
+        </ScrollView>
+      )}
+
+      {/* Fixed Save Button - Only show when data is loaded */}
+      {!loading && !error && (
+        <View className="bg-white px-4 py-4 border-t border-gray-200">
+          <TouchableOpacity
+            onPress={handleSavePlan}
+            className="bg-primary rounded-lg py-4 items-center justify-center"
+            activeOpacity={0.8}
+          >
+            <Text className="text-white text-lg font-promptSemiBold">
+              บันทึกแผนนี้
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };
