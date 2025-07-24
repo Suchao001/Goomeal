@@ -6,6 +6,7 @@ import user from './routes/user_route';
 import article from './routes/article_route';
 import food from './routes/food_route';
 import userFoodPlan from './routes/user_food_plan_route';
+import globalFoodPlan from './routes/globalFoodPlan';
 import { verifyResetToken, resetPassword } from './controllers/forgotpassword';
 import { generateResetPasswordForm, generateErrorPage } from './utils/htmlTemplates';
 
@@ -41,6 +42,7 @@ app.use('/user',user);
 app.use('/api', article);
 app.use('/food', food);
 app.use('/user-food-plans', userFoodPlan);
+app.use('/api', globalFoodPlan);
 
 app.get('/reset-password', async (req, res) => {
     try {
