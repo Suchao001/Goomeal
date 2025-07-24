@@ -24,6 +24,7 @@ export type RootStackParamList = {
         mode?: 'add' | 'edit';
         foodPlanId?: number;
         planData?: any;
+        fromSearch?: boolean;
     } | undefined;
 
     MealPlanEdit: {

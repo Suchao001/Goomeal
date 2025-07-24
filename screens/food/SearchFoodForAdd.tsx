@@ -105,34 +105,29 @@ const SearchFoodForAdd = () => {
   };
 
   const handleAddFood = (food: FoodItem) => {
-  
     if (params.mealId) {
-  
       if(params.source === 'MealPlanEdit') {
         // [REFACTOR] เปลี่ยนวิธีส่งข้อมูลกลับไปที่ MealPlanEdit
         // ใช้ navigate + merge: true เพื่อให้ state ของหน้าก่อนหน้าไม่หาย
-        navigation.navigate({
-          name: 'MealPlanEdit',
-          params: {
-            selectedFood: food,
-            mealId: params.mealId,
-            selectedDay: (route.params as any)?.selectedDay || 1,
-          },
-          merge: true, // สำคัญมาก: จะรวม params แทนที่จะเขียนทับ
+        navigation.navigate('MealPlanEdit', {
+          selectedFood: food,
+          mealId: params.mealId,
+          selectedDay: (route.params as any)?.selectedDay || 1,
+          foodPlanId: (route.params as any)?.foodPlanId
         });
         return;
       }
       
-     
+      // สำหรับ MealPlan - ใช้ navigate แทน goBack
       navigation.navigate('MealPlan', {
         selectedFood: food,
         mealId: params.mealId,
-        selectedDay: (route.params as any)?.selectedDay || 1
+        selectedDay: (route.params as any)?.selectedDay || 1,
+        fromSearch: true // เพิ่ม flag เพื่อระบุว่ามาจาก search
       });
       return;
     }
     
- 
     navigation.goBack();
   };
 
