@@ -60,6 +60,7 @@ interface MealPlanStoreEdit {
   // Actions
   addFoodToMeal: (food: FoodItem, mealId: string, day: number, mealInfo?: { name: string; time: string }) => void;
   removeFoodFromMeal: (foodId: string, mealId: string, day: number) => void;
+  updateFoodInMeal: (updatedFood: FoodItem, mealId: string, day: number) => void; // New function to update food
   clearMealPlan: () => void;
   clearEditSession: () => void; // ล้างข้อมูล edit session
   clearDay: (day: number) => void;
@@ -248,6 +249,29 @@ export const useMealPlanStoreEdit = create<MealPlanStoreEdit>()((set, get) => ({
           }
 
           // Update meal with new items list
+          return {
+            ...state,
+            mealPlanData: {
+              ...state.mealPlanData,
+              [day]: {
+                ...state.mealPlanData[day],
+                [mealId]: {
+                  ...state.mealPlanData[day][mealId],
+                  items: updatedItems,
+                },
+              },
+            },
+          };
+        });
+      },
+
+      updateFoodInMeal: (updatedFood: FoodItem, mealId: string, day: number) => {
+        set((state) => {
+          const existingItems = state.mealPlanData[day]?.[mealId]?.items || [];
+          const updatedItems = existingItems.map(item => 
+            item.id === updatedFood.id ? updatedFood : item
+          );
+
           return {
             ...state,
             mealPlanData: {

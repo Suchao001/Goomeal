@@ -10,6 +10,7 @@ import { SavePlanModal } from '../../components/SavePlanModal';
 import { DatePickerModal } from '../../components/DatePickerModal';
 import { AddMealModal } from '../../components/AddMealModal';
 import { KebabMenuModal } from '../../components/KebabMenuModal';
+import { EditFoodModal } from '../../components/EditFoodModal';
 import { getImageUrl, getCurrentDate, generateDays } from '../../utils/mealPlanUtils';
 import { ApiClient } from '../../utils/apiClient';
 
@@ -31,6 +32,7 @@ const MealPlanScreen = () => {
     addMeal,
     addFoodToMeal,
     removeFoodFromMeal,
+    updateFoodInMeal,
     getAllMealsForDay,
     getDayMeals,
     getMealNutrition,
@@ -44,6 +46,8 @@ const MealPlanScreen = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showKebabMenu, setShowKebabMenu] = useState(false);
   const [showSavePlanModal, setShowSavePlanModal] = useState(false);
+  const [showEditFoodModal, setShowEditFoodModal] = useState(false);
+  const [editingFood, setEditingFood] = useState<{ food: FoodItem; mealId: string; day: number } | null>(null);
   const [planName, setPlanName] = useState('');
   const [planDescription, setPlanDescription] = useState('');
   const [selectedPlanImage, setSelectedPlanImage] = useState<string | null>(null);
@@ -230,6 +234,23 @@ const MealPlanScreen = () => {
     }); 
   };
 
+  const handleEditFood = (food: FoodItem, mealId: string, day: number) => {
+    setEditingFood({ food, mealId, day });
+    setShowEditFoodModal(true);
+  };
+
+  const handleSaveEditedFood = (updatedFood: FoodItem) => {
+    if (editingFood) {
+      updateFoodInMeal(updatedFood, editingFood.mealId, editingFood.day);
+      setEditingFood(null);
+    }
+  };
+
+  const handleCloseEditFoodModal = () => {
+    setShowEditFoodModal(false);
+    setEditingFood(null);
+  };
+
   const renderMealCard = (meal: any) => {
     const currentDayMeals = getDayMeals(selectedDay);
     const mealData = currentDayMeals[meal.id];
@@ -312,6 +333,12 @@ const MealPlanScreen = () => {
                     <Text className="text-xs text-blue-600">เมนูของฉัน</Text>
                   </View>
                 )}
+                <TouchableOpacity
+                  onPress={() => handleEditFood(food, meal.id, selectedDay)}
+                  className="w-6 h-6 rounded-full bg-blue-100 items-center justify-center mr-2"
+                >
+                  <Icon name="create" size={12} color="#3b82f6" />
+                </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => removeFoodFromMeal(food.id, meal.id, selectedDay)}
                   className="w-6 h-6 rounded-full bg-red-100 items-center justify-center"
@@ -491,6 +518,13 @@ const MealPlanScreen = () => {
         saveButtonText="บันทึกแผน"
         setAsCurrentPlan={setAsCurrentPlan}
         setSetAsCurrentPlan={setSetAsCurrentPlan}
+      />
+
+      <EditFoodModal
+        visible={showEditFoodModal}
+        food={editingFood?.food || null}
+        onClose={handleCloseEditFoodModal}
+        onSave={handleSaveEditedFood}
       />
     </SafeAreaView>
   );

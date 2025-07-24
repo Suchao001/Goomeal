@@ -8,6 +8,7 @@ import { useMealPlanMode } from '../../hooks/useMealPlanEdit';
 import { DatePickerModal } from '../../components/DatePickerModal';
 import { AddMealModal } from '../../components/AddMealModal';
 import { KebabMenuModal } from '../../components/KebabMenuModal';
+import { EditFoodModal } from '../../components/EditFoodModal';
 import { getImageUrl, getCurrentDate, generateDays } from '../../utils/mealPlanUtils';
 
 
@@ -39,6 +40,7 @@ const MealPlanEditScreen = () => {
     addMeal,
     addFoodToMeal,
     removeFoodFromMeal,
+    updateFoodInMeal,
     getAllMealsForDay,
     getDayMeals,
     getMealNutrition,
@@ -53,6 +55,8 @@ const MealPlanEditScreen = () => {
   const [showAddMealModal, setShowAddMealModal] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showKebabMenu, setShowKebabMenu] = useState(false);
+  const [showEditFoodModal, setShowEditFoodModal] = useState(false);
+  const [editingFood, setEditingFood] = useState<{ food: FoodItem; mealId: string; day: number } | null>(null);
 
   // Generate days and current date
   const days = useMemo(() => generateDays(), []);
@@ -195,6 +199,24 @@ const MealPlanEditScreen = () => {
     addMeal(newMeal, selectedDay);
   };
 
+  // Handle edit food
+  const handleEditFood = (food: FoodItem, mealId: string, day: number) => {
+    setEditingFood({ food, mealId, day });
+    setShowEditFoodModal(true);
+  };
+
+  const handleSaveEditedFood = (updatedFood: FoodItem) => {
+    if (editingFood) {
+      updateFoodInMeal(updatedFood, editingFood.mealId, editingFood.day);
+      setEditingFood(null);
+    }
+  };
+
+  const handleCloseEditFoodModal = () => {
+    setShowEditFoodModal(false);
+    setEditingFood(null);
+  };
+
   // Handle clear meal plan
   const handleClearMealPlan = () => {
     Alert.alert(
@@ -315,6 +337,12 @@ const MealPlanEditScreen = () => {
                     <Text className="text-xs text-blue-600">เมนูของฉัน</Text>
                   </View>
                 )}
+                <TouchableOpacity
+                  onPress={() => handleEditFood(food, meal.id, selectedDay)}
+                  className="w-6 h-6 rounded-full bg-blue-100 items-center justify-center mr-2"
+                >
+                  <Icon name="create" size={12} color="#3b82f6" />
+                </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => removeFoodFromMeal(food.id, meal.id, selectedDay)}
                   className="w-6 h-6 rounded-full bg-red-100 items-center justify-center"
@@ -494,6 +522,13 @@ const MealPlanEditScreen = () => {
         onSave={handleSavePlan}
         onClear={handleClearMealPlan}
         canSave={canSave}
+      />
+
+      <EditFoodModal
+        visible={showEditFoodModal}
+        food={editingFood?.food || null}
+        onClose={handleCloseEditFoodModal}
+        onSave={handleSaveEditedFood}
       />
     </SafeAreaView>
   );
