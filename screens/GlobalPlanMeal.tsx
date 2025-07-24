@@ -6,7 +6,6 @@ import { useTypedNavigation } from '../hooks/Navigation';
 const GlobalPlanMeal = () => {
   const navigation = useTypedNavigation();
 
-  // Mock data for meal plan
   const mealPlanData = [
     {
       day: 1,
