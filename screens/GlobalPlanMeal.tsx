@@ -12,7 +12,9 @@ const GlobalPlanMeal = () => {
   
   const [mealPlanData, setMealPlanData] = useState<any[]>([]);
   const [planInfo, setPlanInfo] = useState<any>(null);
+  const [originalMealPlan, setOriginalMealPlan] = useState<any>(null); // Store original API format
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -29,6 +31,7 @@ const GlobalPlanMeal = () => {
       if (response.data.success) {
         const { planInfo, mealPlan } = response.data.data;
         setPlanInfo(planInfo);
+        setOriginalMealPlan(mealPlan); // Store original for saving
         
         // Transform API data to component format
         const transformedData = Object.keys(mealPlan).map(dayKey => {
@@ -99,14 +102,65 @@ const GlobalPlanMeal = () => {
   };
 
   const handleSavePlan = async () => {
+    if (!planInfo || !originalMealPlan) {
+      alert('ไม่มีข้อมูลแผนอาหารให้บันทึก');
+      return;
+    }
+
     try {
-      // TODO: Implement save plan to user's meal plan
-      console.log('Saving plan:', planId);
-      // You can implement this to save the plan to user's personal meal plan
-      alert('แผนอาหารถูกบันทึกแล้ว');
-    } catch (error) {
+      setSaving(true);
+      
+      // Create FormData to send both JSON data and image path
+      const formData = new FormData();
+      formData.append('name', `${planInfo.plan_name} (คัดลอก)`);
+      formData.append('description', planInfo.description || `แผนอาหาร ${planInfo.duration} วัน จาก Global Plan`);
+      formData.append('plan', JSON.stringify(originalMealPlan));
+      
+      // Add image path from planInfo if available
+      if (planInfo.image) {
+        // Extract just the filename/path part from the full URL
+        const imagePath = planInfo.image.split('/images/').pop();
+        if (imagePath) {
+          formData.append('imagePath', imagePath);
+        }
+      }
+
+      console.log('Saving plan with image:', {
+        name: `${planInfo.plan_name} (คัดลอก)`,
+        description: planInfo.description,
+        imagePath: planInfo.image,
+        planDataKeys: originalMealPlan ? Object.keys(originalMealPlan) : []
+      });
+
+      const response = await apiClient.post('/user-food-plans', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      if (response.data.success) {
+        alert('บันทึกแผนอาหารเรียบร้อยแล้ว!');
+        console.log('Plan saved successfully:', response.data.data);
+        
+        // Navigate back or to user's plans
+        navigation.goBack();
+      } else {
+        alert(`เกิดข้อผิดพลาด: ${response.data.error}`);
+      }
+    } catch (error: any) {
       console.error('Error saving plan:', error);
-      alert('เกิดข้อผิดพลาดในการบันทึกแผน');
+      
+      let errorMessage = 'เกิดข้อผิดพลาดในการบันทึกแผน';
+      
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      alert(errorMessage);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -246,12 +300,24 @@ const GlobalPlanMeal = () => {
         <View className="bg-white px-4 py-4 border-t border-gray-200">
           <TouchableOpacity
             onPress={handleSavePlan}
-            className="bg-primary rounded-lg py-4 items-center justify-center"
+            className={`rounded-lg py-4 items-center justify-center ${
+              saving ? 'bg-gray-400' : 'bg-primary'
+            }`}
             activeOpacity={0.8}
+            disabled={saving}
           >
-            <Text className="text-white text-lg font-promptSemiBold">
-              บันทึกแผนนี้
-            </Text>
+            {saving ? (
+              <View className="flex-row items-center">
+                <ActivityIndicator size="small" color="white" />
+                <Text className="text-white text-lg font-promptSemiBold ml-2">
+                  กำลังบันทึก...
+                </Text>
+              </View>
+            ) : (
+              <Text className="text-white text-lg font-promptSemiBold">
+                บันทึกแผนนี้
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
       )}

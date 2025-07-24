@@ -4,8 +4,17 @@ import db from '../db_config';
 // Create user food plan
 export const createUserFoodPlan = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, description, plan } = req.body;
+    const { name, description, plan, imagePath } = req.body;
     const userId = (req as any).user?.id;
+    
+    console.log('=== Creating User Food Plan ===');
+    console.log('User ID:', userId);
+    console.log('Plan Name:', name);
+    console.log('Description:', description);
+    console.log('Plan Data Type:', typeof plan);
+    console.log('Plan Data Keys:', plan ? Object.keys(JSON.parse(plan)) : 'no plan data');
+    console.log('Has File:', !!req.file);
+    console.log('Image Path from request:', imagePath);
     
     if (!userId) {
       res.status(401).json({ 
@@ -23,19 +32,27 @@ export const createUserFoodPlan = async (req: Request, res: Response): Promise<v
       return;
     }
 
-    // Handle image upload
-    let imagePath = null;
+    // Handle image path - prioritize uploaded file, then use imagePath from request
+    let finalImagePath = null;
     if (req.file) {
-      imagePath = `/images/user_food_plans/${req.file.filename}`;
+      // New image uploaded
+      finalImagePath = `/images/user_food_plans/${req.file.filename}`;
+    } else if (imagePath) {
+      // Use existing image path from global plan
+      finalImagePath = `/images/${imagePath}`;
     }
+
+    console.log('Final image path:', finalImagePath);
 
     const [insertId] = await db('user_food_plans').insert({
       name,
       description: description || null,
-      plan: JSON.stringify(plan),
-      img: imagePath,
+      plan: typeof plan === 'string' ? plan : JSON.stringify(plan),
+      img: finalImagePath,
       user_id: userId
     });
+
+    console.log('✅ Plan saved successfully with ID:', insertId);
 
     res.status(201).json({
       success: true,
@@ -44,8 +61,8 @@ export const createUserFoodPlan = async (req: Request, res: Response): Promise<v
         id: insertId,
         name,
         description,
-        plan,
-        img: imagePath,
+        plan: typeof plan === 'string' ? JSON.parse(plan) : plan,
+        img: finalImagePath,
         user_id: userId
       }
     });

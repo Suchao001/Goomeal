@@ -136,7 +136,10 @@ export const getMealPlanWithDetails = async (req: Request, res: Response): Promi
     res.status(200).json({
       success: true,
       data: {
-        planInfo: globalPlan,
+        planInfo: {
+          ...globalPlan,
+          image: globalPlan.image ? `${req.protocol}://${req.get('host')}/images/${globalPlan.image}` : null
+        },
         mealPlan: transformedData
       },
       message: 'Meal plan details fetched and transformed successfully'
@@ -241,7 +244,10 @@ export const getAllMealPlansWithDetails = async (req: Request, res: Response): P
         });
 
         results.push({
-          planInfo: plan,
+          planInfo: {
+            ...plan,
+            image: plan.image ? `${req.protocol}://${req.get('host')}/images/${plan.image}` : null
+          },
           mealPlan: transformedData
         });
 
@@ -249,7 +255,10 @@ export const getAllMealPlansWithDetails = async (req: Request, res: Response): P
       } else {
         console.log(`No meal details found for plan ${plan.plan_id}`);
         results.push({
-          planInfo: plan,
+          planInfo: {
+            ...plan,
+            image: plan.image ? `${req.protocol}://${req.get('host')}/images/${plan.image}` : null
+          },
           mealPlan: {}
         });
       }
