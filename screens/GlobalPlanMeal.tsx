@@ -63,6 +63,11 @@ const GlobalPlanMeal = () => {
     // Navigate to daily meal details
   };
 
+  const handleSavePlan = () => {
+    console.log('Save this plan');
+    // Save plan logic here
+  };
+
   const renderMealCard = (dayData: any) => (
     <View key={dayData.day} className="bg-white rounded-xl shadow-sm mx-4 mb-4 overflow-hidden">
       {/* Day Header */}
@@ -88,7 +93,7 @@ const GlobalPlanMeal = () => {
         {dayData.meals.map((meal: any, index: number) => (
           <View key={index} className="flex-row items-center mb-2">
             <View className="w-6 h-6 mr-3 items-center justify-center">
-              <Icon name={meal.icon} size={18} color="#4A4A4A" />
+              <Icon name={meal.icon} size={18} color="#f59e0b" />
             </View>
             <View className="flex-1">
               <Text className="text-sm font-promptMedium text-[#4A4A4A] capitalize">
@@ -102,7 +107,7 @@ const GlobalPlanMeal = () => {
       </View>
 
       {/* Nutrition Summary Section */}
-      <View className="bg-[#F9FAFB] px-4 py-3 mt-2">
+      <View className="bg-white px-4 py-3 mt-2 mx-3 mb-3 rounded-lg">
         {/* Total Calories */}
         <View className="flex-row justify-between items-center mb-3">
           <Text className="text-sm font-promptMedium text-[#4A4A4A]">
@@ -116,7 +121,7 @@ const GlobalPlanMeal = () => {
         {/* Macronutrients - Three Columns */}
         <View className="flex-row justify-between space-x-2">
           {/* Protein */}
-          <View className="flex-1 bg-white rounded-lg p-3 items-center">
+          <View className="flex-1 bg-[#F9FAFB] rounded-lg p-3 items-center">
             <Text className="text-lg font-promptSemiBold text-primary mb-1">
               {dayData.protein}g
             </Text>
@@ -126,7 +131,7 @@ const GlobalPlanMeal = () => {
           </View>
 
           {/* Carbs */}
-          <View className="flex-1 bg-white rounded-lg p-3 items-center mx-2">
+          <View className="flex-1 bg-[#F9FAFB] rounded-lg p-3 items-center mx-2">
             <Text className="text-lg font-promptSemiBold text-primary mb-1">
               {dayData.carbs}g
             </Text>
@@ -136,7 +141,7 @@ const GlobalPlanMeal = () => {
           </View>
 
           {/* Fat */}
-          <View className="flex-1 bg-white rounded-lg p-3 items-center">
+          <View className="flex-1 bg-[#F9FAFB] rounded-lg p-3 items-center">
             <Text className="text-lg font-promptSemiBold text-primary mb-1">
               {dayData.fat}g
             </Text>
@@ -173,6 +178,19 @@ const GlobalPlanMeal = () => {
         {/* Bottom spacing */}
         <View className="h-6" />
       </ScrollView>
+
+      {/* Fixed Save Button */}
+      <View className="bg-white px-4 py-4 border-t border-gray-200">
+        <TouchableOpacity
+          onPress={handleSavePlan}
+          className="bg-primary rounded-lg py-4 items-center justify-center"
+          activeOpacity={0.8}
+        >
+          <Text className="text-white text-lg font-promptSemiBold">
+            บันทึกแผนนี้
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
