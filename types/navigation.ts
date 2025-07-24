@@ -47,6 +47,6 @@ export type RootStackParamList = {
     OptionPlan: undefined;
     SelectGlobalPlan: undefined;
     SeeMoreGlobalPlans: undefined;
-    GlobalPlanMeal: { planId: number };
+    GlobalPlanMeal: undefined;
 
   };

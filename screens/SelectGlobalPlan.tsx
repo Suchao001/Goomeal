@@ -57,7 +57,7 @@ const SelectGlobalPlan = () => {
 
   const handlePlanPress = (planId: number) => {
     console.log('Selected plan:', planId);
-    navigation.navigate('GlobalPlanMeal', { planId });
+    navigation.navigate('GlobalPlanMeal');
   };
 
   const handleSeeMorePlans = () => {

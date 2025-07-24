@@ -4,17 +4,8 @@ import db from '../db_config';
 // Create user food plan
 export const createUserFoodPlan = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, description, plan, imagePath } = req.body;
+    const { name, description, plan } = req.body;
     const userId = (req as any).user?.id;
-    
-    console.log('=== Creating User Food Plan ===');
-    console.log('User ID:', userId);
-    console.log('Plan Name:', name);
-    console.log('Description:', description);
-    console.log('Plan Data Type:', typeof plan);
-    console.log('Plan Data Keys:', plan ? Object.keys(JSON.parse(plan)) : 'no plan data');
-    console.log('Has File:', !!req.file);
-    console.log('Image Path from request:', imagePath);
     
     if (!userId) {
       res.status(401).json({ 
@@ -32,27 +23,19 @@ export const createUserFoodPlan = async (req: Request, res: Response): Promise<v
       return;
     }
 
-    // Handle image path - prioritize uploaded file, then use imagePath from request
-    let finalImagePath = null;
+    // Handle image upload
+    let imagePath = null;
     if (req.file) {
-      // New image uploaded
-      finalImagePath = `/images/user_food_plans/${req.file.filename}`;
-    } else if (imagePath) {
-      // Use existing image path from global plan
-      finalImagePath = `/images/${imagePath}`;
+      imagePath = `/images/user_food_plans/${req.file.filename}`;
     }
-
-    console.log('Final image path:', finalImagePath);
 
     const [insertId] = await db('user_food_plans').insert({
       name,
       description: description || null,
-      plan: typeof plan === 'string' ? plan : JSON.stringify(plan),
-      img: finalImagePath,
+      plan: JSON.stringify(plan),
+      img: imagePath,
       user_id: userId
     });
-
-    console.log('✅ Plan saved successfully with ID:', insertId);
 
     res.status(201).json({
       success: true,
@@ -61,8 +44,8 @@ export const createUserFoodPlan = async (req: Request, res: Response): Promise<v
         id: insertId,
         name,
         description,
-        plan: typeof plan === 'string' ? JSON.parse(plan) : plan,
-        img: finalImagePath,
+        plan,
+        img: imagePath,
         user_id: userId
       }
     });
@@ -169,17 +152,7 @@ export const updateUserFoodPlan = async (req: Request, res: Response): Promise<v
     const { name, description, plan } = req.body;
     const userId = (req as any).user?.id;
     
-    console.log('🔄 [updateUserFoodPlan] Request received:', {
-      planId: id,
-      userId,
-      name,
-      description: description ? description.substring(0, 50) + '...' : description,
-      plan: plan ? 'plan data provided' : 'no plan data',
-      hasFile: !!req.file
-    });
-    
     if (!userId) {
-      console.log('❌ [updateUserFoodPlan] No user ID found');
       res.status(401).json({ 
         success: false, 
         error: 'ไม่พบข้อมูลผู้ใช้' 
@@ -192,10 +165,7 @@ export const updateUserFoodPlan = async (req: Request, res: Response): Promise<v
       .where({ id, user_id: userId })
       .first();
       
-    console.log('🔍 [updateUserFoodPlan] Existing plan found:', !!existingPlan);
-      
     if (!existingPlan) {
-      console.log('❌ [updateUserFoodPlan] Plan not found for user');
       res.status(404).json({ 
         success: false, 
         error: 'ไม่พบแผนอาหารที่ระบุ' 
@@ -217,13 +187,9 @@ export const updateUserFoodPlan = async (req: Request, res: Response): Promise<v
     if (imagePath !== existingPlan.img) updateData.img = imagePath;
 
     // Update the plan
-    console.log('📝 [updateUserFoodPlan] Update data:', updateData);
-    
     await db('user_food_plans')
       .where({ id, user_id: userId })
       .update(updateData);
-      
-    console.log('✅ [updateUserFoodPlan] Plan updated successfully');
 
     res.json({
       success: true,
@@ -239,7 +205,7 @@ export const updateUserFoodPlan = async (req: Request, res: Response): Promise<v
     });
 
   } catch (error) {
-    console.error('💥 [updateUserFoodPlan] Error:', error);
+    console.error('Error updating user food plan:', error);
     res.status(500).json({ 
       success: false, 
       error: 'เกิดข้อผิดพลาดในการอัพเดทแผนอาหาร' 

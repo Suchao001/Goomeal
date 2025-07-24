@@ -98,7 +98,7 @@ export const getMealPlanWithDetails = async (req: Request, res: Response): Promi
         const meals = mealTypeGroups[mealType];
         const mealData: any = {
           time: meals[0]?.meal_time || "00:00",
-          name: meals[0]?.meal_name || `อาหารมื้อ${mealType}`,
+          name: meals[0]?.meal_type || `อาหารมื้อ${mealType}`,
           items: [],
           totalCal: 0
         };
