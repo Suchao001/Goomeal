@@ -17,6 +17,7 @@ import { EatingStyleSettingsScreen, NotificationSettingsScreen, RecordSettingsSc
 import OptionPlanScreen from './screens/OptionPlanScreen';
 import SelectGlobalPlan from './screens/SelectGlobalPlan';
 import SeeMoreGlobalPlans from './screens/SeeMoreGlobalPlans';
+import GlobalPlanMeal from './screens/GlobalPlanMeal';
 
 const Stack = createNativeStackNavigator();
 export default function AppStack() {
@@ -61,6 +62,7 @@ export default function AppStack() {
       <Stack.Screen name="OptionPlan" component={OptionPlanScreen} />
       <Stack.Screen name="SelectGlobalPlan" component={SelectGlobalPlan} />
       <Stack.Screen name="SeeMoreGlobalPlans" component={SeeMoreGlobalPlans} />
+      <Stack.Screen name="GlobalPlanMeal" component={GlobalPlanMeal} />
     </Stack.Navigator>
   );
 }
