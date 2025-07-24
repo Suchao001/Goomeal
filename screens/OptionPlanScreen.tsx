@@ -28,7 +28,7 @@ const OptionPlanScreen = () => {
       title: 'การสร้างแผนการกินจากตัวเลือกที่มี',
       subtitle: 'ทางระบบจะวิเคราะห์สร้างแผนการกินตามข้อมูลที่ท่านเลือกผ่านตัวเลือก',
       icon: 'layers-outline',
-      to: 'AddNewFood'
+      to: 'SelectGlobalPlan'
     },
     {
     

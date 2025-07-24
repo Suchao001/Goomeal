@@ -9,6 +9,8 @@ export * from './reports';
 
 // Export individual screens
 export { default as MenuScreen } from './MenuScreen';
+export { default as OptionPlanScreen } from './OptionPlanScreen';
+export { default as SelectGlobalPlan } from './SelectGlobalPlan';
 
 // FirstForm screens
 export { default as PersonalSetupScreen } from './firstForm/PersonalSetupScreen';

@@ -44,4 +44,7 @@ export type RootStackParamList = {
     } | undefined;
     AddNewFood: undefined;
 
+    OptionPlan: undefined;
+    SelectGlobalPlan: undefined;
+
   };
