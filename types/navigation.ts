@@ -52,5 +52,6 @@ export type RootStackParamList = {
     SelectGlobalPlan: undefined;
     SeeMoreGlobalPlans: undefined;
     GlobalPlanMeal: { planId: number };
+    GlobalPlanDayDetail: { planId: number; day: number };
 
   };

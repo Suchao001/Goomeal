@@ -18,6 +18,7 @@ import OptionPlanScreen from './screens/OptionPlanScreen';
 import SelectGlobalPlan from './screens/SelectGlobalPlan';
 import SeeMoreGlobalPlans from './screens/SeeMoreGlobalPlans';
 import GlobalPlanMeal from './screens/GlobalPlanMeal';
+import GlobalPlanDayDetail from './screens/GlobalPlanDayDetail';
 
 const Stack = createNativeStackNavigator();
 export default function AppStack() {
@@ -63,6 +64,7 @@ export default function AppStack() {
       <Stack.Screen name="SelectGlobalPlan" component={SelectGlobalPlan} />
       <Stack.Screen name="SeeMoreGlobalPlans" component={SeeMoreGlobalPlans} />
       <Stack.Screen name="GlobalPlanMeal" component={GlobalPlanMeal} />
+      <Stack.Screen name="GlobalPlanDayDetail" component={GlobalPlanDayDetail} />
     </Stack.Navigator>
   );
 }

@@ -27,6 +27,7 @@ const GlobalPlanMeal = () => {
 
   useEffect(() => {
     fetchMealPlanDetails();
+    console.log('page global plan meal');
   }, [planId]);
 
   const fetchMealPlanDetails = async () => {
@@ -106,7 +107,7 @@ const GlobalPlanMeal = () => {
 
   const handleDayPress = (day: number) => {
     console.log('View details for day:', day);
-    // Navigate to daily meal details
+    navigation.navigate('GlobalPlanDayDetail', { planId, day });
   };
 
   const handleSavePlan = async () => {
