@@ -66,10 +66,10 @@ const Home = () => {
     if (imageUrl && imageUrl.trim() !== '') {
       // สร้าง URL รูปภาพจาก BLOG_URL + public/ + item.img
       const fullImageUrl = `${blog_url}/${imageUrl}`;
-      console.log('Article image URL:', fullImageUrl);
+    
       return { uri: fullImageUrl };
     }
-    console.log('Using fallback image for article');
+   
     // Use different fallback images
     const fallbackImages = [
       require('../../assets/images/Foodtype_1.png'),

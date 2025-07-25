@@ -142,6 +142,7 @@ const MealPlanEditScreen = () => {
     index: 0,
     routes: [{ name: 'PlanSelection' }],
   });
+  
   }, [clearEditSession, navigation]);
   
   // Handle save plan

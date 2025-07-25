@@ -16,6 +16,9 @@ export type RootStackParamList = {
     PlanSelection: undefined;
     Menu: undefined;
 
+    EditProfile: undefined;
+    ProfileDetail: undefined;
+
     Home: undefined;
     MealPlan: {
         selectedFood?: any;

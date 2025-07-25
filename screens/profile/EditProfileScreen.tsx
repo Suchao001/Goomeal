@@ -1,25 +1,83 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/navigation';
 import { useAuth } from '../../AuthContext';
-import { apiClient, handleApiError } from '../../utils/apiClient';
+import { apiClient } from '../../utils/apiClient';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const EditProfileScreen = () => {
   const navigation = useNavigation<NavigationProp>();
-  const { user } = useAuth();
+  const { user, fetchUserProfile, loading: authLoading } = useAuth();
   
   const [height, setHeight] = useState('180');
   const [weight, setWeight] = useState('75');
   const [age, setAge] = useState('20');
   const [gender, setGender] = useState('ชาย');
-  const [username, setUsername] = useState('suchao');
+  const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Initialize form with user data
+  useEffect(() => {
+    if (user) {
+   
+      // Convert string values to proper format
+      const userHeight = typeof user.height === 'string' ? parseFloat(user.height) : user.height;
+      const userWeight = typeof user.weight === 'string' ? parseFloat(user.weight) : user.weight;
+      const userAge = typeof user.age === 'string' ? parseInt(user.age) : user.age;
+      
+      setUsername(user.username || '');
+      setHeight(userHeight ? Math.round(userHeight).toString() : '180');
+      setWeight(userWeight ? Math.round(userWeight).toString() : '75');
+      setAge(userAge ? userAge.toString() : '20');
+      setGender(convertGenderToThai(user.gender || 'other'));
+          
+     
+    } else {
+      console.log('⚠️ [EditProfile] No user data available in AuthContext');
+    }
+  }, [user]);
+
+  // Handle API errors
+  const handleApiError = (error: any) => {
+    console.error('API Error:', error);
+    
+    if (error.response?.status === 401) {
+      return {
+        title: 'หมดเวลาเซสชัน',
+        message: 'กรุณาเข้าสู่ระบบใหม่',
+        shouldLogout: true
+      };
+    } else if (error.response?.status === 403) {
+      return {
+        title: 'ไม่มีสิทธิ์',
+        message: 'คุณไม่มีสิทธิ์ในการดำเนินการนี้',
+        shouldLogout: false
+      };
+    } else if (error.response?.status >= 500) {
+      return {
+        title: 'ข้อผิดพลาดของเซิร์ฟเวอร์',
+        message: 'กรุณาลองใหม่อีกครั้งในภายหลัง',
+        shouldLogout: false
+      };
+    } else if (!error.response) {
+      return {
+        title: 'ไม่สามารถเชื่อมต่อได้',
+        message: 'กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต',
+        shouldLogout: false
+      };
+    } else {
+      return {
+        title: 'ข้อผิดพลาด',
+        message: error.response?.data?.message || 'เกิดข้อผิดพลาดที่ไม่คาดคิด',
+        shouldLogout: false
+      };
+    }
+  };
 
   // Check if user is logged in
   const checkAuthStatus = async () => {
@@ -51,6 +109,7 @@ const EditProfileScreen = () => {
   };
 
   const convertGenderToThai = (engGender: string) => {
+  
     switch (engGender) {
       case 'male': return 'ชาย';
       case 'female': return 'หญิง';
@@ -59,35 +118,31 @@ const EditProfileScreen = () => {
     }
   };
 
-  // Fetch user profile data
+  // Fetch user profile data using AuthContext
   const fetchProfile = async () => {
     try {
       setLoading(true);
       
-      console.log('� Fetching user profile...');
-      
-      const response = await apiClient.get('/user/profile');
-      
-      console.log('✅ API Response:', response.data);
+      const userData = await fetchUserProfile();
 
-      if (response.data.success) {
-        const userData = response.data.user;
+      if (userData) {
+        // Convert string values to proper format
+        const userHeight = typeof userData.height === 'string' ? parseFloat(userData.height) : userData.height;
+        const userWeight = typeof userData.weight === 'string' ? parseFloat(userData.weight) : userData.weight;
+        const userAge = typeof userData.age === 'string' ? parseInt(userData.age) : userData.age;
+        
         setUsername(userData.username || 'suchao');
-        setHeight(userData.height?.toString() || '180');
-        setWeight(userData.weight?.toString() || '75');
-        setAge(userData.age?.toString() || '20');
+        setHeight(userHeight ? Math.round(userHeight).toString() : '180');
+        setWeight(userWeight ? Math.round(userWeight).toString() : '75');
+        setAge(userAge ? userAge.toString() : '20');
         setGender(convertGenderToThai(userData.gender || 'other'));
         
-        console.log('📋 Profile data loaded:', {
-          username: userData.username,
-          height: userData.height,
-          weight: userData.weight,
-          age: userData.age,
-          gender: userData.gender
-        });
+        
+      } else {
+        console.log('⚠️ [EditProfile] No user data returned from fetchUserProfile');
       }
     } catch (error: any) {
-      console.error('❌ Error fetching profile:', error);
+      console.error('❌ [EditProfile] Error fetching profile:', error);
       
       const errorInfo = handleApiError(error);
       
@@ -99,7 +154,6 @@ const EditProfileScreen = () => {
             text: 'ตกลง', 
             onPress: () => {
               if (errorInfo.shouldLogout) {
-                apiClient.logout();
                 navigation.navigate('Login');
               }
             }
@@ -122,6 +176,28 @@ const EditProfileScreen = () => {
     initializeProfile();
   }, []);
 
+  // Listen for navigation focus to refresh profile
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      console.log('🔄 [EditProfile] Screen focused, refreshing profile...');
+      if (user) {
+        fetchProfile();
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation, user]);
+
+  // Show loading if auth is loading
+  if (authLoading) {
+    return (
+      <View className="flex-1 bg-gray-100 items-center justify-center">
+        <ActivityIndicator size="large" color="#f59e0b" />
+        <Text className="text-gray-600 mt-4 text-lg">กำลังตรวจสอบการเข้าสู่ระบบ...</Text>
+      </View>
+    );
+  }
+
   const handleSave = async () => {
     try {
       setLoading(true);
@@ -133,15 +209,20 @@ const EditProfileScreen = () => {
         gender: convertGenderToEng(gender)
       };
 
-      console.log('📝 Updating profile data:', updateData);
+      
 
       const response = await apiClient.put('/user/update-personal-data', updateData);
 
-      console.log('✅ Update Response:', response.data);
 
       if (response.data.success) {
+        // Refresh user profile in AuthContext
+        await fetchUserProfile();
+        
         Alert.alert('สำเร็จ', 'บันทึกข้อมูลเรียบร้อยแล้ว', [
-          { text: 'ตกลง', onPress: () => navigation.goBack() }
+          { text: 'ตกลง', onPress: () => navigation.reset({
+            index: 0,
+            routes: [{ name: 'ProfileDetail' }]
+          }) }
         ]);
       } else {
         Alert.alert('ข้อผิดพลาด', response.data.message || 'ไม่สามารถบันทึกข้อมูลได้');
@@ -176,7 +257,10 @@ const EditProfileScreen = () => {
       <View className="flex-row items-center justify-between px-4 pt-12 pb-4 bg-white">
         <TouchableOpacity 
           className="w-10 h-10 rounded-full items-center justify-center"
-          onPress={() => navigation.goBack()}
+          onPress={() => navigation.reset({
+            index: 0,
+            routes: [{ name: 'ProfileDetail' }]
+          })}
         >
           <Icon name="arrow-back" size={24} color="#fbbf24" />
         </TouchableOpacity>

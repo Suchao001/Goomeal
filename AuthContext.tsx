@@ -8,6 +8,21 @@ interface User {
   email?: string;
   name?: string;
   username?: string;
+  age?: number;
+  weight?: number;
+  last_updated_weight?: number;
+  height?: number;
+  gender?: 'male' | 'female' | 'other';
+  body_fat?: 'high' | 'low' | 'normal' | "don't know";
+  target_goal?: 'decrease' | 'increase' | 'healthy';
+  target_weight?: number;
+  activity_level?: 'low' | 'moderate' | 'high' | 'very high';
+  additional_requirements?: string;
+  dietary_restrictions?: string;
+  eating_type?: 'vegan' | 'vegetarian' | 'omnivore' | 'keto' | 'other';
+  account_status?: 'active' | 'suspended' | 'deactivated';
+  suspend_reason?: string;
+  created_date?: string;
 }
 
 interface AuthContextType {
@@ -56,28 +71,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchUserProfile = async (): Promise<User | null> => {
     try {
+      console.log('🔄 [AuthContext] Fetching user profile from API...');
       const response = await apiClient.get('/user/profile');
 
       if (response.data.success) {
         const userData = response.data.user;
+        console.log('✅ [AuthContext] Profile fetched successfully:', userData);
         // Update stored user data
         await SecureStore.setItemAsync('user', JSON.stringify(userData));
         setUser(userData);
         return userData;
       }
+      console.log('❌ [AuthContext] Profile fetch unsuccessful');
       return null;
     } catch (error) {
-      console.error('Fetch user profile error:', error);
+      console.error('❌ [AuthContext] Fetch user profile error:', error);
       // Fallback to stored user data if API fails
       try {
         const userString = await SecureStore.getItemAsync('user');
         if (userString) {
           const userData = JSON.parse(userString);
+          console.log('📱 [AuthContext] Using cached user data:', userData);
           setUser(userData);
           return userData;
         }
       } catch (fallbackError) {
-        console.error('Fallback user data error:', fallbackError);
+        console.error('❌ [AuthContext] Fallback user data error:', fallbackError);
       }
       return null;
     }
