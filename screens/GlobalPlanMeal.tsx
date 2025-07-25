@@ -39,32 +39,55 @@ const GlobalPlanMeal = () => {
       
       if (response.data.success) {
         const { planInfo, mealPlan } = response.data.data;
+        
+        console.log('🍽️ Plan Info:', planInfo);
+        console.log('🗓️ Meal Plan Keys:', Object.keys(mealPlan));
+        console.log('🗓️ Full Meal Plan:', mealPlan);
+        
         setPlanInfo(planInfo);
         setOriginalMealPlan(mealPlan); // Store original for saving
         
         // Transform API data to component format
         const transformedData = Object.keys(mealPlan).map(dayKey => {
           const dayData = mealPlan[dayKey];
+          // Day key is already a number string like "1", "2"
           const dayNumber = parseInt(dayKey);
           
+          console.log(`🔍 Processing day ${dayKey} -> day number: ${dayNumber}`);
+          console.log('🍽️ Day data structure:', dayData);
+          
           // Calculate nutrition totals for the day
-          let totalCalories = 0;
+          let totalCalories = dayData.totalCal || 0;
           let totalProtein = 0;
           let totalCarbs = 0;
           let totalFat = 0;
           
           const meals: any[] = [];
           
-          // Process each meal type
+          // Process each meal type - handle different case variations
           Object.keys(dayData.meals).forEach(mealType => {
             const mealData = dayData.meals[mealType];
-            totalCalories += mealData.totalCal;
+            console.log(`🥘 Processing meal type: ${mealType}`, mealData);
+            
+            // Normalize meal type name to lowercase
+            const normalizedMealType = mealType.toLowerCase();
+            
+            // Handle different data structures - could be array or object
+            let mealItems = [];
+            if (Array.isArray(mealData)) {
+              mealItems = mealData;
+            } else if (mealData.items && Array.isArray(mealData.items)) {
+              mealItems = mealData.items;
+            } else if (mealData && typeof mealData === 'object') {
+              // If it's an object, try to extract items or treat as single item
+              mealItems = [mealData];
+            }
             
             // Add individual meal items
-            mealData.items.forEach((item: any) => {
-              totalProtein += item.protein;
-              totalCarbs += item.carb;
-              totalFat += item.fat;
+            mealItems.forEach((item: any) => {
+              if (item.protein) totalProtein += item.protein;
+              if (item.carb) totalCarbs += item.carb;
+              if (item.fat) totalFat += item.fat;
               
               // Map meal type to display format
               const mealTypeDisplay = {
@@ -74,9 +97,9 @@ const GlobalPlanMeal = () => {
               };
               
               meals.push({
-                type: mealType,
-                icon: mealTypeDisplay[mealType as keyof typeof mealTypeDisplay]?.icon || 'restaurant-outline',
-                name: item.name
+                type: normalizedMealType,
+                icon: mealTypeDisplay[normalizedMealType as keyof typeof mealTypeDisplay]?.icon || 'restaurant-outline',
+                name: item.name || item.food_name || 'ไม่ระบุชื่อ'
               });
             });
           });
@@ -106,8 +129,70 @@ const GlobalPlanMeal = () => {
   };
 
   const handleDayPress = (day: number) => {
-    console.log('View details for day:', day);
-    navigation.navigate('GlobalPlanDayDetail', { planId, day });
+    console.log('🎯 View details for day:', day);
+    
+    // Find the day data
+    const dayData = mealPlanData.find(d => d.day === day);
+    
+    // Use the correct key format - just the day number as string
+    const dayKey = day.toString();
+    const originalDayData = originalMealPlan?.[dayKey];
+    
+    console.log('📊 Day data found:', dayData);
+    console.log('📊 Original day data for key', dayKey, ':', originalDayData);
+    console.log('📊 Available keys in originalMealPlan:', originalMealPlan ? Object.keys(originalMealPlan) : 'none');
+    
+    if (dayData && originalDayData) {
+      console.log('✅ Navigating to GlobalPlanDayDetail with real data');
+      navigation.navigate('GlobalPlanDayDetail', { 
+        planId, 
+        day,
+        dayData,
+        originalDayData,
+        planInfo,
+        maxDays: mealPlanData.length
+      });
+    } else {
+      console.log('❌ Missing data - dayData:', !!dayData, 'originalDayData:', !!originalDayData);
+      
+      // Fallback: create minimal data structure
+      if (dayData) {
+        console.log('⚠️ Using fallback data structure');
+        const fallbackOriginalData = {
+          meals: {
+            breakfast: { items: [] as any[] },
+            lunch: { items: [] as any[] },
+            dinner: { items: [] as any[] }
+          }
+        };
+        
+        // Populate with available meal data
+        dayData.meals.forEach((meal: any) => {
+          const mealType = meal.type.toLowerCase();
+          if (fallbackOriginalData.meals[mealType as keyof typeof fallbackOriginalData.meals]) {
+            fallbackOriginalData.meals[mealType as keyof typeof fallbackOriginalData.meals].items.push({
+              name: meal.name,
+              calories: 0,
+              protein: 0,
+              carb: 0,
+              fat: 0,
+              image: null
+            });
+          }
+        });
+        
+        navigation.navigate('GlobalPlanDayDetail', { 
+          planId, 
+          day,
+          dayData,
+          originalDayData: fallbackOriginalData,
+          planInfo,
+          maxDays: mealPlanData.length
+        });
+      } else {
+        alert(`ไม่พบข้อมูลสำหรับวันที่ ${day}`);
+      }
+    }
   };
 
   const handleSavePlan = async () => {
