@@ -2,13 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTypedNavigation } from '../hooks/Navigation';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, RouteProp } from '@react-navigation/native';
 import { apiClient } from '../utils/apiClient';
+import { RootStackParamList } from '../types/navigation';
+
+type GlobalPlanMealRouteProp = RouteProp<RootStackParamList, 'GlobalPlanMeal'>;
 
 const GlobalPlanMeal = () => {
   const navigation = useTypedNavigation();
-  const route = useRoute();
-  const { planId } = route.params as { planId: number };
+  const route = useRoute<GlobalPlanMealRouteProp>();
+  
+  // Now we can safely access planId with proper typing
+  const { planId } = route.params;
+  
+  console.log('🎯 [GlobalPlanMeal] Route params:', route.params);
+  console.log('🎯 [GlobalPlanMeal] Extracted planId:', planId);
   
   const [mealPlanData, setMealPlanData] = useState<any[]>([]);
   const [planInfo, setPlanInfo] = useState<any>(null);
