@@ -113,7 +113,7 @@ export const sendPasswordResetEmail = async (email: string) => {
     }
 };
 
-// Verify reset token
+
 export const verifyResetToken = async (token: string) => {
     try {
         const jwtSecret = process.env.JWT_SECRET;
@@ -164,7 +164,7 @@ export const verifyResetToken = async (token: string) => {
     }
 };
 
-// Verify reset token and update password
+
 export const resetPassword = async (token: string, newPassword: string) => {
     try {
         const jwtSecret = process.env.JWT_SECRET;

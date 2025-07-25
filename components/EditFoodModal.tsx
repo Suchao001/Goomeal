@@ -180,31 +180,21 @@ export const EditFoodModal: React.FC<EditFoodModalProps> = ({
             </View>
           </View>
 
-          {/* Action Buttons - Modern Button Group Style */}
-          <View className="bg-white rounded-2xl overflow-hidden shadow-lg mt-8 mb-4 border border-gray-100">
-            <View className="flex-row">
-              <TouchableOpacity
-                className="flex-1 bg-gray-50 hover:bg-gray-100 py-4 px-6 items-center justify-center border-r border-gray-200"
-                onPress={handleCancel}
-                activeOpacity={0.7}
-              >
-                <View className="flex-row items-center">
-                  <Icon name="close-outline" size={20} color="#6b7280" />
-                  <Text className="text-gray-700 font-semibold text-base ml-2">ยกเลิก</Text>
-                </View>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                className="flex-1 bg-primary hover:bg-primary-dark py-4 px-6 items-center justify-center"
-                onPress={handleSave}
-                activeOpacity={0.8}
-              >
-                <View className="flex-row items-center">
-                  <Icon name="checkmark-outline" size={20} color="white" />
-                  <Text className="text-white font-semibold text-base ml-2">บันทึก</Text>
-                </View>
-              </TouchableOpacity>
-            </View>
+          {/* Action Buttons */}
+          <View className="flex-row space-x-3 mt-6">
+            <TouchableOpacity
+              className="flex-1 bg-gray-200 rounded-lg py-4 items-center justify-center"
+              onPress={handleCancel}
+            >
+              <Text className="text-gray-700 font-medium text-base">ยกเลิก</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              className="flex-1 bg-primary rounded-lg py-4 items-center justify-center"
+              onPress={handleSave}
+            >
+              <Text className="text-white font-medium text-base">บันทึกการแก้ไข</Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </SafeAreaView>

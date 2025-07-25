@@ -8,10 +8,7 @@ import Menu from '../material/Menu';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-/**
- * ProfileDetailScreen Component
- * หน้าข้อมูลโปรไฟล์ - แสดงข้อมูลส่วนตัวและ BMI
- */
+
 const ProfileDetailScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const bmiValue = 23.15;
