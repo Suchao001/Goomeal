@@ -46,7 +46,8 @@ const GlobalPlanDayDetail = () => {
   }, [initialOriginalData]);
 
   useEffect(() => {
-    // When selectedDay changes, navigate back to GlobalPlanMeal to get new data
+   
+    
     if (selectedDay !== initialDay) {
       // Go back to meal plan and let user select the new day
       navigation.goBack();
@@ -62,41 +63,66 @@ const GlobalPlanDayDetail = () => {
       dinner: []
     };
 
-    // Transform breakfast data
-    if (initialOriginalData.meals.breakfast) {
-      transformedMealData.breakfast = initialOriginalData.meals.breakfast.items.map((item: any) => ({
-        name: item.name,
-        calories: item.calories || 0,
-        protein: item.protein || 0,
-        carb: item.carb || 0,
-        fat: item.fat || 0,
-        image: item.image
-      }));
-    }
+    // Helper function to categorize meal types
+    const categorizeMealType = (mealTypeName: string) => {
+      const lowerName = mealTypeName.toLowerCase();
+      
+      if (lowerName.includes('breakfast') || lowerName.includes('เช้า')) {
+        return 'breakfast';
+      } else if (lowerName.includes('lunch') || lowerName.includes('กลางวัน')) {
+        return 'lunch';
+      } else if (lowerName.includes('dinner') || lowerName.includes('เย็น')) {
+        return 'dinner';
+      } else {
+        // For custom meal names, default to lunch category for display
+        return 'lunch';
+      }
+    };
 
-    // Transform lunch data
-    if (initialOriginalData.meals.lunch) {
-      transformedMealData.lunch = initialOriginalData.meals.lunch.items.map((item: any) => ({
-        name: item.name,
-        calories: item.calories || 0,
-        protein: item.protein || 0,
-        carb: item.carb || 0,
-        fat: item.fat || 0,
-        image: item.image
-      }));
-    }
-
-    // Transform dinner data
-    if (initialOriginalData.meals.dinner) {
-      transformedMealData.dinner = initialOriginalData.meals.dinner.items.map((item: any) => ({
-        name: item.name,
-        calories: item.calories || 0,
-        protein: item.protein || 0,
-        carb: item.carb || 0,
-        fat: item.fat || 0,
-        image: item.image
-      }));
-    }
+    // Transform all meal data
+    Object.keys(initialOriginalData.meals).forEach(mealType => {
+      const mealData = initialOriginalData.meals[mealType];
+      const category = categorizeMealType(mealType);
+      
+      // Handle different data structures
+      let mealItems = [];
+      
+      if (Array.isArray(mealData)) {
+        // If mealData is already an array
+        mealItems = mealData;
+      } else if (mealData && typeof mealData === 'object') {
+        // If mealData is an object, check for items property or treat as single item
+        if (mealData.items && Array.isArray(mealData.items)) {
+          mealItems = mealData.items;
+        } else if (mealData.name || mealData.food_name) {
+          // Single meal item
+          mealItems = [mealData];
+        } else {
+          // Object with multiple properties - might be the meal items themselves
+          // Try to extract array values or convert object to array
+          const objectValues = Object.values(mealData);
+          if (objectValues.length > 0 && typeof objectValues[0] === 'object') {
+            mealItems = objectValues;
+          }
+        }
+      }
+      
+      // Transform items and add to appropriate category
+      const transformedItems = mealItems.map((item: any, index: number) => {
+        const transformedItem = {
+          name: item.name || item.food_name || `ไม่ระบุชื่อ ${index + 1}`,
+          calories: parseFloat(item.calories) || parseFloat(item.cal) || 0,
+          protein: parseFloat(item.protein) || 0,
+          carb: parseFloat(item.carb) || parseFloat(item.carbs) || 0,
+          fat: parseFloat(item.fat) || 0,
+          image: item.image || item.img // Handle both 'image' and 'img' field names
+        };
+        
+        return transformedItem;
+      });
+      
+      transformedMealData[category as keyof DayMealData].push(...transformedItems);
+    });
 
     setMealData(transformedMealData);
   };
@@ -118,9 +144,13 @@ const GlobalPlanDayDetail = () => {
     if (!imagePath) {
       return 'https://via.placeholder.com/60x60/E5E7EB/6B7280?text=Food';
     }
+    
+    // If it's already a full URL (starts with http/https), use it as is
     if (imagePath.startsWith('http')) {
       return imagePath;
     }
+    
+    // Otherwise, build URL with seconde_url
     return `${seconde_url}${imagePath}`;
   };
 
