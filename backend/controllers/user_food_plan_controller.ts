@@ -358,8 +358,7 @@ export const getCurrentFoodPlan = async (req: Request, res: Response): Promise<v
         'ufp.name',
         'ufp.description',
         'ufp.plan as plan_data',
-        'ufp.img',
-        'ufp.created_at as plan_created_at'
+        'ufp.img'
       )
       .first();
 
