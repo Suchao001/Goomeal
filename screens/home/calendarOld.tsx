@@ -75,9 +75,7 @@ const CalendarScreen = () => {
             onPress={() => setShowDatePicker(true)}
           >
             <Icon name="calendar" size={20} color="#ffff" />
-            <View className="ml-2">
-              <Text className="text-sm font-medium text-white">{dayName}</Text>
-            </View>
+            
           </TouchableOpacity>
           
           {/* Kebab Menu */}

@@ -13,6 +13,12 @@ import {
   generateArticleUrl,
   Article 
 } from '../../utils/articleApi';
+import { 
+  fetchTodayMeals, 
+  getTodayNutritionSummary,
+  TodayMealData,
+  TodayMealItem 
+} from '../../utils/todayMealApi';
 import { blog_url } from '../../config'; 
 
 const Home = () => {
@@ -20,6 +26,10 @@ const Home = () => {
   const {logout,reloadUser} = useAuth();
   const [blogArticles, setBlogArticles] = useState<Article[]>([]);
   const [loadingArticles, setLoadingArticles] = useState(false);
+  
+  // Today's meals state
+  const [todayMealData, setTodayMealData] = useState<TodayMealData | null>(null);
+  const [loadingTodayMeals, setLoadingTodayMeals] = useState(false);
 
   // Default image fallback
   const defaultImage = require('../../assets/images/Foodtype_1.png');
@@ -27,7 +37,23 @@ const Home = () => {
   // Load articles on component mount
   useEffect(() => {
     loadBlogArticles();
+    loadTodayMeals();
   }, []);
+
+  // Load today's meals from API
+  const loadTodayMeals = async () => {
+    try {
+      setLoadingTodayMeals(true);
+      const todayMeals = await fetchTodayMeals();
+      setTodayMealData(todayMeals);
+      console.log('🍽️ [HomeScreen] Today\'s meals loaded:', todayMeals);
+    } catch (error) {
+      console.error('❌ [HomeScreen] Error loading today\'s meals:', error);
+      setTodayMealData(null);
+    } finally {
+      setLoadingTodayMeals(false);
+    }
+  };
 
   // Load blog articles from API
   const loadBlogArticles = async () => {
@@ -96,68 +122,114 @@ const Home = () => {
     }
   };
 
-  // Mock data for calories and nutrition
-  const caloriesData = {
-    consumed: 800,
-    target: 1500,
-    protein: { current: 45, target: 75, unit: 'g', color: '#ef4444', icon: 'fitness' },
-    carbs: { current: 120, target: 200, unit: 'g', color: '#22c55e', icon: 'leaf' },
-    fat: { current: 30, target: 60, unit: 'g', color: '#f59e0b', icon: 'water' }
+  // Mock data for calories and nutrition (or use real data from API)
+  const getCaloriesData = () => {
+    if (todayMealData) {
+      const nutritionSummary = getTodayNutritionSummary(todayMealData);
+      return {
+        consumed: nutritionSummary.calories,
+        target: 1500, // This could come from user profile
+        protein: { current: nutritionSummary.protein, target: 75, unit: 'g', color: '#ef4444', icon: 'fitness' },
+        carbs: { current: nutritionSummary.carbs, target: 200, unit: 'g', color: '#22c55e', icon: 'leaf' },
+        fat: { current: nutritionSummary.fat, target: 60, unit: 'g', color: '#f59e0b', icon: 'water' }
+      };
+    }
+    
+    // Fallback to mock data
+    return {
+      consumed: 800,
+      target: 1500,
+      protein: { current: 45, target: 75, unit: 'g', color: '#ef4444', icon: 'fitness' },
+      carbs: { current: 120, target: 200, unit: 'g', color: '#22c55e', icon: 'leaf' },
+      fat: { current: 30, target: 60, unit: 'g', color: '#f59e0b', icon: 'water' }
+    };
   };
 
-  // Mock data for today's meals
-  const todayMeals: MealData[] = [
-    {
-      id: '1',
-      mealType: 'breakfast',
-      foodName: 'ข้าวโอ๊ตกับผลไม้',
-      calories: 250,
-      image: require('../../assets/images/Foodtype_1.png'),
-      time: '07:30'
-    },
-    {
-      id: '2',
-      mealType: 'breakfast',
-      foodName: 'กาแฟดำ',
-      calories: 5,
-      time: '07:35'
-    },
-    {
-      id: '3',
-      mealType: 'lunch',
-      foodName: 'สลัดไก่ย่าง',
-      calories: 320,
-      image: require('../../assets/images/Foodtype_3.png'),
-      time: '12:15'
-    },
-    {
-      id: '4',
-      mealType: 'snack',
-      foodName: 'โยเกิร์ตกรีก',
-      calories: 150,
-      time: '15:30'
-    },
-    {
-      id: '5',
-      mealType: 'dinner',
-      foodName: 'ปลาย่างกับผักโขม',
-      calories: 75,
-      image: require('../../assets/images/Foodtype_4.png'),
-      time: '19:00'
+  // Transform API data to component format
+  const getTodayMealsForComponent = (): MealData[] => {
+    if (!todayMealData) {
+      // Fallback to mock data
+      return [
+        {
+          id: '1',
+          mealType: 'breakfast',
+          foodName: 'ข้าวโอ๊ตกับผลไม้',
+          calories: 250,
+          image: require('../../assets/images/Foodtype_1.png'),
+          time: '07:30'
+        },
+        {
+          id: '2',
+          mealType: 'lunch',
+          foodName: 'สลัดไก่ย่าง',
+          calories: 320,
+          image: require('../../assets/images/Foodtype_3.png'),
+          time: '12:15'
+        },
+        {
+          id: '3',
+          mealType: 'dinner',
+          foodName: 'ปลาย่างกับผักโขม',
+          calories: 275,
+          image: require('../../assets/images/Foodtype_4.png'),
+          time: '19:00'
+        }
+      ];
     }
-  ];
+
+    const meals: MealData[] = [];
+    let mealIdCounter = 1;
+
+    // Convert breakfast meals
+    todayMealData.breakfast.forEach((meal, index) => {
+      meals.push({
+        id: `breakfast-${mealIdCounter++}`,
+        mealType: 'breakfast',
+        foodName: meal.name,
+        calories: meal.calories,
+        image: meal.image ? { uri: meal.image } : require('../../assets/images/Foodtype_1.png'),
+        time: '07:30' // Could be enhanced to use actual time
+      });
+    });
+
+    // Convert lunch meals
+    todayMealData.lunch.forEach((meal, index) => {
+      meals.push({
+        id: `lunch-${mealIdCounter++}`,
+        mealType: 'lunch',
+        foodName: meal.name,
+        calories: meal.calories,
+        image: meal.image ? { uri: meal.image } : require('../../assets/images/Foodtype_3.png'),
+        time: '12:15'
+      });
+    });
+
+    // Convert dinner meals
+    todayMealData.dinner.forEach((meal, index) => {
+      meals.push({
+        id: `dinner-${mealIdCounter++}`,
+        mealType: 'dinner',
+        foodName: meal.name,
+        calories: meal.calories,
+        image: meal.image ? { uri: meal.image } : require('../../assets/images/Foodtype_4.png'),
+        time: '19:00'
+      });
+    });
+
+    return meals;
+  };
 
   // Handlers for meal actions
   const handleAddMeal = (mealType: MealData['mealType']) => {
     console.log('Add meal for:', mealType);
     // Navigate to add meal screen or show modal
-    navigation.navigate('RecordFood');
+    // navigation.navigate('RecordFood');
   };
 
   const handleEditMeal = (meal: MealData) => {
     console.log('Edit meal:', meal);
     // Navigate to edit meal screen
-    navigation.navigate('RecordFood');
+    // navigation.navigate('RecordFood');
   };
 
   // Mock data for recommended meals
@@ -186,20 +258,32 @@ const Home = () => {
         </View>
 
         {/* Calories Summary */}
-        <CaloriesSummary
-          caloriesConsumed={caloriesData.consumed}
-          caloriesTarget={caloriesData.target}
-          protein={caloriesData.protein}
-          carbs={caloriesData.carbs}
-          fat={caloriesData.fat}
-        />
+        {loadingTodayMeals ? (
+          <View className="w-[90%] bg-white rounded-lg shadow-md p-6 mt-4 mx-auto items-center">
+            <Text className="text-gray-500">กำลังโหลดข้อมูลโภชนาการ...</Text>
+          </View>
+        ) : (
+          <CaloriesSummary
+            caloriesConsumed={getCaloriesData().consumed}
+            caloriesTarget={getCaloriesData().target}
+            protein={getCaloriesData().protein}
+            carbs={getCaloriesData().carbs}
+            fat={getCaloriesData().fat}
+          />
+        )}
 
         {/* Today's Meals */}
-        <TodayMeals
-          meals={todayMeals}
-          onAddMeal={handleAddMeal}
-          onEditMeal={handleEditMeal}
-        />
+        {loadingTodayMeals ? (
+          <View className="w-[90%] bg-white rounded-lg shadow-md p-6 mt-4 mx-auto items-center">
+            <Text className="text-gray-500">กำลังโหลดเมนูอาหารวันนี้...</Text>
+          </View>
+        ) : (
+          <TodayMeals
+            meals={getTodayMealsForComponent()}
+            onAddMeal={handleAddMeal}
+            onEditMeal={handleEditMeal}
+          />
+        )}
         
         <View className="w-[90%] bg-white rounded-lg shadow-md p-6 mt-4 mx-auto items-center">
           <View className="flex-row items-center mb-4">
@@ -221,7 +305,7 @@ const Home = () => {
         <View className="mt-6">          
             <View className="flex-row justify-between items-center px-4 mb-4">
                 <Text className="text-xl font-bold text-gray-800">บทความการกิน</Text>
-                <TouchableOpacity onPress={() => navigation.navigate('EatingBlog')}>
+                <TouchableOpacity onPress={() => console.log('Navigate to EatingBlog')}>
                 <Text className="text-gray-500 text-sm">ดูเพิ่มเติม</Text>
                 </TouchableOpacity>
             </View>
@@ -297,7 +381,7 @@ const Home = () => {
             ))}           
             <TouchableOpacity 
               className="bg-primary rounded-lg p-4 flex-row items-center justify-center mt-2"
-              onPress={() => navigation.navigate('FoodMenu')}
+              onPress={() => console.log('Navigate to FoodMenu')}
             >
               <Icon name="sparkles" size={24} color="white" />
               <Text className="text-white font-bold text-lg ml-2">ขอเมนูอาหาร</Text>

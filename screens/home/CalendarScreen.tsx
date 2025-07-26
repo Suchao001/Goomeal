@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image, SafeAreaView, Modal, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, Image, SafeAreaView, Modal, ScrollView, FlatList } from 'react-native';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Menu from '../material/Menu';
 import { apiClient } from '../../utils/apiClient';
-import { seconde_url } from '../../config';
+import { seconde_url, base_url } from '../../config';
 
 // Interface for meal items (copied from GlobalPlanDayDetail)
 interface MealItem {
@@ -31,6 +31,8 @@ const CalendarScreen = () => {
 
   // State for selected date
   const [selectedDate, setSelectedDate] = useState(new Date()); // Use actual date instead of day number
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showKebabMenu, setShowKebabMenu] = useState(false);
   
   // State for user food plan data
   const [currentFoodPlan, setCurrentFoodPlan] = useState<any>(null);
@@ -206,6 +208,17 @@ const CalendarScreen = () => {
       return imagePath;
     }
     
+    // Check if path starts with /images/ -> use base_url
+    if (imagePath.startsWith('/images/')) {
+      return `${base_url}${imagePath}`;
+    }
+    
+    // Check if path starts with /foods/ -> use seconde_url
+    if (imagePath.startsWith('/foods/')) {
+      return `${seconde_url}${imagePath}`;
+    }
+    
+    // Default fallback - use seconde_url for other paths
     return `${seconde_url}${imagePath}`;
   };
 
@@ -405,11 +418,18 @@ const CalendarScreen = () => {
         <View className="flex-row items-center">
           <TouchableOpacity 
             className="flex-row items-center"
+            onPress={() => setShowDatePicker(true)}
           >
             <Icon name="calendar" size={20} color="#ffff" />
-            <View className="ml-2">
-              <Text className="text-sm font-medium text-white">{dayName}</Text>
-            </View>
+           
+          </TouchableOpacity>
+          
+          {/* Kebab Menu */}
+          <TouchableOpacity 
+            className="ml-3 w-8 h-8 items-center justify-center"
+            onPress={() => setShowKebabMenu(true)}
+          >
+            <Icon name="ellipsis-vertical" size={20} color="white" />
           </TouchableOpacity>
         </View>
       </View>
@@ -431,9 +451,9 @@ const CalendarScreen = () => {
           <Text className="text-lg font-medium text-gray-800">
             {dayName}
           </Text>
-          <Text className="text-sm text-gray-500">
+          {/* <Text className="text-sm text-gray-500">
             {planDayText}
-          </Text>
+          </Text> */}
           {/* Show total calories if available */}
           {currentDayMeals && currentDayMeals.meals && (
             <Text className="text-xs font-bold text-primary">
@@ -504,7 +524,7 @@ const CalendarScreen = () => {
         {!loading && !error && currentFoodPlan && currentDayMeals && currentDayMeals.meals && (
           <ScrollView className="flex-1 px-4 pt-6" showsVerticalScrollIndicator={false}>
             {/* Plan Info */}
-            <View className="mb-6">
+            {/* <View className="mb-6">
               <Text className="text-xl font-bold text-gray-800 mb-2">แผนอาหารปัจจุบัน</Text>
               <View className="bg-white rounded-xl p-4 shadow-sm">
                 <Text className="text-lg font-semibold text-gray-800 mb-1">{currentFoodPlan.name}</Text>
@@ -520,17 +540,8 @@ const CalendarScreen = () => {
                     </Text>
                   </View>
                 )}
-                
-                {/* Edit Plan Button */}
-                <TouchableOpacity
-                  className="bg-primary rounded-lg py-3 flex-row items-center justify-center"
-                  onPress={() => navigation.navigate('MealPlanEdit', { foodPlanId: currentFoodPlan.id })}
-                >
-                  <Icon name="create" size={20} color="white" />
-                  <Text className="text-white font-medium ml-2">แก้ไขแผนอาหาร</Text>
-                </TouchableOpacity>
               </View>
-            </View>
+            </View> */}
 
             {/* Daily Meals */}
             <View className="mb-6">
@@ -633,6 +644,222 @@ const CalendarScreen = () => {
 
       {/* Bottom Navigation */}
       <Menu />
+
+      {/* Date Picker Modal */}
+      <Modal
+        visible={showDatePicker}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowDatePicker(false)}
+      >
+        <View className="flex-1 bg-black bg-opacity-10 justify-start items-center pt-20">
+          <View className="bg-white rounded-2xl p-6 mx-4 shadow-2xl" style={{ minWidth: 320, maxWidth: 350 }}>
+            <View className="flex-row justify-between items-center mb-4">
+              <Text className="text-xl font-bold text-gray-800">เลือกวันที่</Text>
+              <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                <Icon name="close" size={24} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+            
+            {/* Calendar Grid */}
+            <View className="mb-4">
+              {/* Current Month/Year */}
+              <View className="flex-row items-center justify-between mb-4">
+                <TouchableOpacity
+                  onPress={() => {
+                    const newDate = new Date(selectedDate);
+                    newDate.setMonth(newDate.getMonth() - 1);
+                    setSelectedDate(newDate);
+                  }}
+                  className="w-10 h-10 items-center justify-center"
+                >
+                  <Icon name="chevron-back" size={20} color="#374151" />
+                </TouchableOpacity>
+                
+                <Text className="text-lg font-bold text-gray-800">
+                  {selectedDate.toLocaleDateString('th-TH', { 
+                    year: 'numeric', 
+                    month: 'long' 
+                  })}
+                </Text>
+                
+                <TouchableOpacity
+                  onPress={() => {
+                    const newDate = new Date(selectedDate);
+                    newDate.setMonth(newDate.getMonth() + 1);
+                    setSelectedDate(newDate);
+                  }}
+                  className="w-10 h-10 items-center justify-center"
+                >
+                  <Icon name="chevron-forward" size={20} color="#374151" />
+                </TouchableOpacity>
+              </View>
+              
+              {/* Week days header */}
+              <View className="flex-row mb-2">
+                {['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'].map((day, index) => (
+                  <View key={index} className="flex-1 items-center py-2">
+                    <Text className="text-sm font-medium text-gray-600">{day}</Text>
+                  </View>
+                ))}
+              </View>
+              
+              {/* Calendar days */}
+              <View>
+                {(() => {
+                  const year = selectedDate.getFullYear();
+                  const month = selectedDate.getMonth();
+                  const firstDay = new Date(year, month, 1);
+                  const lastDay = new Date(year, month + 1, 0);
+                  const startDate = new Date(firstDay);
+                  startDate.setDate(startDate.getDate() - firstDay.getDay());
+                  
+                  const weeks = [];
+                  const currentWeek = [];
+                  
+                  for (let i = 0; i < 42; i++) {
+                    const date = new Date(startDate);
+                    date.setDate(startDate.getDate() + i);
+                    
+                    if (currentWeek.length === 7) {
+                      weeks.push([...currentWeek]);
+                      currentWeek.length = 0;
+                    }
+                    
+                    currentWeek.push(date);
+                  }
+                  
+                  if (currentWeek.length > 0) {
+                    weeks.push(currentWeek);
+                  }
+                  
+                  return weeks.map((week, weekIndex) => (
+                    <View key={weekIndex} className="flex-row">
+                      {week.map((date, dayIndex) => {
+                        const isCurrentMonth = date.getMonth() === month;
+                        const isSelected = date.toDateString() === selectedDate.toDateString();
+                        const isToday = date.toDateString() === new Date().toDateString();
+                        
+                        return (
+                          <TouchableOpacity
+                            key={dayIndex}
+                            className="flex-1 items-center py-3"
+                            onPress={() => {
+                              setSelectedDate(new Date(date));
+                              setShowDatePicker(false);
+                            }}
+                          >
+                            <View 
+                              className={`w-8 h-8 rounded-full items-center justify-center ${
+                                isSelected 
+                                  ? 'bg-primary' 
+                                  : isToday 
+                                    ? 'bg-blue-100' 
+                                    : ''
+                              }`}
+                            >
+                              <Text 
+                                className={`text-sm ${
+                                  isSelected 
+                                    ? 'text-white font-bold' 
+                                    : isToday 
+                                      ? 'text-blue-600 font-bold'
+                                      : isCurrentMonth 
+                                        ? 'text-gray-800' 
+                                        : 'text-gray-300'
+                                }`}
+                              >
+                                {date.getDate()}
+                              </Text>
+                            </View>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  ));
+                })()}
+              </View>
+            </View>
+            
+            {/* Quick select buttons */}
+            <View className="flex-row justify-between">
+              <TouchableOpacity
+                onPress={() => {
+                  setSelectedDate(new Date());
+                  setShowDatePicker(false);
+                }}
+                className="flex-1 bg-gray-100 rounded-lg py-3 mr-2"
+              >
+                <Text className="text-center text-gray-700 font-medium">วันนี้</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                onPress={() => {
+                  const tomorrow = new Date();
+                  tomorrow.setDate(tomorrow.getDate() + 1);
+                  setSelectedDate(tomorrow);
+                  setShowDatePicker(false);
+                }}
+                className="flex-1 bg-gray-100 rounded-lg py-3 ml-2"
+              >
+                <Text className="text-center text-gray-700 font-medium">พรุ่งนี้</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Kebab Menu Modal */}
+      <Modal
+        visible={showKebabMenu}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowKebabMenu(false)}
+      >
+        <TouchableOpacity 
+          className="flex-1"
+          onPress={() => setShowKebabMenu(false)}
+        >
+          <View className="absolute top-20 right-4 bg-white rounded-lg shadow-lg py-2 min-w-[150px]">
+            {currentFoodPlan && (
+              <TouchableOpacity
+                className="px-4 py-3 flex-row items-center"
+                onPress={() => {
+                  setShowKebabMenu(false);
+                  navigation.navigate('MealPlanEdit', { foodPlanId: currentFoodPlan.id });
+                }}
+              >
+                <Icon name="create" size={20} color="#6b7280" />
+                <Text className="ml-3 text-gray-700">แก้ไขแผนอาหาร</Text>
+              </TouchableOpacity>
+            )}
+            
+            <TouchableOpacity
+              className="px-4 py-3 flex-row items-center"
+              onPress={() => {
+                setShowKebabMenu(false);
+                navigation.navigate('OptionPlan');
+              }}
+            >
+              <Icon name="add-circle" size={20} color="#6b7280" />
+              <Text className="ml-3 text-gray-700">เพิ่มแผนใหม่</Text>
+            </TouchableOpacity>
+            
+            <View className="border-t border-gray-100 my-1" />
+            
+            <TouchableOpacity
+              className="px-4 py-3 flex-row items-center"
+              onPress={() => {
+                setShowKebabMenu(false);
+                // นำไปยังหน้าการตั้งค่า
+              }}
+            >
+              <Icon name="settings" size={20} color="#6b7280" />
+              <Text className="ml-3 text-gray-700">ตั้งค่า</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
     </SafeAreaView>
   );
