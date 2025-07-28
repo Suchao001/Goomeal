@@ -75,6 +75,18 @@ export class ApiClient extends BaseApiClient {
   async knowCurrentFoodPlan() {
     return this.foodPlanClient.knowCurrentFoodPlan();
   }
+
+  async setPlanSettings(data: {
+    food_plan_id: number;
+    start_date: string;
+    auto_loop: boolean;
+  }) {
+    return this.foodPlanClient.setPlanSettings(data);
+  }
+
+  async getPlanSettings() {
+    return this.foodPlanClient.getPlanSettings();
+  }
 }
 
 // Export a singleton instance

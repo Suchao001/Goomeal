@@ -7,7 +7,9 @@ import {
   deleteUserFoodPlan,
   setCurrentFoodPlan,
   getCurrentFoodPlan,
-  knowCurrentFoodPlan
+  knowCurrentFoodPlan,
+  setPlanSettings,
+  getPlanSettings
 } from '../controllers/user_food_plan_controller';
 import authenticateToken from '../middlewares/authenticateToken';
 import { uploadUserFoodPlan } from '../middlewares/uploadMiddleware';
@@ -40,5 +42,15 @@ router.put('/:id', uploadUserFoodPlan.single('image'), updateUserFoodPlan);
 
 // Delete a user food plan
 router.delete('/:id', deleteUserFoodPlan);
+
+// Set plan settings (start date and auto loop)
+router.post('/set-plan-settings', setPlanSettings);
+
+// Get plan settings
+console.log('Registering GET /get-plan-settings route with function:', getPlanSettings.name);
+router.get('/get-plan-settings', (req, res) => {
+  console.log('🎯 GET /get-plan-settings route handler called!');
+  getPlanSettings(req, res);
+});
 
 export default router;

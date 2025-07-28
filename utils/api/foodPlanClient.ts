@@ -275,4 +275,54 @@ export class FoodPlanApiClient extends BaseApiClient {
       };
     }
   }
+
+  /**
+   * Set plan settings (start date and auto loop)
+   */
+  async setPlanSettings(data: {
+    food_plan_id: number;
+    start_date: string;
+    auto_loop: boolean;
+  }) {
+    try {
+      const response = await this.axiosInstance.post('/user-food-plans/set-plan-settings', {
+        food_plan_id: data.food_plan_id,
+        start_date: data.start_date,
+        auto_loop: data.auto_loop
+      });
+
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    } catch (error: any) {
+      console.error('Error setting plan settings:', error.response?.data || error.message);
+      return {
+        success: false,
+        error: error.response?.data?.message || 'เกิดข้อผิดพลาดในการตั้งค่าแผน'
+      };
+    }
+  }
+
+  /**
+   * Get plan settings (start date and auto loop)
+   */
+  async getPlanSettings() {
+    try {
+      const response = await this.axiosInstance.get('/user-food-plans/get-plan-settings');
+
+      return {
+        success: true,
+        data: response.data.data,
+        message: response.data.message
+      };
+    } catch (error: any) {
+      console.error('Error getting plan settings:', error.response?.data || error.message);
+      return {
+        success: false,
+        error: error.response?.data?.message || 'เกิดข้อผิดพลาดในการดึงการตั้งค่าแผน'
+      };
+    }
+  }
 }
