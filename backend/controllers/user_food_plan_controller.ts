@@ -474,18 +474,16 @@ export const setPlanSettings = async (req: Request, res: Response): Promise<void
       return;
     }
 
-    // Verify that the food plan exists and belongs to the user
-    console.log('setPlanSettings - Checking food_plan_id:', food_plan_id, 'for user_id:', userId);
+
     
     const foodPlan = await db('user_food_plans')
       .where({ id: food_plan_id, user_id: userId })
       .first();
 
-    console.log('setPlanSettings - foodPlan found:', foodPlan);
+   
 
     if (!foodPlan) {
-      console.log('setPlanSettings - Food plan not found! food_plan_id:', food_plan_id, 'user_id:', userId);
-      res.status(404).json({ 
+        res.status(404).json({ 
         success: false, 
         error: 'ไม่พบแผนอาหารที่ระบุ' 
       });
@@ -505,7 +503,7 @@ export const setPlanSettings = async (req: Request, res: Response): Promise<void
           food_plan_id: food_plan_id,
           start_date: start_date,
           is_repeat: auto_loop || false,
-          updated_at: new Date()
+         
         });
     } else {
       // Create new settings record
@@ -514,8 +512,7 @@ export const setPlanSettings = async (req: Request, res: Response): Promise<void
         user_id: userId,
         start_date: start_date,
         is_repeat: auto_loop || false,
-        created_at: new Date(),
-        updated_at: new Date()
+    
       });
     }
 
@@ -540,20 +537,11 @@ export const setPlanSettings = async (req: Request, res: Response): Promise<void
 
 // Get plan settings (start date and auto loop)
 export const getPlanSettings = async (req: Request, res: Response): Promise<void> => {
-  console.log('\n\n🔍 === getPlanSettings function START ===');
-  console.log('Time:', new Date().toISOString());
-  console.log('Request method:', req.method);
-  console.log('Request url:', req.url);
-  console.log('Request params:', req.params);
-  console.log('Request query:', req.query);
-  console.log('Request body:', req.body);
-  console.log('Request headers authorization:', req.headers.authorization);
-  console.log('===========================================\n');
+  
   
   try {
     const userId = (req as any).user?.id;
-    console.log('getPlanSettings - userId:', userId);
-    console.log('getPlanSettings - req.user:', (req as any).user);
+    
     
     if (!userId) {
       console.log('No userId found, returning 401');
@@ -564,14 +552,12 @@ export const getPlanSettings = async (req: Request, res: Response): Promise<void
       return;
     }
 
-    // Get user's plan settings record (one record per user)
-    console.log('Query: SELECT * FROM user_food_plan_using WHERE user_id =', userId);
     
     const userSettings = await db('user_food_plan_using')
       .where('user_id', userId)
       .first();
 
-    console.log('userSettings result:', userSettings);
+  
 
     if (!userSettings) {
       console.log('No settings found, returning default');
