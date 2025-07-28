@@ -11,6 +11,7 @@ interface UserFoodData {
   img?: string;
   user_id: number;
   ingredient: string;
+  src?: string; 
 }
 
 interface FoodSearchResult {
@@ -155,7 +156,7 @@ export const searchFoods = async (req: Request & { user?: any }, res: Response):
  */
 export const addUserFood = async (req: Request & { user?: any; file?: Express.Multer.File }, res: Response): Promise<void> => {
   try {
-    const { name, calories, carbs, fat, protein, ingredient } = req.body;
+    const { name, calories, carbs, fat, protein, ingredient, src } = req.body;
     const user_id = req.user?.id;
     const uploadedFile = req.file;
 
@@ -175,7 +176,7 @@ export const addUserFood = async (req: Request & { user?: any; file?: Express.Mu
       });
       return;
     }
-
+     
     // Prepare food data
     const foodData: UserFoodData = {
       name: name.trim(),
@@ -184,9 +185,10 @@ export const addUserFood = async (req: Request & { user?: any; file?: Express.Mu
       fat: parseFloat(fat) || 0,
       protein: parseFloat(protein) || 0,
       ingredient: ingredient || '',
-      user_id: user_id
+      user_id: user_id,
+      src: src || 'user' // Default to 'user' if not provided
     };
-
+    
     // Add image if uploaded
     if (uploadedFile) {
       foodData.img = `/images/user_foods/${uploadedFile.filename}`;

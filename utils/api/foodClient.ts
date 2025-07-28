@@ -10,6 +10,7 @@ export class FoodApiClient extends BaseApiClient {
     protein: string | number;
     ingredient?: string;
     img?: string;
+    src?: string; 
   }) {
     try {
       // Create FormData for multipart/form-data submission
@@ -36,6 +37,11 @@ export class FoodApiClient extends BaseApiClient {
           name: filename,
           type: type,
         } as any);
+      }
+
+      // Always append src if provided
+      if (foodData.src) {
+        formData.append('src', foodData.src);
       }
 
       const response = await this.axiosInstance.post('/food', formData, {
