@@ -2,6 +2,8 @@ import React, { createContext, useEffect, useContext, useState, ReactNode } from
 import * as SecureStore from 'expo-secure-store';
 import { jwtDecode } from 'jwt-decode';
 import { apiClient } from './utils/apiClient';
+import { setGlobalLogoutCallback } from './utils/api/baseClient';
+import { debugToken } from './utils/tokenDebug';
 
 interface User {
   id?: string;
@@ -31,6 +33,7 @@ interface AuthContextType {
   logout: () => void;
   reloadUser: () => Promise<void>;
   fetchUserProfile: () => Promise<User | null>;
+  debugTokens: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -39,6 +42,7 @@ const AuthContext = createContext<AuthContextType>({
   logout: () => {},
   reloadUser: async () => {},
   fetchUserProfile: async () => null,
+  debugTokens: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -58,10 +62,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } else {
       setUser(null);
     }
-
-    // ApiClient will handle token validation and refresh automatically
-    // when API calls are made, so we don't need to manually check here
-    
     setLoading(false);
   };
 
@@ -86,7 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return null;
     } catch (error) {
       console.error('❌ [AuthContext] Fetch user profile error:', error);
-      // Fallback to stored user data if API fails
+      
       try {
         const userString = await SecureStore.getItemAsync('user');
         if (userString) {
@@ -103,16 +103,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
+    console.log('🚪 [AuthContext] Logout initiated');
     await apiClient.logout(); // This will clear all tokens
     setUser(null);
+    console.log('✅ [AuthContext] User logged out successfully');
+  };
+
+  const handleTokenExpiration = async () => {
+    console.log('⏰ [AuthContext] Token expired, logging out...');
+    await logout();
+  };
+
+  // Debug function for troubleshooting
+  const debugTokens = async () => {
+    await debugToken();
   };
 
   useEffect(() => {
     loadToken();
+    
+    // Set up global logout callback for baseClient
+    setGlobalLogoutCallback(() => {
+      console.log('🔄 [AuthContext] Global logout callback triggered');
+      setUser(null);
+    });
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, logout, reloadUser, fetchUserProfile }}>
+    <AuthContext.Provider value={{ user, loading, logout, reloadUser, fetchUserProfile, debugTokens }}>
       {children}
     </AuthContext.Provider>
   );

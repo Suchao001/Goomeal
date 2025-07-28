@@ -46,7 +46,7 @@ const Home = () => {
       setLoadingTodayMeals(true);
       const todayMeals = await fetchTodayMeals();
       setTodayMealData(todayMeals);
-      console.log('🍽️ [HomeScreen] Today\'s meals loaded:', todayMeals);
+   
     } catch (error) {
       console.error('❌ [HomeScreen] Error loading today\'s meals:', error);
       setTodayMealData(null);
