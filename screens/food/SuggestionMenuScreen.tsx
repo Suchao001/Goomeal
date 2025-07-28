@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { ApiClient } from 'utils/apiClient';
 
 /**
  * SuggestionMenuScreen Component
@@ -9,6 +10,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
  */
 const SuggestionMenuScreen = () => {
   const navigation = useTypedNavigation();
+  const apiClient = new ApiClient();
 
   // State for meal type selection
   const [selectedMealType, setSelectedMealType] = useState('');
@@ -53,6 +55,9 @@ const SuggestionMenuScreen = () => {
   // State for showing additional restrictions
   const [showMoreRestrictions, setShowMoreRestrictions] = useState(false);
 
+  // State for loading indicator
+  const [loading, setLoading] = useState(false);
+
   const addIngredient = () => {
     if (currentIngredient.trim() && !ingredients.includes(currentIngredient.trim())) {
       setIngredients([...ingredients, currentIngredient.trim()]);
@@ -72,26 +77,30 @@ const SuggestionMenuScreen = () => {
     }
   };
 
-  const handleGetSuggestion = () => {
-    if (!selectedMealType) {
-      Alert.alert('กรุณาเลือกมื้ออาหาร', 'โปรดเลือกมื้ออาหารที่ต้องการ');
-      return;
+  const handleGetSuggestion = async () => {
+    try {
+      setLoading(true);
+      // Prepare data from form state
+      const payload = {
+        mealType: selectedMealType,
+        hungerLevel: hungerLevel + 1, // 1-based
+        ingredients,
+        foodType: selectedFoodType,
+        dietaryRestrictions,
+        complexityLevel,
+      };
+      const response = await apiClient.suggestFood(payload);
+      setLoading(false);
+      if (response.success && response.data?.answer) {
+        // Navigate to FoodSuggestionScreen with suggestion data
+        navigation.navigate('FoodSuggestion', { suggestion: response.data.answer });
+      } else {
+        Alert.alert('เกิดข้อผิดพลาด', response.error || 'ไม่สามารถขอคำแนะนำจาก AI ได้');
+      }
+    } catch (error) {
+      setLoading(false);
+      Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อ AI ได้');
     }
-
-    // Here you would typically send the data to your AI service
-    Alert.alert(
-      'กำลังสร้างเมนูแนะนำ',
-      'AI กำลังวิเคราะห์ความต้องการของคุณ...',
-      [
-        {
-          text: 'ตกลง',
-          onPress: () => {
-            // Navigate to results or back
-            navigation.goBack();
-          }
-        }
-      ]
-    );
   };
 
   return (
@@ -332,11 +341,18 @@ const SuggestionMenuScreen = () => {
         {/* Get Suggestion Button */}
         <View className="mx-4 mt-6 mb-8">
           <TouchableOpacity
-            className="bg-primary rounded-xl p-4 flex-row items-center justify-center shadow-md"
+            className={`bg-primary rounded-xl p-4 flex-row items-center justify-center shadow-md ${loading ? 'opacity-60' : ''}`}
             onPress={handleGetSuggestion}
+            disabled={loading}
           >
-            <Icon name="sparkles" size={24} color="white" />
-            <Text className="text-white font-bold text-lg ml-2">ขอแนะนำเมนู</Text>
+            {loading ? (
+              <Icon name="sync" size={24} color="white" style={{ marginRight: 8 }} />
+            ) : (
+              <Icon name="sparkles" size={24} color="white" />
+            )}
+            <Text className="text-white font-bold text-lg ml-2">
+              {loading ? 'กำลังขอเมนู...' : 'ขอแนะนำเมนู'}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

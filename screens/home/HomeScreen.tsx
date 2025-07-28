@@ -381,7 +381,7 @@ const Home = () => {
             ))}           
             <TouchableOpacity 
               className="bg-primary rounded-lg p-4 flex-row items-center justify-center mt-2"
-              onPress={() => console.log('Navigate to FoodMenu')}
+              onPress={() => navigation.navigate('FoodMenu')}
             >
               <Icon name="sparkles" size={24} color="white" />
               <Text className="text-white font-bold text-lg ml-2">ขอเมนูอาหาร</Text>

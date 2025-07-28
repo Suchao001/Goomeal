@@ -8,6 +8,7 @@ import food from './routes/food_route';
 import userFoodPlan from './routes/user_food_plan_route';
 import globalFoodPlan from './routes/globalFoodPlan';
 import mealPlanDetail from './routes/mealPlanDetail';
+import aiRoute from './routes/ai_route';
 import { verifyResetToken, resetPassword } from './controllers/forgotpassword';
 import { generateResetPasswordForm, generateErrorPage } from './utils/htmlTemplates';
 
@@ -45,6 +46,9 @@ app.use('/food', food);
 app.use('/user-food-plans', userFoodPlan);
 app.use('/api', globalFoodPlan);
 app.use('/api', mealPlanDetail);
+
+// Register AI mock route
+app.use('/api/ai', aiRoute);
 
 app.get('/reset-password', async (req, res) => {
     try {

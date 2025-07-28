@@ -7,3 +7,4 @@ export { default as MealPlanEditScreen } from './MealPlanScreenEdit';
 export { default as SearchFoodForAdd } from './SearchFoodForAdd';
 export { default as AddNewFoodScreen } from './AddNewFoodScreen';
 export { default as EatingBlogScreen } from './EatingBlogScreen';
+export { default as FoodSuggestionScreen } from './FoodSuggestionScreen';

@@ -1,15 +1,18 @@
 import { BaseApiClient } from './api/baseClient';
 import { FoodApiClient } from './api/foodClient';
 import { FoodPlanApiClient } from './api/foodPlanClient';
+import { AiApiClient } from './api/aiApiClient';
 
 export class ApiClient extends BaseApiClient {
   private foodClient: FoodApiClient;
   private foodPlanClient: FoodPlanApiClient;
+  private aiClient: AiApiClient;
 
   constructor() {
     super();
     this.foodClient = new FoodApiClient();
     this.foodPlanClient = new FoodPlanApiClient();
+    this.aiClient = new AiApiClient();
   }
 
   // ===== FOOD API METHODS =====
@@ -86,6 +89,11 @@ export class ApiClient extends BaseApiClient {
 
   async getPlanSettings() {
     return this.foodPlanClient.getPlanSettings();
+  }
+
+  // ===== AI API METHODS =====
+  async suggestFood(payload?: any) {
+    return this.aiClient.suggestFood(payload);
   }
 }
 

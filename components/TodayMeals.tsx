@@ -24,7 +24,7 @@ const TodayMeals: React.FC<TodayMealsProps> = ({ meals, onAddMeal, onEditMeal })
       case 'breakfast': return 'มื้อเช้า';
       case 'lunch': return 'มื้อเที่ยง';
       case 'dinner': return 'มื้อเย็น';
-      case 'snack': return 'ของว่าง';
+      
       default: return 'มื้ออาหาร';
     }
   };
@@ -34,7 +34,7 @@ const TodayMeals: React.FC<TodayMealsProps> = ({ meals, onAddMeal, onEditMeal })
       case 'breakfast': return 'sunny';
       case 'lunch': return 'partly-sunny';
       case 'dinner': return 'moon';
-      case 'snack': return 'cafe';
+ 
       default: return 'restaurant';
     }
   };
@@ -44,13 +44,13 @@ const TodayMeals: React.FC<TodayMealsProps> = ({ meals, onAddMeal, onEditMeal })
       case 'breakfast': return '#f59e0b';
       case 'lunch': return '#10b981';
       case 'dinner': return '#6366f1';
-      case 'snack': return '#f97316';
+   
       default: return '#6b7280';
     }
   };
 
   // Group meals by type
-  const mealTypes: MealData['mealType'][] = ['breakfast', 'lunch', 'dinner', 'snack'];
+  const mealTypes: MealData['mealType'][] = ['breakfast', 'lunch', 'dinner'];
   const groupedMeals = mealTypes.map(type => ({
     type,
     meals: meals.filter(meal => meal.mealType === type)
@@ -129,15 +129,15 @@ const TodayMeals: React.FC<TodayMealsProps> = ({ meals, onAddMeal, onEditMeal })
         <View>
           {typeMeals.map(renderMealItem)}
         </View>
-      ) : (
-        <TouchableOpacity
-          className="border-2 border-dashed border-gray-300 rounded-lg py-6 items-center"
-          onPress={() => onAddMeal(type)}
-        >
-          <Icon name="add-circle-outline" size={24} color="#9ca3af" />
-          <Text className="text-gray-500 text-sm mt-1">เพิ่มอาหาร{getMealTypeLabel(type)}</Text>
-        </TouchableOpacity>
-      )}
+      ) : null
+        // <TouchableOpacity
+        //   className="border-2 border-dashed border-gray-300 rounded-lg py-6 items-center"
+        //   onPress={() => onAddMeal(type)}
+        // >
+        //   <Icon name="add-circle-outline" size={24} color="#9ca3af" />
+        //   <Text className="text-gray-500 text-sm mt-1">เพิ่มอาหาร{getMealTypeLabel(type)}</Text>
+        // </TouchableOpacity>
+      }
     </View>
   );
 
