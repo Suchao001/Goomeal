@@ -1,9 +1,7 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert, SafeAreaView } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTypedNavigation } from '../hooks/Navigation';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/navigation';
 import { useAuth } from '../AuthContext';
 import Menu from './material/Menu';
 
@@ -16,71 +14,66 @@ const MenuScreen = () => {
   const navigation = useTypedNavigation<'Menu'>(); 
   const { logout, user } = useAuth();
 
-  const handleProfilePress = () => {
+  const handleProfilePress = useCallback(() => {
     navigation.navigate('ProfileDetail');
-  };
+  }, [navigation]);
 
-  const handleAccountSettingsPress = () => {
+  const handleAccountSettingsPress = useCallback(() => {
     navigation.navigate('EditAccountSettings');
-  };
+  }, [navigation]);
 
-  const handleFirstTimeSetupPress = () => {
+  const handleFirstTimeSetupPress = useCallback(() => {
     navigation.navigate('PersonalSetup');
-  };
+  }, [navigation]);
 
-  const handlePlanSelectionPress = () => {
+  const handlePlanSelectionPress = useCallback(() => {
     navigation.navigate('PlanSelection');
-  };
+  }, [navigation]);
 
-  const handleEatingReportPress = () => {
+  const handleEatingReportPress = useCallback(() => {
     navigation.navigate('EatingReport');
-  };
+  }, [navigation]);
 
-  const handleEatingStyleSettingsPress = () => {
+  const handleEatingStyleSettingsPress = useCallback(() => {
     navigation.navigate('EatingStyleSettings');
-  };
+  }, [navigation]);
 
-  const handleNotificationSettingsPress = () => {
+  const handleNotificationSettingsPress = useCallback(() => {
     navigation.navigate('NotificationSettings');
-  };
+  }, [navigation]);
 
-  const handleRecordSettingsPress = () => {
+  const handleRecordSettingsPress = useCallback(() => {
     navigation.navigate('RecordSettings');
-  };
+  }, [navigation]);
 
-  const handleMealTimeSettingsPress = () => {
+  const handleMealTimeSettingsPress = useCallback(() => {
     navigation.navigate('MealTimeSettings');
-  };
+  }, [navigation]);
 
-  const handleLogout = () => {
+  // สำหรับ handleLogout มี dependency เป็นฟังก์ชัน logout จาก useAuth
+  // ซึ่งเราได้แก้ไขให้คงที่ด้วย useCallback ใน AuthContext แล้ว
+  const handleLogout = useCallback(() => {
     Alert.alert(
       'ออกจากระบบ',
       'คุณต้องการออกจากระบบหรือไม่?',
       [
-        {
-          text: 'ยกเลิก',
-          style: 'cancel',
-        },
+        { text: 'ยกเลิก', style: 'cancel' },
         {
           text: 'ออกจากระบบ',
           style: 'destructive',
-          onPress: () => {
-            logout();
-          },
+          onPress: logout, // เรียกใช้ logout โดยตรง
         },
       ],
       { cancelable: true }
     );
-  };
+  }, [logout]);
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
-
       
       {/* Main Content */}
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }}>
-        {/* First Time Setup Section */}
-
+        
         {/* User Profile Section */}
         <View className="bg-white mx-4 mt-6 rounded-xl shadow-sm p-6">
           <View className="flex-row items-center">
@@ -88,10 +81,12 @@ const MenuScreen = () => {
               <Text className="text-white text-2xl">👤</Text>
             </View>
             <View className="ml-4 flex-1">
-              <Text className="text-xl font-bold text-gray-800">{user?.username || user?.email || 'ผู้ใช้งาน'}</Text>
+              <Text className="text-xl font-bold text-gray-800" numberOfLines={1}>
+                {user?.username || user?.name || user?.email || 'ผู้ใช้งาน'}
+              </Text>
               <View className="flex-row items-center mt-1">
-          <View className="w-2 h-2 bg-green-500 rounded-full mr-2"></View>
-          <Text className="text-sm text-green-600">ออนไลน์</Text>
+                <View className="w-2 h-2 bg-green-500 rounded-full mr-2"></View>
+                <Text className="text-sm text-green-600">ออนไลน์</Text>
               </View>
             </View>
             
@@ -110,7 +105,7 @@ const MenuScreen = () => {
               onPress={handleProfilePress}
             >
               <View className="w-8 h-8 bg-blue-100 rounded-full items-center justify-center mr-3">
-          <Icon name="person" size={16} color="#3b82f6" />
+                <Icon name="person" size={16} color="#3b82f6" />
               </View>
               <Text className="text-sm font-medium text-gray-700 flex-1">ข้อมูลส่วนตัว</Text>
               <Icon name="chevron-forward" size={16} color="#9ca3af" />
@@ -118,12 +113,13 @@ const MenuScreen = () => {
           </View>
         </View>
 
-
-<View className="mx-4 mt-6">
-          <Text className="text-lg font-bold text-gray-800 mb-3">เริ่มต้นใช้งาน</Text>
-          <TouchableOpacity 
-            className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex-row items-center"
-            onPress={handleFirstTimeSetupPress}
+        {/* ... ส่วนที่เหลือของ UI เหมือนเดิมทั้งหมด ... */}
+        {user?.first_time_setting == false && (
+          <View className="mx-4 mt-6">
+            <Text className="text-lg font-bold text-gray-800 mb-3">เริ่มต้นใช้งาน</Text>
+            <TouchableOpacity 
+              className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex-row items-center"
+              onPress={handleFirstTimeSetupPress}
           >
             <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mr-4">
               <Icon name="document-text" size={24} color="#3b82f6" />
@@ -135,9 +131,11 @@ const MenuScreen = () => {
             <Icon name="chevron-forward" size={20} color="#3b82f6" />
           </TouchableOpacity>
         </View>
-        {/* Main Menu */}
+        )}
+       
+            {/* Main Menu */}
         <View className="mx-4 mt-6">
-          <Text className="text-lg font-bold text-gray-800 mb-3">เมนูหลัก</Text>
+          <Text className="text-lg font-bold text-gray-800 mb-3">เมนูหลัก </Text>
           <View className="bg-white rounded-xl shadow-sm overflow-hidden">
             
              <TouchableOpacity 
@@ -226,6 +224,7 @@ const MenuScreen = () => {
             </TouchableOpacity>
           </View>
         </View>
+        
 
         {/* Additional Options */}
         <View className="mx-4 mt-6">

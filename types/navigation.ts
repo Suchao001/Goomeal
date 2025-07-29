@@ -12,10 +12,17 @@ export type RootStackParamList = {
     PersonalPlan2: undefined;
     PersonalPlan3: undefined;
     PersonalPlan4: undefined;
+    FoodMenu: undefined;
+    EatingBlog: undefined;
+    EatingReport: undefined;
+    EatingStyleSettings: undefined;
+    NotificationSettings: undefined;
+    RecordSettings: undefined;
+    MealTimeSettings: undefined;
 
     PlanSelection: undefined;
     Menu: undefined;
-
+    EditAccountSettings: undefined;
     EditProfile: undefined;
     ProfileDetail: undefined;
     FoodSuggestion: { suggestion: string };

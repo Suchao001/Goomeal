@@ -95,7 +95,8 @@ const getUserProfile = async (userId: number) => {
             additional_requirements: user.additional_requirements,
             account_status: user.account_status,
             suspend_reason: user.suspend_reason,
-            created_date: user.created_date
+            created_date: user.created_date,
+            first_time_setting: user.first_time_setting
         };
     } catch (error: any) {
         console.error('Get profile error details:', error);
@@ -117,6 +118,7 @@ const updatePersonalData = async (userId: number, personalData: {
     eating_type?: 'vegan' | 'vegetarian' | 'omnivore' | 'keto' | 'other';
     dietary_restrictions?: string;
     additional_requirements?: string;
+    first_time_setting?: boolean;
 }) => {
     try {
         // Check if user exists
@@ -172,7 +174,8 @@ const updatePersonalData = async (userId: number, personalData: {
             additional_requirements: updatedUser.additional_requirements,
             account_status: updatedUser.account_status,
             suspend_reason: updatedUser.suspend_reason,
-            created_date: updatedUser.created_date
+            created_date: updatedUser.created_date,
+            first_time_setting: true
         };
     } catch (error: any) {
         console.error('❌ เกิดข้อผิดพลาดในการอัปเดตข้อมูลส่วนตัว:', error.message);

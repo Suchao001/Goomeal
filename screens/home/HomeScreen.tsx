@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useCallback,useMemo } from 'react';
 import { View, Text, TouchableOpacity, Image, ScrollView, FlatList, Linking } from 'react-native';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -8,6 +8,7 @@ import CaloriesSummary from '../../components/CaloriesSummary';
 import TodayMeals, { MealData } from '../../components/TodayMeals';
 import { useAuth } from 'AuthContext';
 import { showConfirmAlert } from '../../components/Alert';
+
 import { 
   fetchFeaturedArticles, 
   generateArticleUrl,
@@ -23,13 +24,16 @@ import { blog_url } from '../../config';
 
 const Home = () => {
   const navigation = useTypedNavigation<'Home'>();
-  const {logout,reloadUser} = useAuth();
+  const {fetchUserProfile} = useAuth();
   const [blogArticles, setBlogArticles] = useState<Article[]>([]);
   const [loadingArticles, setLoadingArticles] = useState(false);
   
   // Today's meals state
   const [todayMealData, setTodayMealData] = useState<TodayMealData | null>(null);
-  const [loadingTodayMeals, setLoadingTodayMeals] = useState(false);
+  const [loadingTodayMeals, setLoadingTodayMeals] = useState(true);
+
+  // First time setting state
+  const [firstTimeSetting, setFirstTimeSetting] = useState<boolean | null>(null);
 
   // Default image fallback
   const defaultImage = require('../../assets/images/Foodtype_1.png');
@@ -40,8 +44,21 @@ const Home = () => {
     loadTodayMeals();
   }, []);
 
+  // Fetch user profile to check first_time_setting
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const profile = await fetchUserProfile();
+        setFirstTimeSetting(!!profile?.first_time_setting === true);
+      } catch (e) {
+        setFirstTimeSetting(null);
+      }
+    };
+    fetchProfile();
+  }, [fetchUserProfile]);
+
   // Load today's meals from API
-  const loadTodayMeals = async () => {
+  const loadTodayMeals = useCallback(async () => {
     try {
       setLoadingTodayMeals(true);
       const todayMeals = await fetchTodayMeals();
@@ -53,7 +70,7 @@ const Home = () => {
     } finally {
       setLoadingTodayMeals(false);
     }
-  };
+  }, []);
 
   // Load blog articles from API
   const loadBlogArticles = async () => {
@@ -64,28 +81,24 @@ const Home = () => {
     } catch (error) {
       console.error('Error loading blog articles:', error);
       // Fallback to mock data if API fails
-      setBlogArticles([
-        {
-          id: 1,
-          title: '5 เทคนิคการทำอาหารเพื่อสุขภาพ',
-          excerpt_content: 'เรียนรู้วิธีการปรุงอาหารที่ดีต่อสุขภาพและอร่อยไปพร้อมกัน...',
-          img: '',
-          status: 'release' as const,
-          tags: []
-        },
-        {
-          id: 2,
-          title: 'ประโยชน์ของการกินผักผลไม้ในชีวิตประจำวัน',
-          excerpt_content: 'ผักผลไม้มีสารอาหารที่จำเป็นต่อร่างกาย ช่วยเสริมภูมิคุ้มกัน...',
-          img: '',
-          status: 'release' as const,
-          tags: []
-        }
-      ]);
+    
     } finally {
       setLoadingArticles(false);
     }
   };
+
+    useEffect(() => {
+    const checkProfile = async () => {
+      try {
+        const profile = await fetchUserProfile();
+        setFirstTimeSetting(!!profile?.first_time_setting);
+      } catch (e) {
+        console.error('Failed to fetch profile for first time setting check', e);
+        setFirstTimeSetting(null); // จัดการ state เมื่อเกิด error
+      }
+    };
+    checkProfile();
+  }, [fetchUserProfile]); 
 
   // Get image source for articles
   const getImageSource = (imageUrl?: string, fallbackIndex: number = 0) => {
@@ -124,16 +137,16 @@ const Home = () => {
 
   // Mock data for calories and nutrition (or use real data from API)
   const getCaloriesData = () => {
-    if (todayMealData) {
-      const nutritionSummary = getTodayNutritionSummary(todayMealData);
-      return {
-        consumed: nutritionSummary.calories,
-        target: 1500, // This could come from user profile
-        protein: { current: nutritionSummary.protein, target: 75, unit: 'g', color: '#ef4444', icon: 'fitness' },
-        carbs: { current: nutritionSummary.carbs, target: 200, unit: 'g', color: '#22c55e', icon: 'leaf' },
-        fat: { current: nutritionSummary.fat, target: 60, unit: 'g', color: '#f59e0b', icon: 'water' }
-      };
-    }
+    // if (todayMealData) {
+    //   const nutritionSummary = getTodayNutritionSummary(todayMealData);
+    //   return {
+    //     consumed: nutritionSummary.calories,
+    //     target: 1500,
+    //     protein: { current: nutritionSummary.protein, target: 75, unit: 'g', color: '#ef4444', icon: 'fitness' },
+    //     carbs: { current: nutritionSummary.carbs, target: 200, unit: 'g', color: '#22c55e', icon: 'leaf' },
+    //     fat: { current: nutritionSummary.fat, target: 60, unit: 'g', color: '#f59e0b', icon: 'water' }
+    //   };
+    // }
     
     // Fallback to mock data
     return {
@@ -146,42 +159,16 @@ const Home = () => {
   };
 
   // Transform API data to component format
-  const getTodayMealsForComponent = (): MealData[] => {
-    if (!todayMealData) {
-      // Fallback to mock data
-      return [
-        {
-          id: '1',
-          mealType: 'breakfast',
-          foodName: 'ข้าวโอ๊ตกับผลไม้',
-          calories: 250,
-          image: require('../../assets/images/Foodtype_1.png'),
-          time: '07:30'
-        },
-        {
-          id: '2',
-          mealType: 'lunch',
-          foodName: 'สลัดไก่ย่าง',
-          calories: 320,
-          image: require('../../assets/images/Foodtype_3.png'),
-          time: '12:15'
-        },
-        {
-          id: '3',
-          mealType: 'dinner',
-          foodName: 'ปลาย่างกับผักโขม',
-          calories: 275,
-          image: require('../../assets/images/Foodtype_4.png'),
-          time: '19:00'
-        }
-      ];
-    }
+  const getTodayMealsForComponent = useMemo((): MealData[] => {
+    if (!todayMealData) return []; 
 
     const meals: MealData[] = [];
     let mealIdCounter = 1;
 
+   
     // Convert breakfast meals
     todayMealData.breakfast.forEach((meal, index) => {
+      // console.log( meal);
       meals.push({
         id: `breakfast-${mealIdCounter++}`,
         mealType: 'breakfast',
@@ -217,7 +204,7 @@ const Home = () => {
     });
 
     return meals;
-  };
+  }, [todayMealData]);
 
   // Handlers for meal actions
   const handleAddMeal = (mealType: MealData['mealType']) => {
@@ -279,33 +266,35 @@ const Home = () => {
           </View>
         ) : (
           <TodayMeals
-            meals={getTodayMealsForComponent()}
+            meals={getTodayMealsForComponent}
             onAddMeal={handleAddMeal}
             onEditMeal={handleEditMeal}
           />
         )}
-        
-        <View className="w-[90%] bg-white rounded-lg shadow-md p-6 mt-4 mx-auto items-center">
-          <View className="flex-row items-center mb-4">
-            <View className="w-6 h-6 bg-orange-400 rounded-full mr-2 items-center justify-center">
-              <Text className="text-white font-bold">✎</Text>
+        {/* firsttime setting */}
+        {firstTimeSetting === false && (
+          <View className="w-[90%] bg-white rounded-lg shadow-md p-6 mt-4 mx-auto items-center">
+            <View className="flex-row items-center mb-4">
+              <View className="w-6 h-6 bg-orange-400 rounded-full mr-2 items-center justify-center">
+                <Text className="text-white font-bold">✎</Text>
+              </View>
+              <Text className="text-gray-600 text-center">
+                กรอกข้อมูลที่จำเป็น{"\n"}เพื่อให้สร้างแผนการกินที่เหมาะสมกับคุณ
+              </Text>
             </View>
-            <Text className="text-gray-600 text-center">
-              กรอกข้อมูลที่จำเป็น{'\n'}เพื่อให้สร้างแผนการกินที่เหมาะสมกับคุณ
-            </Text>
+            <TouchableOpacity
+              className="bg-orange-400 px-6 py-2 rounded-full"
+              onPress={() => navigation.navigate('PersonalPlan1')}
+            >
+              <Text className="text-white font-semibold">กรอกข้อมูลครั้งแรก</Text>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity
-            className="bg-orange-400 px-6 py-2 rounded-full"
-            onPress={() => navigation.navigate('PersonalPlan1')}
-          >
-            <Text className="text-white font-semibold">กรอกข้อมูลครั้งแรก</Text>
-          </TouchableOpacity>
-        </View>        
+        )}        
        
         <View className="mt-6">          
             <View className="flex-row justify-between items-center px-4 mb-4">
                 <Text className="text-xl font-bold text-gray-800">บทความการกิน</Text>
-                <TouchableOpacity onPress={() => console.log('Navigate to EatingBlog')}>
+                <TouchableOpacity onPress={() => navigation.navigate('EatingBlog')}>
                 <Text className="text-gray-500 text-sm">ดูเพิ่มเติม</Text>
                 </TouchableOpacity>
             </View>
