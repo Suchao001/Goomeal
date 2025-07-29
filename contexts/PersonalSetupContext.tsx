@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode,useCallback } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { base_url } from '../config';
 
@@ -15,7 +15,8 @@ export interface PersonalSetupData {
   target_goal?: 'decrease' | 'increase' | 'healthy';
   target_weight?: string;
   plan_duration?: string;
-  
+
+  isForAi?: boolean; // Optional, used for AI-specific plans
   // PersonalPlanScreen2 data
   activity_level?: 'low' | 'moderate' | 'high' | 'very high';
   
@@ -36,6 +37,7 @@ interface PersonalSetupContextType {
     activity: { label: string; value: string }[];
     eating: { label: string; value: string }[];
     restrictions: { label: string; value: string }[];
+    isForAi?: boolean;
   };
   submitToDatabase: () => Promise<{ success: boolean; message: string }>;
   resetSetupData: () => void;
@@ -46,11 +48,13 @@ const PersonalSetupContext = createContext<PersonalSetupContextType | undefined>
 export const PersonalSetupProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [setupData, setSetupData] = useState<PersonalSetupData>({});
 
-  const updateSetupData = (data: Partial<PersonalSetupData>) => {
-    setSetupData(prev => ({ ...prev, ...data }));
-    console.log('📊 อัปเดตข้อมูล:', { ...setupData, ...data });
-  };
-
+  const updateSetupData = useCallback((data: Partial<PersonalSetupData>) => {
+  setSetupData(prev => {
+    const newData = { ...prev, ...data };
+    console.log('📊 อัปเดตข้อมูล:', newData);
+    return newData;
+  });
+}, []);
   const getSummary = () => {
     // แปลงข้อมูลเป็นข้อความที่อ่านง่าย
     const genderMap = {
@@ -109,7 +113,8 @@ export const PersonalSetupProvider: React.FC<{ children: ReactNode }> = ({ child
       restrictions: [
         { label: 'อาหารที่แพ้', value: setupData.dietary_restrictions && setupData.dietary_restrictions.length > 0 ? setupData.dietary_restrictions.join(', ') : 'ไม่มี' },
         { label: 'ความต้องการเพิ่มเติม', value: setupData.additional_requirements || 'ไม่มี' }
-      ]
+      ],
+      isForAi: setupData.isForAi
     };
   };
 
@@ -123,7 +128,12 @@ export const PersonalSetupProvider: React.FC<{ children: ReactNode }> = ({ child
         throw new Error('ไม่พบ access token กรุณาเข้าสู่ระบบใหม่');
       }
 
-      // เตรียมข้อมูลสำหรับส่งไป backend
+      if(setupData.isForAi){
+        console.log('🔍 กำลังส่งข้อมูลสำหรับ AI...')
+
+      
+      }
+
       const requestData = {
         age: setupData.age ? parseInt(setupData.age) : undefined,
         weight: setupData.weight ? parseFloat(setupData.weight) : undefined,
@@ -139,7 +149,7 @@ export const PersonalSetupProvider: React.FC<{ children: ReactNode }> = ({ child
         first_time_setting: true 
       };
 
-      console.log('📊 ข้อมูลที่จะส่ง:', requestData);
+     
 
       const response = await fetch(`${base_url}/user/update-personal-data`, {
         method: 'PUT',

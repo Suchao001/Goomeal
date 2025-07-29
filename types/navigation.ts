@@ -8,7 +8,7 @@ export type RootStackParamList = {
     ForgotPassword_after: undefined;
 
     PersonalSetup: undefined;
-    PersonalPlan1: undefined;
+    PersonalPlan1: {isForAi?: boolean};
     PersonalPlan2: undefined;
     PersonalPlan3: undefined;
     PersonalPlan4: undefined;

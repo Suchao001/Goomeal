@@ -81,6 +81,16 @@ const PersonalDataSummaryScreen = () => {
         <SummarySection title="ระดับกิจกรรม" data={summary.activity} />
         <SummarySection title="ประเภทการกิน" data={summary.eating} />
         <SummarySection title="ข้อจำกัดและความต้องการ" data={summary.restrictions} />
+        {summary.isForAi && (
+          <View className="mb-6">
+            <Text className="text-lg font-promptSemiBold text-gray-800 mb-3">สำหรับ AI</Text>
+            <View className="bg-gray-50 rounded-xl p-4">
+              <Text className="text-gray-600 font-promptMedium">
+                ระบบจะใช้ข้อมูลนี้ในการสร้างแผนการกินที่เหมาะสม
+              </Text>
+            </View>
+          </View>
+        )}
       </ScrollView>
 
       {/* Action Buttons */}

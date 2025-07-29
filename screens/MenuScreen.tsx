@@ -244,6 +244,24 @@ const MenuScreen = () => {
               <Icon name="chevron-forward" size={20} color="#ef4444" />
             </TouchableOpacity>
           </View>
+ {/* test section */}
+          <View className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <TouchableOpacity 
+              className="flex-row items-center p-4"
+              onPress={() => {}}
+            >
+              <View className="w-10 h-10 bg-red-100 rounded-full items-center justify-center mr-4">
+                <Icon name="log-out" size={20} color="#ffb800" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-base font-medium text-black">test</Text>
+                <Text className="text-xs text-black"></Text>
+              </View>
+              <Icon name="chevron-forward" size={20} color="#ffb800" />
+            </TouchableOpacity>
+          </View>
+
+
         </View>
 
         {/* App Version */}

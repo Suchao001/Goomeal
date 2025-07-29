@@ -14,17 +14,7 @@ type RootStackParamList = {
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-/**
- * Bottom Navigation Menu Component
- * แสดงเมนูนำทางด้านล่างพร้อมไอคอน 5 ตัว
- * 
- * Icons:
- * - Home: หน้าแรก
- * - Chat: แชท/สนทนา
- * - RecordFood: บันทึกอาหาร (Save/Edit)
- * - Calendar: ปฏิทิน
- * - Profile: โปรไฟล์ส่วนตัว
- */
+
 const Menu = () => {
   const navigation = useNavigation<NavigationProp>();
   return (

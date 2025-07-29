@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { View, Text, TouchableOpacity, ScrollView, Alert, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTypedNavigation } from '../hooks/Navigation';
@@ -10,7 +11,6 @@ const OptionPlanScreen = () => {
 
   const planOptions = [
     {
- 
       title: 'ปรับแต่งการกินอาหารตามรูปแบบของท่านเอง',
       subtitle: 'และจะมีการวิเคราะห์แผนการกินของท่าน',
       icon: 'calendar-outline',
@@ -21,7 +21,7 @@ const OptionPlanScreen = () => {
       title: 'สร้างแผนการกินจากระบบ โดยกรอกข้อมูล',
       subtitle: 'เบื้องต้นระบบจะสร้างแผนการกินตามที่ท่านต้องการ',
       icon: 'sparkles-outline',
-      to: 'SearchFoodForAdd'
+      to: 'PersonalPlan1'
     },
     {
       id: '3',
@@ -75,12 +75,18 @@ const OptionPlanScreen = () => {
           {/* Option Cards */}
           <View className="space-y-3">
             {planOptions.map((option, index) => (
-              <TouchableOpacity
-                key={index}
-                className="mx-[8%] mb-4"
-                onPress={() => handleOptionPress(option.to)}
-                activeOpacity={0.7}
-              >
+                <TouchableOpacity
+                  key={index}
+                  className="mx-[8%] mb-4"
+                  onPress={() => {
+                    if (option.to === 'PersonalPlan1') {
+                      navigation.navigate('PersonalPlan1', { isForAi: true });
+                    } else {
+                      handleOptionPress(option.to);
+                    }
+                  }}
+                  activeOpacity={0.7}
+                >
                 <View className="bg-[#EFEFEF] rounded-2xl p-4 py-10 flex-row items-center">
                   {/* Icon at the beginning */}
                   <View className="mr-4">

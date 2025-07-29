@@ -4,11 +4,14 @@ import { useTypedNavigation } from '../../hooks/Navigation';
 import { ArrowLeft } from '../../components/GeneralMaterial';
 import { useState, useMemo } from 'react';
 import { usePersonalSetup } from '../../contexts/PersonalSetupContext';
+import { useEffect } from 'react';
+import { useRoute, RouteProp } from '@react-navigation/native';
+import {RootStackParamList} from '../../types/navigation';
 
 const PersonalPlanScreen1 = () => {
   const navigation = useTypedNavigation<'PersonalPlan1'>();
   const { updateSetupData } = usePersonalSetup();
-  
+  const route = useRoute<RouteProp<RootStackParamList, 'PersonalPlan1'>>();
   const [planDuration, setPlanDuration] = useState('7');
   const [isCustomPlan, setIsCustomPlan] = useState(false);
   const [openWeight, setOpenWeight] = useState(false);
@@ -16,9 +19,17 @@ const PersonalPlanScreen1 = () => {
   const [weightValue, setWeightValue] = useState('70');
   const [selectedTarget, setSelectedTarget] = useState<'decrease' | 'increase' | 'healthy'>('decrease');
 
-  
 
-  // Memoized weight items (30 to 150 kg)
+   useEffect(() => {
+    const isForAiFromNav = route.params?.isForAi;
+    if (isForAiFromNav !== undefined) {
+      updateSetupData({ isForAi: isForAiFromNav });
+      console.log(`Saved 'isForAi: ${isForAiFromNav}' to context.`);
+    }
+  }, [route.params?.isForAi, updateSetupData]); // <-- ให้ effect นี้ทำงานเมื่อค่า isForAi ที่ส่งมาเปลี่ยนไป
+
+
+  
   const weightItems = useMemo(
     () =>
       [...Array(151).keys()].slice(30).map((weight) => ({
