@@ -22,6 +22,25 @@ router.post('/suggest-food', async (req, res) => {
   }
 });
 
+router.post('/suggest-plan', async (req, res) => {
+  try {
+    const payload = req.body || {};
+    const answer = await suggestFood(payload);
+    console.log('AI response:', answer);
+    res.json({
+      success: true,
+      answer,
+      input: req.body || null
+    });
+  } catch (error) {
+    console.error('Error in /suggest-plan route:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
 export default router;
 
 

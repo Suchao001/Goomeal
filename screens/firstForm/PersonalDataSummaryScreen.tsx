@@ -76,7 +76,10 @@ const PersonalDataSummaryScreen = () => {
 
       {/* Summary Content */}
       <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false}>
-        <SummarySection title="ข้อมูลส่วนตัว" data={summary.personal} />
+        {summary.isForAi == false && (
+          <SummarySection title="ข้อมูลส่วนตัว" data={summary.personal} />
+        )}
+      
         <SummarySection title="เป้าหมายและแพลน" data={summary.plan} />
         <SummarySection title="ระดับกิจกรรม" data={summary.activity} />
         <SummarySection title="ประเภทการกิน" data={summary.eating} />
