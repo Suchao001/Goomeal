@@ -6,20 +6,16 @@ import { usePersonalSetup } from '../../contexts/PersonalSetupContext';
 
 const PersonalDataSummaryScreen = () => {
   const navigation = useTypedNavigation<'PersonalDataSummary'>();
-  const { getSummary, submitToDatabase, resetSetupData } = usePersonalSetup();
+  const { getSummary, submitToDatabase, getPlanSuggestions, resetSetupData } = usePersonalSetup();
   const [isLoading, setIsLoading] = useState(false);
   
   const summary = getSummary();
 
   const handleConfirm = async () => {
     setIsLoading(true);
-    
     try {
-      // ส่งข้อมูลไปยัง backend
       const result = await submitToDatabase();
-      
       if (result.success) {
-        // แสดงข้อความสำเร็จ
         Alert.alert(
           'สำเร็จ!',
           result.message,
@@ -27,9 +23,7 @@ const PersonalDataSummaryScreen = () => {
             {
               text: 'ตกลง',
               onPress: () => {
-                // รีเซ็ตข้อมูลหลังจากส่งเสร็จ
                 resetSetupData();
-                // ไปยังหน้าหลัก
                 navigation.navigate('Home');
               }
             }
@@ -46,6 +40,31 @@ const PersonalDataSummaryScreen = () => {
       setIsLoading(false);
     }
   };
+
+  const handlePromptAI = async () => {
+      try {
+        setIsLoading(true);
+        const result = await getPlanSuggestions();
+        if (result.success) {
+          console.log('AI Suggestions:', result.message);
+          Alert.alert('สำเร็จ!', result.message, [
+            {
+              text: 'ตกลง',
+              onPress: () => {
+                resetSetupData();
+                navigation.navigate('Home');
+              }
+            }
+          ]);
+        } else {
+          Alert.alert('เกิดข้อผิดพลาด', result.message);
+        }
+      }catch (error) {
+        console.error('Error getting AI suggestions:', error);
+        Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถดึงข้อมูลจาก AI ได้ กรุณาลองใหม่อีกครั้ง');
+      }
+      setIsLoading(false);
+  }
 
   const SummarySection = ({ title, data }: { title: string; data: { label: string; value: string }[] }) => (
     <View className="mb-6">
@@ -100,7 +119,7 @@ const PersonalDataSummaryScreen = () => {
       <View className="p-6 pt-4">
         <TouchableOpacity
           className={`w-full bg-primary rounded-xl p-4 justify-center items-center mb-3 ${isLoading ? 'opacity-50' : ''}`}
-          onPress={handleConfirm}
+          onPress={ summary.isForAi ? () => handlePromptAI() : handleConfirm}
           disabled={isLoading}
         >
           <Text className="text-white text-lg font-promptBold">

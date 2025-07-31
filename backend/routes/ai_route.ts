@@ -1,7 +1,9 @@
 import express from 'express';
 const router = express.Router();
-import { suggestFood } from '../controllers/ai_api_controller';
+import { suggestFood,getFoodPlanSuggestions } from '../controllers/ai_api_controller';
+import authenticateToken from '../middlewares/authenticateToken';
 
+router.use(authenticateToken);
 
 router.post('/suggest-food', async (req, res) => {
   try {
@@ -25,11 +27,13 @@ router.post('/suggest-food', async (req, res) => {
 router.post('/suggest-plan', async (req, res) => {
   try {
     const payload = req.body || {};
-    const answer = await suggestFood(payload);
-    console.log('AI response:', answer);
+    const userId = (req as any).user?.id;
+    const message = await getFoodPlanSuggestions(userId, payload);
+
+    console.log('AI response:', JSON.stringify(message, null, 2));
     res.json({
       success: true,
-      answer,
+      message,
       input: req.body || null
     });
   } catch (error) {

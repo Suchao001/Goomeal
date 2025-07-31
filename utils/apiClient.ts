@@ -97,6 +97,10 @@ export class ApiClient extends BaseApiClient {
   async suggestFood(payload?: any) {
     return this.aiClient.suggestFood(payload);
   }
+
+  async getFoodPlanSuggestions(payload?: any) {
+    return this.aiClient.getFoodPlanSuggestions(payload);
+  }
 }
 
 // Export a singleton instance
