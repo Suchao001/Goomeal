@@ -107,7 +107,14 @@ export const PersonalSetupProvider: React.FC<{ children: ReactNode }> = ({ child
       ],
       plan: [
         { label: 'เป้าหมาย', value: setupData.target_goal ? targetGoalMap[setupData.target_goal] : '-' },
-        { label: 'น้ำหนักเป้าหมาย', value: setupData.target_weight ? `${setupData.target_weight} กก.` : '-' },
+        { 
+          label: setupData.target_goal === 'increase' 
+            ? 'น้ำหนักที่ต้องการจะเพิ่ม' 
+            : setupData.target_goal === 'decrease' 
+            ? 'น้ำหนักที่ต้องการจะลด' 
+            : 'น้ำหนักเป้าหมาย', 
+          value: setupData.target_weight ? `${setupData.target_weight} กก.` : '-' 
+        },
         { label: 'ระยะเวลาแพลน', value: setupData.plan_duration ? `${setupData.plan_duration} วัน` : '-' }
       ],
       activity: [

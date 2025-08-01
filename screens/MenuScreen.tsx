@@ -75,28 +75,40 @@ const MenuScreen = () => {
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }}>
         
         {/* User Profile Section */}
-        <View className="bg-white mx-4 mt-6 rounded-xl shadow-sm p-6">
+        <View className="bg-white mx-4 mt-8 rounded-xl shadow-sm p-6">
           <View className="flex-row items-center">
-            <View className="w-16 h-16 bg-indigo-500 rounded-full items-center justify-center">
-              <Text className="text-white text-2xl">👤</Text>
+        {/* Avatar with gradient background */}
+        <View className="relative">
+          <View className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full items-center justify-center shadow-lg">
+            <View className="w-14 h-14 bg-white/20 rounded-full items-center justify-center backdrop-blur-sm">
+              <Icon name="person" size={24} color="black" />
             </View>
-            <View className="ml-4 flex-1">
-              <Text className="text-xl font-bold text-gray-800" numberOfLines={1}>
-                {user?.username || user?.name || user?.email || 'ผู้ใช้งาน'}
-              </Text>
-              <View className="flex-row items-center mt-1">
-                <View className="w-2 h-2 bg-green-500 rounded-full mr-2"></View>
-                <Text className="text-sm text-green-600">ออนไลน์</Text>
-              </View>
-            </View>
-            
-            <TouchableOpacity 
-              className="w-10 h-10 bg-gray-100 rounded-full items-center justify-center"
-              onPress={handleAccountSettingsPress}
-            >
-              <Icon name="settings" size={20} color="#6b7280" />
-            </TouchableOpacity>
           </View>
+          
+          <View className="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full items-center justify-center shadow-sm">
+            <View className="w-3 h-3 bg-green-500 rounded-full"></View>
+          </View>
+        </View>
+
+  <View className="ml-4 flex-1">
+    <Text className="text-xl font-bold text-gray-800" numberOfLines={1}>
+      {user?.username || user?.name || user?.email || 'ผู้ใช้งาน'}
+    </Text>
+    <View className="flex-row items-center mt-1">
+      <Text className="text-sm text-green-600 font-medium">ออนไลน์</Text>
+      <View className="w-1 h-1 bg-gray-300 rounded-full mx-2"></View>
+      <Text className="text-xs text-gray-500">พร้อมใช้งาน</Text>
+    </View>
+  </View>
+  
+  {/* Settings button with better styling */}
+  <TouchableOpacity 
+    className="w-10 h-10 bg-gray-50 border border-gray-200 rounded-full items-center justify-center shadow-sm active:bg-gray-100"
+    onPress={handleAccountSettingsPress}
+  >
+    <Icon name="settings" size={18} color="#6b7280" />
+  </TouchableOpacity>
+</View>
 
           {/* Quick Actions */}
           <View className="mt-4 pt-4 border-t border-gray-100">
@@ -113,7 +125,6 @@ const MenuScreen = () => {
           </View>
         </View>
 
-        {/* ... ส่วนที่เหลือของ UI เหมือนเดิมทั้งหมด ... */}
         {user?.first_time_setting == false && (
           <View className="mx-4 mt-6">
             <Text className="text-lg font-bold text-gray-800 mb-3">เริ่มต้นใช้งาน</Text>
@@ -132,12 +143,28 @@ const MenuScreen = () => {
           </TouchableOpacity>
         </View>
         )}
+
        
             {/* Main Menu */}
         <View className="mx-4 mt-6">
           <Text className="text-lg font-bold text-gray-800 mb-3">เมนูหลัก </Text>
           <View className="bg-white rounded-xl shadow-sm overflow-hidden">
             
+          <TouchableOpacity 
+                className="flex-row items-center p-4 border-b border-gray-100 bg-green-50"
+                onPress={() => navigation.navigate('OptionPlan')}
+              >
+                <View className="w-10 h-10 bg-green-100 rounded-full items-center justify-center mr-4">
+                  <Icon name="add-circle" size={20} color="#22c55e" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-base font-medium text-gray-800">เพิ่มแผนอาหาร</Text>
+                  <Text className="text-xs text-gray-500">สร้างแผนอาหารใหม่อย่างรวดเร็ว</Text>
+                </View>
+                <Icon name="chevron-forward" size={20} color="#9ca3af" />
+              </TouchableOpacity>
+
+
              <TouchableOpacity 
               className="flex-row items-center p-4 border-b border-gray-100"
               onPress={handleEatingReportPress}
@@ -244,24 +271,6 @@ const MenuScreen = () => {
               <Icon name="chevron-forward" size={20} color="#ef4444" />
             </TouchableOpacity>
           </View>
- {/* test section */}
-          <View className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <TouchableOpacity 
-              className="flex-row items-center p-4"
-              onPress={() => {}}
-            >
-              <View className="w-10 h-10 bg-red-100 rounded-full items-center justify-center mr-4">
-                <Icon name="log-out" size={20} color="#ffb800" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-base font-medium text-black">test</Text>
-                <Text className="text-xs text-black"></Text>
-              </View>
-              <Icon name="chevron-forward" size={20} color="#ffb800" />
-            </TouchableOpacity>
-          </View>
-
-
         </View>
 
         {/* App Version */}

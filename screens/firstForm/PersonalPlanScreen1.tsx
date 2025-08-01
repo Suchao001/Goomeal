@@ -16,7 +16,7 @@ const PersonalPlanScreen1 = () => {
   const [isCustomPlan, setIsCustomPlan] = useState(false);
   const [openWeight, setOpenWeight] = useState(false);
   const [openDuration, setOpenDuration] = useState(false);
-  const [weightValue, setWeightValue] = useState('70');
+  const [weightChangeValue, setWeightChangeValue] = useState('1'); // เปลี่ยนจาก weightValue เป็น weightChangeValue
   const [selectedTarget, setSelectedTarget] = useState<'decrease' | 'increase' | 'healthy'>('decrease');
 
 
@@ -30,11 +30,12 @@ const PersonalPlanScreen1 = () => {
 
 
   
-  const weightItems = useMemo(
+  // เปลี่ยน weightItems เป็น weightChangeItems สำหรับการเพิ่ม/ลดน้ำหนัก (1-5 กิโล)
+  const weightChangeItems = useMemo(
     () =>
-      [...Array(151).keys()].slice(30).map((weight) => ({
-        label: `${weight} กิโล`,
-        value: `${weight}`,
+      [...Array(5).keys()].map((weight) => ({
+        label: `${weight + 1} กิโลกรัม`,
+        value: `${weight + 1}`,
       })),
     []
   );
@@ -63,7 +64,7 @@ const PersonalPlanScreen1 = () => {
     // บันทึกข้อมูลลง Context
     updateSetupData({
       target_goal: selectedTarget,
-      target_weight: weightValue,
+      target_weight: selectedTarget === 'healthy' ? undefined : weightChangeValue, // ถ้าเป็น healthy ไม่ต้องส่งน้ำหนัก
       plan_duration: planDuration
     });
     
@@ -104,6 +105,15 @@ const PersonalPlanScreen1 = () => {
             </TouchableOpacity>
           ))}
         </View>
+
+        {/* คำอธิบายเพิ่มเติม */}
+        {selectedTarget !== 'healthy' && (
+          <View className="w-full mb-4 px-4">
+            <Text className="text-gray-500 text-sm font-promptLight text-center">
+              💡 ระบบจะคำนวณแผนอาหารจากผลที่คาดหวัง 1 เดือนข้างหน้า
+            </Text>
+          </View>
+        )}
 
 
       {/* Plan Duration Selection */}
@@ -171,40 +181,45 @@ const PersonalPlanScreen1 = () => {
         </View>
       </View>
 
-      {/* Target Weight Dropdown */}
-      <View className="w-full mb-6">
-      <Text className="text-gray-600 mb-6 font-promptMedium text-center text-[20px]">
-          น้ำหนักเป้าหมาย
-        </Text>
-        <DropDownPicker
-          open={openWeight}
-          value={weightValue}
-          items={weightItems}
-          setOpen={setOpenWeight}
-          setValue={setWeightValue}
-          placeholder="เลือกน้ำหนักเป้าหมาย"
-          containerStyle={{ height: 50 }}
-        
-          style={{
-            backgroundColor: '#F3F4F6',
-            borderRadius: 14,
-            borderWidth: 0,
-            paddingHorizontal: 12,
-            
-          }}
-          dropDownContainerStyle={{
-            backgroundColor: '#F3F4F6',
-            borderRadius: 8,
-            borderWidth: 0,
-          }}
-          textStyle={{
-            fontFamily: 'Prompt-Regular',
-            fontSize: 16,
-          }}
-          zIndex={1000} // Lower zIndex for weight dropdown
-          zIndexInverse={2000}
-        />
-      </View>
+      {/* Target Weight Dropdown - แสดงเฉพาะเมื่อเลือก เพิ่ม หรือ ลดน้ำหนัก */}
+      {selectedTarget !== 'healthy' && (
+        <View className="w-full mb-6">
+          <Text className="text-gray-600 mb-2 font-promptMedium text-center text-[20px]">
+            {selectedTarget === 'increase' ? 'น้ำหนักที่ต้องการเพิ่ม' : 'น้ำหนักที่ต้องการลด'}
+          </Text>
+          <Text className="text-gray-500 mb-4 font-promptLight text-center text-sm px-4">
+            ค่าน้ำหนักที่ดีสำหรับ{selectedTarget === 'increase' ? 'เพิ่ม' : 'ลด'}น้ำหนักใน 1 เดือน ไม่ควรเกิน 5 กิโลกรัม
+          </Text>
+          <DropDownPicker
+            open={openWeight}
+            value={weightChangeValue}
+            items={weightChangeItems}
+            setOpen={setOpenWeight}
+            setValue={setWeightChangeValue}
+            placeholder={`เลือกจำนวนกิโลกรัมที่จะ${selectedTarget === 'increase' ? 'เพิ่ม' : 'ลด'}`}
+            containerStyle={{ height: 50 }}
+          
+            style={{
+              backgroundColor: '#F3F4F6',
+              borderRadius: 14,
+              borderWidth: 0,
+              paddingHorizontal: 12,
+              
+            }}
+            dropDownContainerStyle={{
+              backgroundColor: '#F3F4F6',
+              borderRadius: 8,
+              borderWidth: 0,
+            }}
+            textStyle={{
+              fontFamily: 'Prompt-Regular',
+              fontSize: 16,
+            }}
+            zIndex={1000} // Lower zIndex for weight dropdown
+            zIndexInverse={2000}
+          />
+        </View>
+      )}
 
       {/* Next Button */}
       <TouchableOpacity

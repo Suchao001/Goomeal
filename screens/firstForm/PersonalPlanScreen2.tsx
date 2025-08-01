@@ -26,12 +26,16 @@ const PersonalPlanScreen2 = () => {
   }
 
   const handleContinue = () => {
-    // บันทึกข้อมูลลง Context
-    if (actLevel > 0) {
-      updateSetupData({
-        activity_level: activityItems[actLevel - 1].value as 'low' | 'moderate' | 'high' | 'very high'
-      });
+    // ตรวจสอบว่าได้เลือกระดับกิจกรรมแล้วหรือไม่
+    if (actLevel === 0) {
+      alert('กรุณาเลือกระดับการทำกิจกรรมของคุณ');
+      return;
     }
+
+    // บันทึกข้อมูลลง Context
+    updateSetupData({
+      activity_level: activityItems[actLevel - 1].value as 'low' | 'moderate' | 'high' | 'very high'
+    });
     
     navigation.navigate('PersonalPlan3');
   };
@@ -68,8 +72,11 @@ const PersonalPlanScreen2 = () => {
 </View>
 
       <TouchableOpacity
-        className="w-[95%] bg-primary rounded-xl p-4 justify-center items-center absolute bottom-8"
+        className={`w-[95%] rounded-xl p-4 justify-center items-center absolute bottom-8 ${
+          actLevel > 0 ? 'bg-primary' : 'bg-gray-400'
+        }`}
         onPress={handleContinue}
+        disabled={actLevel === 0}
       >
         <Text className="text-white text-lg font-promptBold">ต่อไป</Text>
       </TouchableOpacity>

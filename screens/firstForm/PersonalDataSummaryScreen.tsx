@@ -65,9 +65,9 @@ const PersonalDataSummaryScreen = () => {
       <Text className="text-lg font-promptSemiBold text-gray-800 mb-3">{title}</Text>
       <View className="bg-gray-50 rounded-xl p-4">
         {data.map((item, index) => (
-          <View key={index} className="flex-row justify-between items-center py-2">
-            <Text className="text-gray-600 font-promptMedium">{item.label}:</Text>
-            <Text className="text-gray-800 font-promptRegular">{item.value}</Text>
+          <View key={index} className="flex-row justify-between items-start py-2">
+            <Text className="text-gray-600 font-promptMedium flex-1 mr-2">{item.label}:</Text>
+            <Text className="text-gray-800 font-promptRegular flex-1 text-right">{item.value}</Text>
           </View>
         ))}
       </View>

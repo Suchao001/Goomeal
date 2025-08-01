@@ -412,7 +412,7 @@ const CalendarScreen = () => {
         </TouchableOpacity>
         
         {/* Title */}
-        <Text className="text-xl font-bold text-white font-prompt">จัดการเมนูอาหาร</Text>
+        <Text className="text-xl font-bold text-white font-prompt">แผนการกิน</Text>
         
         {/* Calendar Info */}
         <View className="flex-row items-center">

@@ -21,6 +21,7 @@ import SeeMoreGlobalPlans from './screens/SeeMoreGlobalPlans';
 import GlobalPlanMeal from './screens/GlobalPlanMeal';
 import GlobalPlanDayDetail from './screens/GlobalPlanDayDetail';
 import  AiPlanMealScreen  from './screens/AiPlanMealScreen';
+import  AiPlanDayDetail  from './screens/AiPlanDayDetail';
 
 const Stack = createNativeStackNavigator();
 export default function AppStack() {
@@ -71,6 +72,7 @@ export default function AppStack() {
 
       {/* AI Plan Meal Screen */}
       <Stack.Screen name="AiPlanMealScreen" component={AiPlanMealScreen} />
+      <Stack.Screen name="AiPlanDayDetail" component={AiPlanDayDetail} />
     </Stack.Navigator>
   );
 }

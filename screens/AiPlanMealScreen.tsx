@@ -108,6 +108,33 @@ const AiPlanMealScreen = () => {
     }
   };
 
+  const handleDayPress = (day: number) => {
+    console.log('🎯 View details for day:', day);
+    
+    // Find the day data
+    const dayData = mealPlanData.find(d => d.day === day);
+    
+    // Use the correct key format - just the day number as string
+    const dayKey = day.toString();
+    const originalDayData = aiPlanData?.[dayKey];
+    
+    console.log('📊 Day data found:', dayData);
+    console.log('📊 Original day data for key', dayKey, ':', originalDayData);
+    
+    if (dayData && originalDayData) {
+      console.log('✅ Navigating to AiPlanDayDetail with real data');
+      navigation.navigate('AiPlanDayDetail', { 
+        day,
+        dayData,
+        originalDayData,
+        maxDays: mealPlanData.length,
+        aiPlanData
+      });
+    } else {
+      alert(`ไม่พบข้อมูลสำหรับวันที่ ${day}`);
+    }
+  };
+
   const renderMealCard = (dayData: any) => (
     <View key={dayData.day} className="bg-white rounded-xl shadow-sm mx-4 mb-4 overflow-hidden">
       <View className="bg-white px-4 pt-4 pb-2">
@@ -115,6 +142,15 @@ const AiPlanMealScreen = () => {
           <Text className="text-lg font-promptSemiBold text-[#4A4A4A]">
             วันที่ {dayData.day}
           </Text>
+          <TouchableOpacity 
+            onPress={() => handleDayPress(dayData.day)}
+            className="flex-row items-center"
+          >
+            <Text className="text-sm font-promptMedium text-primary mr-1">
+              ดูรายละเอียด
+            </Text>
+            <Icon name="chevron-forward" size={16} color="#f59e0b" />
+          </TouchableOpacity>
         </View>
       </View>
       <View className="px-4 pb-3">

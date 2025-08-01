@@ -30,12 +30,16 @@ const PersonalPlanScreen3 = () => {
   }
 
   const handleContinue = () => {
-    // บันทึกข้อมูลลง Context
-    if (foodType > 0) {
-      updateSetupData({
-        eating_type: foodTypeItems[foodType - 1].value as 'omnivore' | 'keto' | 'vegetarian' | 'vegan' | 'other'
-      });
+    // ตรวจสอบว่าได้เลือกประเภทการกินแล้วหรือไม่
+    if (foodType === 0) {
+      alert('กรุณาเลือกประเภทการกินของคุณ');
+      return;
     }
+
+    // บันทึกข้อมูลลง Context
+    updateSetupData({
+      eating_type: foodTypeItems[foodType - 1].value as 'omnivore' | 'keto' | 'vegetarian' | 'vegan' | 'other'
+    });
     
     navigation.navigate('PersonalPlan4');
   };
@@ -85,8 +89,11 @@ const PersonalPlanScreen3 = () => {
 </View>
 
       <TouchableOpacity
-        className="w-[95%] bg-primary rounded-xl p-4 justify-center items-center absolute bottom-8"
+        className={`w-[95%] rounded-xl p-4 justify-center items-center absolute bottom-8 ${
+          foodType > 0 ? 'bg-primary' : 'bg-gray-400'
+        }`}
         onPress={handleContinue}
+        disabled={foodType === 0}
       >
         <Text className="text-white text-lg font-promptBold">ต่อไป</Text>
       </TouchableOpacity>

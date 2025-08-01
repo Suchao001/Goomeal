@@ -184,14 +184,14 @@ const EditAccountSettingsScreen = () => {
       {/* Header */}
       <View className="bg-white px-4 pt-12 pb-4 flex-row items-center justify-between shadow-sm">
         <TouchableOpacity 
-          className="w-10 h-10 rounded-full bg-yellow-100 items-center justify-center"
+          className="w-10 h-10  items-center justify-center"
           onPress={() => navigation.goBack()}
         >
-          <Icon name="arrow-back" size={24} color="#f59e0b" />
+          <Icon name="arrow-back" size={24} color="#ffb800" />
         </TouchableOpacity>
         
         <View className="flex-row items-center">
-          <Icon name="person-circle" size={32} color="#9ca3af" />
+          <Icon name="person-circle" size={32} color="#ffb800" />
           <Text className="text-xl font-promptBold text-gray-800 ml-2">แก้ไข</Text>
         </View>
         
@@ -201,7 +201,7 @@ const EditAccountSettingsScreen = () => {
       {/* Loading State */}
       {isLoading ? (
         <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#f59e0b" />
+          <ActivityIndicator size="large" color="#ffb800" />
           <Text className="text-gray-600 font-prompt mt-4">กำลังโหลดข้อมูล...</Text>
         </View>
       ) : (
@@ -321,7 +321,7 @@ const EditAccountSettingsScreen = () => {
         <View className="mt-6 space-y-3">
           {/* Save Button */}
           <TouchableOpacity
-            className="bg-yellow-500 rounded-xl p-4 flex-row items-center justify-center shadow-sm"
+            className="bg-primary rounded-xl p-4 flex-row items-center justify-center shadow-sm"
             onPress={handleSaveAndEdit}
           >
             <Icon name="create" size={24} color="white" />
@@ -330,7 +330,7 @@ const EditAccountSettingsScreen = () => {
 
           {/* Logout Button */}
           <TouchableOpacity
-            className="bg-red-500 mt-1 rounded-xl p-4 flex-row items-center justify-center shadow-sm"
+            className="bg-red-400 mt-1 rounded-xl p-4 flex-row items-center justify-center shadow-sm"
             onPress={handleLogout}
           >
             <Icon name="log-out" size={24} color="white" />
@@ -341,7 +341,7 @@ const EditAccountSettingsScreen = () => {
         {/* App Info */}
         <View className="mt-8 items-center">
           <Text className="text-gray-400 font-prompt text-sm">GoodMeal App v1.0.0</Text>
-          <Text className="text-gray-400 font-prompt text-xs mt-1">© 2024 GoodMeal Team</Text>
+          <Text className="text-gray-400 font-prompt text-xs mt-1">© 2025 GoodMeal Team</Text>
         </View>
         </ScrollView>
       )}
@@ -356,7 +356,7 @@ const EditAccountSettingsScreen = () => {
         <View className="flex-1 bg-black/50 justify-center items-center px-6">
           <View className="bg-white rounded-2xl p-6 w-full max-w-sm">
             <View className="items-center mb-6">
-              <Icon name="lock-closed" size={48} color="#f59e0b" />
+              <Icon name="lock-closed" size={48} color="#ffb800" />
               <Text className="text-xl font-promptBold text-gray-800 mt-4 text-center">
                 ยืนยันรหัสผ่าน
               </Text>
@@ -391,7 +391,7 @@ const EditAccountSettingsScreen = () => {
               </TouchableOpacity>
 
               <TouchableOpacity
-                className="flex-1 bg-yellow-500 rounded-xl p-4 items-center"
+                className="flex-1 bg-primary rounded-xl p-4 items-center"
                 onPress={handleConfirmAndSave}
               >
                 <Text className="text-white font-promptBold">ยืนยัน</Text>
