@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Icon from 'react-native-vector-icons/Ionicons';
 
@@ -17,46 +17,56 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const Menu = () => {
   const navigation = useNavigation<NavigationProp>();
+  const route = useRoute();
+  
+  const getIconColor = (routeName: string) => {
+    return route.name === routeName ? '#4a4a4a' : '#fff';
+  };
+  
+  const getIconStyle = (routeName: string) => {
+    return route.name === routeName ? styles.activeMenuItem : styles.menuItem;
+  };
+  
   return (
     <View style={styles.container}>
       {/* Home Icon */}
       <TouchableOpacity 
         onPress={() => navigation.navigate('Home')}
-        style={styles.menuItem}
+        style={getIconStyle('Home')}
       >
-        <Icon name="home" size={24} color="white" />
+        <Icon name="home" size={24} color={getIconColor('Home')} />
       </TouchableOpacity>
 
       {/* Chat Icon */}
       <TouchableOpacity 
         onPress={() => navigation.navigate('Chat')}
-        style={styles.menuItem}
+        style={getIconStyle('Chat')}
       >
-        <Icon name="chatbubble" size={24} color="white" />
+        <Icon name="chatbubble" size={24} color={getIconColor('Chat')} />
       </TouchableOpacity>
 
       {/* Record Food / Save Edit Icon */}
       <TouchableOpacity 
         onPress={() => navigation.navigate('RecordFood')}
-        style={styles.menuItem}
+        style={getIconStyle('RecordFood')}
       >
-        <Icon name="create" size={24} color="white" />
+        <Icon name="create" size={24} color={getIconColor('RecordFood')} />
       </TouchableOpacity>
 
       {/* Calendar Icon */}
       <TouchableOpacity 
         onPress={() => navigation.navigate('Calendar')}
-        style={styles.menuItem}
+        style={getIconStyle('Calendar')}
       >
-        <Icon name="calendar" size={24} color="white" />
+        <Icon name="calendar" size={24} color={getIconColor('Calendar')} />
       </TouchableOpacity>
 
       {/* Profile / Person Icon */}
       <TouchableOpacity 
         onPress={() => navigation.navigate('Menu')}
-        style={styles.menuItem}
+        style={getIconStyle('Menu')}
       >
-        <Icon name="person" size={24} color="white" />
+        <Icon name="person" size={24} color={getIconColor('Menu')} />
       </TouchableOpacity>
     </View>
   );
@@ -83,8 +93,18 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 5, // For Android shadow
-  },  menuItem: {
+  },  
+  menuItem: {
     alignItems: 'center',
+    padding: 8,
+    borderRadius: 12,
+  },
+  activeMenuItem: {
+    alignItems: 'center',
+    padding: 8,
+    borderRadius: 12,
+   
+    transform: [{ scale: 1.1 }],
   },
 });
 

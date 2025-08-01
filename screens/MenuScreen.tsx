@@ -91,13 +91,13 @@ const MenuScreen = () => {
         </View>
 
   <View className="ml-4 flex-1">
-    <Text className="text-xl font-bold text-gray-800" numberOfLines={1}>
+    <Text className="text-xl font-promptBold text-myBlack" numberOfLines={1}>
       {user?.username || user?.name || user?.email || 'ผู้ใช้งาน'}
     </Text>
     <View className="flex-row items-center mt-1">
-      <Text className="text-sm text-green-600 font-medium">ออนไลน์</Text>
+      <Text className="text-sm text-green-600 font-promptMedium">ออนไลน์</Text>
       <View className="w-1 h-1 bg-gray-300 rounded-full mx-2"></View>
-      <Text className="text-xs text-gray-500">พร้อมใช้งาน</Text>
+      <Text className="text-xs text-gray-500 font-prompt">พร้อมใช้งาน</Text>
     </View>
   </View>
   
@@ -119,7 +119,7 @@ const MenuScreen = () => {
               <View className="w-8 h-8 bg-blue-100 rounded-full items-center justify-center mr-3">
                 <Icon name="person" size={16} color="#3b82f6" />
               </View>
-              <Text className="text-sm font-medium text-gray-700 flex-1">ข้อมูลส่วนตัว</Text>
+              <Text className="text-sm font-promptMedium text-gray-700 flex-1">ข้อมูลส่วนตัว</Text>
               <Icon name="chevron-forward" size={16} color="#9ca3af" />
             </TouchableOpacity>
           </View>
@@ -127,7 +127,7 @@ const MenuScreen = () => {
 
         {user?.first_time_setting == false && (
           <View className="mx-4 mt-6">
-            <Text className="text-lg font-bold text-gray-800 mb-3">เริ่มต้นใช้งาน</Text>
+            <Text className="text-lg font-promptBold text-myBlack mb-3">เริ่มต้นใช้งาน</Text>
             <TouchableOpacity 
               className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex-row items-center"
               onPress={handleFirstTimeSetupPress}
@@ -136,8 +136,8 @@ const MenuScreen = () => {
               <Icon name="document-text" size={24} color="#3b82f6" />
             </View>
             <View className="flex-1">
-              <Text className="text-base font-semibold text-blue-800">กรอกข้อมูลครั้งแรก</Text>
-              <Text className="text-sm text-blue-600 mt-1">กรอกข้อมูลส่วนตัวเพื่อเริ่มใช้งาน</Text>
+              <Text className="text-base font-promptSemiBold text-blue-800">กรอกข้อมูลครั้งแรก</Text>
+              <Text className="text-sm text-blue-600 mt-1 font-prompt">กรอกข้อมูลส่วนตัวเพื่อเริ่มใช้งาน</Text>
             </View>
             <Icon name="chevron-forward" size={20} color="#3b82f6" />
           </TouchableOpacity>
@@ -147,7 +147,7 @@ const MenuScreen = () => {
        
             {/* Main Menu */}
         <View className="mx-4 mt-6">
-          <Text className="text-lg font-bold text-gray-800 mb-3">เมนูหลัก </Text>
+          <Text className="text-lg font-promptBold text-myBlack mb-3">เมนูหลัก </Text>
           <View className="bg-white rounded-xl shadow-sm overflow-hidden">
             
           <TouchableOpacity 
@@ -158,8 +158,8 @@ const MenuScreen = () => {
                   <Icon name="add-circle" size={20} color="#22c55e" />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-base font-medium text-gray-800">เพิ่มแผนอาหาร</Text>
-                  <Text className="text-xs text-gray-500">สร้างแผนอาหารใหม่อย่างรวดเร็ว</Text>
+                  <Text className="text-base font-promptMedium text-myBlack">เพิ่มแผนอาหาร</Text>
+                  <Text className="text-xs text-gray-500 font-prompt">สร้างแผนอาหารใหม่อย่างรวดเร็ว</Text>
                 </View>
                 <Icon name="chevron-forward" size={20} color="#9ca3af" />
               </TouchableOpacity>
@@ -173,8 +173,8 @@ const MenuScreen = () => {
                 <Icon name="analytics" size={20} color="#f59e0b" />
               </View>
               <View className="flex-1">
-                <Text className="text-base font-medium text-gray-800">รายงานการกิน</Text>
-                <Text className="text-xs text-gray-500">ดูสถิติและรายงานการบริโภคอาหาร</Text>
+                <Text className="text-base font-promptMedium text-myBlack">รายงานการกิน</Text>
+                <Text className="text-xs text-gray-500 font-prompt">ดูสถิติและรายงานการบริโภคอาหาร</Text>
               </View>
               <Icon name="chevron-forward" size={20} color="#9ca3af" />
             </TouchableOpacity>
@@ -187,8 +187,8 @@ const MenuScreen = () => {
                 <Icon name="restaurant" size={20} color="#22c55e" />
               </View>
               <View className="flex-1">
-                <Text className="text-base font-medium text-gray-800">เลือกแพลนการกิน</Text>
-                <Text className="text-xs text-gray-500">เลือกแพลนอาหารที่เหมาะสมกับคุณ</Text>
+                <Text className="text-base font-promptMedium text-myBlack">เลือกแพลนการกิน</Text>
+                <Text className="text-xs text-gray-500 font-prompt">เลือกแพลนอาหารที่เหมาะสมกับคุณ</Text>
               </View>
               <Icon name="chevron-forward" size={20} color="#9ca3af" />
             </TouchableOpacity>
@@ -202,8 +202,8 @@ const MenuScreen = () => {
                 <Icon name="options" size={20} color="#8b5cf6" />
               </View>
               <View className="flex-1">
-                <Text className="text-base font-medium text-gray-800">ตั้งค่าการรูปแบบการกิน</Text>
-                <Text className="text-xs text-gray-500">กำหนดรูปแบบการกินที่เหมาะสม</Text>
+                <Text className="text-base font-promptMedium text-myBlack">ตั้งค่าการรูปแบบการกิน</Text>
+                <Text className="text-xs text-gray-500 font-prompt">กำหนดรูปแบบการกินที่เหมาะสม</Text>
               </View>
               <Icon name="chevron-forward" size={20} color="#9ca3af" />
             </TouchableOpacity>
@@ -216,8 +216,8 @@ const MenuScreen = () => {
                 <Icon name="notifications" size={20} color="#f97316" />
               </View>
               <View className="flex-1">
-                <Text className="text-base font-medium text-gray-800">ตั้งค่าการแจ้งเตือน</Text>
-                <Text className="text-xs text-gray-500">จัดการการแจ้งเตือนต่างๆ</Text>
+                <Text className="text-base font-promptMedium text-myBlack">ตั้งค่าการแจ้งเตือน</Text>
+                <Text className="text-xs text-gray-500 font-prompt">จัดการการแจ้งเตือนต่างๆ</Text>
               </View>
               <Icon name="chevron-forward" size={20} color="#9ca3af" />
             </TouchableOpacity>
@@ -230,8 +230,8 @@ const MenuScreen = () => {
                 <Icon name="create" size={20} color="#6366f1" />
               </View>
               <View className="flex-1">
-                <Text className="text-base font-medium text-gray-800">ตั้งค่าบันทึกการกิน</Text>
-                <Text className="text-xs text-gray-500">กำหนดวิธีการบันทึกอาหาร</Text>
+                <Text className="text-base font-promptMedium text-myBlack">ตั้งค่าบันทึกการกิน</Text>
+                <Text className="text-xs text-gray-500 font-prompt">กำหนดวิธีการบันทึกอาหาร</Text>
               </View>
               <Icon name="chevron-forward" size={20} color="#9ca3af" />
             </TouchableOpacity>
@@ -244,8 +244,8 @@ const MenuScreen = () => {
                 <Icon name="time" size={20} color="#14b8a6" />
               </View>
               <View className="flex-1">
-                <Text className="text-base font-medium text-gray-800">ตั้งเวลามื้ออาหาร</Text>
-                <Text className="text-xs text-gray-500">กำหนดเวลาสำหรับแต่ละมื้อ</Text>
+                <Text className="text-base font-promptMedium text-myBlack">ตั้งเวลามื้ออาหาร</Text>
+                <Text className="text-xs text-gray-500 font-prompt">กำหนดเวลาสำหรับแต่ละมื้อ</Text>
               </View>
               <Icon name="chevron-forward" size={20} color="#9ca3af" />
             </TouchableOpacity>
@@ -255,7 +255,7 @@ const MenuScreen = () => {
 
         {/* Additional Options */}
         <View className="mx-4 mt-6">
-          <Text className="text-lg font-bold text-gray-800 mb-3">อื่นๆ</Text>
+          <Text className="text-lg font-promptBold text-myBlack mb-3">อื่นๆ</Text>
           <View className="bg-white rounded-xl shadow-sm overflow-hidden">
             <TouchableOpacity 
               className="flex-row items-center p-4"
@@ -265,8 +265,8 @@ const MenuScreen = () => {
                 <Icon name="log-out" size={20} color="#ef4444" />
               </View>
               <View className="flex-1">
-                <Text className="text-base font-medium text-red-500">ออกจากระบบ</Text>
-                <Text className="text-xs text-red-400">ลงชื่อออกจากบัญชี</Text>
+                <Text className="text-base font-promptMedium text-red-500">ออกจากระบบ</Text>
+                <Text className="text-xs text-red-400 font-prompt">ลงชื่อออกจากบัญชี</Text>
               </View>
               <Icon name="chevron-forward" size={20} color="#ef4444" />
             </TouchableOpacity>
@@ -275,7 +275,7 @@ const MenuScreen = () => {
 
         {/* App Version */}
         <View className="mx-4 mt-6 mb-4">
-          <Text className="text-center text-sm text-gray-400">
+          <Text className="text-center text-sm text-gray-400 font-prompt">
             GoodMeal App v1.0.0
           </Text>
         </View>

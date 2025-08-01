@@ -77,10 +77,10 @@ const TodayMeals: React.FC<TodayMealsProps> = ({ meals, onAddMeal, onEditMeal })
 
       {/* Food Info */}
       <View className="flex-1">
-        <Text className="text-sm font-medium text-gray-800" numberOfLines={1}>
+        <Text className="text-sm font-promptMedium text-myBlack" numberOfLines={1}>
           {meal.foodName}
         </Text>
-        <Text className="text-xs text-gray-500">
+        <Text className="text-xs text-gray-500 font-prompt">
           {meal.calories} แคลอรี่
           {meal.time && ` • ${meal.time}`}
         </Text>
@@ -106,11 +106,11 @@ const TodayMeals: React.FC<TodayMealsProps> = ({ meals, onAddMeal, onEditMeal })
               color={getMealTypeColor(type)} 
             />
           </View>
-          <Text className="text-base font-semibold text-gray-800">
+          <Text className="text-base font-promptSemiBold text-myBlack">
             {getMealTypeLabel(type)}
           </Text>
           {typeMeals.length > 0 && (
-            <Text className="text-sm text-gray-500 ml-2">
+            <Text className="text-sm text-gray-500 ml-2 font-prompt">
               ({typeMeals.reduce((sum, meal) => sum + meal.calories, 0)} แคลอรี่)
             </Text>
           )}
@@ -144,8 +144,8 @@ const TodayMeals: React.FC<TodayMealsProps> = ({ meals, onAddMeal, onEditMeal })
   return (
     <View className="mx-4 mt-4 bg-white rounded-xl p-5 shadow-sm">
       <View className="flex-row items-center justify-between mb-4">
-        <Text className="text-lg font-bold text-gray-800">มื้ออาหารวันนี้</Text>
-        <Text className="text-sm text-gray-500">
+        <Text className="text-lg font-promptBold text-myBlack">มื้ออาหารวันนี้</Text>
+        <Text className="text-sm text-gray-500 font-prompt">
           {meals.length} รายการ • {meals.reduce((sum, meal) => sum + meal.calories, 0)} แคลอรี่
         </Text>
       </View>

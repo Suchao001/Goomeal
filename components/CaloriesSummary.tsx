@@ -37,7 +37,7 @@ const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
         <View className="bg-white rounded-2xl p-4 shadow-sm border border-gray-50">
           {/* Label */}
           <View className="items-center mb-3">
-            <Text className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+            <Text className="text-xs font-promptMedium text-myBlack uppercase tracking-wide">
               {label}
             </Text>
           </View>
@@ -53,7 +53,7 @@ const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
               />
               {/* Percent and ring above icon */}
               <View className="w-16 h-16 rounded-full items-center justify-center" style={{ backgroundColor: data.color + '10', zIndex: 1 }}>
-                <Text className="text-lg font-bold" style={{ color: data.color }}>
+                <Text className="text-lg font-promptBold" style={{ color: data.color }}>
                   {Math.round(percentage)}%
                 </Text>
               </View>
@@ -73,11 +73,11 @@ const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
           </View>
           {/* Values */}
           <View className="items-center">
-            <Text className="text-base font-bold text-gray-800">
+            <Text className="text-base font-promptBold text-myBlack">
               {data.current}
-              <Text className="text-sm font-normal text-gray-500">{data.unit}</Text>
+              <Text className="text-sm font-prompt text-gray-500">{data.unit}</Text>
             </Text>
-            <Text className="text-xs text-gray-400 mt-1">
+            <Text className="text-xs text-gray-400 mt-1 font-prompt">
               เป้าหมาย {data.target}{data.unit}
             </Text>
           </View>
@@ -92,9 +92,9 @@ const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
       <View className="bg-white rounded-2xl p-4 shadow-lg border border-blue-100 mb-3">
         {/* Header */}
         <View className="flex-row items-center justify-between mb-4">
-          <Text className="text-lg font-bold text-gray-800">แคลอรี่วันนี้</Text>
+          <Text className="text-lg font-promptBold text-myBlack">แคลอรี่วันนี้</Text>
           <View className="bg-white rounded-full px-2 py-0.5 shadow-sm">
-            <Text className="text-[10px] font-medium text-blue-600">
+            <Text className="text-[10px] font-promptMedium text-blue-600">
               {Math.round(caloriesPercentage)}%
             </Text>
           </View>
@@ -102,14 +102,14 @@ const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
         {/* Main Calories Display */}
         <View className="items-center mb-4">
           <View className="flex-row items-baseline justify-center mb-1">
-            <Text className="text-3xl font-bold text-gray-800">
+            <Text className="text-3xl font-promptBold text-myBlack">
               {caloriesConsumed.toLocaleString()}
             </Text>
-            <Text className="text-base text-gray-500 ml-1">
+            <Text className="text-base text-gray-500 ml-1 font-prompt">
               / {caloriesTarget.toLocaleString()}
             </Text>
           </View>
-          <Text className="text-xs font-medium text-gray-600 mb-2">กิโลแคลอรี่</Text>
+          <Text className="text-xs font-promptMedium text-gray-600 mb-2">กิโลแคลอรี่</Text>
           {/* Progress Bar */}
           <View className="w-full mb-2">
             <View className="w-full h-2 bg-white rounded-full shadow-inner overflow-hidden">
@@ -126,14 +126,14 @@ const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
           {/* Status Message */}
           {remainingCalories > 0 ? (
             <View className="bg-white rounded-full px-3 py-1 shadow-sm">
-              <Text className="text-xs font-medium text-gray-600">
-                เหลืออีก <Text className="font-bold text-green-600">{remainingCalories}</Text> แคลอรี่
+              <Text className="text-xs font-promptMedium text-gray-600">
+                เหลืออีก <Text className="font-promptBold text-green-600">{remainingCalories}</Text> แคลอรี่
               </Text>
             </View>
           ) : (
             <View className="bg-red-50 rounded-full px-3 py-1 border border-red-100">
-              <Text className="text-xs font-medium text-red-600">
-                เกินเป้าหมาย <Text className="font-bold">{caloriesConsumed - caloriesTarget}</Text> แคลอรี่
+              <Text className="text-xs font-promptMedium text-red-600">
+                เกินเป้าหมาย <Text className="font-promptBold">{caloriesConsumed - caloriesTarget}</Text> แคลอรี่
               </Text>
             </View>
           )}

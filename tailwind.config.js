@@ -14,6 +14,8 @@ module.exports = {
       },
       colors: {
         primary: '#ffb800',
+        myBlack: '#4a4a4a',
+        myMagenta: "#ff005c"
       },
     },
   },

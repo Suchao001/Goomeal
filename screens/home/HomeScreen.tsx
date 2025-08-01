@@ -238,7 +238,7 @@ const Home = () => {
  
 
   return (
-    <View className="flex-1 bg-gray-100">
+    <View className="flex-1 bg-gray-100 ">
         <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>     
         <View style={{ paddingTop: 0 }}>
           <Header />
@@ -247,7 +247,7 @@ const Home = () => {
         {/* Calories Summary */}
         {loadingTodayMeals ? (
           <View className="w-[90%] bg-white rounded-lg shadow-md p-6 mt-4 mx-auto items-center">
-            <Text className="text-gray-500">กำลังโหลดข้อมูลโภชนาการ...</Text>
+            <Text className="text-gray-500 font-prompt">กำลังโหลดข้อมูลโภชนาการ...</Text>
           </View>
         ) : (
           <CaloriesSummary
@@ -262,7 +262,7 @@ const Home = () => {
         {/* Today's Meals */}
         {loadingTodayMeals ? (
           <View className="w-[90%] bg-white rounded-lg shadow-md p-6 mt-4 mx-auto items-center">
-            <Text className="text-gray-500">กำลังโหลดเมนูอาหารวันนี้...</Text>
+            <Text className="text-gray-500 font-prompt">กำลังโหลดเมนูอาหารวันนี้...</Text>
           </View>
         ) : (
           <TodayMeals
@@ -276,9 +276,9 @@ const Home = () => {
           <View className="w-[90%] bg-white rounded-lg shadow-md p-6 mt-4 mx-auto items-center">
             <View className="flex-row items-center mb-4">
               <View className="w-6 h-6 bg-orange-400 rounded-full mr-2 items-center justify-center">
-                <Text className="text-white font-bold">✎</Text>
+                <Text className="text-white font-promptBold">✎</Text>
               </View>
-              <Text className="text-gray-600 text-center">
+              <Text className="text-gray-600 text-center font-prompt">
                 กรอกข้อมูลที่จำเป็น{"\n"}เพื่อให้สร้างแผนการกินที่เหมาะสมกับคุณ
               </Text>
             </View>
@@ -286,16 +286,16 @@ const Home = () => {
               className="bg-orange-400 px-6 py-2 rounded-full"
               onPress={() => navigation.navigate('PersonalPlan1')}
             >
-              <Text className="text-white font-semibold">กรอกข้อมูลครั้งแรก</Text>
+              <Text className="text-white font-promptSemiBold">กรอกข้อมูลครั้งแรก</Text>
             </TouchableOpacity>
           </View>
         )}        
        
         <View className="mt-6">          
             <View className="flex-row justify-between items-center px-4 mb-4">
-                <Text className="text-xl font-bold text-gray-800">บทความการกิน</Text>
+                <Text className="text-xl font-promptBold text-myBlack">บทความการกิน</Text>
                 <TouchableOpacity onPress={() => navigation.navigate('EatingBlog')}>
-                <Text className="text-gray-500 text-sm">ดูเพิ่มเติม</Text>
+                <Text className="text-gray-500 text-sm font-prompt">ดูเพิ่มเติม</Text>
                 </TouchableOpacity>
             </View>
 
@@ -322,10 +322,10 @@ const Home = () => {
                   {/* Article Content */}
                   <View className="flex-1 p-4 justify-between">
                     <View>
-                      <Text className="text-lg font-semibold text-gray-800 mb-2" numberOfLines={2}>
+                      <Text className="text-lg font-promptSemiBold text-myBlack mb-2" numberOfLines={2}>
                         {item.title}
                       </Text>
-                      <Text className="text-gray-600 text-sm" numberOfLines={3}>
+                      <Text className="text-gray-600 text-sm font-prompt" numberOfLines={3}>
                         {item.excerpt_content || 'ไม่มีคำอธิบาย'}
                       </Text>
                     </View>
@@ -340,7 +340,7 @@ const Home = () => {
         {/* Recommended Meals Section */}
         <View className="mt-8 mb-4">
           <View className="px-4 mb-4">
-            <Text className="text-xl font-bold text-gray-800 mb-2">เมนูแนะนำของคุณ</Text>
+            <Text className="text-xl font-promptBold text-myBlack mb-2">เมนูแนะนำของคุณ</Text>
           </View>
 
           <View className="px-4">
@@ -358,10 +358,10 @@ const Home = () => {
                   
                   
                   <View className="flex-1 p-4 justify-center">
-                    <Text className="text-lg font-semibold text-gray-800 mb-1">
+                    <Text className="text-lg font-promptSemiBold text-myBlack mb-1">
                       {meal.name}
                     </Text>
-                    <Text className="text-orange-500 font-medium">
+                    <Text className="text-orange-500 font-promptMedium">
                       {meal.calories} แคลอรี่
                     </Text>
                   </View>
@@ -373,7 +373,7 @@ const Home = () => {
               onPress={() => navigation.navigate('FoodMenu')}
             >
               <Icon name="sparkles" size={24} color="white" />
-              <Text className="text-white font-bold text-lg ml-2">ขอเมนูอาหาร</Text>
+              <Text className="text-white font-promptBold text-lg ml-2">ขอเมนูอาหาร</Text>
             </TouchableOpacity>
           </View>
         </View>
