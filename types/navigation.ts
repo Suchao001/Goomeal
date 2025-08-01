@@ -67,5 +67,6 @@ export type RootStackParamList = {
       planInfo: any;
       maxDays: number;
     };
+    AiPlanMealScreen: { aiPlanData: any };
 
   };

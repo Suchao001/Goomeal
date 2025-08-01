@@ -42,28 +42,22 @@ const PersonalDataSummaryScreen = () => {
   };
 
   const handlePromptAI = async () => {
-      try {
-        setIsLoading(true);
-        const result = await getPlanSuggestions();
-        if (result.success) {
-          console.log('AI Suggestions:', result.message);
-          Alert.alert('สำเร็จ!', result.message, [
-            {
-              text: 'ตกลง',
-              onPress: () => {
-                resetSetupData();
-                navigation.navigate('Home');
-              }
-            }
-          ]);
-        } else {
-          Alert.alert('เกิดข้อผิดพลาด', result.message);
-        }
-      }catch (error) {
-        console.error('Error getting AI suggestions:', error);
-        Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถดึงข้อมูลจาก AI ได้ กรุณาลองใหม่อีกครั้ง');
+    try {
+      setIsLoading(true);
+      const result = await getPlanSuggestions();
+      if (result.success && result.message) {
+        console.log('AI Suggestions:', result.message);
+        navigation.navigate('AiPlanMealScreen', { aiPlanData: result.message });
+        resetSetupData();
+      } else {
+        Alert.alert('เกิดข้อผิดพลาด', result.message || 'ไม่สามารถดึงข้อมูลจาก AI ได้');
       }
+    } catch (error) {
+      console.error('Error getting AI suggestions:', error);
+      Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถดึงข้อมูลจาก AI ได้ กรุณาลองใหม่อีกครั้ง');
+    } finally {
       setIsLoading(false);
+    }
   }
 
   const SummarySection = ({ title, data }: { title: string; data: { label: string; value: string }[] }) => (

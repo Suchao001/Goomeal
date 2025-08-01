@@ -41,7 +41,7 @@ interface PersonalSetupContextType {
     isForAi?: boolean;
   };
   submitToDatabase: () => Promise<{ success: boolean; message: string }>;
-  getPlanSuggestions: () => Promise<{ success: boolean; message: string }>;
+  getPlanSuggestions: () => Promise<{ success: boolean; message: string; data?: any }>;
   resetSetupData: () => void;
 }
 
@@ -124,7 +124,7 @@ export const PersonalSetupProvider: React.FC<{ children: ReactNode }> = ({ child
     };
   };
 
-  const getPlanSuggestions = async (): Promise<{ success: boolean; message: string }> => {
+  const getPlanSuggestions = async (): Promise<{ success: boolean; message: string; data?: any }> => {
     try {
       const token = await SecureStore.getItemAsync('accessToken');
       if (!token) {
@@ -156,6 +156,7 @@ export const PersonalSetupProvider: React.FC<{ children: ReactNode }> = ({ child
       return {
         success: response.success,
         message: response.message ?? '',
+        data: response.data, // Include the actual meal plan data
       };
     } catch (error: any) {
       console.error('❌ เกิดข้อผิดพลาดในการดึงข้อมูล:', error);

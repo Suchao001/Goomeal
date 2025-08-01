@@ -179,6 +179,33 @@ Generate a food plan for ${totalPlanDay} days. Format the response as described.
     const content = response.choices[0].message.content;
     const cleaned = content?.replace(/```(?:json)?/g, '').replace(/```/g, '').trim();
 
+    let parsedData;
+    try {
+      if (!cleaned) {
+        throw new Error("AI response is empty");
+      }
+      parsedData = JSON.parse(cleaned);
+    } catch (e) {
+      console.error('Failed to parse JSON from AI response:', cleaned);
+      throw new Error('Invalid JSON returned from AI');
+    }
+
+    Object.keys(parsedData).forEach(day => {
+      const dayPlan = parsedData[day];
+      if (dayPlan && dayPlan.meals) {
+        
+        Object.keys(dayPlan.meals).forEach(mealKey => {
+          const meal = dayPlan.meals[mealKey];
+          
+          if (meal && Array.isArray(meal.items)) {
+
+            meal.items = meal.items.filter((item: any) =>
+              item && Object.keys(item).length > 0
+            );
+          }
+        });
+      }
+    });
     try {
       return JSON.parse(cleaned || '');
     } catch (e) {
