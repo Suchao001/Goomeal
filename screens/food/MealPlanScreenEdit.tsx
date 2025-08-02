@@ -10,6 +10,7 @@ import { AddMealModal } from '../../components/AddMealModal';
 import { KebabMenuModal } from '../../components/KebabMenuModal';
 import { EditFoodModal } from '../../components/EditFoodModal';
 import { getImageUrl, getCurrentDate, generateDays } from '../../utils/mealPlanUtils';
+import { useRecommendedNutrition } from '../../hooks/useRecommendedNutrition';
 
 
 const MealPlanEditScreen = () => {
@@ -62,6 +63,9 @@ const MealPlanEditScreen = () => {
   // Generate days and current date
   const days = useMemo(() => generateDays(), []);
   const currentDate = useMemo(() => getCurrentDate(selectedDay), [selectedDay]);
+
+  // Get recommended nutrition from user profile with caching
+  const { nutrition: recommendedNutrition, isCalculated, isProfileComplete } = useRecommendedNutrition();
 
   // Check if we can save (has meal plan data and planId)
   const canSave = useMemo(() => {
@@ -291,24 +295,23 @@ const MealPlanEditScreen = () => {
 
         {/* Nutrition Summary */}
         {hasFood && (
-          <View className="bg-gray-50 rounded-lg p-3 mb-3">
-            <View className="flex-row justify-between items-center mb-2">
-              <Text className="text-sm font-medium text-gray-700">สรุปโภชนาการ</Text>
+          <View className="bg-gray-50 rounded-lg p-2 mb-3">
+            <View className="flex-row justify-between items-center">
+              <View className="flex-row space-x-4">
+                <View className="items-center">
+                  <Text className="text-xs text-gray-500">คาร์บ</Text>
+                  <Text className="text-xs font-medium text-gray-700">{nutrition.carb}g</Text>
+                </View>
+                <View className="items-center">
+                  <Text className="text-xs text-gray-500">โปรตีน</Text>
+                  <Text className="text-xs font-medium text-gray-700">{nutrition.protein}g</Text>
+                </View>
+                <View className="items-center">
+                  <Text className="text-xs text-gray-500">ไขมัน</Text>
+                  <Text className="text-xs font-medium text-gray-700">{nutrition.fat}g</Text>
+                </View>
+              </View>
               <Text className="text-sm font-bold text-blue-600">{nutrition.cal} kcal</Text>
-            </View>
-            <View className="flex-row justify-between">
-              <View className="items-center">
-                <Text className="text-xs text-gray-500">คาร์บ</Text>
-                <Text className="text-sm font-medium text-gray-700">{nutrition.carb}g</Text>
-              </View>
-              <View className="items-center">
-                <Text className="text-xs text-gray-500">โปรตีน</Text>
-                <Text className="text-sm font-medium text-gray-700">{nutrition.protein}g</Text>
-              </View>
-              <View className="items-center">
-                <Text className="text-xs text-gray-500">ไขมัน</Text>
-                <Text className="text-sm font-medium text-gray-700">{nutrition.fat}g</Text>
-              </View>
             </View>
           </View>
         )}
@@ -316,18 +319,17 @@ const MealPlanEditScreen = () => {
         {/* Food items */}
         {hasFood && (
           <View className="bg-white border border-gray-200 rounded-lg p-3 mb-3">
-            <Text className="text-sm font-medium text-gray-700 mb-2">รายการอาหาร</Text>
             {mealData.items.map((food: FoodItem, index: number) => (
               <View key={`${food.id}-${index}`} className="flex-row items-center mb-2 last:mb-0">
-                <View className="w-8 h-8 rounded bg-gray-200 items-center justify-center mr-3">
+                <View className="w-12 h-12 rounded bg-gray-200 items-center justify-center mr-3">
                   {food.img ? (
                     <Image
                       source={{ uri: getImageUrl(food) }}
-                      className="w-8 h-8 rounded"
+                      className="w-12 h-12 rounded"
                       resizeMode="cover"
                     />
                   ) : (
-                    <Text className="text-xs">🍽️</Text>
+                    <Text className="text-sm">🍽️</Text>
                   )}
                 </View>
                 <View className="flex-1">
@@ -457,30 +459,102 @@ const MealPlanEditScreen = () => {
         
         {/* Daily Calories Summary */}
         <View className="bg-blue-50 rounded-lg p-4 mt-2">
-          <View className="flex-row justify-between items-center mb-3">
-            <Text className="text-lg font-bold text-blue-800">รวมแคลอรี่วันนี้</Text>
-            <Text className="text-xl font-bold text-blue-600">{getDayNutrition(selectedDay).cal} kcal</Text>
-          </View>
-          
-          {getDayNutrition(selectedDay).cal > 0 && (
-            <View className="flex-row justify-between bg-white rounded-lg p-3">
-              <View className="items-center flex-1">
-                <Text className="text-xs text-blue-600 font-medium">คาร์โบไฮเดรต</Text>
-                <Text className="text-sm font-bold text-blue-700">{getDayNutrition(selectedDay).carb}g</Text>
-              </View>
-              <View className="items-center flex-1">
-                <Text className="text-xs text-blue-600 font-medium">โปรตีน</Text>
-                <Text className="text-sm font-bold text-blue-700">{getDayNutrition(selectedDay).protein}g</Text>
-              </View>
-              <View className="items-center flex-1">
-                <Text className="text-xs text-blue-600 font-medium">ไขมัน</Text>
-                <Text className="text-sm font-bold text-blue-700">{getDayNutrition(selectedDay).fat}g</Text>
+          {/* Profile Status Indicator */}
+          {!isProfileComplete && (
+            <View className="bg-orange-100 border border-orange-200 rounded-lg p-3 mb-3">
+              <View className="flex-row items-center">
+                <Icon name="warning" size={16} color="#f59e0b" />
+                <Text className="text-xs text-orange-700 ml-2 flex-1">
+                  ข้อมูลโปรไฟล์ไม่สมบูรณ์ กำลังใช้ค่าเริ่มต้น
+                </Text>
               </View>
             </View>
           )}
           
-          {getDayNutrition(selectedDay).cal === 0 && (
-            <Text className="text-center text-blue-600 text-sm">ยังไม่มีข้อมูลอาหารสำหรับวันนี้</Text>
+          <View className="flex-row justify-between items-center mb-3">
+            <View>
+              <Text className="text-lg font-bold text-blue-800 font-prompt">รวมแคลอรี่วันนี้</Text>
+              {isCalculated && (
+                <Text className="text-xs text-blue-600">คำนวณจากข้อมูลโปรไฟล์ของคุณ</Text>
+              )}
+            </View>
+            <View className="items-end">
+              <Text className="text-xl font-bold text-blue-600">{getDayNutrition(selectedDay).cal} kcal</Text>
+              <Text className="text-xs text-blue-500">จาก {recommendedNutrition.cal} kcal ที่แนะนำ</Text>
+            </View>
+          </View>
+          
+          {/* Calories Progress Bar */}
+          <View className="mb-4">
+            <View className="bg-blue-200 rounded-full h-2 mb-2">
+              <View 
+                className="bg-blue-600 h-2 rounded-full" 
+                style={{ 
+                  width: `${Math.min((getDayNutrition(selectedDay).cal / recommendedNutrition.cal) * 100, 100)}%` 
+                }}
+              />
+            </View>
+            <View className="flex-row justify-between">
+              <Text className="text-xs text-blue-600">ปัจจุบัน: {getDayNutrition(selectedDay).cal} kcal</Text>
+              <Text className="text-xs text-blue-500">เป้าหมาย: {recommendedNutrition.cal} kcal</Text>
+            </View>
+          </View>
+          
+          {getDayNutrition(selectedDay).cal > 0 && (
+            <View className="bg-white rounded-lg p-3">
+              <View className="flex-row justify-between space-x-3">
+                {/* Carbs Progress */}
+                <View className="flex-1 px-1">
+                  <View className="flex-row justify-between items-center mb-1">
+                    <Text className="text-xs text-gray-600 font-prompt">คาร์บ</Text>
+                    <Text className="text-xs text-gray-700 font-prompt">{getDayNutrition(selectedDay).carb}g</Text>
+                  </View>
+                  <View className="bg-orange-200 rounded-full h-2 mb-1">
+                    <View 
+                      className="bg-orange-500 h-2 rounded-full" 
+                      style={{ 
+                        width: `${Math.min((getDayNutrition(selectedDay).carb / recommendedNutrition.carb) * 100, 100)}%` 
+                      }}
+                    />
+                  </View>
+                  <Text className="text-xs text-gray-500 font-prompt text-center">{recommendedNutrition.carb}g</Text>
+                </View>
+                
+                {/* Protein Progress */}
+                <View className="flex-1 px-1">
+                  <View className="flex-row justify-between items-center mb-1">
+                    <Text className="text-xs text-gray-600 font-prompt">โปรตีน</Text>
+                    <Text className="text-xs text-gray-700 font-prompt">{getDayNutrition(selectedDay).protein}g</Text>
+                  </View>
+                  <View className="bg-green-200 rounded-full h-2 mb-1">
+                    <View 
+                      className="bg-green-500 h-2 rounded-full" 
+                      style={{ 
+                        width: `${Math.min((getDayNutrition(selectedDay).protein / recommendedNutrition.protein) * 100, 100)}%` 
+                      }}
+                    />
+                  </View>
+                  <Text className="text-xs text-gray-500 font-prompt text-center">{recommendedNutrition.protein}g</Text>
+                </View>
+                
+                {/* Fat Progress */}
+                <View className="flex-1 px-1">
+                  <View className="flex-row justify-between items-center mb-1">
+                    <Text className="text-xs text-gray-600 font-prompt">ไขมัน</Text>
+                    <Text className="text-xs text-gray-700 font-prompt">{getDayNutrition(selectedDay).fat}g</Text>
+                  </View>
+                  <View className="bg-purple-200 rounded-full h-2 mb-1">
+                    <View 
+                      className="bg-purple-500 h-2 rounded-full" 
+                      style={{ 
+                        width: `${Math.min((getDayNutrition(selectedDay).fat / recommendedNutrition.fat) * 100, 100)}%` 
+                      }}
+                    />
+                  </View>
+                  <Text className="text-xs text-gray-500 font-prompt text-center">{recommendedNutrition.fat}g</Text>
+                </View>
+              </View>
+            </View>
           )}
         </View>
       </View>
@@ -495,7 +569,7 @@ const MealPlanEditScreen = () => {
           className="bg-white border-2 border-dashed border-gray-300 rounded-xl p-6 items-center justify-center"
           onPress={() => setShowAddMealModal(true)}
         >
-          <Icon name="add-circle" size={48} color="#9ca3af" />
+          <Icon name="add-circle" size={22} color="#9ca3af" />
           <Text className="text-gray-600 font-medium mt-2">เพิ่มมื้อเพิ่มเติม</Text>
         </TouchableOpacity>
         <View>
