@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Alert } from 'react-native';
+import { calculateRecommendedNutrition, RecommendedNutrition, UserProfileData } from '../utils/nutritionCalculator';
 
 export interface FoodItem {
   id: string;
@@ -41,11 +42,19 @@ export interface CustomMealsPerDay {
   [day: number]: Meal[];
 }
 
+// Nutrition cache with user profile hash
+interface NutritionCache {
+  userProfileHash: string;
+  nutrition: RecommendedNutrition;
+  lastCalculated: number;
+}
+
 interface MealPlanStore {
   mealPlanData: MealPlanData;
   meals: Meal[]; // Default meals
   customMeals: CustomMealsPerDay; // Custom meals per day
   isEditMode: boolean; 
+  nutritionCache: NutritionCache | null; // Cached nutrition data
   
   // Actions
   addFoodToMeal: (food: FoodItem, mealId: string, day: number, mealInfo?: { name: string; time: string }) => void;
@@ -63,6 +72,10 @@ interface MealPlanStore {
   // Nutrition calculations
   getMealNutrition: (day: number, mealId: string) => { cal: number; carb: number; fat: number; protein: number };
   getDayNutrition: (day: number) => { cal: number; carb: number; fat: number; protein: number };
+  
+  // Recommended nutrition with caching
+  getRecommendedNutrition: (userProfile: UserProfileData) => RecommendedNutrition;
+  clearNutritionCache: () => void;
 }
 
 // Default meal information
@@ -83,6 +96,61 @@ export const useMealPlanStore = create<MealPlanStore>()(
       ],
       customMeals: {}, // Initialize custom meals
       isEditMode: false, // Initialize edit mode flag
+      nutritionCache: null, // Initialize nutrition cache
+
+      // Helper function to create user profile hash
+      _createUserProfileHash: (userProfile: UserProfileData): string => {
+        return JSON.stringify({
+          age: userProfile.age,
+          weight: userProfile.weight,
+          height: userProfile.height,
+          gender: userProfile.gender,
+          body_fat: userProfile.body_fat,
+          target_goal: userProfile.target_goal,
+          target_weight: userProfile.target_weight,
+          activity_level: userProfile.activity_level
+        });
+      },
+
+      getRecommendedNutrition: (userProfile: UserProfileData) => {
+        const state = get();
+        const userProfileHash = (state as any)._createUserProfileHash(userProfile);
+        const now = Date.now();
+        const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+        // Check if we have valid cached data
+        if (
+          state.nutritionCache &&
+          state.nutritionCache.userProfileHash === userProfileHash &&
+          (now - state.nutritionCache.lastCalculated) < CACHE_DURATION
+        ) {
+          console.log('🎯 [MealPlanStore] Using cached nutrition data');
+          return state.nutritionCache.nutrition;
+        }
+
+        // Calculate new nutrition data
+        console.log('🧮 [MealPlanStore] Calculating new nutrition data');
+        const nutrition = calculateRecommendedNutrition(userProfile);
+
+        // Update cache
+        set((state) => ({
+          ...state,
+          nutritionCache: {
+            userProfileHash,
+            nutrition,
+            lastCalculated: now
+          }
+        }));
+
+        return nutrition;
+      },
+
+      clearNutritionCache: () => {
+        set((state) => ({
+          ...state,
+          nutritionCache: null
+        }));
+      },
 
       setEditMode: (isEdit: boolean) => {
         set((state) => ({

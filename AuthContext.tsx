@@ -4,6 +4,7 @@ import * as SecureStore from 'expo-secure-store';
 import { apiClient } from './utils/apiClient';
 import { setGlobalLogoutCallback } from './utils/api/baseClient';
 import { debugToken } from './utils/tokenDebug';
+import { useMealPlanStore } from './stores/mealPlanStore';
 
 // ... Interface User ไม่มีการเปลี่ยนแปลง ...
 interface User {
@@ -54,10 +55,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // USECALLBACK: ห่อฟังก์ชันนี้เพื่อทำให้ reference คงที่
-  // ฟังก์ชันนี้ถูกเรียกโดย reloadUser และ useEffect
   const loadToken = useCallback(async () => {
-    setLoading(true); // ควรตั้งค่า loading ตอนเริ่มโหลด
+    setLoading(true); 
     try {
       const accessToken = await SecureStore.getItemAsync('accessToken');
       const refreshToken = await SecureStore.getItemAsync('refreshToken');
@@ -76,8 +75,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []); // Dependency array ว่าง เพราะไม่ได้ใช้ค่าจาก state/props ภายนอก
 
-  // USECALLBACK: ห่อฟังก์ชัน fetchUserProfile
-  // นี่คือฟังก์ชันที่เป็นต้นเหตุของ Loop ในหน้า Home.js
   const fetchUserProfile = useCallback(async (): Promise<User | null> => {
     try {
       const response = await apiClient.get('/user/profile');
@@ -86,6 +83,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const userData = response.data.user;
         console.log('✅ [AuthContext] Profile fetched successfully:', userData);
         await SecureStore.setItemAsync('user', JSON.stringify(userData));
+        
+        // Clear nutrition cache when user profile changes
+        const { clearNutritionCache } = useMealPlanStore.getState();
+        clearNutritionCache();
+        console.log('🔄 [AuthContext] Nutrition cache cleared due to profile update');
+        
         setUser(userData);
         return userData;
       }
@@ -113,6 +116,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = useCallback(async () => {
     console.log('🚪 [AuthContext] Logout initiated');
     await apiClient.logout();
+    
+    // Clear nutrition cache on logout
+    const { clearNutritionCache } = useMealPlanStore.getState();
+    clearNutritionCache();
+    console.log('🔄 [AuthContext] Nutrition cache cleared on logout');
+    
     setUser(null);
     console.log('✅ [AuthContext] User logged out successfully');
   }, []); // Dependency array ว่าง

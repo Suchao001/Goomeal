@@ -179,6 +179,11 @@ export const PersonalSetupProvider: React.FC<{ children: ReactNode }> = ({ child
       if (!token) {
         throw new Error('ไม่พบ access token กรุณาเข้าสู่ระบบใหม่');
       }
+      const target_weight_ = setupData.target_goal === 'decrease'
+        ? parseFloat(setupData.weight ?? '0') - parseFloat(setupData.target_weight ?? '0')
+        : setupData.target_goal === 'increase'
+        ? parseFloat(setupData.weight ?? '0') + parseFloat(setupData.target_weight ?? '0')
+        : parseFloat(setupData.weight ?? '0'); // healthy = current weight
 
       const requestData = {
         age: setupData.age ? parseInt(setupData.age) : undefined,
@@ -187,7 +192,7 @@ export const PersonalSetupProvider: React.FC<{ children: ReactNode }> = ({ child
         gender: setupData.gender,
         body_fat: setupData.body_fat,
         target_goal: setupData.target_goal,
-        target_weight: setupData.target_weight ? parseFloat(setupData.target_weight) : undefined,
+        target_weight: setupData.target_weight  ? parseFloat(setupData.target_weight) : undefined,
         activity_level: setupData.activity_level,
         eating_type: setupData.eating_type,
         dietary_restrictions: setupData.dietary_restrictions ? setupData.dietary_restrictions.join(', ') : undefined,
