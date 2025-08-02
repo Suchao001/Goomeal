@@ -270,20 +270,20 @@ const MealPlanScreen = () => {
               <Icon name={meal.icon} size={24} color="#eab308" />
             </View>
             <View>
-              <Text className="text-lg font-semibold text-gray-800">{meal.name}</Text>
-              <Text className="text-sm text-gray-500">{meal.time}</Text>
+              <Text className="text-lg font-semibold text-gray-800 font-prompt">{meal.name}</Text>
+              <Text className="text-sm text-gray-500 font-prompt">{meal.time}</Text>
             </View>
           </View>
           
           {/* Meal status */}
           <View className="items-end">
             <View className={`px-3 py-1 rounded-full ${hasFood ? 'bg-green-100' : 'bg-gray-100'}`}>
-              <Text className={`text-xs font-medium ${hasFood ? 'text-green-600' : 'text-gray-600'}`}>
+              <Text className={`text-xs font-medium font-prompt ${hasFood ? 'text-green-600' : 'text-gray-600'}`}>
                 {hasFood ? `${mealData.items.length} เมนู` : 'ยังไม่มีเมนู'}
               </Text>
             </View>
             {hasFood && (
-              <Text className="text-xs text-gray-500 mt-1">{nutrition.cal} kcal</Text>
+              <Text className="text-xs text-gray-500 mt-1 font-prompt">{nutrition.cal} kcal</Text>
             )}
           </View>
         </View>
@@ -294,19 +294,19 @@ const MealPlanScreen = () => {
             <View className="flex-row justify-between items-center">
               <View className="flex-row space-x-4">
                 <View className="items-center">
-                  <Text className="text-xs text-gray-500">คาร์บ</Text>
-                  <Text className="text-xs font-medium text-gray-700">{nutrition.carb}g</Text>
+                  <Text className="text-xs text-gray-500 font-prompt">คาร์บ</Text>
+                  <Text className="text-xs font-medium text-gray-700 font-prompt">{nutrition.carb}g</Text>
                 </View>
                 <View className="items-center">
-                  <Text className="text-xs text-gray-500">โปรตีน</Text>
-                  <Text className="text-xs font-medium text-gray-700">{nutrition.protein}g</Text>
+                  <Text className="text-xs text-gray-500 font-prompt">โปรตีน</Text>
+                  <Text className="text-xs font-medium text-gray-700 font-prompt">{nutrition.protein}g</Text>
                 </View>
                 <View className="items-center">
-                  <Text className="text-xs text-gray-500">ไขมัน</Text>
-                  <Text className="text-xs font-medium text-gray-700">{nutrition.fat}g</Text>
+                  <Text className="text-xs text-gray-500 font-prompt">ไขมัน</Text>
+                  <Text className="text-xs font-medium text-gray-700 font-prompt">{nutrition.fat}g</Text>
                 </View>
               </View>
-              <Text className="text-sm font-bold text-blue-600">{nutrition.cal} kcal</Text>
+              <Text className="text-sm font-bold text-blue-600 font-prompt">{nutrition.cal} kcal</Text>
             </View>
           </View>
         )}
@@ -328,12 +328,12 @@ const MealPlanScreen = () => {
                   )}
                 </View>
                 <View className="flex-1">
-                  <Text className="text-sm font-medium text-gray-800">{food.name}</Text>
-                  <Text className="text-xs text-gray-500">{food.cal} kcal • {food.carb}g คาร์บ • {food.protein}g โปรตีน</Text>
+                  <Text className="text-sm font-medium text-gray-800 font-prompt">{food.name}</Text>
+                  <Text className="text-xs text-gray-500 font-prompt">{food.cal} kcal • {food.carb}g คาร์บ • {food.protein}g โปรตีน</Text>
                 </View>
                 {food.isUserFood && (
                   <View className="bg-blue-100 rounded px-1 py-0.5 mr-2">
-                    <Text className="text-xs text-blue-600">เมนูของฉัน</Text>
+                    <Text className="text-xs text-blue-600 font-prompt">เมนูของฉัน</Text>
                   </View>
                 )}
                 <TouchableOpacity
@@ -359,7 +359,7 @@ const MealPlanScreen = () => {
           onPress={() => handleAddFoodToMeal(meal.id)}
         >
           <Icon name="add" size={20} color="white" />
-          <Text className="text-white font-medium ml-2">เพิ่มอาหาร</Text>
+          <Text className="text-white font-medium ml-2 font-prompt">เพิ่มอาหาร</Text>
         </TouchableOpacity>
       </View>
     );
@@ -419,8 +419,8 @@ const MealPlanScreen = () => {
             className="flex-1 items-center"
             onPress={() => setShowDatePicker(true)}
           >
-            <Text className="text-lg font-bold text-gray-800">{currentDate.fullDate}</Text>
-            <Text className="text-sm text-gray-500">แตะเพื่อเปลี่ยนวันที่</Text>
+            <Text className="text-lg font-bold text-gray-800 font-prompt">{currentDate.fullDate}</Text>
+            <Text className="text-sm text-gray-500 font-prompt">แตะเพื่อเปลี่ยนวันที่</Text>
           </TouchableOpacity>
           
           <TouchableOpacity
@@ -441,7 +441,7 @@ const MealPlanScreen = () => {
             <View className="bg-orange-100 border border-orange-200 rounded-lg p-3 mb-3">
               <View className="flex-row items-center">
                 <Icon name="warning" size={16} color="#f59e0b" />
-                <Text className="text-xs text-orange-700 ml-2 flex-1">
+                <Text className="text-xs text-orange-700 ml-2 flex-1 font-prompt">
                   ข้อมูลโปรไฟล์ไม่สมบูรณ์ กำลังใช้ค่าเริ่มต้น
                 </Text>
               </View>
@@ -452,12 +452,12 @@ const MealPlanScreen = () => {
             <View>
               <Text className="text-lg font-bold text-blue-800 font-prompt">รวมแคลอรี่วันนี้</Text>
               {isCalculated && (
-                <Text className="text-xs text-blue-600">คำนวณจากข้อมูลโปรไฟล์ของคุณ</Text>
+                <Text className="text-xs text-blue-600 font-prompt">คำนวณจากข้อมูลโปรไฟล์ของคุณ</Text>
               )}
             </View>
             <View className="items-end">
-              <Text className="text-xl font-bold text-blue-600">{getDayNutrition(selectedDay).cal} kcal</Text>
-              <Text className="text-xs text-blue-500">จาก {recommendedNutrition.cal} kcal ที่แนะนำ</Text>
+              <Text className="text-xl font-bold text-blue-600 font-prompt">{getDayNutrition(selectedDay).cal} kcal</Text>
+              <Text className="text-xs text-blue-500 font-prompt">จาก {recommendedNutrition.cal} kcal ที่แนะนำ</Text>
             </View>
           </View>
           
@@ -472,8 +472,8 @@ const MealPlanScreen = () => {
               />
             </View>
             <View className="flex-row justify-between">
-              <Text className="text-xs text-blue-600">ปัจจุบัน: {getDayNutrition(selectedDay).cal} kcal</Text>
-              <Text className="text-xs text-blue-500">เป้าหมาย: {recommendedNutrition.cal} kcal</Text>
+              <Text className="text-xs text-blue-600 font-prompt">ปัจจุบัน: {getDayNutrition(selectedDay).cal} kcal</Text>
+              <Text className="text-xs text-blue-500 font-prompt">เป้าหมาย: {recommendedNutrition.cal} kcal</Text>
             </View>
           </View>
           
@@ -551,10 +551,10 @@ const MealPlanScreen = () => {
           onPress={() => setShowAddMealModal(true)}
         >
           <Icon name="add-circle" size={22} color="#9ca3af" />
-          <Text className="text-gray-600 font-medium mt-2">เพิ่มมื้อเพิ่มเติม</Text>
+          <Text className="text-gray-600 font-medium mt-2 font-prompt">เพิ่มมื้อเพิ่มเติม</Text>
         </TouchableOpacity>
         <View>
-          <Text className="text-gray-500 text-center mt-4">คุณสามารถเพิ่มมื้ออาหารได้ตามต้องการ</Text>
+          <Text className="text-gray-500 text-center mt-4 font-prompt">คุณสามารถเพิ่มมื้ออาหารได้ตามต้องการ</Text>
         </View>
         
         {/* Bottom spacing for menu */}
