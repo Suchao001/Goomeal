@@ -13,6 +13,7 @@ import { KebabMenuModal } from '../../components/KebabMenuModal';
 import { EditFoodModal } from '../../components/EditFoodModal';
 import { getImageUrl, getCurrentDate, generateDays } from '../../utils/mealPlanUtils';
 import { ApiClient } from '../../utils/apiClient';
+import Menu from '../material/Menu'
 
 
 const MealPlanScreen = () => {
@@ -471,13 +472,20 @@ const MealPlanScreen = () => {
           className="bg-white border-2 border-dashed border-gray-300 rounded-xl p-6 items-center justify-center"
           onPress={() => setShowAddMealModal(true)}
         >
-          <Icon name="add-circle" size={48} color="#9ca3af" />
+          <Icon name="add-circle" size={22} color="#9ca3af" />
           <Text className="text-gray-600 font-medium mt-2">เพิ่มมื้อเพิ่มเติม</Text>
         </TouchableOpacity>
         <View>
           <Text className="text-gray-500 text-center mt-4">คุณสามารถเพิ่มมื้ออาหารได้ตามต้องการ</Text>
         </View>
+        
+        {/* Bottom spacing for menu */}
+        <View className="h-40" />
+        
       </ScrollView>
+
+      {/* Menu */}
+      <Menu />
 
       {/* Modals */}
       <DatePickerModal

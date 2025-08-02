@@ -1,22 +1,11 @@
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRoute } from '@react-navigation/native';
+import { useTypedNavigation } from '../../hooks/Navigation';
 import Icon from 'react-native-vector-icons/Ionicons';
 
-type RootStackParamList = {
-  Home: undefined;
-  Chat: undefined;
-  RecordFood: undefined;
-  Calendar: undefined;
-  Menu: undefined;
-};
-
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
-
 const Menu = () => {
-  const navigation = useNavigation<NavigationProp>();
+  const navigation = useTypedNavigation();
   const route = useRoute();
   
   const getIconColor = (routeName: string) => {
@@ -39,10 +28,10 @@ const Menu = () => {
 
       {/* Chat Icon */}
       <TouchableOpacity 
-        onPress={() => navigation.navigate('Chat')}
-        style={getIconStyle('Chat')}
+        onPress={() => navigation.navigate('ChatScreen')}
+        style={getIconStyle('ChatScreen')}
       >
-        <Icon name="chatbubble" size={24} color={getIconColor('Chat')} />
+        <Icon name="chatbubble" size={24} color={getIconColor('ChatScreen')} />
       </TouchableOpacity>
 
       {/* Record Food / Save Edit Icon */}
