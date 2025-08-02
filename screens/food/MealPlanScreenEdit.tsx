@@ -19,6 +19,7 @@ const MealPlanEditScreen = () => {
   
   // Get foodPlanId from route params and keep it constant
   const [foodPlanId] = useState(() => (route.params as any)?.foodPlanId);
+  const [from] = useState(() => (route.params as any)?.from);
 
   // Use the refactored hook - edit-only mode
   const { 
@@ -140,7 +141,7 @@ const MealPlanEditScreen = () => {
     clearEditSession();
     navigation.reset({
     index: 0,
-    routes: [{ name: 'PlanSelection' }],
+    routes: [{ name: from || 'Home' }] // Use 'Home' as default if from is not set,
   });
   
   }, [clearEditSession, navigation]);

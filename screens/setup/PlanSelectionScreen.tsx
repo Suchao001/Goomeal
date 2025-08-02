@@ -117,7 +117,8 @@ const PlanSelectionScreen = () => {
       // Navigate to MealPlan screen in edit mode with the selected plan ID
       navigation.navigate('MealPlanEdit', {
         mode: 'edit',
-        foodPlanId: selectedPlan.id
+        foodPlanId: selectedPlan.id,
+        from: 'PlanSelection'
       });
     }
   };

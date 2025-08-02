@@ -1,5 +1,5 @@
 import React from 'react';
-
+import { useRoute } from '@react-navigation/native';
 import { View, Text, TouchableOpacity, ScrollView, Alert, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTypedNavigation } from '../hooks/Navigation';
@@ -8,6 +8,9 @@ const { width } = Dimensions.get('window');
 
 const OptionPlanScreen = () => {
   const navigation = useTypedNavigation();
+  const route = useRoute();
+  const params = route.params as any;
+  const from = params?.from;
 
   const planOptions = [
     {
@@ -35,12 +38,19 @@ const OptionPlanScreen = () => {
       title: 'สร้างแผนการกินตาม prompt ที่ท่านกรอก',
       subtitle: 'หรือสอบถามเกี่ยวกับการกิน',
       icon: 'chatbubble-outline',
-      to: 'AddNewFood'
+      to: 'ChatScreen'
     }
   ];
 
-  const handleOptionPress = ( page: string) => {
-    navigation.navigate(page)
+  const handleOptionPress = (page: string) => {
+    switch(page) {
+      case 'ChatScreen':
+        navigation.navigate('ChatScreen');
+        break;
+      default:
+        // Handle other pages if needed
+        break;
+    }
   };
 
   return (
@@ -50,7 +60,15 @@ const OptionPlanScreen = () => {
         <View className="flex-row items-center justify-between mb-6">
           <TouchableOpacity 
             className="p-2"
-            onPress={() => navigation.goBack()}
+            onPress={() => {
+              if (from === 'CalendarScreen') {
+                navigation.navigate('Calendar');
+              } else if (from === 'Menu') {
+                navigation.navigate('Menu');
+              } else {
+                navigation.navigate('Home');
+              }
+            }}
           >
             <Icon name="arrow-back" size={24} color="#374151" />
           </TouchableOpacity>
@@ -81,6 +99,10 @@ const OptionPlanScreen = () => {
                   onPress={() => {
                     if (option.to === 'PersonalPlan1') {
                       navigation.navigate('PersonalPlan1', { isForAi: true });
+                    } else if (option.to === 'SelectGlobalPlan') {
+                      navigation.navigate('SelectGlobalPlan');
+                    } else if (option.to === 'MealPlan') {
+                      navigation.navigate('MealPlan', { from: 'OptionPlan' });
                     } else {
                       handleOptionPress(option.to);
                     }

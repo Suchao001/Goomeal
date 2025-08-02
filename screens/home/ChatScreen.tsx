@@ -10,7 +10,7 @@ import Menu from '../material/Menu';
  */
 const ChatScreen = () => {
   const [message, setMessage] = useState('');
-  const navigation = useTypedNavigation<'Chat'>();
+  const navigation = useTypedNavigation<'ChatScreen'>();
   const [chatMessages, setChatMessages] = useState([
     {
       id: 1,

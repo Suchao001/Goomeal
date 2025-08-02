@@ -19,7 +19,10 @@ export type RootStackParamList = {
     NotificationSettings: undefined;
     RecordSettings: undefined;
     MealTimeSettings: undefined;
+    ChatScreen: undefined;
 
+    Calendar: undefined;
+    RecordFood: undefined;
     PlanSelection: undefined;
     Menu: undefined;
     EditAccountSettings: undefined;
@@ -35,6 +38,7 @@ export type RootStackParamList = {
         foodPlanId?: number;
         planData?: any;
         fromSearch?: boolean;
+        from?: string;
     } | undefined;
 
     MealPlanEdit: {
@@ -44,6 +48,7 @@ export type RootStackParamList = {
         mode?: 'add' | 'edit';
         foodPlanId?: number;
         planData?: any;
+        from?: string;
     } | undefined;
 
     SearchFoodForAdd: {
@@ -55,7 +60,9 @@ export type RootStackParamList = {
     } | undefined;
     AddNewFood: undefined;
 
-    OptionPlan: undefined;
+    OptionPlan: {
+      from?: string;
+    };
     SelectGlobalPlan: undefined;
     SeeMoreGlobalPlans: undefined;
     GlobalPlanMeal: { planId: number };

@@ -29,7 +29,7 @@ export default function AppStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {/* Main App Screens */}
       <Stack.Screen name="Home" component={HomeScreen} />
-      <Stack.Screen name="Chat" component={ChatScreen} />
+      <Stack.Screen name="ChatScreen" component={ChatScreen} />
       <Stack.Screen name="RecordFood" component={RecordFoodScreen} />
       <Stack.Screen name="Calendar" component={CalendarScreen} />      
       <Stack.Screen name="Menu" component={MenuScreen} />      

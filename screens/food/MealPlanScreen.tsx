@@ -18,6 +18,8 @@ import { ApiClient } from '../../utils/apiClient';
 const MealPlanScreen = () => {
   const navigation = useTypedNavigation();
   const route = useRoute();
+  const params = route.params as any;
+  const from = params?.from;
 
   // API Client
   const apiClient = useMemo(() => new ApiClient(), []);
@@ -60,12 +62,10 @@ const MealPlanScreen = () => {
     total + Object.values(day).reduce((mealTotal, meal: any) => mealTotal + meal.items.length, 0), 0
   );
 
-  // Debug: Monitor mealPlanData changes
- 
-  // Clear meal plan when entering screen for the first time (not when returning from search)
   useEffect(() => {
+     console.log(from)
     const params = route.params as any;
-    // Only clear if this is the first visit (no params) or not returning from search
+
     if (!params?.fromSearch && !params?.selectedFood) {
       clearMealPlan();
     }
@@ -373,7 +373,7 @@ const MealPlanScreen = () => {
           className="w-10 h-10 rounded-lg items-center justify-center"
           onPress={() => navigation.reset({
             index: 0,
-            routes: [{ name: 'Home' }]
+            routes: [{ name: from || 'Home' }]
           })}
         >
           

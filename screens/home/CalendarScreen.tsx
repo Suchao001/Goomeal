@@ -6,6 +6,7 @@ import Menu from '../material/Menu';
 import { apiClient } from '../../utils/apiClient';
 import { seconde_url, base_url } from '../../config';
 
+
 // Interface for meal items (copied from GlobalPlanDayDetail)
 interface MealItem {
   name: string;
@@ -116,15 +117,11 @@ const CalendarScreen = () => {
   useEffect(() => {
     const planDay = getCurrentPlanDay();
     setCurrentDayMeals(planDay);
-    console.log('📅 [CalendarScreen] Selected Date:', selectedDate.toLocaleDateString('th-TH'));
-    console.log('📊 [CalendarScreen] Plan Day:', planDay);
-    
-    // Debug the meal structure
     if (planDay && planDay.meals) {
-      console.log('🍽️ [CalendarScreen] Meals Structure:', JSON.stringify(planDay.meals, null, 2));
-      console.log('🥘 [CalendarScreen] Breakfast:', planDay.meals.breakfast);
-      console.log('🍱 [CalendarScreen] Lunch:', planDay.meals.lunch);
-      console.log('🍜 [CalendarScreen] Dinner:', planDay.meals.dinner);
+      // console.log('🍽️ [CalendarScreen] Meals Structure:', JSON.stringify(planDay.meals, null, 2));
+      // console.log('🥘 [CalendarScreen] Breakfast:', planDay.meals.breakfast);
+      // console.log('🍱 [CalendarScreen] Lunch:', planDay.meals.lunch);
+      // console.log('🍜 [CalendarScreen] Dinner:', planDay.meals.dinner);
     }
   }, [selectedDate, currentFoodPlan]);
 
@@ -154,8 +151,6 @@ const CalendarScreen = () => {
       }
     }
     
-    console.log('🍽️ [CalendarScreen] Parsed meals data:', mealsData);
-    
     // Helper function to categorize meal types (supports case variations and custom names)
     const categorizeMealType = (mealTypeName: string) => {
       const lowerName = mealTypeName.toLowerCase();
@@ -177,8 +172,7 @@ const CalendarScreen = () => {
       const mealData = mealsData[mealKey];
       const category = categorizeMealType(mealKey);
       
-      console.log(`🍽️ [CalendarScreen] Processing meal: ${mealKey} -> ${category}`, mealData);
-      
+   
       if (mealData && mealData.items && Array.isArray(mealData.items)) {
         const transformedItems = mealData.items.map((item: any) => ({
           name: item.name || 'ไม่ระบุชื่อ',
@@ -194,7 +188,7 @@ const CalendarScreen = () => {
       }
     });
 
-    console.log('🍽️ [CalendarScreen] Final transformed data:', transformedMealData);
+   
     return transformedMealData;
   };
 
@@ -257,12 +251,7 @@ const CalendarScreen = () => {
         mealTotalCal = mealsData[mealKey].totalCal;
       }
     }
-    
-    console.log(`🍽️ [CalendarScreen] ${mealType}:`, {
-      mealsCount: meals.length,
-      calculatedCal: totalCalories,
-      mealTotalCal: mealTotalCal,
-    });
+  
     
     return (
       <View className="mb-8">
@@ -347,20 +336,12 @@ const CalendarScreen = () => {
       setLoading(true);
       setError(null);
       
-      console.log('🍽️ [CalendarScreen] Fetching current user food plan...');
-      
       // Call API to get current active food plan
       const response = await apiClient.get('/user-food-plans/current');
       
-      console.log('🍽️ [CalendarScreen] API Response:', response.data);
-      
+    
       if (response.data.success) {
         const planData = response.data.data;
-        
-        console.log('📋 [CalendarScreen] Full Plan Data:', planData);
-        console.log('📅 [CalendarScreen] Plan JSON Data:', planData.plan_data);
-        console.log('�️ [CalendarScreen] Using Info - Start Date:', planData.start_date);
-        console.log('🔄 [CalendarScreen] Is Repeat:', planData.is_repeat);
         
         setCurrentFoodPlan({
           id: planData.food_plan_id,
@@ -601,7 +582,9 @@ const CalendarScreen = () => {
             {/* Add Menu Button */}
             <TouchableOpacity 
               className="bg-primary rounded-xl px-8 py-4 flex-row items-center shadow-md"
-              onPress={() => navigation.navigate('OptionPlan')}
+              onPress={() => navigation.navigate('OptionPlan', {
+                from: 'CalendarScreen'
+              })}
             >
               <Icon name="add-circle" size={24} color="white" />
               <Text className="text-white font-bold text-lg ml-2">เพิ่มเมนู</Text>
@@ -826,7 +809,7 @@ const CalendarScreen = () => {
                 className="px-4 py-3 flex-row items-center"
                 onPress={() => {
                   setShowKebabMenu(false);
-                  navigation.navigate('MealPlanEdit', { foodPlanId: currentFoodPlan.id });
+                  navigation.navigate('MealPlanEdit', { foodPlanId: currentFoodPlan.id, from: 'Calendar' });
                 }}
               >
                 <Icon name="create" size={20} color="#6b7280" />
