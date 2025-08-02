@@ -59,6 +59,7 @@ export type RootStackParamList = {
         selectedDay?: number;
     } | undefined;
     AddNewFood: undefined;
+    EditFood: { foodId: string; food?: any };
 
     OptionPlan: {
       from?: string;

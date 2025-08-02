@@ -144,25 +144,40 @@ const MenuScreen = () => {
         </View>
         )}
 
-       
-            {/* Main Menu */}
+        {/* Quick Actions - 2 Columns */}
         <View className="mx-4 mt-6">
-          <Text className="text-lg font-promptBold text-myBlack mb-3">เมนูหลัก </Text>
+          <Text className="text-lg font-promptBold text-myBlack mb-3">การจัดการอาหาร</Text>
+          <View className="bg-white rounded-xl shadow-sm overflow-hidden flex-row">
+            {/* เพิ่มแผนอาหาร */}
+            <TouchableOpacity 
+              className="flex-1 bg-green-50 p-3 items-center border-r border-gray-200"
+              onPress={() => navigation.navigate('OptionPlan',{from:'Menu'})}
+            >
+              <View className="w-10 h-10 bg-green-100 rounded-full items-center justify-center mb-2">
+                <Icon name="add-circle" size={20} color="#22c55e" />
+              </View>
+              <Text className="text-xs font-promptSemiBold text-green-800 text-center">เพิ่มแผนอาหาร</Text>
+              <Text className="text-xs text-green-600 mt-1 text-center font-prompt">สร้างแผนใหม่</Text>
+            </TouchableOpacity>
+
+            {/* จัดการเมนูอาหาร */}
+            <TouchableOpacity 
+              className="flex-1 bg-blue-50 p-3 items-center"
+              onPress={() => navigation.navigate('MyFood' as any)}
+            >
+              <View className="w-10 h-10 bg-blue-100 rounded-full items-center justify-center mb-2">
+                <Icon name="restaurant" size={20} color="#3b82f6" />
+              </View>
+              <Text className="text-xs font-promptSemiBold text-blue-800 text-center">จัดการเมนูอาหาร</Text>
+              <Text className="text-xs text-blue-600 mt-1 text-center font-prompt">ดูและแก้ไขเมนู</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Main Menu */}
+        <View className="mx-4 mt-6">
+          <Text className="text-lg font-promptBold text-myBlack mb-3">เมนูหลัก</Text>
           <View className="bg-white rounded-xl shadow-sm overflow-hidden">
-            
-          <TouchableOpacity 
-                className="flex-row items-center p-4 border-b border-gray-100 bg-green-50"
-                onPress={() => navigation.navigate('OptionPlan')}
-              >
-                <View className="w-10 h-10 bg-green-100 rounded-full items-center justify-center mr-4">
-                  <Icon name="add-circle" size={20} color="#22c55e" />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-base font-promptMedium text-myBlack">เพิ่มแผนอาหาร</Text>
-                  <Text className="text-xs text-gray-500 font-prompt">สร้างแผนอาหารใหม่อย่างรวดเร็ว</Text>
-                </View>
-                <Icon name="chevron-forward" size={20} color="#9ca3af" />
-              </TouchableOpacity>
 
 
              <TouchableOpacity 

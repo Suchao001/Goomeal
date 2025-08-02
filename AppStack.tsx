@@ -3,6 +3,7 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { HomeScreen, ChatScreen, CalendarScreen } from './screens/home';
 import { RecordFoodScreen, EatingBlogScreen, FoodMenuScreen, SuggestionMenuScreen, MealPlanScreen,MealPlanEditScreen, SearchFoodForAdd, AddNewFoodScreen } from './screens/food';
+import EditFoodScreen from './screens/food/EditFoodScreen';
 import FoodSuggestionScreen from './screens/food/FoodSuggestionScreen';
 import MenuScreen from './screens/MenuScreen';
 import { ProfileDetailScreen, EditProfileScreen, EditAccountSettingsScreen } from './screens/profile';
@@ -22,6 +23,7 @@ import GlobalPlanMeal from './screens/GlobalPlanMeal';
 import GlobalPlanDayDetail from './screens/GlobalPlanDayDetail';
 import  AiPlanMealScreen  from './screens/AiPlanMealScreen';
 import  AiPlanDayDetail  from './screens/AiPlanDayDetail';
+import MyFood from 'screens/MyFood';
 
 const Stack = createNativeStackNavigator();
 export default function AppStack() {
@@ -44,6 +46,7 @@ export default function AppStack() {
       <Stack.Screen name="MealPlanEdit" component={MealPlanEditScreen} />
       <Stack.Screen name="SearchFoodForAdd" component={SearchFoodForAdd} /> 
       <Stack.Screen name="AddNewFood" component={AddNewFoodScreen} />
+      <Stack.Screen name="EditFood" component={EditFoodScreen} />
         {/* Menu Sub-screens */}
       <Stack.Screen name="FirstTimeSetup" component={FirstTimeSetupScreen} />
       <Stack.Screen name="PlanSelection" component={PlanSelectionScreen} />
@@ -69,6 +72,8 @@ export default function AppStack() {
       <Stack.Screen name="SeeMoreGlobalPlans" component={SeeMoreGlobalPlans} />
       <Stack.Screen name="GlobalPlanMeal" component={GlobalPlanMeal} />
       <Stack.Screen name="GlobalPlanDayDetail" component={GlobalPlanDayDetail} />
+
+      <Stack.Screen name="MyFood" component={MyFood} />
 
       {/* AI Plan Meal Screen */}
       <Stack.Screen name="AiPlanMealScreen" component={AiPlanMealScreen} />

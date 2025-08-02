@@ -34,6 +34,26 @@ export class ApiClient extends BaseApiClient {
     return this.foodClient.searchFoods(query, limit);
   }
 
+  async getUserFoods(query?: string, limit?: number, src?: 'user' | 'ai') {
+    return this.foodClient.getUserFoods(query, limit, src);
+  }
+
+  async updateUserFood(foodId: string, foodData: {
+    name?: string;
+    calories?: string;
+    carbs?: string;
+    protein?: string;
+    fat?: string;
+    ingredient?: string;
+    img?: string;
+  }) {
+    return this.foodClient.updateUserFood(foodId, foodData);
+  }
+
+  async deleteUserFood(foodId: string) {
+    return this.foodClient.deleteUserFood(foodId);
+  }
+
   // ===== FOOD PLAN API METHODS =====
   async saveFoodPlan(data: {
     name: string;

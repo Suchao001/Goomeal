@@ -11,6 +11,7 @@ import { KebabMenuModal } from '../../components/KebabMenuModal';
 import { EditFoodModal } from '../../components/EditFoodModal';
 import { getImageUrl, getCurrentDate, generateDays } from '../../utils/mealPlanUtils';
 import { useRecommendedNutrition } from '../../hooks/useRecommendedNutrition';
+import Menu from '../../screens/material/Menu'; // Import Menu component
 
 
 const MealPlanEditScreen = () => {
@@ -381,9 +382,9 @@ const MealPlanEditScreen = () => {
           >
             <Icon name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
-          
-          <Text className="text-xl font-bold text-white font-prompt">แก้ไขแผนอาหาร</Text>
-          
+
+          <Text className="text-xl  text-white font-promptBold">แก้ไขแผนอาหาร</Text>
+
           <View className="w-10 h-10" />
         </View>
         
@@ -405,9 +406,9 @@ const MealPlanEditScreen = () => {
         >
           <Icon name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
-        
+
         <Text className="text-xl font-bold text-white font-prompt">แก้ไขแผนอาหาร</Text>
-        
+
         <View className="flex-row items-center">
           <TouchableOpacity
             className="bg-opacity-20 rounded-lg px-3 py-2 mr-2"
@@ -558,7 +559,7 @@ const MealPlanEditScreen = () => {
           )}
         </View>
       </View>
-
+      
       {/* Main Content */}
       <ScrollView className="flex-1 px-4 py-6" showsVerticalScrollIndicator={false}>
         {/* Meal Cards */}
@@ -575,8 +576,11 @@ const MealPlanEditScreen = () => {
         <View>
           <Text className="text-gray-500 text-center mt-4 font-prompt">คุณสามารถเพิ่มมื้ออาหารได้ตามต้องการ</Text>
         </View>
+
+            <View className="h-40" />
       </ScrollView>
 
+      <Menu />
       {/* Modals */}
       <DatePickerModal
         visible={showDatePicker}
