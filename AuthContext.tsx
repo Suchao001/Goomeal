@@ -20,6 +20,7 @@ interface User {
   body_fat?: 'high' | 'low' | 'normal' | "don't know";
   target_goal?: 'decrease' | 'increase' | 'healthy';
   target_weight?: number;
+  start_weight?: number;
   activity_level?: 'low' | 'moderate' | 'high' | 'very high';
   additional_requirements?: string;
   dietary_restrictions?: string;
