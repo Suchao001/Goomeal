@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { User } from '../models/user_model';
 
 
+
 const register = async ({username, email, password}: Pick<User, 'username' | 'email' | 'password'>) => {
     try {
         // Check if user already exists
@@ -104,6 +105,79 @@ const getUserProfile = async (userId: number) => {
     }
 };
 
+//update user account 
+const updateUserProfile = async (userId: number, updateData: {
+    username?: string;
+    email?: string;
+    currentPassword: string;
+    newPassword?: string;
+}) => {
+    try {
+        const { username, email, currentPassword, newPassword } = updateData;
+        
+        // Get current user data
+        const currentUser = await db('users').where({ id: userId }).first();
+        if (!currentUser) {
+            throw new Error('User not found');
+        }
+        
+        // Verify current password
+        const isCurrentPasswordValid = await bcrypt.compare(currentPassword, currentUser.password);
+        if (!isCurrentPasswordValid) {
+            throw new Error('Current password is incorrect');
+        }
+        
+        // Check if username is being changed and if it already exists
+        if (username && username !== currentUser.username) {
+            const existingUsername = await db('users').where({ username }).first();
+            if (existingUsername) {
+                throw new Error('Username already exists');
+            }
+        }
+        
+        // Check if email is being changed and if it already exists
+        if (email && email !== currentUser.email) {
+            const existingEmail = await db('users').where({ email }).first();
+            if (existingEmail) {
+                throw new Error('Email already exists');
+            }
+        }
+        
+        // Prepare update object
+        const updateObj: any = {};
+        if (username) updateObj.username = username;
+        if (email) updateObj.email = email;
+        if (newPassword) {
+            updateObj.password = await bcrypt.hash(newPassword, 10);
+        }
+        
+        // Update user
+        await db('users').where({ id: userId }).update(updateObj);
+        
+        // Get updated user data
+        const updatedUser = await db('users').where({ id: userId }).first();
+        
+        return {
+            id: updatedUser.id,
+            username: updatedUser.username,
+            email: updatedUser.email,
+            age: updatedUser.age,
+            weight: updatedUser.weight,
+            height: updatedUser.height,
+            gender: updatedUser.gender,
+            target_goal: updatedUser.target_goal,
+            target_weight: updatedUser.target_weight,
+            activity_level: updatedUser.activity_level,
+            eating_type: updatedUser.eating_type,
+            account_status: updatedUser.account_status,
+            created_date: updatedUser.created_date
+        };
+    } catch (error: any) {
+        console.error('Update profile error details:', error);
+        throw new Error(error.message || 'Error updating user profile');
+    }
+}
+
 // Update personal data from setup screens
 const updatePersonalData = async (userId: number, personalData: {
     age?: number;
@@ -183,4 +257,4 @@ const updatePersonalData = async (userId: number, personalData: {
     }
 };
 
-export {register, login, getUserProfile, updatePersonalData};
+export {register, login, getUserProfile, updatePersonalData,updateUserProfile};
