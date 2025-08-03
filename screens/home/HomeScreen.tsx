@@ -8,6 +8,7 @@ import CaloriesSummary from '../../components/CaloriesSummary';
 import TodayMeals, { MealData } from '../../components/TodayMeals';
 import { useAuth } from 'AuthContext';
 import { showConfirmAlert } from '../../components/Alert';
+import InAppBrowser from '../../components/InAppBrowser';
 
 import { 
   fetchFeaturedArticles, 
@@ -49,6 +50,11 @@ const Home = () => {
   // First time setting state
   const [firstTimeSetting, setFirstTimeSetting] = useState<boolean | null>(null);
 
+  // InAppBrowser state
+  const [browserVisible, setBrowserVisible] = useState(false);
+  const [browserUrl, setBrowserUrl] = useState('');
+  const [browserTitle, setBrowserTitle] = useState('');
+
   // Default image fallback
   const defaultImage = require('../../assets/images/Foodtype_1.png');
 
@@ -70,7 +76,7 @@ const Home = () => {
       }
     };
     fetchProfile();
-  }, [fetchUserProfile]);
+  }, []); // Remove fetchUserProfile dependency to prevent infinite loop
 
   // Load today's meals from API
   const loadTodayMeals = useCallback(async () => {
@@ -102,18 +108,19 @@ const Home = () => {
     }
   };
 
-    useEffect(() => {
-    const checkProfile = async () => {
-      try {
-        const profile = await fetchUserProfile();
-        setFirstTimeSetting(!!profile?.first_time_setting);
-      } catch (e) {
-        console.error('Failed to fetch profile for first time setting check', e);
-        setFirstTimeSetting(null); // จัดการ state เมื่อเกิด error
-      }
-    };
-    checkProfile();
-  }, [fetchUserProfile]); 
+  // Remove the duplicate useEffect that causes infinite loop
+  // useEffect(() => {
+  //   const checkProfile = async () => {
+  //     try {
+  //       const profile = await fetchUserProfile();
+  //       setFirstTimeSetting(!!profile?.first_time_setting);
+  //     } catch (e) {
+  //       console.error('Failed to fetch profile for first time setting check', e);
+  //       setFirstTimeSetting(null);
+  //     }
+  //   };
+  //   checkProfile();
+  // }, [fetchUserProfile]);
 
   // Get image source for articles
   const getImageSource = (imageUrl?: string, fallbackIndex: number = 0) => {
@@ -138,12 +145,13 @@ const Home = () => {
   const handleArticleClick = async (article: Article) => {
     try {
       const url = generateArticleUrl(article.id);
-      const supported = await Linking.canOpenURL(url);
-      if (supported) {
-        await Linking.openURL(url);
+      if (url && url.trim() !== '') {
+        setBrowserUrl(url);
+        setBrowserTitle(article.title || 'บทความ');
+        setBrowserVisible(true);
       } else {
-        // Navigate to EatingBlog screen as fallback
-        console.log('Cannot open URL, navigate to EatingBlog instead');
+        console.log('Cannot generate URL, navigate to EatingBlog instead');
+        navigation.navigate('EatingBlog');
       }
     } catch (error) {
       console.error('Error opening article:', error);
@@ -247,7 +255,7 @@ const Home = () => {
         console.log('Recommended meals fetched:', result.data);
         if (Array.isArray(result.data.userFoods)) {
           setRecommendedMeals(
-            result.data.userFoods.slice(0, 2).map((item) => ({
+            result.data.userFoods.slice(0, 2).map((item: any) => ({
               id: item.id,
               name: item.name,
               cal: item.cal,
@@ -444,6 +452,20 @@ const Home = () => {
 
       {/* Bottom Navigation */}
       <Menu />
+
+      {/* InApp Browser Modal */}
+      {browserUrl && (
+        <InAppBrowser
+          isVisible={browserVisible}
+          url={browserUrl}
+          title={browserTitle}
+          onClose={() => {
+            setBrowserVisible(false);
+            setBrowserUrl('');
+            setBrowserTitle('');
+          }}
+        />
+      )}
     </View>
   );
 };

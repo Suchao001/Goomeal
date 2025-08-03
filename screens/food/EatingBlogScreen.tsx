@@ -14,6 +14,7 @@ import {
   Tag 
 } from '../../utils/articleApi';
 import { blog_url } from '../../config';
+import InAppBrowser from '../../components/InAppBrowser';
 
 
 const EatingBlogScreen = () => {
@@ -24,6 +25,11 @@ const EatingBlogScreen = () => {
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // InAppBrowser state
+  const [browserVisible, setBrowserVisible] = useState(false);
+  const [browserUrl, setBrowserUrl] = useState('');
+  const [browserTitle, setBrowserTitle] = useState('');
 
   // Default image fallback
   const defaultImage = require('../../assets/images/Foodtype_1.png');
@@ -91,12 +97,9 @@ const EatingBlogScreen = () => {
     }
 
     try {
-      const supported = await Linking.canOpenURL(url);
-      if (supported) {
-        await Linking.openURL(url);
-      } else {
-        Alert.alert('ข้อผิดพลาด', 'ไม่สามารถเปิดลิงก์นี้ได้');
-      }
+      setBrowserUrl(url);
+      setBrowserTitle(article.title);
+      setBrowserVisible(true);
     } catch (error) {
       Alert.alert('ข้อผิดพลาด', 'เกิดข้อผิดพลาดในการเปิดลิงก์');
     }
@@ -332,6 +335,14 @@ const EatingBlogScreen = () => {
         </View>
 
       </ScrollView>
+
+      {/* InApp Browser Modal */}
+      <InAppBrowser
+        isVisible={browserVisible}
+        url={browserUrl}
+        title={browserTitle}
+        onClose={() => setBrowserVisible(false)}
+      />
     </View>
   );
 };
