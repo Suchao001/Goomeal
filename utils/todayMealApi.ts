@@ -188,8 +188,6 @@ export const fetchTodayMeals = async (targetDate?: Date): Promise<TodayMealData 
 
     const planData = response.data.data;
     
-    console.log('📋 [TodayMealApi] Plan Data:', planData);
-    
     // Set up plan info
     const currentFoodPlan = {
       id: planData.food_plan_id,

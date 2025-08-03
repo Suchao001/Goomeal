@@ -150,7 +150,7 @@ const Home = () => {
         setBrowserTitle(article.title || 'บทความ');
         setBrowserVisible(true);
       } else {
-        console.log('Cannot generate URL, navigate to EatingBlog instead');
+       ;
         navigation.navigate('EatingBlog');
       }
     } catch (error) {
@@ -252,7 +252,7 @@ const Home = () => {
       const result = await apiClient.getUserFoods('', 2, 'ai'); // Get latest 2 AI foods
       if (result.success && result.data) {
         // Just take the first 2 items from the result data (no sort)
-        console.log('Recommended meals fetched:', result.data);
+        
         if (Array.isArray(result.data.userFoods)) {
           setRecommendedMeals(
             result.data.userFoods.slice(0, 2).map((item: any) => ({
@@ -454,18 +454,12 @@ const Home = () => {
       <Menu />
 
       {/* InApp Browser Modal */}
-      {browserUrl && (
-        <InAppBrowser
-          isVisible={browserVisible}
-          url={browserUrl}
-          title={browserTitle}
-          onClose={() => {
-            setBrowserVisible(false);
-            setBrowserUrl('');
-            setBrowserTitle('');
-          }}
-        />
-      )}
+      <InAppBrowser
+        isVisible={browserVisible}
+        url={browserUrl}
+        title={browserTitle}
+        onClose={() => setBrowserVisible(false)}
+      />
     </View>
   );
 };
