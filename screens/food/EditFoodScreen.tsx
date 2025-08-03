@@ -139,9 +139,19 @@ const EditFoodScreen = () => {
     setIsLoading(true);
 
     try {
+      // Check if user wants to delete the image
+      const originalImageUrl = originalFood?.img ? `${base_url}${originalFood.img}` : null;
+      const hasImageDeleted = originalImageUrl && !selectedImage;
+      
       // Determine if image is new (local URI) or existing (server URL)
       let imageToSend: string | undefined = selectedImage || undefined;
-      if (selectedImage && selectedImage.startsWith(base_url)) {
+      let deleteImage = false;
+      
+      if (hasImageDeleted) {
+        // User has deleted the image
+        deleteImage = true;
+        imageToSend = undefined;
+      } else if (selectedImage && selectedImage.startsWith(base_url)) {
         // This is an existing image, don't send it
         imageToSend = undefined;
       }
@@ -153,7 +163,8 @@ const EditFoodScreen = () => {
         protein: protein,
         fat: fat,
         ingredient: ingredient.trim() || undefined,
-        img: imageToSend ? 'NEW_IMAGE' : 'NO_CHANGE'
+        img: imageToSend ? 'NEW_IMAGE' : hasImageDeleted ? 'DELETE_IMAGE' : 'NO_CHANGE',
+        deleteImage: deleteImage
       });
 
       const result = await apiClient.updateUserFood(foodId, {
@@ -163,7 +174,8 @@ const EditFoodScreen = () => {
         protein: protein,
         fat: fat,
         ingredient: ingredient.trim() || undefined,
-        img: imageToSend
+        img: imageToSend,
+        deleteImage: deleteImage
       });
 
       console.log('Update result:', result);

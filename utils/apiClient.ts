@@ -46,6 +46,7 @@ export class ApiClient extends BaseApiClient {
     fat?: string;
     ingredient?: string;
     img?: string;
+    deleteImage?: boolean;
   }) {
     return this.foodClient.updateUserFood(foodId, foodData);
   }

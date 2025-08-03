@@ -138,15 +138,16 @@ export class FoodApiClient extends BaseApiClient {
   // Update User Food API Method
   async updateUserFood(foodId: string, foodData: {
     name?: string;
-    calories?: string | number;
-    carbs?: string | number;
-    fat?: string | number;
-    protein?: string | number;
+    calories?: string;
+    carbs?: string;
+    protein?: string;
+    fat?: string;
     ingredient?: string;
     img?: string;
+    deleteImage?: boolean;
   }) {
     try {
-      // Extract numeric ID from user_123 format
+      // Remove 'user_' prefix if present
       const numericId = foodId.replace('user_', '');
       
       // Create FormData for multipart/form-data submission
@@ -169,6 +170,11 @@ export class FoodApiClient extends BaseApiClient {
       }
       if (foodData.ingredient !== undefined) {
         formData.append('ingredient', foodData.ingredient);
+      }
+
+      // Handle image deletion
+      if (foodData.deleteImage) {
+        formData.append('deleteImage', 'true');
       }
 
       // Handle image upload if provided

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import db from '../db_config';
 import path from 'path';
+import fs from 'fs';
 
 interface UserFoodData {
   name: string;
@@ -8,7 +9,7 @@ interface UserFoodData {
   carb: number;
   fat: number;
   protein: number;
-  img?: string;
+  img?: string | null;
   user_id: number;
   ingredient: string;
   src?: string; 
@@ -286,6 +287,20 @@ export const deleteUserFood = async (req: Request & { user?: any }, res: Respons
       return;
     }
 
+    // Delete image file if exists
+    if (food.img) {
+      const imagePath = path.join(__dirname, '..', 'images', 'user_foods', path.basename(food.img));
+      try {
+        if (fs.existsSync(imagePath)) {
+          fs.unlinkSync(imagePath);
+          console.log('Deleted image file:', imagePath);
+        }
+      } catch (imageError) {
+        console.error('Error deleting image file:', imageError);
+        // Continue with database deletion even if image deletion fails
+      }
+    }
+
     // Delete the food
     const deletedCount = await db('user_food')
       .where('id', id)
@@ -388,7 +403,7 @@ export const addUserFood = async (req: Request & { user?: any; file?: Express.Mu
  */
 export const updateUserFood = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = (req as any).user?.userId;
+    const userId = (req as any).user?.userId || (req as any).user?.id;
     const foodId = req.params.id;
 
     if (!userId) {
@@ -420,6 +435,20 @@ export const updateUserFood = async (req: Request, res: Response): Promise<void>
       return;
     }
 
+    // Handle image deletion request
+    if (req.body.deleteImage === 'true' && existingFood.img) {
+      const imagePath = path.join(__dirname, '..', 'images', 'user_foods', path.basename(existingFood.img));
+      try {
+        if (fs.existsSync(imagePath)) {
+          fs.unlinkSync(imagePath);
+          console.log('Deleted old image file:', imagePath);
+        }
+      } catch (imageError) {
+        console.error('Error deleting old image file:', imageError);
+        // Continue with update even if image deletion fails
+      }
+    }
+
     // Prepare update data
     const updateData: Partial<UserFoodData> = {};
 
@@ -433,8 +462,27 @@ export const updateUserFood = async (req: Request, res: Response): Promise<void>
 
     // Handle image upload if provided
     if (req.file) {
+      // Delete old image if exists and new image is uploaded
+      if (existingFood.img) {
+        const oldImagePath = path.join(__dirname, '..', 'images', 'user_foods', path.basename(existingFood.img));
+        try {
+          if (fs.existsSync(oldImagePath)) {
+            fs.unlinkSync(oldImagePath);
+            console.log('Deleted old image file for replacement:', oldImagePath);
+          }
+        } catch (imageError) {
+          console.error('Error deleting old image file:', imageError);
+          // Continue with update even if old image deletion fails
+        }
+      }
+      
       const imagePath = `/images/user_foods/${req.file.filename}`;
       updateData.img = imagePath;
+    }
+
+    // Handle explicit image removal
+    if (req.body.deleteImage === 'true') {
+      updateData.img = null;
     }
 
     // Validate numeric values

@@ -32,22 +32,27 @@ const authenticateToken = (req: CustomRequest, res: Response, next: NextFunction
         return;
     }
     try {
-      
-        const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
+        console.log('=== AUTHENTICATING TOKEN ===');
+        console.log('Token received:', token.substring(0, 20) + '...');
         
+        const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
+        console.log('Decoded token payload:', decoded);
         
         const currentTime = Math.floor(Date.now() / 1000);
+        console.log('Current time:', currentTime, 'Token exp:', decoded.exp);
        
         if (decoded.exp && decoded.exp < currentTime) {
-           
+            console.log('TOKEN EXPIRED');
             res.status(401).json({ message: 'Token has expired' });
             return;
         }
         
         req.user = decoded;
-       
+        console.log('User set on request:', req.user);
+        console.log('=== TOKEN AUTH SUCCESS ===');
         next();
     } catch (error) {
+        console.log('=== TOKEN AUTH FAILED ===');
         console.log('Token verification failed:', error);
         res.status(401).json({ message: 'Invalid token' });
         return;
