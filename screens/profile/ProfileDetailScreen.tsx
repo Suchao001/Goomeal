@@ -188,6 +188,9 @@ const ProfileDetailScreen = () => {
   if (authLoading || loading) {
     return (
       <SafeAreaView className="flex-1 bg-gray-50">
+        <View>
+          
+        </View>
         <View className="bg-primary px-4 py-4 pt-10">
           <Text className="text-2xl font-bold text-white text-center font-prompt">ข้อมูลโปรไฟล์</Text>
         </View>
@@ -224,10 +227,17 @@ const ProfileDetailScreen = () => {
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       {/* Header */}
-      <View className="bg-primary px-4 py-4 pt-10 flex-row items-center justify-between">
-        <View className="w-10" />
+      <View className="bg-primary px-4 py-4 pt-10 flex-row items-center justify-center relative">
+        <TouchableOpacity 
+            className="absolute left-4 top-8 w-10 h-10 items-center justify-center"
+            onPress={() => navigation.reset({
+              index: 0,
+              routes: [{ name: 'Menu' }]
+            })}
+          >
+            <Icon name="arrow-back" size={24} color="#ffffff" />
+        </TouchableOpacity>
         <Text className="text-2xl text-white font-promptBold">ข้อมูลโปรไฟล์</Text>
-        <View className="w-10" />
       </View>
 
       {/* Main Content */}
@@ -238,15 +248,7 @@ const ProfileDetailScreen = () => {
       >
         {/* Profile Section */}
         <View className="bg-white mx-4 mt-6 rounded-xl p-5 shadow-sm">
-          <TouchableOpacity 
-            className="absolute top-3 right-4 w-10 h-10 rounded-full items-center justify-center z-10"
-            onPress={() => navigation.reset({
-              index: 0,
-              routes: [{ name: 'Menu' }]
-            })}
-          >
-            <Icon name="arrow-back" size={24} color="#ffb800" />
-          </TouchableOpacity>
+          
           
           {/* Profile Header */}
           <View className="flex-row items-center mb-5">

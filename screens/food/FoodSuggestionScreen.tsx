@@ -40,6 +40,7 @@ const FoodSuggestionScreen: React.FC<Props> = ({ route }) => {
       if (result && result.success) {
         // Show success message or navigate
         alert('บันทึกเมนูนี้ในเมนูของฉันเรียบร้อยแล้ว!');
+        navigation.goBack();
       } else {
         alert('เกิดข้อผิดพลาดในการบันทึกเมนู');
       }

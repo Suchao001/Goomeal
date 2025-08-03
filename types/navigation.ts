@@ -20,6 +20,8 @@ export type RootStackParamList = {
     RecordSettings: undefined;
     MealTimeSettings: undefined;
     ChatScreen: undefined;
+    SuggestionMenu: undefined;
+    MyFood: undefined;
 
     Calendar: undefined;
     RecordFood: undefined;

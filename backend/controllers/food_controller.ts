@@ -13,6 +13,7 @@ interface UserFoodData {
   user_id: number;
   ingredient: string;
   src?: string; 
+  created_at?: string;
 }
 
 interface FoodSearchResult {
@@ -366,7 +367,8 @@ export const addUserFood = async (req: Request & { user?: any; file?: Express.Mu
       protein: parseFloat(protein) || 0,
       ingredient: ingredient || '',
       user_id: user_id,
-      src: src || 'user' // Default to 'user' if not provided
+      src: src || 'user',
+      created_at: new Date().toISOString().replace('T', ' ').replace('Z', '') 
     };
     
     // Add image if uploaded

@@ -339,8 +339,11 @@ const Home = () => {
 
         {/* Recommended Meals Section */}
         <View className="mt-8 mb-4">
-          <View className="px-4 mb-4">
+          <View className="px-4 mb-4 flex-row justify-between items-center">
             <Text className="text-xl font-promptBold text-myBlack mb-2">เมนูแนะนำของคุณ</Text>
+             <TouchableOpacity onPress={() => navigation.navigate('MyFood')}>
+                <Text className="text-gray-500 text-sm font-prompt">ดูเพิ่มเติม</Text>
+                </TouchableOpacity>
           </View>
 
           <View className="px-4">
@@ -370,7 +373,7 @@ const Home = () => {
             ))}           
             <TouchableOpacity 
               className="bg-primary rounded-lg p-4 flex-row items-center justify-center mt-2"
-              onPress={() => navigation.navigate('FoodMenu')}
+              onPress={() => navigation.navigate('SuggestionMenu')}
             >
               <Icon name="sparkles" size={24} color="white" />
               <Text className="text-white font-promptBold text-lg ml-2">ขอเมนูอาหาร</Text>

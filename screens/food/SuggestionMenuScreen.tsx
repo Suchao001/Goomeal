@@ -83,7 +83,7 @@ const SuggestionMenuScreen = () => {
       // Prepare data from form state
       const payload = {
         mealType: selectedMealType,
-        hungerLevel: hungerLevel + 1, // 1-based
+        hungerLevel: hungerLevel + 1,
         ingredients,
         foodType: selectedFoodType,
         dietaryRestrictions,
@@ -93,7 +93,7 @@ const SuggestionMenuScreen = () => {
       setLoading(false);
       if (response.success && response.data?.answer) {
         // Navigate to FoodSuggestionScreen with suggestion data
-        navigation.navigate('FoodSuggestion', { suggestion: response.data.answer });
+        navigation.navigate('FoodSuggehstion', { suggestion: response.data.answer });
       } else {
         Alert.alert('เกิดข้อผิดพลาด', response.error || 'ไม่สามารถขอคำแนะนำจาก AI ได้');
       }
