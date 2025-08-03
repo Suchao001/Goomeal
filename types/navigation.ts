@@ -22,6 +22,7 @@ export type RootStackParamList = {
     ChatScreen: undefined;
     SuggestionMenu: undefined;
     MyFood: undefined;
+   
 
     Calendar: undefined;
     RecordFood: undefined;

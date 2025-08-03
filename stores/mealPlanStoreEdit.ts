@@ -138,12 +138,7 @@ export const useMealPlanStoreEdit = create<MealPlanStoreEdit>()((set, get) => ({
       },
 
       addFoodToMeal: (food: FoodItem, mealId: string, day: number, mealInfo?: { name: string; time: string }) => {
-        console.log('🍽️ [mealPlanStoreEdit] addFoodToMeal called:', { 
-          food: food.name, 
-          mealId, 
-          day, 
-          mealInfo 
-        });
+        
         
         set((state) => {
           console.log('📝 [mealPlanStoreEdit] Current state before adding food:', {
@@ -320,7 +315,7 @@ export const useMealPlanStoreEdit = create<MealPlanStoreEdit>()((set, get) => ({
       },
 
       loadMealPlanData: (planData: any) => {
-        console.log('🔥 [mealPlanStoreEdit] loadMealPlanData called with:', planData);
+        
         if (!planData || !planData.plan) {
           console.log('❌ [mealPlanStoreEdit] No full plan object provided');
           return;
@@ -340,7 +335,7 @@ export const useMealPlanStoreEdit = create<MealPlanStoreEdit>()((set, get) => ({
           customMeals: convertedCustomMeals,
           isEditMode: true,
         });
-        console.log('🏁 [mealPlanStoreEdit] Final state after loading:', get());
+       
       },
 
       getMealData: (day: number, mealId: string) => {
@@ -455,10 +450,7 @@ function parsePlanContents(parsedPlanData: any) {
     }
   });
 
-  console.log('🎯 [mealPlanStoreEdit] Final converted data:', {
-    convertedMealPlanData,
-    convertedCustomMeals
-  });
+  
 
   return { convertedMealPlanData, convertedCustomMeals };
 }

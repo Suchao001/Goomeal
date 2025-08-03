@@ -623,6 +623,7 @@ const CalendarScreen = () => {
             </TouchableOpacity>
           </View>
         )}
+        <View className='h-20' />
       </View>
 
       {/* Bottom Navigation */}

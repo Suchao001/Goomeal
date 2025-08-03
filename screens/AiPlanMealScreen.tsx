@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert, BackHandler } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTypedNavigation } from '../hooks/Navigation';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useFocusEffect } from '@react-navigation/native';
 import { apiClient } from '../utils/apiClient';
 
 const AiPlanMealScreen = () => {
@@ -13,6 +13,7 @@ const AiPlanMealScreen = () => {
   const [mealPlanData, setMealPlanData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [planSaved, setPlanSaved] = useState(false);
 
   useEffect(() => {
     if (!aiPlanData) {
@@ -68,6 +69,46 @@ const AiPlanMealScreen = () => {
     setLoading(false);
   }, [aiPlanData]);
 
+  // Handle back button and navigation
+  const handleBackPress = () => {
+    if (!planSaved) {
+      Alert.alert(
+        'ยืนยันการออก',
+        'ท่านยังไม่ได้บันทึกแผนนี้ ต้องการจะออกหรือไม่?',
+        [
+          {
+            text: 'ยกเลิก',
+            style: 'cancel',
+          },
+          {
+            text: 'ออก',
+            style: 'destructive',
+            onPress: () => navigation.navigate('Home'),
+          },
+        ]
+      );
+      return true; // Prevent default back action
+    }
+    navigation.navigate('Home');
+    return true;
+  };
+
+  // Handle hardware back button on Android
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        return handleBackPress();
+      };
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => subscription.remove();
+    }, [planSaved])
+  );
+
+  const handleTryAgain = () => {
+    navigation.navigate('OptionPlan', {});
+  };
+
   const handleSavePlan = async () => {
     if (!aiPlanData) {
       alert('ไม่มีข้อมูลแผนอาหารให้บันทึก');
@@ -85,9 +126,18 @@ const AiPlanMealScreen = () => {
       });
       
       if (response.success) {
-        alert('บันทึกแผนอาหารเรียบร้อยแล้ว!');
+        setPlanSaved(true);
+        Alert.alert(
+          'สำเร็จ!',
+          'บันทึกแผนอาหารเรียบร้อยแล้ว!',
+          [
+            {
+              text: 'ตกลง',
+              onPress: () => navigation.navigate('Home'),
+            },
+          ]
+        );
         console.log('Plan saved successfully:', response.data);
-        navigation.navigate('Home');
       } else {
         alert(`เกิดข้อผิดพลาด: ${response.message}`);
       }
@@ -214,7 +264,7 @@ const AiPlanMealScreen = () => {
         <View className="flex-row items-center">
           <TouchableOpacity 
             className="p-2 mr-2"
-            onPress={() => navigation.goBack()}
+            onPress={handleBackPress}
           >
             <Icon name="arrow-back" size={24} color="#4A4A4A" />
           </TouchableOpacity>
@@ -240,7 +290,7 @@ const AiPlanMealScreen = () => {
         <View className="bg-white px-4 py-4 border-t border-gray-200">
           <TouchableOpacity
             onPress={handleSavePlan}
-            className={`rounded-lg py-4 items-center justify-center ${
+            className={`rounded-lg py-4 items-center justify-center mb-3 ${
               saving ? 'bg-gray-400' : 'bg-primary'
             }`}
             activeOpacity={0.8}
@@ -258,6 +308,17 @@ const AiPlanMealScreen = () => {
                 บันทึกแผนนี้
               </Text>
             )}
+          </TouchableOpacity>
+          
+          {/* Try Again Button */}
+          <TouchableOpacity
+            onPress={handleTryAgain}
+            className="rounded-lg py-4 items-center justify-center border border-primary"
+            activeOpacity={0.8}
+          >
+            <Text className="text-primary text-lg font-promptSemiBold">
+              ลองใหม่
+            </Text>
           </TouchableOpacity>
         </View>
       )}
