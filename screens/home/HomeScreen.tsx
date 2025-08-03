@@ -20,7 +20,21 @@ import {
   TodayMealData,
   TodayMealItem 
 } from '../../utils/todayMealApi';
-import { blog_url } from '../../config'; 
+import { blog_url, base_url } from '../../config';
+import { ApiClient } from '../../utils/apiClient';
+
+interface RecommendedMeal {
+  id: string;
+  name: string;
+  cal: number;
+  carb: number;
+  fat: number;
+  protein: number;
+  img: string | null;
+  ingredient: string;
+  src?: string;
+  created_at?: string;
+} 
 
 const Home = () => {
   const navigation = useTypedNavigation<'Home'>();
@@ -42,6 +56,7 @@ const Home = () => {
   useEffect(() => {
     loadBlogArticles();
     loadTodayMeals();
+    fetchRecommendedMeals();
   }, []);
 
   // Fetch user profile to check first_time_setting
@@ -220,20 +235,64 @@ const Home = () => {
   };
 
   // Mock data for recommended meals
-  const recommendedMeals = [
-    {
-      id: '1',
-      name: 'สลัดผักรวมกับไก่ย่าง',
-      calories: 285,
-      image: require('../../assets/images/Foodtype_3.png'),
-    },
-    {
-      id: '2',
-      name: 'ข้าวกล้องผัดผักโขม',
-      calories: 320,
-      image: require('../../assets/images/Foodtype_4.png'),
-    },
-  ];
+  const [recommendedMeals, setRecommendedMeals] = useState<RecommendedMeal[]>([]);
+
+  // Fetch recommended meals (latest 2 AI-generated foods)
+  const fetchRecommendedMeals = async () => {
+    try {
+      const apiClient = new ApiClient();
+      const result = await apiClient.getUserFoods('', 2, 'ai'); // Get latest 2 AI foods
+      if (result.success && result.data) {
+        // Just take the first 2 items from the result data (no sort)
+        console.log('Recommended meals fetched:', result.data);
+        if (Array.isArray(result.data.userFoods)) {
+          setRecommendedMeals(
+            result.data.userFoods.slice(0, 2).map((item) => ({
+              id: item.id,
+              name: item.name,
+              cal: item.cal,
+              carb: item.carb,
+              fat: item.fat,
+              protein: item.protein,
+              img: item.img,
+              ingredient: item.ingredient,
+              src: item.src,
+              created_at: item.createdAt,
+            }))
+          );
+        } else {
+          setRecommendedMeals([]);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching recommended meals:', error);
+      // Fallback to mock data if API fails
+      setRecommendedMeals([
+        {
+          id: '1',
+          name: 'สลัดผักรวมกับไก่ย่าง',
+          cal: 285,
+          carb: 15,
+          fat: 12,
+          protein: 25,
+          img: null,
+          ingredient: 'ผักสด, ไก่ย่าง',
+          src: 'ai'
+        },
+        {
+          id: '2',
+          name: 'ข้าวกล้องผัดผักโขม',
+          cal: 320,
+          carb: 45,
+          fat: 8,
+          protein: 12,
+          img: null,
+          ingredient: 'ข้าวกล้อง, ผักโขม',
+          src: 'ai'
+        },
+      ]);
+    }
+  };
 
  
 
@@ -284,7 +343,7 @@ const Home = () => {
             </View>
             <TouchableOpacity
               className="bg-orange-400 px-6 py-2 rounded-full"
-              onPress={() => navigation.navigate('PersonalPlan1')}
+              onPress={() => navigation.navigate('PersonalPlan1', {})}
             >
               <Text className="text-white font-promptSemiBold">กรอกข้อมูลครั้งแรก</Text>
             </TouchableOpacity>
@@ -353,7 +412,7 @@ const Home = () => {
                   
                   <View className="w-24 h-24 bg-gray-200 items-center justify-center">
                     <Image
-                      source={meal.image}
+                      source={meal.img ? { uri: meal.img } : require('../../assets/images/Foodtype_3.png')}
                       className="w-full h-full"
                       resizeMode="cover"
                     />
@@ -365,7 +424,7 @@ const Home = () => {
                       {meal.name}
                     </Text>
                     <Text className="text-orange-500 font-promptMedium">
-                      {meal.calories} แคลอรี่
+                      {meal.cal} แคลอรี่
                     </Text>
                   </View>
                 </View>
@@ -381,8 +440,6 @@ const Home = () => {
           </View>
         </View>
 
-        {/* ----- จุดที่แก้ไข: ลบคอมเมนต์ที่อาจเป็นปัญหาออกไป ----- */}
-        
       </ScrollView>
 
       {/* Bottom Navigation */}

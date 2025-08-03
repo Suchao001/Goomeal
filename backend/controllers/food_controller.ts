@@ -64,7 +64,6 @@ export const getUserFoods = async (req: Request & { user?: any }, res: Response)
         'ingredient',
         'src',
         'created_at',
-        
       )
       .where('user_id', user_id)
       .orderBy('created_at', 'desc'); // Show newest first
