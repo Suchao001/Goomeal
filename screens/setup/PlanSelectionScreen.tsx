@@ -210,7 +210,13 @@ const PlanSelectionScreen = () => {
       const result = await apiClient.getPlanSettings();
       if (result.success && result.data) {
         if (result.data.start_date) {
-          setSelectedStartDate(new Date(result.data.start_date));
+          // Parse date safely without timezone issues
+          const dateStr = result.data.start_date;
+          const [year, month, day] = dateStr.split('-').map(Number);
+          const loadedDate = new Date(year, month - 1, day); // month is 0-indexed
+          console.log('📥 Loaded Date from API:', dateStr);
+          console.log('📅 Parsed Date:', loadedDate);
+          setSelectedStartDate(loadedDate);
         }
         setIsAutoLoop(result.data.auto_loop || false);
       }
@@ -236,8 +242,11 @@ const PlanSelectionScreen = () => {
         return;
       }
       
-      // Format date for API
-      const formattedDate = selectedStartDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+      // Format date for API (avoid timezone issues)
+      const year = selectedStartDate.getFullYear();
+      const month = String(selectedStartDate.getMonth() + 1).padStart(2, '0');
+      const day = String(selectedStartDate.getDate()).padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day}`; // YYYY-MM-DD format
       
       // Call API to save plan settings
       const result = await apiClient.setPlanSettings({
@@ -433,7 +442,7 @@ const PlanSelectionScreen = () => {
                                 >
                                   {plan.name}
                                 </Text>
-                                {isCurrentPlan && (
+                                {/* {isCurrentPlan && (
                                   <View 
                                     className="ml-2 px-3 py-1 bg-primary rounded-full"
                                     style={{ 
@@ -451,7 +460,7 @@ const PlanSelectionScreen = () => {
                                       ปัจจุบัน
                                     </Text>
                                   </View>
-                                )}
+                                )} */}
                               </View>
                               <Text 
                                 className="text-sm text-gray-600 leading-5"

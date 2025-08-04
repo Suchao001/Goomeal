@@ -351,7 +351,7 @@ const Home = () => {
             </View>
             <TouchableOpacity
               className="bg-orange-400 px-6 py-2 rounded-full"
-              onPress={() => navigation.navigate('PersonalPlan1', {})}
+              onPress={() => navigation.navigate('PersonalSetup')}
             >
               <Text className="text-white font-promptSemiBold">กรอกข้อมูลครั้งแรก</Text>
             </TouchableOpacity>

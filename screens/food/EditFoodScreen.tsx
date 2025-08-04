@@ -162,9 +162,10 @@ const EditFoodScreen = () => {
         carbs: carbs,
         protein: protein,
         fat: fat,
-        ingredient: ingredient.trim() || undefined,
+        ingredient: ingredient.trim() === '' ? '' : ingredient.trim(),
         img: imageToSend ? 'NEW_IMAGE' : hasImageDeleted ? 'DELETE_IMAGE' : 'NO_CHANGE',
-        deleteImage: deleteImage
+        deleteImage: deleteImage,
+        ingredientLength: ingredient.trim().length // Debug log
       });
 
       const result = await apiClient.updateUserFood(foodId, {
@@ -173,7 +174,7 @@ const EditFoodScreen = () => {
         carbs: carbs,
         protein: protein,
         fat: fat,
-        ingredient: ingredient.trim() || undefined,
+        ingredient: ingredient.trim() === '' ? '' : ingredient.trim(), // Send empty string to clear ingredient
         img: imageToSend,
         deleteImage: deleteImage
       });

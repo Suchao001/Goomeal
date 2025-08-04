@@ -388,8 +388,9 @@ const CalendarScreen = () => {
       {/* Header - calendarOld style */}
       <View className="bg-primary px-4 py-4 mt-6 flex-row items-center justify-between border-b border-gray-100">
         {/* Menu Button */}
+        
         <TouchableOpacity className="w-10 h-10 rounded-lg items-center justify-center">
-          <Icon name="menu" size={24} color="white" />
+          <Icon name="menu" size={24} color="#ffb800" />
         </TouchableOpacity>
         
         {/* Title */}
