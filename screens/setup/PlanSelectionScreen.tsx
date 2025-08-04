@@ -212,10 +212,35 @@ const PlanSelectionScreen = () => {
         if (result.data.start_date) {
           // Parse date safely without timezone issues
           const dateStr = result.data.start_date;
-          const [year, month, day] = dateStr.split('-').map(Number);
-          const loadedDate = new Date(year, month - 1, day); // month is 0-indexed
-          console.log('📥 Loaded Date from API:', dateStr);
-          console.log('📅 Parsed Date:', loadedDate);
+          
+          
+          let loadedDate: Date;
+          
+          // Handle different date formats
+          if (typeof dateStr === 'string') {
+            if (dateStr.includes('-')) {
+              // Format: YYYY-MM-DD
+              const [year, month, day] = dateStr.split('-').map(Number);
+              loadedDate = new Date(year, month - 1, day); // month is 0-indexed
+            } else if (dateStr.includes('/')) {
+              // Format: MM/DD/YYYY or DD/MM/YYYY
+              loadedDate = new Date(dateStr);
+            } else {
+              // Try parsing as is
+              loadedDate = new Date(dateStr);
+            }
+          } else {
+            // If it's already a Date object or timestamp
+            loadedDate = new Date(dateStr);
+          }
+          
+          // Validate the parsed date
+          if (isNaN(loadedDate.getTime())) {
+            console.warn('⚠️ Invalid date parsed, using current date');
+            loadedDate = new Date();
+          }
+          
+         
           setSelectedStartDate(loadedDate);
         }
         setIsAutoLoop(result.data.auto_loop || false);
@@ -702,11 +727,21 @@ const PlanSelectionScreen = () => {
                       <View>
                         <Text className="text-sm font-medium text-gray-700">วันเริ่มต้นแผน</Text>
                         <Text className="text-lg font-semibold text-gray-800">
-                          {selectedStartDate.toLocaleDateString('th-TH', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
+                          {(() => {
+                            try {
+                              if (isNaN(selectedStartDate.getTime())) {
+                                return 'ยังไม่ได้ตั้งค่า';
+                              }
+                              return selectedStartDate.toLocaleDateString('th-TH', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric'
+                              });
+                            } catch (error) {
+                              console.error('Date formatting error:', error);
+                              return 'รูปแบบวันที่ไม่ถูกต้อง';
+                            }
+                          })()}
                         </Text>
                       </View>
                     </View>
