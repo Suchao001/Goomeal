@@ -6,7 +6,7 @@ export interface UserProfileData {
   weight: number;
   height: number;
   gender: 'male' | 'female' | 'other';
-  body_fat?: 'low' | 'normal' | 'high' | 'don\'t know';
+  body_fat?: 'low' | 'normal' | 'high' | 'unknown';
   target_goal: 'decrease' | 'increase' | 'healthy';
   target_weight: number;
   activity_level: 'low' | 'moderate' | 'high' | 'very high';

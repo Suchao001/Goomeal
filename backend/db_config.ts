@@ -13,6 +13,7 @@ const config: {[key:string]: Knex.Config} = {
       port: Number(process.env.DB_PORT),
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
+      charset: 'utf8mb4'
     },
   } 
 }
