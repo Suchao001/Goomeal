@@ -3,17 +3,20 @@ import { BaseApiClient } from './api/baseClient';
 import { FoodApiClient } from './api/foodClient';
 import { FoodPlanApiClient } from './api/foodPlanClient';
 import { AiApiClient } from './api/aiApiClient';
+import { GoodChatApiClient } from './api/goodChatClient';
 
 export class ApiClient extends BaseApiClient {
   private foodClient: FoodApiClient;
   private foodPlanClient: FoodPlanApiClient;
   private aiClient: AiApiClient;
+  private goodChatClient: GoodChatApiClient;
 
   constructor() {
     super();
     this.foodClient = new FoodApiClient();
     this.foodPlanClient = new FoodPlanApiClient();
     this.aiClient = new AiApiClient();
+    this.goodChatClient = new GoodChatApiClient();
   }
 
   // ===== FOOD API METHODS =====
@@ -121,6 +124,23 @@ export class ApiClient extends BaseApiClient {
 
   async getFoodPlanSuggestions(payload?: any) {
     return this.aiClient.getFoodPlanSuggestions(payload);
+  }
+
+  // ===== GOODCHAT API METHODS =====
+  async getChatSession() {
+    return this.goodChatClient.getChatSession();
+  }
+
+  async getChatMessages(limit?: number, offset?: number) {
+    return this.goodChatClient.getChatMessages(limit, offset);
+  }
+
+  async sendChatMessage(message: string) {
+    return this.goodChatClient.sendMessage(message);
+  }
+
+  async clearChatHistory() {
+    return this.goodChatClient.clearChatHistory();
   }
 }
 
