@@ -410,109 +410,108 @@ const PlanSelectionScreen = () => {
                   {/* Header Section */}
                   
 
-                  <View className="gap-4">
-                    {plans.map((plan) => {
+                  {/* Plans Container - Single Card */}
+                  <View 
+                    className="bg-white rounded-3xl p-4 shadow-lg"
+                    style={{
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.1,
+                      shadowRadius: 8,
+                      elevation: 2,
+                    }}
+                  >
+                    {plans.map((plan, index) => {
                       const isCurrentPlan = currentPlanId === plan.id;
+                      const isLastItem = index === plans.length - 1;
+                      
                       return (
-                        <View 
-                          key={plan.id} 
-                          className={`bg-white rounded-3xl p-4 flex-row items-center justify-between ${isCurrentPlan ? 'border-2 border-primary' : ''}`}
-                          style={{ 
-                            marginBottom: 8,
-                            shadowColor: '#000',
-                            shadowOffset: { width: 0, height: 4 },
-                            shadowOpacity: 0.1,
-                            shadowRadius: 8,
-                            elevation: 1,
-                            ...(isCurrentPlan && {
-                              borderColor: '#ffb800',
-                              borderWidth: 2,
-                             
-                            })
-                          }}
-                        >
-                          <View className="flex-row items-center flex-1">
-                            {/* Plan Image */}
-                            <View 
-                              className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-100 to-yellow-100 items-center justify-center mr-4 overflow-hidden"
-                              style={{ 
-                                width: 64, 
-                                height: 64, 
-                                borderRadius: 16,
-                                marginRight: 16, 
-                                overflow: 'hidden',
-                                backgroundColor: isCurrentPlan ? '#fed7aa' : '#fef3c7'
-                              }}
-                            >
-                              {plan.img ? (
-                                <Image 
-                                  source={{ uri: plan.img }} 
-                                  className="w-full h-full"
-                                  style={{ width: '100%', height: '100%' }}
-                                  resizeMode="cover"
-                                />
-                              ) : (
-                                <Text style={{ fontSize: 28 }}>
-                                  {isCurrentPlan ? '⭐' : '🍽️'}
-                                </Text>
-                              )}
-                            </View>
-
-                            {/* Plan Info */}
-                            <View className="flex-1">
-                              <View className="flex-row items-center mb-1">
-                                <Text 
-                                  className={`text-lg font-bold mb-1 ${isCurrentPlan ? 'text-primary' : 'text-gray-800'}`}
-                                  style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 4 }}
-                                >
-                                  {plan.name}
-                                </Text>
-                                {/* {isCurrentPlan && (
-                                  <View 
-                                    className="ml-2 px-3 py-1 bg-primary rounded-full"
-                                    style={{ 
-                                      marginLeft: 8, 
-                                      paddingHorizontal: 12, 
-                                      paddingVertical: 4, 
-                                      backgroundColor: '#f59e0b', 
-                                      borderRadius: 16 
-                                    }}
-                                  >
-                                    <Text 
-                                      className="text-xs text-white font-semibold"
-                                      style={{ fontSize: 11, color: '#ffffff', fontWeight: '600' }}
-                                    >
-                                      ปัจจุบัน
-                                    </Text>
-                                  </View>
-                                )} */}
-                              </View>
-                              <Text 
-                                className="text-sm text-gray-600 leading-5"
-                                style={{ fontSize: 14, color: '#6b7280', lineHeight: 20 }}
-                                numberOfLines={2}
-                              >
-                                {plan.description || 'แผนอาหารสำหรับสุขภาพที่ดี'}
-                              </Text>
-                            </View>
-                          </View>
-
-                          {/* Options Button */}
-                          <TouchableOpacity 
-                            className="p-3 rounded-full  ml-3"
-                            style={{ 
-                              padding: 12,
-                              borderRadius: 50,
-                           
+                        <View key={plan.id}>
+                          <View 
+                            className={`flex-row items-center justify-between py-4 ${isCurrentPlan ? 'bg-orange-50' : ''}`}
+                            style={{
+                              paddingVertical: 16,
+                              paddingHorizontal: 8,
+                              borderRadius: isCurrentPlan ? 12 : 0,
+                              backgroundColor: isCurrentPlan ? '#fff7ed' : 'transparent'
                             }}
-                            onPress={(event) => handlePlanOptions(plan, event)}
                           >
-                            <Icon 
-                              name="ellipsis-vertical" 
-                              size={20} 
-                              color={isCurrentPlan ? '#f59e0b' : '#6b7280'} 
+                            <View className="flex-row items-center flex-1">
+                              {/* Plan Image */}
+                              <View 
+                                className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-100 to-yellow-100 items-center justify-center mr-4 overflow-hidden"
+                                style={{ 
+                                  width: 56, 
+                                  height: 56, 
+                                  borderRadius: 14,
+                                  marginRight: 16, 
+                                  overflow: 'hidden',
+                                  backgroundColor: isCurrentPlan ? '#fed7aa' : '#fef3c7'
+                                }}
+                              >
+                                {plan.img ? (
+                                  <Image 
+                                    source={{ uri: plan.img }} 
+                                    className="w-full h-full"
+                                    style={{ width: '100%', height: '100%' }}
+                                    resizeMode="cover"
+                                  />
+                                ) : (
+                                  <Text style={{ fontSize: 24 }}>
+                                    {isCurrentPlan ? '⭐' : '🍽️'}
+                                  </Text>
+                                )}
+                              </View>
+
+                              {/* Plan Info */}
+                              <View className="flex-1">
+                                <View className="flex-row items-center mb-1">
+                                  <Text 
+                                    className={`text-lg font-bold ${isCurrentPlan ? 'text-primary' : 'text-gray-800'}`}
+                                    style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 2 }}
+                                  >
+                                    {plan.name}
+                                  </Text>
+                                  
+                                </View>
+                                <Text 
+                                  className="text-sm text-gray-600 leading-5"
+                                  style={{ fontSize: 13, color: '#6b7280', lineHeight: 18 }}
+                                  numberOfLines={2}
+                                >
+                                  {plan.description || 'แผนอาหารสำหรับสุขภาพที่ดี'}
+                                </Text>
+                              </View>
+                            </View>
+
+                            {/* Options Button */}
+                            <TouchableOpacity 
+                              className="p-2 rounded-full ml-3"
+                              style={{ 
+                                padding: 10,
+                                borderRadius: 50,
+                              }}
+                              onPress={(event) => handlePlanOptions(plan, event)}
+                            >
+                              <Icon 
+                                name="ellipsis-vertical" 
+                                size={18} 
+                                color={isCurrentPlan ? '#ffb800' : '#6b7280'} 
+                              />
+                            </TouchableOpacity>
+                          </View>
+                          
+                          {/* Divider Line */}
+                          {!isLastItem && (
+                            <View 
+                              className="border-b border-gray-100 mx-4"
+                              style={{ 
+                                borderBottomWidth: 1, 
+                                borderBottomColor: '#f3f4f6',
+                                marginHorizontal: 16
+                              }}
                             />
-                          </TouchableOpacity>
+                          )}
                         </View>
                       );
                     })}

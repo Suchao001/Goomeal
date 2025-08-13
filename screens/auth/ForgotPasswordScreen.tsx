@@ -57,9 +57,9 @@ export const ForgotPasswordScreen = () => {
   return (
     <View className="flex-1 items-center bg-white p-6">
       <ArrowLeft />
-      <Text className="text-3xl text-gray-800 mb-2 mt-32 font-promptSemiBold">
-        ลืมรหัสผ่านงั้นหรอ
-      </Text>
+      <Text className="text-3xl text-gray-800 mb-2 mt-32 font-promptSemiBold leading-[40px]">
+  ลืมรหัสผ่านงั้นหรอ
+</Text>
       <Text className="text-base text-gray-600 mb-6 font-prompt">
         กรุณากรอกของคุณแล้ว เราจะลิ้งค์รีเซ็ตไปให้ทางอีเมล
       </Text>
@@ -94,9 +94,9 @@ export const ForgotPasswordScreen_after = () => {
   return (
     <View className="flex-1 items-center bg-white p-6">
       <ArrowLeft goto={'Login'} />
-      <Text className="text-3xl text-gray-800 mb-2 mt-32 font-promptSemiBold">
-        ลืมรหัสผ่านงั้นหรอ
-      </Text>
+      <Text className="text-3xl text-gray-800 mb-2 mt-32 font-promptSemiBold leading-[40px]">
+  ลืมรหัสผ่านงั้นหรอ
+</Text>
       <Text className="text-base text-gray-600 mb-6 font-prompt">
         หากอีเมลที่คุณกรอกตรงตามบัญชีที่มีอยู่ เราจะส่งลิงค์เพื่อรีเซ็ตรหัสผ่านให้คุณ
         โปรดตรวจสอบที่อีเมลคุณ แล้วคลิกลิงค์เพื่อรีเซ็ตรหัสผ่านของคุณ
@@ -174,9 +174,9 @@ export const ResetPasswordScreen = () => {
   return (
     <View className="flex-1 items-center bg-white p-6">
       <ArrowLeft goto={'Login'} />
-      <Text className="text-3xl text-gray-800 mb-2 mt-32 font-promptSemiBold">
-        รีเซ็ตรหัสผ่าน
-      </Text>
+      <Text className="text-3xl text-gray-800 mb-2 mt-32 font-promptSemiBold leading-[40px]">
+  ลืมรหัสผ่านงั้นหรอ
+</Text>
       <Text className="text-base text-gray-600 mb-6 font-prompt">
         กรุณากรอกรหัสผ่านใหม่ของคุณ
       </Text>

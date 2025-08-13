@@ -155,7 +155,7 @@ export const searchFoods = async (req: Request & { user?: any }, res: Response):
         'img',
         'ingredient'
       )
-      .where('user_id', user_id);
+      .where('user_id', user_id).orderBy('created_at', 'desc'); 
 
     let globalFoodsQuery = db('foods')
       .select(

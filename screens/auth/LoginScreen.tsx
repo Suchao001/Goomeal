@@ -42,7 +42,7 @@ const LoginScreen = () => {
       console.error('Login error:', error);
     showAlert({
        message: 'Error',
-       description: 'Invalid username or password',
+       description: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
        type: 'danger',
     });
 
