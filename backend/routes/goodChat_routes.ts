@@ -4,7 +4,9 @@ import {
   getChatMessages,
   sendMessage,
   clearChatHistory,
-  checkAiHealth
+  checkAiHealth,
+  getConversationSummary,
+  triggerRollingSummary
 } from '../controllers/goodChat_controller';
 import authenticateToken from '../middlewares/authenticateToken';
 
@@ -27,5 +29,11 @@ router.post('/message', sendMessage);
 
 // Clear chat history
 router.delete('/history', clearChatHistory);
+
+// Get conversation summary
+router.get('/summary', getConversationSummary);
+
+// Manually trigger rolling summary generation
+router.post('/summary/generate', triggerRollingSummary);
 
 export default router;
