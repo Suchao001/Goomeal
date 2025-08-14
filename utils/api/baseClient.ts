@@ -73,12 +73,11 @@ export class BaseApiClient {
           this.isRefreshing = true;
 
           try {
-            console.log('🔄 [BaseApiClient] Attempting to refresh token...');
-            // Try to refresh token
+            
+            
             const newToken = await this.refreshToken();
             if (newToken) {
-              console.log('✅ [BaseApiClient] Token refresh successful');
-              // Process queued requests
+              
               this.processQueue(null);
               
               // Retry original request with new token
@@ -142,12 +141,6 @@ export class BaseApiClient {
       const currentTime = Date.now() / 1000;
       const timeToExpiry = decodedToken.exp - currentTime;
       
-      console.log('🔍 [BaseApiClient] Token expiry check:', {
-        timeToExpiry: Math.round(timeToExpiry),
-        willRefresh: timeToExpiry < 30
-      });
-      
-      // If token expires within 30 seconds, refresh it
       if (timeToExpiry < 30) {
         console.log('⏰ [BaseApiClient] Token expires soon, refreshing...');
         const newToken = await this.refreshToken();
@@ -225,7 +218,7 @@ export class BaseApiClient {
 
   private async clearTokens(): Promise<void> {
     try {
-      console.log('🧹 [BaseApiClient] Clearing all tokens...');
+      
       await SecureStore.deleteItemAsync('accessToken');
       await SecureStore.deleteItemAsync('refreshToken');
       await SecureStore.deleteItemAsync('user');

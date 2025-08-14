@@ -17,6 +17,7 @@ const Menu = () => {
   };
   
   return (
+  
     <View style={styles.container}>
       {/* Home Icon */}
       <TouchableOpacity 

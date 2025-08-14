@@ -265,7 +265,6 @@ export const fetchTodayMeals = async (targetDate?: Date): Promise<TodayMealData 
       planName: currentFoodPlan.name
     };
 
-    console.log('✅ [TodayMealApi] Successfully fetched today\'s meals:', result);
     
     return result;
 

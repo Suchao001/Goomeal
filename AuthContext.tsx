@@ -82,14 +82,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (response.data.success) {
         const userData = response.data.user;
-        console.log('✅ [AuthContext] Profile fetched successfully:', userData);
+        
         await SecureStore.setItemAsync('user', JSON.stringify(userData));
         
         // Clear nutrition cache when user profile changes
         const { clearNutritionCache } = useMealPlanStore.getState();
         clearNutritionCache();
-        console.log('🔄 [AuthContext] Nutrition cache cleared due to profile update');
-        
         setUser(userData);
         return userData;
       }
@@ -102,7 +100,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const userString = await SecureStore.getItemAsync('user');
         if (userString) {
           const userData = JSON.parse(userString);
-          console.log('📱 [AuthContext] Using cached user data:', userData);
           setUser(userData); // อัปเดต state ด้วยข้อมูล fallback
           return userData;
         }

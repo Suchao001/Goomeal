@@ -100,11 +100,9 @@ export class FoodPlanApiClient extends BaseApiClient {
     image?: string; // Can be a new file URI or an existing relative path
   }) {
     try {
-      console.log('🔄 [foodPlanApiClient] Updating food plan:', { planId, name: data.name, image: data.image });
-
-      // If the image is a new file to upload (e.g., starts with 'file://')
+     
       if (data.image && data.image.startsWith('file://')) {
-        console.log('📤 [foodPlanApiClient] Updating with new image using FormData.');
+        
         const formData = new FormData();
         formData.append('name', data.name);
         if (data.description) {

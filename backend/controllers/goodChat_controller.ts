@@ -1,5 +1,9 @@
 import { Request, Response } from 'express';
 import db from '../db_config';
+import axios from 'axios';
+
+const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+const AI_API_KEY = process.env.AI_API_KEY;
 
 interface ChatMessage {
   id?: number;
@@ -16,9 +20,6 @@ interface ChatSession {
   summary?: string;
 }
 
-/**
- * Get or create chat session for user
- */
 export const getChatSession = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = (req as any).user?.id;
@@ -31,7 +32,6 @@ export const getChatSession = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    // Check if session exists
     let session = await db('chat_session')
       .where({ user_id: userId })
       .first();
@@ -71,9 +71,7 @@ export const getChatSession = async (req: Request, res: Response): Promise<void>
   }
 };
 
-/**
- * Get chat messages for user
- */
+
 export const getChatMessages = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = (req as any).user?.id;
@@ -87,14 +85,12 @@ export const getChatMessages = async (req: Request, res: Response): Promise<void
       return;
     }
 
-    // Get messages ordered by creation time
     const messages = await db('chat_message')
       .where({ user_id: userId })
       .orderBy('created_at', 'asc')
       .limit(Number(limit))
       .offset(Number(offset));
 
-    // Format messages for frontend
     const formattedMessages = messages.map((msg: any, index: number) => ({
       id: msg.id,
       text: msg.message,
@@ -120,9 +116,6 @@ export const getChatMessages = async (req: Request, res: Response): Promise<void
   }
 };
 
-/**
- * Send message to chat
- */
 export const sendMessage = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = (req as any).user?.id;
@@ -144,7 +137,6 @@ export const sendMessage = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    // Ensure session exists
     let session = await db('chat_session')
       .where({ user_id: userId })
       .first();
@@ -166,8 +158,8 @@ export const sendMessage = async (req: Request, res: Response): Promise<void> =>
 
     await db('chat_message').insert(userMessageData);
 
-    // Generate fixed AI response based on keywords
-    const aiResponse = generateFixedResponse(message.trim());
+    // Generate AI response using OpenAI API
+    const aiResponse = await getAiResponse(message.trim(), userId);
 
     // Save AI response
     const aiMessageData: ChatMessage = {
@@ -178,12 +170,10 @@ export const sendMessage = async (req: Request, res: Response): Promise<void> =>
 
     await db('chat_message').insert(aiMessageData);
 
-    // Update session timestamp
     await db('chat_session')
       .where({ user_id: userId })
       .update({ updated_at: new Date() });
 
-    // Return both messages
     const userMsg = {
       id: Date.now(),
       text: message.trim(),
@@ -205,6 +195,8 @@ export const sendMessage = async (req: Request, res: Response): Promise<void> =>
         minute: '2-digit' 
       })
     };
+
+    console.log(`💬 [GoodChat] User ${userId}: "${message.trim()}" -> AI: "${aiResponse.substring(0, 50)}..."`);
 
     res.status(200).json({
       success: true,
@@ -262,43 +254,129 @@ export const clearChatHistory = async (req: Request, res: Response): Promise<voi
   }
 };
 
+
 /**
- * Generate fixed AI response based on user message
- * This is a simple keyword-based response system for testing
+ * Get AI response from OpenAI API
  */
-function generateFixedResponse(userMessage: string): string {
-  const lowerMessage = userMessage.toLowerCase();
-  
-  // Weight loss related
-  if (lowerMessage.includes('ลดน้ำหนัก') || lowerMessage.includes('ผอม') || lowerMessage.includes('ลดความอ้วน')) {
-    return 'สำหรับการลดน้ำหนัก แนะนำให้กินอาหารที่มีแคลอรี่ต่ำ เพิ่มผัก ผลไม้ และโปรตีนไม่ติดมัน เช่น ปลา ไก่ย่าง ไข่ต้ม และหลีกเลี่ยงของทอด ของหวาน และเครื่องดื่มที่มีน้ำตาลสูง';
+async function getAiResponse(userMessage: string, userId: number): Promise<string> {
+  try {
+    if (!AI_API_KEY) {
+      throw new Error('OpenAI API key not configured');
+    }
+
+    const recentMessages = await db('chat_message')
+      .where({ user_id: userId })
+      .orderBy('created_at', 'desc')
+      .limit(10)
+      .select('role', 'message');
+
+    // Build conversation context for OpenAI
+    const conversationHistory = recentMessages.reverse().map(msg => ({
+      role: msg.role === 'user' ? 'user' : 'assistant',
+      content: msg.message
+    }));
+
+    // Create system message for nutrition and health advice
+    const systemMessage = {
+      role: 'system',
+      content: `คุณเป็น AI ผู้เชี่ยวชาญด้านโภชนาการและสุขภาพ ชื่อ "GoodMeal AI" 
+ให้คำแนะนำเกี่ยวกับ:
+- การกินเพื่อสุขภาพ
+- โภชนาการ
+- เมนูอาหาร
+- การลดน้ำหนัก
+- การเพิ่มกล้ามเนื้อ
+- วิธีทำอาหารเพื่อสุขภาพ
+
+ตอบเป็นภาษาไทยเสมอ และให้คำแนะนำที่เป็นประโยชน์ ถูกต้อง และเข้าใจง่าย
+ใช้น้ำเสียงที่เป็นมิตรและให้กำลังใจ`
+    };
+
+    // Build messages array for OpenAI
+    const messages = [
+      systemMessage,
+      ...conversationHistory,
+      { role: 'user', content: userMessage }
+    ];
+
+    // Call OpenAI API
+    const response = await axios.post(OPENAI_API_URL, {
+      model: 'gpt-3.5-turbo',
+      messages: messages,
+      max_tokens: 500,
+      temperature: 0.7,
+      top_p: 0.9
+    }, {
+      headers: {
+        'Authorization': `Bearer ${AI_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      timeout: 30000 // 30 second timeout
+    });
+
+    const aiResponse = response.data.choices?.[0]?.message?.content?.trim();
+    
+    if (!aiResponse) {
+      return 'ขออภัยครับ เกิดข้อผิดพลาดในการประมวลผล กรุณาลองใหม่อีกครั้ง';
+    }
+
+    return aiResponse;
+
+  } catch (error) {
+    console.error('Error calling OpenAI API:', error);
+    
+    // Fallback response if AI API fails
+    return 'ขออภัยครับ เกิดข้อผิดพลาดในการประมวลผล กรุณาลองใหม่อีกครั้ง';
   }
-  
-  // Protein related
-  if (lowerMessage.includes('โปรตีน') || lowerMessage.includes('กล้ามเนื้อ') || lowerMessage.includes('เพิ่มกล้าม')) {
-    return 'อาหารที่มีโปรตีนสูงที่แนะนำ ได้แก่ ไข่ไก่ ปลาแซลมอน ไก่อก เต้าหู้ ถั่วเหลือง นม โยเกิร์ต และถั่วต่างๆ ควรกินโปรตีน 1.2-2.0 กรัมต่อน้ำหนักตัว 1 กิโลกรัมต่อวัน';
-  }
-  
-  // Healthy cooking
-  if (lowerMessage.includes('ทำอาหาร') || lowerMessage.includes('วิธีทำ') || lowerMessage.includes('สูตร')) {
-    return 'วิธีการทำอาหารเพื่อสุขภาพ: 1) ใช้น้ำมันน้อย เลือกน้ำมันมะกอก 2) นึ่ง ต้ม ย่าง แทนการทอด 3) เพิ่มผักและเครื่องเทศ 4) ลดเกลือและน้ำตาล 5) เลือกเนื้อสัตว์ไม่ติดมัน';
-  }
-  
-  // Vegetables and fruits
-  if (lowerMessage.includes('ผัก') || lowerMessage.includes('ผลไม้') || lowerMessage.includes('วิตามิน')) {
-    return 'ผักและผลไม้ที่แนะนำสำหรับสุขภาพ: ผักใบเขียว บร็อกโคลี่ แครอท มะเขือเทศ แอปเปิ้ล กล้วย ส้ม ผลไม้เบอรี่ต่างๆ ควรกิน 5-9 ส่วนต่อวัน';
-  }
-  
-  // Water and hydration
-  if (lowerMessage.includes('น้ำ') || lowerMessage.includes('ดื่ม') || lowerMessage.includes('เครื่องดื่ม')) {
-    return 'ดื่มน้ำให้เพียงพอ 8-10 แก้วต่อวัน หลีกเลี่ยงเครื่องดื่มที่มีน้ำตาลสูง เลือกน้ำเปล่า ชาเขียว หรือน้ำผลไม้สดโดยไม่เติมน้ำตาล';
-  }
-  
-  // General greeting
-  if (lowerMessage.includes('สวัสดี') || lowerMessage.includes('หวัดดี') || lowerMessage.includes('ดีครับ') || lowerMessage.includes('ดีค่ะ')) {
-    return 'สวัสดีครับ! ยินดีให้คำแนะนำเรื่องการกินเพื่อสุขภาพ มีคำถามอะไรเกี่ยวกับอาหาร โภชนาการ หรือการดูแลสุขภาพไหมครับ?';
-  }
-  
-  // Default response
-  return 'ขอบคุณสำหรับคำถามครับ! สำหรับคำแนะนำที่ตรงจุดมากขึ้น ลองถามเกี่ยวกับ "การลดน้ำหนัก", "อาหารโปรตีนสูง", "วิธีทำอาหารเพื่อสุขภาพ", "ผักผลไม้แนะนำ" หรือ "การดื่มน้ำ" ดูครับ';
 }
+
+
+export const checkAiHealth = async (req: Request, res: Response): Promise<void> => {
+  try {
+    if (!AI_API_KEY) {
+      res.status(200).json({
+        success: true,
+        data: {
+          openai_available: false,
+          api_key_configured: false,
+          fallback_mode: true,
+          error: 'OpenAI API key not configured'
+        }
+      });
+      return;
+    }
+    const response = await axios.post(OPENAI_API_URL, {
+      model: 'gpt-3.5-turbo',
+      messages: [{ role: 'user', content: 'Hello' }],
+      max_tokens: 5
+    }, {
+      headers: {
+        'Authorization': `Bearer ${AI_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      timeout: 10000
+    });
+    
+    res.status(200).json({
+      success: true,
+      data: {
+        openai_available: true,
+        api_key_configured: true,
+        model: 'gpt-3.5-turbo',
+        status: 'healthy'
+      }
+    });
+
+  } catch (error) {
+    console.error('OpenAI health check failed:', error);
+    res.status(200).json({
+      success: true,
+      data: {
+        openai_available: false,
+        api_key_configured: !!AI_API_KEY,
+        fallback_mode: true,
+        error: 'OpenAI API not reachable'
+      }
+    });
+  }
+};

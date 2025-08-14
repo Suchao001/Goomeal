@@ -3,13 +3,17 @@ import {
   getChatSession,
   getChatMessages,
   sendMessage,
-  clearChatHistory
+  clearChatHistory,
+  checkAiHealth
 } from '../controllers/goodChat_controller';
 import authenticateToken from '../middlewares/authenticateToken';
 
 const router = express.Router();
 
-// Apply auth middleware to all chat routes
+// Health check route (no auth required)
+router.get('/health', checkAiHealth);
+
+// Apply auth middleware to all other chat routes
 router.use(authenticateToken);
 
 // Get or create chat session
