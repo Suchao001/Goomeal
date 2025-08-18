@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert } from 'react-native';
 import { useTypedNavigation } from '../../hooks/Navigation';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Menu from '../material/Menu';
 import { fetchTodayMeals, TodayMealData, TodayMealItem } from '../../utils/todayMealApi';
@@ -27,6 +27,8 @@ interface MealTime {
 
 const RecordFoodScreen = () => {
   const navigation = useTypedNavigation();
+  const route = useRoute();
+  const params = route.params as any;
 
   // Get current day for limiting navigation and initial state
   const getCurrentDay = () => {
@@ -84,48 +86,66 @@ const RecordFoodScreen = () => {
       setIsLoading(true);
       const todayMeals = await fetchTodayMeals();
       setTodayMealData(todayMeals);
-      
-      // Convert API data to MealTime format
+
+      // Convert API data to MealTime format but preserve any manually added (non-plan) entries
       if (todayMeals) {
-        const updatedMealTimes = [...mealTimes];
-        
-        // Convert breakfast
-        updatedMealTimes[0].entries = todayMeals.breakfast.map((meal, index) => ({
-          id: `breakfast-${index}`,
-          name: meal.name,
-          calories: meal.calories,
-          carbs: meal.carb,
-          fat: meal.fat,
-          protein: meal.protein,
-          confirmed: true,
-          fromPlan: true
-        }));
-        
-        // Convert lunch
-        updatedMealTimes[1].entries = todayMeals.lunch.map((meal, index) => ({
-          id: `lunch-${index}`,
-          name: meal.name,
-          calories: meal.calories,
-          carbs: meal.carb,
-          fat: meal.fat,
-          protein: meal.protein,
-          confirmed: true,
-          fromPlan: true
-        }));
-        
-        // Convert dinner
-        updatedMealTimes[2].entries = todayMeals.dinner.map((meal, index) => ({
-          id: `dinner-${index}`,
-          name: meal.name,
-          calories: meal.calories,
-          carbs: meal.carb,
-          fat: meal.fat,
-          protein: meal.protein,
-          confirmed: true,
-          fromPlan: true
-        }));
-        
-        setMealTimes(updatedMealTimes);
+        setMealTimes(prev => {
+          const preserved = prev.map(mt => mt.entries.filter(e => !e.fromPlan));
+          const next = [...prev];
+
+          next[0] = {
+            ...next[0],
+            entries: [
+              ...todayMeals.breakfast.map((meal, index) => ({
+                id: `breakfast-${index}`,
+                name: meal.name,
+                calories: meal.calories,
+                carbs: meal.carb,
+                fat: meal.fat,
+                protein: meal.protein,
+                confirmed: true,
+                fromPlan: true
+              })),
+              ...preserved[0]
+            ]
+          };
+
+          next[1] = {
+            ...next[1],
+            entries: [
+              ...todayMeals.lunch.map((meal, index) => ({
+                id: `lunch-${index}`,
+                name: meal.name,
+                calories: meal.calories,
+                carbs: meal.carb,
+                fat: meal.fat,
+                protein: meal.protein,
+                confirmed: true,
+                fromPlan: true
+              })),
+              ...preserved[1]
+            ]
+          };
+
+          next[2] = {
+            ...next[2],
+            entries: [
+              ...todayMeals.dinner.map((meal, index) => ({
+                id: `dinner-${index}`,
+                name: meal.name,
+                calories: meal.calories,
+                carbs: meal.carb,
+                fat: meal.fat,
+                protein: meal.protein,
+                confirmed: true,
+                fromPlan: true
+              })),
+              ...preserved[2]
+            ]
+          };
+
+          return next;
+        });
       }
     } catch (error) {
       console.error('❌ [RecordFoodScreen] Error loading today\'s meals:', error);
@@ -146,6 +166,34 @@ const RecordFoodScreen = () => {
         setSelectedDay(currentDay);
       } else {
         loadTodayMeals();
+      }
+
+      // Add selected food from SearchFoodForAdd
+      const p = params as any;
+      if (p?.fromSearch && p?.selectedFood && typeof p.timeIndex === 'number') {
+        const ti = p.timeIndex as number;
+        const food = p.selectedFood as any;
+
+        setMealTimes(prev => {
+          const next = [...prev];
+          const entry = {
+            id: `manual-${Date.now()}`,
+            name: food.name,
+            calories: food.cal ?? food.calories ?? 0,
+            carbs: food.carb ?? food.carbs ?? 0,
+            fat: food.fat ?? 0,
+            protein: food.protein ?? 0,
+            confirmed: true,
+            fromPlan: false,
+          } as FoodEntry;
+          next[ti] = { ...next[ti], entries: [...next[ti].entries, entry] };
+          return next;
+        });
+
+        // Clear params to avoid duplicate additions
+        setTimeout(() => {
+          (navigation as any).setParams({ selectedFood: undefined, timeIndex: undefined, fromSearch: undefined });
+        }, 0);
       }
     }, [loadTodayMeals, selectedDay])
   );
@@ -198,7 +246,8 @@ const RecordFoodScreen = () => {
     const meal = mealTimes[timeIndex];
     navigation.navigate('SearchFoodForAdd', {
       selectedDay: selectedDay,
-      source: meal.label // Use label as source identifier
+      source: meal.label, // Use label as source identifier
+      timeIndex
     });
   };
 

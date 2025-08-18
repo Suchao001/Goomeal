@@ -25,7 +25,11 @@ export type RootStackParamList = {
    
 
     Calendar: undefined;
-    RecordFood: undefined;
+    RecordFood: {
+      selectedFood?: any;
+      timeIndex?: number;
+      fromSearch?: boolean;
+    } | undefined;
     PlanSelection: undefined;
     Menu: undefined;
     EditAccountSettings: undefined;
@@ -54,12 +58,13 @@ export type RootStackParamList = {
         from?: string;
     } | undefined;
 
-    SearchFoodForAdd: {
+  SearchFoodForAdd: {
         foodPlanId?: number;
         hideRecommended?: boolean;
         mealId?: string;
         source?: string;
         selectedDay?: number;
+    timeIndex?: number;
     } | undefined;
     AddNewFood: undefined;
     EditFood: { foodId: string; food?: any };

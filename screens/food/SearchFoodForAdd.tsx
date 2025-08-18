@@ -25,6 +25,7 @@ interface RouteParams {
   mealId?: string;
   source?: string;
   selectedDay?: number;
+  timeIndex?: number;
 }
 
 const SearchFoodForAdd = () => {
@@ -127,8 +128,12 @@ const SearchFoodForAdd = () => {
       });
       return;
     }
-    
-    navigation.goBack();
+    // Return to RecordFood with selectedFood
+    navigation.navigate('RecordFood', {
+      selectedFood: food,
+      timeIndex: params.timeIndex,
+      fromSearch: true,
+    });
   };
 
   const handleAddNewMenu = () => {
