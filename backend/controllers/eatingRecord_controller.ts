@@ -119,7 +119,7 @@ export const getEatingRecordsByDate = async (req: Request, res: Response): Promi
         log_date: date
       })
       .orderBy('meal_time', 'asc')
-      .orderBy('created_at', 'asc');
+      .orderBy('id', 'asc');
 
     // Calculate total nutrients for the day
     const totalNutrients = records.reduce((total, record) => ({

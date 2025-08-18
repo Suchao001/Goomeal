@@ -64,7 +64,9 @@ export type RootStackParamList = {
         mealId?: string;
         source?: string;
         selectedDay?: number;
-    timeIndex?: number;
+        timeIndex?: number;
+        mealLabel?: string;
+        mealTime?: string;
     } | undefined;
     AddNewFood: undefined;
     EditFood: { foodId: string; food?: any };

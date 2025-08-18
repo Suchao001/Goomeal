@@ -5,6 +5,7 @@ import { useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Menu from '../material/Menu';
 import { ApiClient } from '../../utils/apiClient';
+import { createEatingRecord, type EatingRecord } from '../../utils/api/eatingRecordApi';
 import { base_url, seconde_url } from '../../config';
 
 interface FoodItem {
@@ -26,6 +27,8 @@ interface RouteParams {
   source?: string;
   selectedDay?: number;
   timeIndex?: number;
+  mealLabel?: string; // Add meal label to params
+  mealTime?: string;  // Add meal time to params
 }
 
 const SearchFoodForAdd = () => {
@@ -105,7 +108,7 @@ const SearchFoodForAdd = () => {
     }
   };
 
-  const handleAddFood = (food: FoodItem) => {
+  const handleAddFood = async (food: FoodItem) => {
     if (params.mealId) {
       if(params.source === 'MealPlanEdit') {
         // [REFACTOR] เปลี่ยนวิธีส่งข้อมูลกลับไปที่ MealPlanEdit
@@ -128,12 +131,33 @@ const SearchFoodForAdd = () => {
       });
       return;
     }
-    // Return to RecordFood with selectedFood
-    navigation.navigate('RecordFood', {
-      selectedFood: food,
-      timeIndex: params.timeIndex,
-      fromSearch: true,
-    });
+    // Save immediately for RecordFood flow
+    try {
+      const now = new Date();
+      const targetDay = (params.selectedDay ?? now.getDate());
+      const dateForDay = new Date(now.getFullYear(), now.getMonth(), targetDay);
+      const logDate = dateForDay.toISOString().split('T')[0];
+      
+      // Use actual meal info if provided, otherwise fallback to defaults
+      const mealLabel = params.mealLabel || ['มื้อเช้า','มื้อกลางวัน','มื้อเย็น'][params.timeIndex ?? 0];
+      const mealTime = params.mealTime || ['7:30','12:30','18:30'][params.timeIndex ?? 0];
+      
+      const recordData: Omit<EatingRecord, 'id' | 'user_id' | 'created_at' | 'updated_at'> = {
+        log_date: logDate,
+        food_name: food.name,
+        meal_type: mealLabel,
+        calories: food.cal ?? 0,
+        carbs: food.carb ?? 0,
+        fat: food.fat ?? 0,
+        protein: food.protein ?? 0,
+        meal_time: `${mealTime}:00`,
+        image: food.img || undefined,
+      };
+      await createEatingRecord(recordData);
+      navigation.navigate('RecordFood', { fromSearch: true });
+    } catch (e) {
+      console.error('Save on add failed:', e);
+    }
   };
 
   const handleAddNewMenu = () => {
