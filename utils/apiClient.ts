@@ -126,7 +126,6 @@ export class ApiClient extends BaseApiClient {
     return this.aiClient.getFoodPlanSuggestions(payload);
   }
 
-  // ===== GOODCHAT API METHODS =====
   async getChatSession() {
     return this.goodChatClient.getChatSession();
   }

@@ -100,7 +100,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const userString = await SecureStore.getItemAsync('user');
         if (userString) {
           const userData = JSON.parse(userString);
-          setUser(userData); // อัปเดต state ด้วยข้อมูล fallback
+          setUser(userData); 
           return userData;
         }
       } catch (fallbackError) {
@@ -141,7 +141,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.log('🔄 [AuthContext] Global logout callback triggered');
       setUser(null);
     });
-  }, [loadToken]); // เพิ่ม loadToken เข้าไปใน dependency array (ซึ่งเป็น best practice)
+  }, [loadToken]); 
 
   return (
     <AuthContext.Provider value={{ user, loading, logout, reloadUser, fetchUserProfile, debugTokens }}>
