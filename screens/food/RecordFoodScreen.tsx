@@ -5,17 +5,23 @@ import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Menu from '../material/Menu';
 import { fetchTodayMeals, TodayMealData, TodayMealItem } from '../../utils/todayMealApi';
+import { createEatingRecord, EatingRecord } from '../../utils/api/eatingRecordApi';
 
 interface FoodEntry {
   id: string;
   name: string;
   calories: number;
+  carbs?: number;
+  fat?: number;
+  protein?: number;
   confirmed: boolean;
+  fromPlan?: boolean; // Indicates if this food is from meal plan
 }
 
 interface MealTime {
   time: string;
   label: string;
+  mealType: string; // For API mapping
   entries: FoodEntry[];
 }
 
@@ -34,16 +40,19 @@ const RecordFoodScreen = () => {
     {
       time: '7:30',
       label: 'มื้อเช้า',
+      mealType: 'breakfast',
       entries: []
     },
     {
       time: '12:30',
       label: 'มื้อกลางวัน',
+      mealType: 'lunch',
       entries: []
     },
     {
       time: '18:30',
       label: 'มื้อเย็น',
+      mealType: 'dinner',
       entries: []
     }
   ]);
@@ -51,10 +60,14 @@ const RecordFoodScreen = () => {
   // Today's meals data from API
   const [todayMealData, setTodayMealData] = useState<TodayMealData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasSavedToday, setHasSavedToday] = useState(false);
 
   // Load today's meals when component mounts or selected day changes
   useEffect(() => {
     loadTodayMeals();
+    // Reset saved state when day changes
+    setHasSavedToday(false);
   }, [selectedDay]);
 
   // Ensure we start with today's date when component mounts
@@ -81,7 +94,11 @@ const RecordFoodScreen = () => {
           id: `breakfast-${index}`,
           name: meal.name,
           calories: meal.calories,
-          confirmed: true
+          carbs: meal.carb,
+          fat: meal.fat,
+          protein: meal.protein,
+          confirmed: true,
+          fromPlan: true
         }));
         
         // Convert lunch
@@ -89,7 +106,11 @@ const RecordFoodScreen = () => {
           id: `lunch-${index}`,
           name: meal.name,
           calories: meal.calories,
-          confirmed: true
+          carbs: meal.carb,
+          fat: meal.fat,
+          protein: meal.protein,
+          confirmed: true,
+          fromPlan: true
         }));
         
         // Convert dinner
@@ -97,7 +118,11 @@ const RecordFoodScreen = () => {
           id: `dinner-${index}`,
           name: meal.name,
           calories: meal.calories,
-          confirmed: true
+          carbs: meal.carb,
+          fat: meal.fat,
+          protein: meal.protein,
+          confirmed: true,
+          fromPlan: true
         }));
         
         setMealTimes(updatedMealTimes);
@@ -117,8 +142,6 @@ const RecordFoodScreen = () => {
       // Check if we need to update to today's date
       const currentDay = getCurrentDay();
       if (selectedDay < currentDay) {
-        // If the selected day is in the past compared to current day, 
-        // user might want to see today's data
         console.log('Day changed, updating to current day');
         setSelectedDay(currentDay);
       } else {
@@ -187,7 +210,7 @@ const RecordFoodScreen = () => {
     setMealTimes(updatedMealTimes);
   };
 
-  const handleConfirmAll = () => {
+  const handleConfirmAll = async () => {
     const totalMeals = mealTimes.reduce((total, meal) => total + meal.entries.length, 0);
     
     if (totalMeals === 0) {
@@ -195,36 +218,156 @@ const RecordFoodScreen = () => {
       return;
     }
     
+    // Only allow saving for today
+    if (!isToday) {
+      Alert.alert('ไม่สามารถบันทึกได้', 'สามารถบันทึกอาหารได้เฉพาะวันนี้เท่านั้น');
+      return;
+    }
+
+    // Check if already saving
+    if (isSaving) {
+      return;
+    }
+
+    // Check if already saved today
+    if (hasSavedToday) {
+      Alert.alert(
+        'เคยบันทึกแล้ว',
+        'คุณได้บันทึกอาหารวันนี้ไปแล้ว ต้องการบันทึกเพิ่มหรือไม่?',
+        [
+          { text: 'ยกเลิก', style: 'cancel' },
+          { 
+            text: 'บันทึกเพิ่ม', 
+            onPress: async () => {
+              await saveAllMealsToDatabase();
+            }
+          }
+        ]
+      );
+      return;
+    }
+
+    // Show plan information in confirmation
+    const planInfo = todayMealData?.planName ? `\nตามแผน: ${todayMealData.planName}` : '';
+    
     Alert.alert(
       'ยืนยันการบันทึก', 
-      `คุณต้องการบันทึกอาหาร ${totalMeals} รายการหรือไม่?`,
+      `คุณต้องการบันทึกอาหาร ${totalMeals} รายการหรือไม่?${planInfo}`,
       [
         { text: 'ยกเลิก', style: 'cancel' },
         { 
           text: 'ยืนยัน', 
-          onPress: () => {
-            // TODO: Implement actual saving to backend
-            Alert.alert('สำเร็จ', 'บันทึกอาหารเรียบร้อยแล้ว');
+          onPress: async () => {
+            await saveAllMealsToDatabase();
           }
         }
       ]
     );
   };
 
+  const saveAllMealsToDatabase = async () => {
+    try {
+      setIsSaving(true);
+      
+      const today = new Date();
+      const logDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+      
+      let savedCount = 0;
+      let errorCount = 0;
+
+      for (const meal of mealTimes) {
+        for (const entry of meal.entries) {
+          try {
+            const recordData: Omit<EatingRecord, 'id' | 'user_id' | 'created_at' | 'updated_at'> = {
+              log_date: logDate,
+              food_name: entry.name,
+              meal_type: meal.label,
+              calories: entry.calories || 0,
+              carbs: entry.carbs || 0,
+              fat: entry.fat || 0,
+              protein: entry.protein || 0,
+              meal_time: meal.time + ':00', // Convert to HH:MM:SS format
+              image: undefined // No image for now
+            };
+
+            await createEatingRecord(recordData);
+            savedCount++;
+            console.log(`✅ [RecordFood] Saved: ${entry.name} for ${meal.label}`);
+          } catch (error) {
+            console.error(`❌ [RecordFood] Failed to save: ${entry.name}`, error);
+            errorCount++;
+          }
+        }
+      }
+
+      // Mark as saved if at least some records were saved
+      if (savedCount > 0) {
+        setHasSavedToday(true);
+      }
+
+      // Show result
+      if (errorCount === 0) {
+        Alert.alert(
+          'สำเร็จ!', 
+          `บันทึกอาหาร ${savedCount} รายการเรียบร้อยแล้ว`,
+          [
+            {
+              text: 'ตกลง',
+              onPress: () => {
+                // Optionally navigate back or refresh
+              }
+            }
+          ]
+        );
+      } else {
+        Alert.alert(
+          'บันทึกเสร็จสิ้น', 
+          `บันทึกสำเร็จ ${savedCount} รายการ\nไม่สำเร็จ ${errorCount} รายการ`,
+          [{ text: 'ตกลง' }]
+        );
+      }
+
+    } catch (error) {
+      console.error('❌ [RecordFood] Error in saveAllMealsToDatabase:', error);
+      Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const FoodEntryCard = ({ entry, onRemove }: { entry: FoodEntry; onRemove: () => void }) => (
-    <View className="bg-green-100 rounded-lg p-3 mb-2 flex-row items-center justify-between">
-      <View className="flex-row items-center flex-1">
-        <Icon name="checkmark-circle" size={20} color="#22c55e" />
-        <View className="ml-3 flex-1">
-          <Text className="font-semibold text-gray-800">{entry.name}</Text>
-          <Text className="text-gray-600">{entry.calories} แคลอรี่</Text>
+    <View className={`${entry.fromPlan ? 'bg-blue-50 border border-blue-200' : 'bg-green-100'} rounded-lg p-3 mb-2`}>
+      <View className="flex-row items-center justify-between">
+        <View className="flex-row items-center flex-1">
+          <Icon 
+            name={entry.fromPlan ? "calendar" : "checkmark-circle"} 
+            size={20} 
+            color={entry.fromPlan ? "#3b82f6" : "#22c55e"} 
+          />
+          <View className="ml-3 flex-1">
+            <View className="flex-row items-center">
+              <Text className="font-semibold text-gray-800">{entry.name}</Text>
+              {entry.fromPlan && (
+                <View className="ml-2 px-2 py-1 bg-blue-100 rounded-full">
+                  <Text className="text-blue-600 text-xs font-medium">ตามแผน</Text>
+                </View>
+              )}
+            </View>
+            <View className="flex-row items-center mt-1">
+              <Text className="text-gray-600 text-sm">{entry.calories} แคลอรี่</Text>
+              {entry.carbs && entry.fat && entry.protein && (
+                <Text className="text-gray-500 text-xs ml-2">
+                  • คาร์บ {entry.carbs}g • ไขมัน {entry.fat}g • โปรตีน {entry.protein}g
+                </Text>
+              )}
+            </View>
+          </View>
         </View>
-      </View>
-      <View className="flex-row items-center">
-        <Icon name="attach" size={16} color="#6b7280" />
-        <TouchableOpacity onPress={onRemove} className="ml-2">
-          <Icon name="remove-circle" size={20} color="#ef4444" />
-        </TouchableOpacity>
+        <View className="flex-row items-center">
+          <TouchableOpacity onPress={onRemove} className="ml-2">
+            <Icon name="remove-circle" size={20} color="#ef4444" />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -347,13 +490,23 @@ const RecordFoodScreen = () => {
         
         {/* Show plan info if available */}
         {todayMealData && todayMealData.planName && (
-          <View className="mt-3 p-3 bg-blue-50 rounded-lg">
-            <View className="flex-row items-center">
-              <Icon name="calendar" size={16} color="#3b82f6" />
-              <Text className="text-blue-600 font-medium ml-2">
-                {todayMealData.planName}
-                {todayMealData.planDay && ` - วันที่ ${todayMealData.planDay}`}
-              </Text>
+          <View className="mt-3 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center flex-1">
+                <View className="w-8 h-8 bg-blue-500 rounded-full items-center justify-center mr-3">
+                  <Icon name="calendar" size={16} color="white" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-blue-800 font-semibold">แผนการกินวันนี้</Text>
+                  <Text className="text-blue-600 text-sm">
+                    {todayMealData.planName}
+                    {todayMealData.planDay && ` - วันที่ ${todayMealData.planDay}`}
+                  </Text>
+                </View>
+              </View>
+              <View className="px-3 py-1 bg-blue-500 rounded-full">
+                <Text className="text-white text-xs font-medium">ใช้งานอยู่</Text>
+              </View>
             </View>
           </View>
         )}
@@ -391,15 +544,54 @@ const RecordFoodScreen = () => {
       </ScrollView>
 
       <View className="bg-white px-4 py-4 border-t border-gray-100">
+        {/* Summary before confirmation */}
+        {mealTimes.some(meal => meal.entries.length > 0) && (
+          <View className="mb-4 p-3 bg-gray-50 rounded-lg">
+            <View className="flex-row items-center justify-between mb-2">
+              <Text className="font-medium text-gray-700">สรุปอาหารที่จะบันทึก</Text>
+              <Text className="text-primary font-semibold">
+                {mealTimes.reduce((total, meal) => total + meal.entries.length, 0)} รายการ
+              </Text>
+            </View>
+            <View className="flex-row justify-between">
+              <Text className="text-sm text-gray-600">
+                เช้า: {mealTimes[0].entries.length} | 
+                กลางวัน: {mealTimes[1].entries.length} | 
+                เย็น: {mealTimes[2].entries.length}
+              </Text>
+              <Text className="text-sm text-primary font-medium">{totalCalories} แคลอรี่</Text>
+            </View>
+          </View>
+        )}
+        
         <TouchableOpacity
           onPress={handleConfirmAll}
-          className="bg-primary rounded-xl p-4 items-center justify-center"
+          className={`${mealTimes.some(meal => meal.entries.length > 0) && isToday && !isSaving
+            ? 'bg-primary' 
+            : 'bg-gray-300'} rounded-xl p-4 items-center justify-center`}
+          disabled={!mealTimes.some(meal => meal.entries.length > 0) || !isToday || isSaving}
         >
           <View className="flex-row items-center">
-            <Icon name="checkmark" size={20} color="white" />
-            <Text className="text-white font-bold ml-2">ยืนยันการบันทึกทั้งหมด</Text>
+            <Icon 
+              name={isSaving ? "sync" : hasSavedToday ? "checkmark-done" : "checkmark"} 
+              size={20} 
+              color="white" 
+            />
+            <Text className="text-white font-bold ml-2">
+              {isSaving 
+                ? 'กำลังบันทึก...'
+                : !isToday 
+                  ? 'บันทึกได้เฉพาะวันนี้' 
+                  : hasSavedToday
+                    ? 'บันทึกเพิ่มอาหาร'
+                    : mealTimes.some(meal => meal.entries.length > 0)
+                      ? 'ยืนยันการบันทึกทั้งหมด'
+                      : 'ไม่มีอาหารที่จะบันทึก'
+              }
+            </Text>
           </View>
         </TouchableOpacity>
+        <View className='h-24'></View>
       </View>
 
       <Menu />

@@ -10,6 +10,7 @@ import globalFoodPlan from './routes/globalFoodPlan';
 import mealPlanDetail from './routes/mealPlanDetail';
 import aiRoute from './routes/ai_route';
 import goodChatRoute from './routes/goodChat_routes';
+import eatingRecordRoute from './routes/eatingRecord_routes';
 import { verifyResetToken, resetPassword } from './controllers/forgotpassword';
 import { generateResetPasswordForm, generateErrorPage } from './utils/htmlTemplates';
 
@@ -53,6 +54,9 @@ app.use('/api/ai', aiRoute);
 
 // Register goodChat route
 app.use('/api/goodchat', goodChatRoute);
+
+// Register eating record route
+app.use('/api/eating-records', eatingRecordRoute);
 
 app.get('/reset-password', async (req, res) => {
     try {
