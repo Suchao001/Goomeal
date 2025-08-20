@@ -17,6 +17,9 @@ import { generateResetPasswordForm, generateErrorPage } from './utils/htmlTempla
 // Load environment variables
 dotenv.config();
 
+// Set timezone to Thailand
+process.env.TZ = 'Asia/Bangkok';
+
 const app = express();
 app.use(express.json());
 

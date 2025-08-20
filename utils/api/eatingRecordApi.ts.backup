@@ -5,7 +5,20 @@ export interface EatingRecord {
   user_id?: number;
   log_date: string;
   food_name: string;
-  meal_type?: string;
+  m/**
+ * Check which plan items are already saved using unique_id
+ */
+export const checkSavedPlanItems = async (uniqueIds: string[]): Promise<{ [key: string]: { saved: boolean, recordId?: number } }> => {
+  try {
+    console.log('🍽️ [EatingRecordAPI] Checking saved plan items:', uniqueIds);
+    const response = await apiClient.post('/api/eating-records/check-saved', { unique_ids: uniqueIds });
+    console.log('✅ [EatingRecordAPI] Check saved plan items success:', response.data.data);
+    return response.data.data;
+  } catch (error: any) {
+    console.error('❌ [EatingRecordAPI] Error checking saved items:', error.response?.data || error.message);
+    throw new Error(error.response?.data?.error || 'เกิดข้อผิดพลาดในการตรวจสอบ');
+  }
+};ring;
   calories?: number;
   carbs?: number;
   fat?: number;
@@ -156,6 +169,20 @@ export const deleteEatingRecord = async (id: number): Promise<{ success: boolean
 };
 
 /**
+ * Check if plan items are saved by unique_ids
+ */
+export const checkSavedPlanItems = async (uniqueIds: string[]): Promise<{ [key: string]: boolean }> => {
+  try {
+    console.log('🍽️ [EatingRecordAPI] Checking saved plan items:', uniqueIds);
+    const response = await apiClient.post('/api/eating-records/check-saved', { unique_ids: uniqueIds });
+    return response.data.data;
+  } catch (error: any) {
+    console.error('❌ [EatingRecordAPI] Error checking saved items:', error.response?.data || error.message);
+    throw new Error(error.response?.data?.error || 'เกิดข้อผิดพลาดในการตรวจสอบ');
+  }
+};
+
+/**
  * Get eating statistics
  */
 export const getEatingStats = async (periodDays: number = 7): Promise<EatingStatsResponse> => {
@@ -206,21 +233,6 @@ export const calculateTotalNutrients = (records: EatingRecord[]) => {
     }),
     { calories: 0, carbs: 0, fat: 0, protein: 0 }
   );
-};
-
-/**
- * Check which plan items are already saved using unique_id
- */
-export const checkSavedPlanItems = async (uniqueIds: string[]): Promise<{ [key: string]: { saved: boolean, recordId?: number } }> => {
-  try {
-    console.log('🍽️ [EatingRecordAPI] Checking saved plan items:', uniqueIds);
-    const response = await apiClient.post('/api/eating-records/check-saved', { unique_ids: uniqueIds });
-    console.log('✅ [EatingRecordAPI] Check saved plan items success:', response.data.data);
-    return response.data.data;
-  } catch (error: any) {
-    console.error('❌ [EatingRecordAPI] Error checking saved items:', error.response?.data || error.message);
-    throw new Error(error.response?.data?.error || 'เกิดข้อผิดพลาดในการตรวจสอบ');
-  }
 };
 
 /**

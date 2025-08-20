@@ -13,6 +13,7 @@ interface EatingRecord {
   protein?: number;
   meal_time?: string;
   image?: string;
+  unique_id?: string; 
   created_at?: Date;
   updated_at?: Date;
 }
@@ -41,7 +42,8 @@ export const createEatingRecord = async (req: Request, res: Response): Promise<v
       fat,
       protein,
       meal_time,
-      image
+      image,
+      unique_id
     } = req.body;
 
     // Validation
@@ -63,7 +65,8 @@ export const createEatingRecord = async (req: Request, res: Response): Promise<v
       fat: fat || null,
       protein: protein || null,
       meal_time: meal_time || null,
-      image: image || null
+      image: image || null,
+      unique_id: unique_id || null
     };
 
     const [recordId] = await db('eating_record').insert(recordData);
@@ -432,6 +435,64 @@ export const getEatingStats = async (req: Request, res: Response): Promise<void>
     res.status(500).json({
       success: false,
       error: 'เกิดข้อผิดพลาดในการดึงสถิติ'
+    });
+  }
+};
+
+/**
+ * Check if plan items are saved by unique_ids
+ */
+export const checkSavedPlanItems = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req as any).user?.id;
+    const { unique_ids } = req.body;
+    
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: 'ไม่พบข้อมูลผู้ใช้'
+      });
+      return;
+    }
+
+    if (!unique_ids || !Array.isArray(unique_ids)) {
+      res.status(400).json({
+        success: false,
+        error: 'กรุณาระบุ unique_ids'
+      });
+      return;
+    }
+
+    const savedRecords = await db('eating_record')
+      .where('user_id', userId)
+      .whereIn('unique_id', unique_ids)
+      .select('unique_id', 'id');
+
+    // สร้าง object ที่บอกว่า unique_id ไหนถูก save แล้ว
+    const savedStatus = unique_ids.reduce((acc: any, id: string) => {
+      acc[id] = { saved: false };
+      return acc;
+    }, {});
+
+    savedRecords.forEach((record: any) => {
+      if (record.unique_id) {
+        savedStatus[record.unique_id] = { 
+          saved: true, 
+          recordId: record.id 
+        };
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      data: savedStatus
+    });
+
+  } catch (error) {
+    console.error('Error checking saved plan items:', error);
+    res.status(500).json({
+      success: false,
+      error: 'เกิดข้อผิดพลาดในการตรวจสอบ'
     });
   }
 };

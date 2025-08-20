@@ -5,7 +5,8 @@ import {
   getEatingRecordsByDateRange,
   updateEatingRecord,
   deleteEatingRecord,
-  getEatingStats
+  getEatingStats,
+  checkSavedPlanItems
 } from '../controllers/eatingRecord_controller';
 import authenticateToken from '../middlewares/authenticateToken';
 
@@ -18,9 +19,17 @@ router.use(authenticateToken);
  * @route   POST /api/eating-records
  * @desc    Create new eating record
  * @access  Private
- * @body    { log_date, food_name, meal_type?, calories?, carbs?, fat?, protein?, meal_time?, image? }
+ * @body    { log_date, food_name, meal_type?, calories?, carbs?, fat?, protein?, meal_time?, image?, unique_id? }
  */
 router.post('/', createEatingRecord);
+
+/**
+ * @route   POST /api/eating-records/check-saved
+ * @desc    Check if plan items are saved by unique_ids
+ * @access  Private
+ * @body    { unique_ids: string[] }
+ */
+router.post('/check-saved', checkSavedPlanItems);
 
 /**
  * @route   GET /api/eating-records/date/:date
