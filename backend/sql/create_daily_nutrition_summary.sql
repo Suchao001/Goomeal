@@ -1,4 +1,4 @@
--- Create daily_nutrition_summary table
+่า-- Create daily_nutrition_summary table
 CREATE TABLE IF NOT EXISTS `daily_nutrition_summary` (
   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,

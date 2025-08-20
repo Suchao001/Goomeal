@@ -73,7 +73,6 @@ const Home = () => {
     loadTodayMeals();
     loadDailySummary();
     fetchRecommendedMeals();
-   
   }, []);
 
   // Fetch user profile to check first_time_setting
@@ -95,7 +94,6 @@ const Home = () => {
       setLoadingTodayMeals(true);
       const todayMeals = await fetchTodayMeals();
       setTodayMealData(todayMeals);
-       console.log(JSON.stringify(todayMealData, null, 2));
    
     } catch (error) {
       console.error('❌ [HomeScreen] Error loading today\'s meals:', error);
@@ -113,7 +111,6 @@ const Home = () => {
       const summary = await getDailyNutritionSummary(today);
       if (summary.success && summary.data) {
         setDailySummary(summary.data);
-        console.log('📊 [HomeScreen] Daily summary:', summary.data);
       } else {
         setDailySummary(null);
       }
@@ -192,29 +189,68 @@ const Home = () => {
 
   // Get real calories data from API
   const getCaloriesData = () => {
+    // Calculate target nutrition from meal plan
+    const getMealPlanNutritionTargets = () => {
+      if (!todayMealData) return { protein: 75, carbs: 275, fat: 67 };
+      
+      let totalProtein = 0;
+      let totalCarbs = 0;
+      let totalFat = 0;
+      
+      // Sum up breakfast
+      todayMealData.breakfast.forEach(meal => {
+        totalProtein += meal.protein || 0;
+        totalCarbs += meal.carb || 0;
+        totalFat += meal.fat || 0;
+      });
+      
+      // Sum up lunch
+      todayMealData.lunch.forEach(meal => {
+        totalProtein += meal.protein || 0;
+        totalCarbs += meal.carb || 0;
+        totalFat += meal.fat || 0;
+      });
+      
+      // Sum up dinner
+      todayMealData.dinner.forEach(meal => {
+        totalProtein += meal.protein || 0;
+        totalCarbs += meal.carb || 0;
+        totalFat += meal.fat || 0;
+      });
+      
+      return {
+        protein: totalProtein,
+        carbs: totalCarbs,
+        fat: totalFat
+      };
+    };
+    
+    const nutritionTargets = getMealPlanNutritionTargets();
+
     // Use data from daily_nutrition_summary if available
     if (dailySummary) {
       const targetCalories = todayMealData?.totalCalories || 2000;
+      
       return {
         consumed: dailySummary.total_calories || 0,
         target: targetCalories,
         protein: { 
           current: dailySummary.total_protein || 0, 
-          target: Math.round(targetCalories * 0.15 / 4), // 15% of calories
+          target: nutritionTargets.protein,
           unit: 'g', 
           color: '#ef4444', 
           icon: 'fitness' 
         },
         carbs: { 
           current: dailySummary.total_carbs || 0, 
-          target: Math.round(targetCalories * 0.55 / 4), // 55% of calories
+          target: nutritionTargets.carbs,
           unit: 'g', 
           color: '#22c55e', 
           icon: 'leaf' 
         },
         fat: { 
           current: dailySummary.total_fat || 0, 
-          target: Math.round(targetCalories * 0.30 / 9), // 30% of calories
+          target: nutritionTargets.fat,
           unit: 'g', 
           color: '#f59e0b', 
           icon: 'water' 
@@ -224,27 +260,26 @@ const Home = () => {
 
     // If daily summary not available but have meal plan, use plan as target
     if (todayMealData) {
-      const nutritionSummary = getTodayNutritionSummary(todayMealData);
       return {
         consumed: 0, // No consumption data yet
         target: todayMealData.totalCalories,
         protein: { 
           current: 0, 
-          target: Math.round(todayMealData.totalCalories * 0.15 / 4),
+          target: nutritionTargets.protein,
           unit: 'g', 
           color: '#ef4444', 
           icon: 'fitness' 
         },
         carbs: { 
           current: 0, 
-          target: Math.round(todayMealData.totalCalories * 0.55 / 4),
+          target: nutritionTargets.carbs,
           unit: 'g', 
           color: '#22c55e', 
           icon: 'leaf' 
         },
         fat: { 
           current: 0, 
-          target: Math.round(todayMealData.totalCalories * 0.30 / 9),
+          target: nutritionTargets.fat,
           unit: 'g', 
           color: '#f59e0b', 
           icon: 'water' 
@@ -278,10 +313,8 @@ const Home = () => {
     const meals: MealData[] = [];
     let mealIdCounter = 1;
 
-   
     // Convert breakfast meals
     todayMealData.breakfast.forEach((meal, index) => {
-      // console.log( meal);
       meals.push({
         id: `breakfast-${mealIdCounter++}`,
         mealType: 'breakfast',
@@ -321,13 +354,11 @@ const Home = () => {
 
   // Handlers for meal actions
   const handleAddMeal = (mealType: MealData['mealType']) => {
-    console.log('Add meal for:', mealType);
     // Navigate to add meal screen or show modal
     // navigation.navigate('RecordFood');
   };
 
   const handleEditMeal = (meal: MealData) => {
-    console.log('Edit meal:', meal);
     // Navigate to edit meal screen
     // navigation.navigate('RecordFood');
   };

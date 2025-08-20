@@ -116,8 +116,8 @@ const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
               <View
                 className="h-2 rounded-full shadow-sm"
                 style={{
-                  backgroundColor: caloriesPercentage > 100 ? '#ef4444' : 
-                                 caloriesPercentage > 80 ? '#f59e0b' : '#10b981',
+                  backgroundColor: caloriesPercentage > 100 ? '#f59e0b' : 
+                                 caloriesPercentage > 80 ? '#10b981' : '#10b981',
                   width: `${Math.min(caloriesPercentage, 100)}%`,
                 }}
               />
@@ -130,13 +130,13 @@ const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
                 เหลืออีก <Text className="font-promptBold text-green-600">{remainingCalories}</Text> แคลอรี่
               </Text>
             </View>
-          ) : (
+          ) : remainingCalories < 0 ? (
             <View className="bg-red-50 rounded-full px-3 py-1 border border-red-100">
               <Text className="text-xs font-promptMedium text-red-600">
                 เกินเป้าหมาย <Text className="font-promptBold">{caloriesConsumed - caloriesTarget}</Text> แคลอรี่
               </Text>
             </View>
-          )}
+          ) : null}
         </View>
       </View>
       {/* Nutrition Cards */}
