@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import db from '../db_config';
+import { upsertDailyNutritionSummary } from './dailyNutritionSummary_controller';
 
 interface EatingRecord {
   id?: number;
@@ -76,6 +77,9 @@ export const createEatingRecord = async (req: Request, res: Response): Promise<v
       .first();
 
     console.log(`🍽️ [EatingRecord] User ${userId} recorded: "${food_name}" on ${log_date}`);
+
+    // Update daily nutrition summary
+    await upsertDailyNutritionSummary(userId, log_date);
 
     res.status(201).json({
       success: true,
@@ -293,6 +297,9 @@ export const updateEatingRecord = async (req: Request, res: Response): Promise<v
 
     console.log(`🍽️ [EatingRecord] User ${userId} updated record ${id}: "${updatedRecord.food_name}"`);
 
+    // Update daily nutrition summary
+    await upsertDailyNutritionSummary(userId, updatedRecord.log_date);
+
     res.status(200).json({
       success: true,
       data: updatedRecord,
@@ -342,6 +349,9 @@ export const deleteEatingRecord = async (req: Request, res: Response): Promise<v
       .del();
 
     console.log(`🍽️ [EatingRecord] User ${userId} deleted record ${id}: "${existingRecord.food_name}"`);
+
+    // Update daily nutrition summary
+    await upsertDailyNutritionSummary(userId, existingRecord.log_date);
 
     res.status(200).json({
       success: true,

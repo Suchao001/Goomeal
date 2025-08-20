@@ -1,6 +1,7 @@
 import React, { useState, useEffect,useCallback,useMemo } from 'react';
 import { View, Text, TouchableOpacity, Image, ScrollView, FlatList, Linking } from 'react-native';
 import { useTypedNavigation } from '../../hooks/Navigation';
+import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Header from '../material/Header';
 import Menu from '../material/Menu';
@@ -21,6 +22,10 @@ import {
   TodayMealData,
   TodayMealItem 
 } from '../../utils/todayMealApi';
+import { 
+  getDailyNutritionSummary,
+  DailyNutritionSummary 
+} from '../../utils/api/dailyNutritionSummaryApi';
 import { blog_url, base_url } from '../../config';
 import { ApiClient } from '../../utils/apiClient';
 
@@ -47,6 +52,10 @@ const Home = () => {
   const [todayMealData, setTodayMealData] = useState<TodayMealData | null>(null);
   const [loadingTodayMeals, setLoadingTodayMeals] = useState(true);
 
+  // Daily nutrition summary state
+  const [dailySummary, setDailySummary] = useState<DailyNutritionSummary | null>(null);
+  const [loadingSummary, setLoadingSummary] = useState(true);
+
   // First time setting state
   const [firstTimeSetting, setFirstTimeSetting] = useState<boolean | null>(null);
 
@@ -62,7 +71,9 @@ const Home = () => {
   useEffect(() => {
     loadBlogArticles();
     loadTodayMeals();
+    loadDailySummary();
     fetchRecommendedMeals();
+   
   }, []);
 
   // Fetch user profile to check first_time_setting
@@ -84,12 +95,33 @@ const Home = () => {
       setLoadingTodayMeals(true);
       const todayMeals = await fetchTodayMeals();
       setTodayMealData(todayMeals);
+       console.log(JSON.stringify(todayMealData, null, 2));
    
     } catch (error) {
       console.error('❌ [HomeScreen] Error loading today\'s meals:', error);
       setTodayMealData(null);
     } finally {
       setLoadingTodayMeals(false);
+    }
+  }, []);
+
+  // Load daily nutrition summary
+  const loadDailySummary = useCallback(async () => {
+    try {
+      setLoadingSummary(true);
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+      const summary = await getDailyNutritionSummary(today);
+      if (summary.success && summary.data) {
+        setDailySummary(summary.data);
+        console.log('📊 [HomeScreen] Daily summary:', summary.data);
+      } else {
+        setDailySummary(null);
+      }
+    } catch (error) {
+      console.error('❌ [HomeScreen] Error loading daily summary:', error);
+      setDailySummary(null);
+    } finally {
+      setLoadingSummary(false);
     }
   }, []);
 
@@ -158,28 +190,86 @@ const Home = () => {
     }
   };
 
-  // Mock data for calories and nutrition (or use real data from API)
+  // Get real calories data from API
   const getCaloriesData = () => {
-    // if (todayMealData) {
-    //   const nutritionSummary = getTodayNutritionSummary(todayMealData);
-    //   return {
-    //     consumed: nutritionSummary.calories,
-    //     target: 1500,
-    //     protein: { current: nutritionSummary.protein, target: 75, unit: 'g', color: '#ef4444', icon: 'fitness' },
-    //     carbs: { current: nutritionSummary.carbs, target: 200, unit: 'g', color: '#22c55e', icon: 'leaf' },
-    //     fat: { current: nutritionSummary.fat, target: 60, unit: 'g', color: '#f59e0b', icon: 'water' }
-    //   };
-    // }
+    // Use data from daily_nutrition_summary if available
+    if (dailySummary) {
+      const targetCalories = todayMealData?.totalCalories || 2000;
+      return {
+        consumed: dailySummary.total_calories || 0,
+        target: targetCalories,
+        protein: { 
+          current: dailySummary.total_protein || 0, 
+          target: Math.round(targetCalories * 0.15 / 4), // 15% of calories
+          unit: 'g', 
+          color: '#ef4444', 
+          icon: 'fitness' 
+        },
+        carbs: { 
+          current: dailySummary.total_carbs || 0, 
+          target: Math.round(targetCalories * 0.55 / 4), // 55% of calories
+          unit: 'g', 
+          color: '#22c55e', 
+          icon: 'leaf' 
+        },
+        fat: { 
+          current: dailySummary.total_fat || 0, 
+          target: Math.round(targetCalories * 0.30 / 9), // 30% of calories
+          unit: 'g', 
+          color: '#f59e0b', 
+          icon: 'water' 
+        }
+      };
+    }
+
+    // If daily summary not available but have meal plan, use plan as target
+    if (todayMealData) {
+      const nutritionSummary = getTodayNutritionSummary(todayMealData);
+      return {
+        consumed: 0, // No consumption data yet
+        target: todayMealData.totalCalories,
+        protein: { 
+          current: 0, 
+          target: Math.round(todayMealData.totalCalories * 0.15 / 4),
+          unit: 'g', 
+          color: '#ef4444', 
+          icon: 'fitness' 
+        },
+        carbs: { 
+          current: 0, 
+          target: Math.round(todayMealData.totalCalories * 0.55 / 4),
+          unit: 'g', 
+          color: '#22c55e', 
+          icon: 'leaf' 
+        },
+        fat: { 
+          current: 0, 
+          target: Math.round(todayMealData.totalCalories * 0.30 / 9),
+          unit: 'g', 
+          color: '#f59e0b', 
+          icon: 'water' 
+        }
+      };
+    }
     
-    // Fallback to mock data
+    // Fallback to default values
     return {
-      consumed: 800,
-      target: 1500,
-      protein: { current: 45, target: 75, unit: 'g', color: '#ef4444', icon: 'fitness' },
-      carbs: { current: 120, target: 200, unit: 'g', color: '#22c55e', icon: 'leaf' },
-      fat: { current: 30, target: 60, unit: 'g', color: '#f59e0b', icon: 'water' }
+      consumed: 0,
+      target: 2000,
+      protein: { current: 0, target: 75, unit: 'g', color: '#ef4444', icon: 'fitness' },
+      carbs: { current: 0, target: 275, unit: 'g', color: '#22c55e', icon: 'leaf' },
+      fat: { current: 0, target: 67, unit: 'g', color: '#f59e0b', icon: 'water' }
     };
   };
+
+  // Refresh data when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      // Refresh data when screen comes into focus
+      loadDailySummary();
+      loadTodayMeals();
+    }, [loadDailySummary, loadTodayMeals])
+  );
 
   // Transform API data to component format
   const getTodayMealsForComponent = useMemo((): MealData[] => {
@@ -312,7 +402,7 @@ const Home = () => {
         </View>
 
         {/* Calories Summary */}
-        {loadingTodayMeals ? (
+        {loadingTodayMeals || loadingSummary ? (
           <View className="w-[90%] bg-white rounded-lg shadow-md p-6 mt-4 mx-auto items-center">
             <Text className="text-gray-500 font-prompt">กำลังโหลดข้อมูลโภชนาการ...</Text>
           </View>

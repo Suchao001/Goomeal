@@ -11,6 +11,7 @@ import mealPlanDetail from './routes/mealPlanDetail';
 import aiRoute from './routes/ai_route';
 import goodChatRoute from './routes/goodChat_routes';
 import eatingRecordRoute from './routes/eatingRecord_routes';
+import dailyNutritionSummaryRoute from './routes/dailyNutritionSummary_routes';
 import { verifyResetToken, resetPassword } from './controllers/forgotpassword';
 import { generateResetPasswordForm, generateErrorPage } from './utils/htmlTemplates';
 
@@ -60,6 +61,9 @@ app.use('/api/goodchat', goodChatRoute);
 
 // Register eating record route
 app.use('/api/eating-records', eatingRecordRoute);
+
+// Register daily nutrition summary route
+app.use('/api/daily-summary', dailyNutritionSummaryRoute);
 
 app.get('/reset-password', async (req, res) => {
     try {
