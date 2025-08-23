@@ -63,7 +63,7 @@ const PersonalPlanScreen2 = () => {
       underlayColor="#facc15"
       activeOpacity={1}
     >
-      <View className={`w-full p-5 rounded-xl  ${actLevel == index + 1 ? 'border border-primary' : 'border border-transparent'}`}>
+      <View className={`w-full p-5 rounded-xl  ${actLevel == index + 1 ? 'border-2 border-primary' : 'border border-transparent'}`}>
         <Text className="text-gray-800 text-lg font-promptMedium">{item.label}</Text>
         <Text className="text-gray-600 text-sm font-promptLight">{item.content}</Text>
       </View>

@@ -5,6 +5,8 @@ import { useTypedNavigation } from '../hooks/Navigation';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { apiClient } from '../utils/apiClient';
 import { RootStackParamList } from '../types/navigation';
+import { SavePlanModal } from '../components/SavePlanModal';
+import { useImagePicker } from '../hooks/useImagePicker';
 
 type GlobalPlanMealRouteProp = RouteProp<RootStackParamList, 'GlobalPlanMeal'>;
 
@@ -14,21 +16,33 @@ const GlobalPlanMeal = () => {
   
   // Now we can safely access planId with proper typing
   const { planId } = route.params;
-  
-  console.log('🎯 [GlobalPlanMeal] Route params:', route.params);
-  console.log('🎯 [GlobalPlanMeal] Extracted planId:', planId);
-  
   const [mealPlanData, setMealPlanData] = useState<any[]>([]);
   const [planInfo, setPlanInfo] = useState<any>(null);
   const [originalMealPlan, setOriginalMealPlan] = useState<any>(null); // Store original API format
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // SavePlanModal states
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [planName, setPlanName] = useState('');
+  const [planDescription, setPlanDescription] = useState('');
+  const [setAsCurrentPlan, setSetAsCurrentPlan] = useState(true);
+  const [selectedPlanImage, setSelectedPlanImage] = useState<string | null>(null);
+  const { showImagePicker } = useImagePicker();
 
   useEffect(() => {
     fetchMealPlanDetails();
-    console.log('page global plan meal');
+    console.log('Screen: GlobalPlanMeal');
   }, [planId]);
+
+  useEffect(() => {
+    // Set default values when planInfo is loaded
+    if (planInfo) {
+      setPlanName(`${planInfo.plan_name} (คัดลอก)`);
+      setPlanDescription(planInfo.description || `แผนอาหาร ${planInfo.duration} วัน จาก Global Plan`);
+    }
+  }, [planInfo]);
 
   const fetchMealPlanDetails = async () => {
     try {
@@ -39,11 +53,6 @@ const GlobalPlanMeal = () => {
       
       if (response.data.success) {
         const { planInfo, mealPlan } = response.data.data;
-        
-        console.log('🍽️ Plan Info:', planInfo);
-        console.log('🗓️ Meal Plan Keys:', Object.keys(mealPlan));
-        console.log('🗓️ Full Meal Plan:', mealPlan);
-        
         setPlanInfo(planInfo);
         setOriginalMealPlan(mealPlan); // Store original for saving
         
@@ -53,10 +62,6 @@ const GlobalPlanMeal = () => {
           // Day key is already a number string like "1", "2"
           const dayNumber = parseInt(dayKey);
           
-          console.log(`🔍 Processing day ${dayKey} -> day number: ${dayNumber}`);
-          console.log('🍽️ Day data structure:', dayData);
-          
-          // Calculate nutrition totals for the day
           let totalCalories = dayData.totalCal || 0;
           let totalProtein = 0;
           let totalCarbs = 0;
@@ -67,9 +72,7 @@ const GlobalPlanMeal = () => {
           // Process each meal type - handle different case variations
           Object.keys(dayData.meals).forEach(mealType => {
             const mealData = dayData.meals[mealType];
-            console.log(`🥘 Processing meal type: ${mealType}`, mealData);
-            
-            // Normalize meal type name to lowercase
+          
             const normalizedMealType = mealType.toLowerCase();
             
             // Handle different data structures - could be array or object
@@ -129,21 +132,14 @@ const GlobalPlanMeal = () => {
   };
 
   const handleDayPress = (day: number) => {
-    console.log('🎯 View details for day:', day);
-    
-    // Find the day data
+  
     const dayData = mealPlanData.find(d => d.day === day);
     
     // Use the correct key format - just the day number as string
     const dayKey = day.toString();
     const originalDayData = originalMealPlan?.[dayKey];
-    
-    console.log('📊 Day data found:', dayData);
-    console.log('📊 Original day data for key', dayKey, ':', originalDayData);
-    console.log('📊 Available keys in originalMealPlan:', originalMealPlan ? Object.keys(originalMealPlan) : 'none');
-    
+  
     if (dayData && originalDayData) {
-      console.log('✅ Navigating to GlobalPlanDayDetail with real data');
       navigation.navigate('GlobalPlanDayDetail', { 
         planId, 
         day,
@@ -195,34 +191,62 @@ const GlobalPlanMeal = () => {
     }
   };
 
+  const handleImagePicker = async () => {
+    const imageUri = await showImagePicker('เลือกรูปภาพแผน', 'เลือกรูปภาพสำหรับแผนอาหารของคุณ');
+    if (imageUri) {
+      setSelectedPlanImage(imageUri);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedPlanImage(null);
+  };
+
+  const openSaveModal = () => {
+    setShowSaveModal(true);
+  };
+
   const handleSavePlan = async () => {
     if (!planInfo || !originalMealPlan) {
       alert('ไม่มีข้อมูลแผนอาหารให้บันทึก');
       return;
     }
-
+    
+    if (!planName.trim()) {
+      alert('กรุณาใส่ชื่อแผนอาหาร');
+      return;
+    }
+    
     try {
       setSaving(true);
-      
-      // Create FormData to send both JSON data and image path
       const formData = new FormData();
-      formData.append('name', `${planInfo.plan_name} (คัดลอก)`);
-      formData.append('description', planInfo.description || `แผนอาหาร ${planInfo.duration} วัน จาก Global Plan`);
+      formData.append('name', planName.trim());
+      formData.append('description', planDescription.trim() || `แผนอาหาร ${planInfo.duration} วัน`);
       formData.append('plan', JSON.stringify(originalMealPlan));
+      formData.append('setAsCurrentPlan', setAsCurrentPlan.toString());
       
-      // Add image path from planInfo if available
-      if (planInfo.image) {
-        // Extract just the filename/path part from the full URL
+      // Handle image upload
+      if (selectedPlanImage) {
+        const imageExtension = selectedPlanImage.split('.').pop() || 'jpg';
+        formData.append('image', {
+          uri: selectedPlanImage,
+          type: `image/${imageExtension}`,
+          name: `plan_image.${imageExtension}`,
+        } as any);
+      } else if (planInfo.image) {
+        // Use existing plan image if no new image selected
         const imagePath = planInfo.image.split('/images/').pop();
         if (imagePath) {
           formData.append('imagePath', imagePath);
         }
       }
 
-      console.log('Saving plan with image:', {
-        name: `${planInfo.plan_name} (คัดลอก)`,
-        description: planInfo.description,
-        imagePath: planInfo.image,
+      console.log('Saving plan with data:', {
+        name: planName.trim(),
+        description: planDescription.trim(),
+        hasNewImage: !!selectedPlanImage,
+        hasExistingImage: !!planInfo.image,
+        setAsCurrentPlan,
         planDataKeys: originalMealPlan ? Object.keys(originalMealPlan) : []
       });
 
@@ -236,6 +260,7 @@ const GlobalPlanMeal = () => {
         alert('บันทึกแผนอาหารเรียบร้อยแล้ว!');
         console.log('Plan saved successfully:', response.data.data);
         
+        setShowSaveModal(false);
         // Navigate back or to user's plans
         navigation.goBack();
       } else {
@@ -257,6 +282,12 @@ const GlobalPlanMeal = () => {
       setSaving(false);
     }
   };
+
+  // Calculate total days and menus for SavePlanModal
+  const totalDays = mealPlanData.length;
+  const totalMenus = mealPlanData.reduce((total, day) => {
+    return total + (day.meals ? day.meals.length : 0);
+  }, 0);
 
   const renderMealCard = (dayData: any) => (
     <View key={dayData.day} className="bg-white rounded-xl shadow-sm mx-4 mb-4 overflow-hidden">
@@ -393,28 +424,35 @@ const GlobalPlanMeal = () => {
       {!loading && !error && (
         <View className="bg-white px-4 py-4 border-t border-gray-200">
           <TouchableOpacity
-            onPress={handleSavePlan}
-            className={`rounded-lg py-4 items-center justify-center ${
-              saving ? 'bg-gray-400' : 'bg-primary'
-            }`}
+            onPress={openSaveModal}
+            className="bg-primary rounded-lg py-4 items-center justify-center"
             activeOpacity={0.8}
-            disabled={saving}
           >
-            {saving ? (
-              <View className="flex-row items-center">
-                <ActivityIndicator size="small" color="white" />
-                <Text className="text-white text-lg font-promptSemiBold ml-2">
-                  กำลังบันทึก...
-                </Text>
-              </View>
-            ) : (
-              <Text className="text-white text-lg font-promptSemiBold">
-                บันทึกแผนนี้
-              </Text>
-            )}
+            <Text className="text-white text-lg font-promptSemiBold">
+              บันทึกแผนนี้
+            </Text>
           </TouchableOpacity>
         </View>
       )}
+
+      {/* Save Plan Modal */}
+      <SavePlanModal
+        visible={showSaveModal}
+        onClose={() => setShowSaveModal(false)}
+        onSave={handleSavePlan}
+        planName={planName}
+        setPlanName={setPlanName}
+        planDescription={planDescription}
+        setPlanDescription={setPlanDescription}
+        selectedPlanImage={selectedPlanImage}
+        onImagePicker={handleImagePicker}
+        onRemoveImage={handleRemoveImage}
+        totalDays={totalDays}
+        totalMenus={totalMenus}
+        saveButtonText={saving ? "กำลังบันทึก..." : "บันทึกแผน"}
+        setAsCurrentPlan={setAsCurrentPlan}
+        setSetAsCurrentPlan={setSetAsCurrentPlan}
+      />
     </View>
   );
 };

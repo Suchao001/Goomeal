@@ -42,6 +42,7 @@ const SelectGlobalPlan = () => {
     };
 
     fetchGlobalPlans();
+    console.log('Screen : SelectGlobalPlan');
   }, []);
 
   const getImageUrl = (imagePath: string | null) => {
@@ -56,7 +57,6 @@ const SelectGlobalPlan = () => {
   };
 
   const handlePlanPress = (planId: number) => {
-    console.log('Selected plan:', planId);
     navigation.navigate('GlobalPlanMeal', { planId });
   };
 

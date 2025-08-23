@@ -35,7 +35,7 @@ const EditProfileScreen = () => {
   // Memoized dropdown items
   const weightChangeItems = useMemo(
     () =>
-      [...Array(5).keys()].map((weight) => ({
+      [...Array(30).keys()].map((weight) => ({
         label: `${weight + 1} kg`,
         value: `${weight + 1}`,
       })),
@@ -89,7 +89,8 @@ const EditProfileScreen = () => {
         setActivityLevel(user.activity_level);
       }
           
-     console.log(weightChangeItems, bodyFatItems, activityLevelItems);
+     console.log('weightChangeItems length:', weightChangeItems.length, 'first 5 items:', weightChangeItems.slice(0, 5), 'last 5 items:', weightChangeItems.slice(-5));
+     console.log('bodyFatItems:', bodyFatItems, 'activityLevelItems:', activityLevelItems);
     } else {
       console.log('⚠️ [EditProfile] No user data available in AuthContext');
     }
@@ -380,6 +381,8 @@ const EditProfileScreen = () => {
         className="flex-1 px-6 py-6" 
         showsVerticalScrollIndicator={false}
         style={{ zIndex: 0 }}
+        nestedScrollEnabled={true}
+        keyboardShouldPersistTaps="handled"
       >
         {/* Basic Info Section */}
         <Text className="text-2xl text-gray-800 mb-6 font-promptSemiBold text-center">
@@ -477,7 +480,7 @@ const EditProfileScreen = () => {
         </View>
 
         {/* Goals Section */}
-        <Text className="text-2xl text-gray-800 mb-6 font-promptSemiBold text-center">
+        <Text className="text-lg text-black mb-6 font-promptMedium">
           เป้าหมายของคุณ
         </Text>
 
@@ -503,26 +506,18 @@ const EditProfileScreen = () => {
           </View>
         </View>
 
-        {/* คำอธิบายเพิ่มเติม */}
-        {targetGoal !== 'healthy' && (
-          <View className="w-full mb-6 px-4">
-            <Text className="text-gray-500 text-sm font-promptLight text-center">
-              💡 ระบบจะคำนวณแผนอาหารจากผลที่คาดหวัง 1 เดือนข้างหน้า
-            </Text>
-          </View>
-        )}
-
+     
         {/* Target Weight - แสดงเฉพาะเมื่อเลือก เพิ่ม หรือ ลดน้ำหนัก */}
         {targetGoal !== 'healthy' && (
-          <View className="mb-6" style={{ zIndex: openTargetWeight ? 2000 : 2 }}>
-            <Text className="text-gray-600 mb-2 font-promptMedium text-center text-lg">
+          <View className="mb-6" style={{ zIndex: openTargetWeight ? 5000 : 5 }}>
+            <Text className="text-black mb-2 font-promptMedium  text-lg">
               {targetGoal === 'increase' ? 'น้ำหนักที่ต้องการเพิ่ม' : 'น้ำหนักที่ต้องการลด'}
             </Text>
-            <Text className="text-gray-500 mb-4 font-promptLight text-center text-sm px-4">
-              ค่าน้ำหนักที่ดีสำหรับ{targetGoal === 'increase' ? 'เพิ่ม' : 'ลด'}น้ำหนักใน 1 เดือน ไม่ควรเกิน 5 กิโลกรัม
-            </Text>
+            
             <DropDownPicker
               open={openTargetWeight}
+              zIndex={5000}
+              zIndexInverse={3000}
               onOpen={() => setOpenActivityLevel(false)}
               value={targetWeight}
               items={weightChangeItems}
@@ -535,7 +530,7 @@ const EditProfileScreen = () => {
               }}
               setValue={setTargetWeight}
               placeholder={`เลือกจำนวนกิโลกรัมที่จะ${targetGoal === 'increase' ? 'เพิ่ม' : 'ลด'}`}
-              containerStyle={{ height: 50, marginBottom: 10 }}
+              containerStyle={{ height: 50, marginBottom: openTargetWeight ? 200 : 10 }}
               style={{
                 backgroundColor: '#F3F4F6',
                 borderRadius: 14,
@@ -546,25 +541,27 @@ const EditProfileScreen = () => {
                 backgroundColor: '#F3F4F6',
                 borderRadius: 8,
                 borderWidth: 0,
+                zIndex: 5000,
+               
               }}
               textStyle={{
                 fontFamily: 'Prompt-Regular',
                 fontSize: 16,
               }}
+              scrollViewProps={{
+                nestedScrollEnabled: true,
+              }}
+              listMode="SCROLLVIEW"
               
             />
           </View>
         )}
 
-        {/* Health Info Section */}
-        <Text className="text-2xl text-gray-800 mb-6 font-promptSemiBold text-center">
-          ข้อมูลสุขภาพ
-        </Text>
 
         {/* Body Fat */}
         <View className="mb-6">
-          <Text className="text-gray-600 mb-2 font-promptMedium text-center text-lg">ระดับไขมันในร่างกาย</Text>
-          <Text className="text-gray-500 mb-4 font-promptLight text-center text-sm px-4">
+          <Text className="text-black mb-2 font-promptMedium  text-lg">ระดับไขมันในร่างกาย</Text>
+          <Text className="text-gray-500 mb-4 font-promptLight  text-sm px-4">
             เลือกระดับที่เหมาะสมกับคุณ
           </Text>
           <View className="flex-row flex-wrap justify-between">
@@ -583,13 +580,15 @@ const EditProfileScreen = () => {
         </View>
 
         {/* Activity Level */}
-        <View className="mb-8"  style={{ zIndex: openTargetWeight ? 2000 : 1 }}>
-          <Text className="text-gray-600 mb-2 font-promptMedium text-center text-lg">ระดับกิจกรรม</Text>
-          <Text className="text-gray-500 mb-4 font-promptLight text-center text-sm px-4">
+        <View className="mb-8"  style={{ zIndex: openActivityLevel ? 4000 : 4 }}>
+          <Text className="text-gray-600 mb-2 font-promptMedium  text-lg">ระดับกิจกรรม</Text>
+          <Text className="text-gray-500 mb-4 font-promptLight  text-sm px-4">
             ระดับการออกกำลังกายของคุณ
           </Text>
           <DropDownPicker
             open={openActivityLevel}
+            zIndex={4000}
+            zIndexInverse={2000}
             value={activityLevel}
             items={activityLevelItems}
             setOpen={(callback) => {
@@ -601,7 +600,7 @@ const EditProfileScreen = () => {
             }}
             setValue={setActivityLevel}
             placeholder="เลือกระดับกิจกรรม"
-            containerStyle={{ height: 50, marginBottom: 10 }}
+            containerStyle={{ height: 50, marginBottom: openActivityLevel ? 160 : 10 }}
             style={{
               backgroundColor: '#F3F4F6',
               borderRadius: 14,
@@ -612,11 +611,17 @@ const EditProfileScreen = () => {
               backgroundColor: '#F3F4F6',
               borderRadius: 8,
               borderWidth: 0,
+              zIndex: 4000,
+              maxHeight: 150,
             }}
             textStyle={{
               fontFamily: 'Prompt-Regular',
               fontSize: 16,
             }}
+            scrollViewProps={{
+              nestedScrollEnabled: true,
+            }}
+            listMode="SCROLLVIEW"
            
           />
         </View>

@@ -139,7 +139,7 @@ export const SavePlanModal: React.FC<SavePlanModalProps> = ({
             </TouchableOpacity>
 
             {/* Action Buttons */}
-            <View className="flex-row space-x-3">
+            <View className="flex-row space-x-3 gap-1">
               <TouchableOpacity
                 className="flex-1 bg-gray-200 rounded-lg py-3 items-center"
                 onPress={onClose}

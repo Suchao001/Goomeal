@@ -26,6 +26,7 @@ const PersonalPlanScreen1 = () => {
       updateSetupData({ isForAi: isForAiFromNav });
       console.log(`Saved 'isForAi: ${isForAiFromNav}' to context.`);
     }
+    console.log('Screen : PersonalPlanScreen1');
   }, [route.params?.isForAi, updateSetupData]); // <-- ให้ effect นี้ทำงานเมื่อค่า isForAi ที่ส่งมาเปลี่ยนไป
 
 
@@ -33,7 +34,7 @@ const PersonalPlanScreen1 = () => {
   // เปลี่ยน weightItems เป็น weightChangeItems สำหรับการเพิ่ม/ลดน้ำหนัก (1-5 กิโล)
   const weightChangeItems = useMemo(
     () =>
-      [...Array(5).keys()].map((weight) => ({
+      [...Array(30).keys()].map((weight) => ({
         label: `${weight + 1} กิโลกรัม`,
         value: `${weight + 1}`,
       })),
@@ -78,7 +79,8 @@ const PersonalPlanScreen1 = () => {
 
       {/* Header Text */}
       <Text className="text-3xl text-gray-800 mb-2 mt-20 font-promptSemiBold text-center w-5/6">
-        กรอกข้อมูลในการสร้างแพลนในการกินอาหาร
+        กรอกข้อมูลในการสร้าง
+        แพลนในการกินอาหาร
       </Text>
       <Text className="text-gray-600 mb-6 font-promptMedium text-[20px] text-center">
         เป้าหมายของคุณ
@@ -93,8 +95,8 @@ const PersonalPlanScreen1 = () => {
           ].map((target) => (
             <TouchableOpacity
               key={target.key}
-              className={`w-full rounded-xl p-3 items-center mb-2 shadow-lg shadow-slate-800 ${
-                selectedTarget === target.key ? 'bg-white border border-primary' : 'bg-white border border-transparent'
+              className={`w-full rounded-xl p-3 items-center mb-2   ${
+                selectedTarget === target.key ? 'bg-white  border-primary border-2' : 'bg-gray-100 border border-transparent'
               }`}
               onPress={() => setSelectedTarget(target.key as 'decrease' | 'increase' | 'healthy')}
               accessibilityLabel={`เลือกเป้าหมาย ${target.label}`}
@@ -106,14 +108,7 @@ const PersonalPlanScreen1 = () => {
           ))}
         </View>
 
-        {/* คำอธิบายเพิ่มเติม */}
-        {selectedTarget !== 'healthy' && (
-          <View className="w-full mb-4 px-4">
-            <Text className="text-gray-500 text-sm font-promptLight text-center">
-              💡 ระบบจะคำนวณแผนอาหารจากผลที่คาดหวัง 1 เดือนข้างหน้า
-            </Text>
-          </View>
-        )}
+       
 
 
       {/* Plan Duration Selection */}
@@ -187,9 +182,7 @@ const PersonalPlanScreen1 = () => {
           <Text className="text-gray-600 mb-2 font-promptMedium text-center text-[20px]">
             {selectedTarget === 'increase' ? 'น้ำหนักที่ต้องการเพิ่ม' : 'น้ำหนักที่ต้องการลด'}
           </Text>
-          <Text className="text-gray-500 mb-4 font-promptLight text-center text-sm px-4">
-            ค่าน้ำหนักที่ดีสำหรับ{selectedTarget === 'increase' ? 'เพิ่ม' : 'ลด'}น้ำหนักใน 1 เดือน ไม่ควรเกิน 5 กิโลกรัม
-          </Text>
+         
           <DropDownPicker
             open={openWeight}
             value={weightChangeValue}

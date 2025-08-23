@@ -67,7 +67,7 @@ const PersonalPlanScreen3 = () => {
    underlayColor="#facc15"
    activeOpacity={1}
  >
-   <View className={`w-full p-5 rounded-xl flex-row items-center gap-4  ${foodType == index + 1 ? 'border border-primary' : 'border border-transparent'}`}>
+   <View className={`w-full p-5 rounded-xl flex-row items-center gap-4  ${foodType == index + 1 ? 'border-2 border-primary' : 'border border-transparent'}`}>
      
      {/* รูปภาพด้านซ้าย */}
      <Image

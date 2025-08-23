@@ -6,6 +6,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/navigation';
 import { useAuth } from '../../AuthContext';
 import Menu from '../material/Menu';
+import { calculateBMIResult, getBMICategories, isChildForBMI } from '../../utils/bmiCalculator';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -49,30 +50,17 @@ const ProfileDetailScreen = () => {
     loadProfile();
   }, [loadProfile]);
 
-  useEffect(() => {
-    console.log('ProfileDetailScreen data:', {
-      bmiValue,
-      weight,
-      height,
-      age,
-      username,
-      targetWeight,
-      startWeight,
-      targetGoal,
-    });
-  }, [profileData]);
-
-  // Calculate BMI
-  const calculateBMI = (weight?: number, height?: number) => {
-    if (!weight || !height) return 0;
-    const heightInMeters = height / 100;
-    return parseFloat((weight / (heightInMeters * heightInMeters)).toFixed(1));
-  };
-
-  const bmiValue = calculateBMI(profileData?.weight, profileData?.height);
+  // Calculate BMI using the new utility
   const weight = profileData?.weight || 0;
   const height = profileData?.height || 0;
   const age = profileData?.age || 0;
+  const gender = profileData?.gender as 'male' | 'female' | 'other' | undefined;
+  
+  const bmiResult = calculateBMIResult(weight, height, age, gender);
+  const bmiValue = bmiResult.bmi;
+  const isChild = isChildForBMI(age);
+  const bmiCategories = getBMICategories(age);
+
   const username = profileData?.username || 'ผู้ใช้';
   const targetWeight = profileData?.target_weight || 0;
   const startWeight = profileData?.last_updated_weight || 0;
@@ -155,35 +143,9 @@ const ProfileDetailScreen = () => {
     );
   };
 
-  // BMI categories with colors
-  const bmiCategories = [
-    { label: 'Underweight', color: '#3b82f6', range: '< 18.5' },
-    { label: 'Normal', color: '#22c55e', range: '18.5-24.9' },
-    { label: 'Overweight', color: '#f59e0b', range: '25-29.9' },
-    { label: 'Obese', color: '#f97316', range: '30-34.9' },
-    { label: 'Extremely Obese', color: '#ef4444', range: '≥ 35' },
-  ];
-
-  const getBMICategory = (bmi: number) => {
-    if (bmi < 18.5) return 0;
-    if (bmi < 25) return 1;
-    if (bmi < 30) return 2;
-    if (bmi < 35) return 3;
-    return 4;
-  };
-
-  const getBMIDescription = (categoryIndex: number) => {
-    const descriptions = [
-      'คุณมีน้ำหนักต่ำกว่าเกณฑ์ ควรเพิ่มน้ำหนักให้อยู่ในเกณฑ์ปกติ',
-      'คุณมีน้ำหนักอยู่ในเกณฑ์ปกติ ควรรักษาน้ำหนักให้อยู่ในระดับนี้ต่อไป',
-      'คุณมีน้ำหนักเกินเกณฑ์ ควรลดน้ำหนักให้อยู่ในเกณฑ์ปกติ',
-      'คุณมีน้ำหนักเกินมาก ควรปรึกษาแพทย์และลดน้ำหนัก',
-      'คุณมีน้ำหนักเกินมากเป็นอันตราย ควรปรึกษาแพทย์โดยด่วน'
-    ];
-    return descriptions[categoryIndex] || 'ไม่สามารถประเมินได้';
-  };
-
-  const currentCategory = getBMICategory(bmiValue);
+  // Use BMI result from utility
+  const currentCategory = bmiCategories.findIndex(cat => cat.label === bmiResult.category);
+  const currentBMIColor = bmiResult.color;
 
   if (authLoading || loading) {
     return (
@@ -373,17 +335,25 @@ const ProfileDetailScreen = () => {
               <View className="flex-row items-center mb-2">
                 <View 
                   className="w-3 h-3 rounded-full mr-2"
-                  style={{ backgroundColor: bmiCategories[currentCategory].color }}
+                  style={{ backgroundColor: bmiResult.color }}
                 />
                 <Text 
                   className="text-base font-promptSemiBold"
-                  style={{ color: bmiCategories[currentCategory].color }}
+                  style={{ color: bmiResult.color }}
                 >
-                  {bmiCategories[currentCategory].label}
+                  {bmiResult.category}
+                  {isChild && (
+                    <Text className="text-xs text-gray-500"> (เด็ก)</Text>
+                  )}
                 </Text>
               </View>
               <Text className="text-sm text-gray-500 text-center leading-5 font-prompt">
-                {getBMIDescription(currentCategory)}
+                {bmiResult.description}
+                {isChild && bmiResult.percentileInfo && (
+                  <Text className="block mt-1 text-xs text-blue-600">
+                    {bmiResult.percentileInfo}
+                  </Text>
+                )}
               </Text>
             </View>
           </View>
