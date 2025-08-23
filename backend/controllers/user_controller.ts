@@ -2,8 +2,7 @@ import db from '../db_config';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/user_model';
-
-
+import {ageToYearOfBirth, yearOfBirthToAge, isValidYearOfBirth} from '../utils/ageCal';
 
 const register = async ({username, email, password}: Pick<User, 'username' | 'email' | 'password'>) => {
     try {
@@ -88,7 +87,7 @@ const getUserProfile = async (userId: number) => {
             id: user.id,
             username: user.username,
             email: user.email,
-            age: user.age,
+            age: user.age ? yearOfBirthToAge(user.age) : null, // Convert year of birth to age
             weight: user.weight,
             last_updated_weight: user.last_updated_weight,
             height: user.height,
@@ -213,7 +212,13 @@ const updatePersonalData = async (userId: number, personalData: {
             first_time_setting: personalData.first_time_setting !== undefined ? personalData.first_time_setting : true
         };
 
-        if (personalData.age !== undefined) updateObj.age = personalData.age;
+        if (personalData.age !== undefined) {
+            const birthYear = ageToYearOfBirth(personalData.age);
+            if (!isValidYearOfBirth(birthYear)) {
+                throw new Error('Invalid age provided. Age must be between 10 and 120.');
+            }
+            updateObj.age = birthYear; // Store as birth year
+        }
         if (personalData.weight !== undefined) {
             updateObj.weight = personalData.weight;
             updateObj.last_updated_weight = personalData.weight; // Auto-update last_updated_weight when weight changes

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import db from '../db_config';
 import axios from 'axios';
+import { yearOfBirthToAge } from '../utils/ageCal';
 
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 const AI_API_KEY = process.env.AI_API_KEY;
@@ -27,7 +28,7 @@ const getUserInfo = async (userId: number) => {
       throw new Error('User not found');
     }
     return {
-      age: user.age,
+      age: user.age ? yearOfBirthToAge(user.age) : null,
       weight: user.weight,
       height: user.height,
       gender: user.gender,

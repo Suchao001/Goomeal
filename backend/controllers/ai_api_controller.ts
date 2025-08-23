@@ -2,6 +2,7 @@ import axios from 'axios';
 import OpenAI from 'openai';
 import db from '../db_config';
 import { calculateRecommendedNutrition, getCalculationSummary, UserProfileData } from '../utils/nutritionCalculator';
+import {yearOfBirthToAge } from '../utils/ageCal';
 
 const url = process.env.AI_API || 'http://localhost:11434';
 
@@ -16,7 +17,7 @@ const getUserInfo = async (userId: number) => {
       throw new Error('User not found');
     }
     return {
-      age: user.age,
+      age: user.age ? yearOfBirthToAge(user.age) : null,
       weight: user.weight,
       height: user.height,
       gender: user.gender,

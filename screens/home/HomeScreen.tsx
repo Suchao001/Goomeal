@@ -73,6 +73,7 @@ const Home = () => {
     loadTodayMeals();
     loadDailySummary();
     fetchRecommendedMeals();
+    console.log(JSON.stringify(todayMealData, null, 2));
   }, []);
 
   // Fetch user profile to check first_time_setting
@@ -94,6 +95,7 @@ const Home = () => {
       setLoadingTodayMeals(true);
       const todayMeals = await fetchTodayMeals();
       setTodayMealData(todayMeals);
+       console.log(JSON.stringify(todayMealData, null, 2));
    
     } catch (error) {
       console.error('❌ [HomeScreen] Error loading today\'s meals:', error);
@@ -111,6 +113,7 @@ const Home = () => {
       const summary = await getDailyNutritionSummary(today);
       if (summary.success && summary.data) {
         setDailySummary(summary.data);
+        console.log('📊 [HomeScreen] Daily summary:', summary.data);
       } else {
         setDailySummary(null);
       }
@@ -226,6 +229,7 @@ const Home = () => {
     };
     
     const nutritionTargets = getMealPlanNutritionTargets();
+    console.log('🎯 [HomeScreen] Nutrition targets from meal plan:', nutritionTargets);
 
     // Use data from daily_nutrition_summary if available
     if (dailySummary) {
@@ -313,8 +317,10 @@ const Home = () => {
     const meals: MealData[] = [];
     let mealIdCounter = 1;
 
+   
     // Convert breakfast meals
     todayMealData.breakfast.forEach((meal, index) => {
+      // console.log( meal);
       meals.push({
         id: `breakfast-${mealIdCounter++}`,
         mealType: 'breakfast',
@@ -354,11 +360,13 @@ const Home = () => {
 
   // Handlers for meal actions
   const handleAddMeal = (mealType: MealData['mealType']) => {
+    console.log('Add meal for:', mealType);
     // Navigate to add meal screen or show modal
     // navigation.navigate('RecordFood');
   };
 
   const handleEditMeal = (meal: MealData) => {
+    console.log('Edit meal:', meal);
     // Navigate to edit meal screen
     // navigation.navigate('RecordFood');
   };

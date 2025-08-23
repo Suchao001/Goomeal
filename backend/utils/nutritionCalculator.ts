@@ -2,7 +2,7 @@
 // คำนวณค่าโภชนาการที่แนะนำตามข้อมูลผู้ใช้ (สำหรับ Backend)
 
 export interface UserProfileData {
-  age: number;
+  age: number | null;
   weight: number;
   height: number;
   gender: 'male' | 'female' | 'other';
