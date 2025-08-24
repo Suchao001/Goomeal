@@ -7,6 +7,7 @@ import Menu from '../material/Menu';
 import { ApiClient } from '../../utils/apiClient';
 import { createEatingRecord, type EatingRecord } from '../../utils/api/eatingRecordApi';
 import { base_url, seconde_url } from '../../config';
+import { getBangkokTime, getBangkokDateForDay } from '../../utils/bangkokTime';
 
 interface FoodItem {
   id: string;
@@ -133,10 +134,12 @@ const SearchFoodForAdd = () => {
     }
     // Save immediately for RecordFood flow
     try {
-      const now = new Date();
-      const targetDay = (params.selectedDay ?? now.getDate());
-      const dateForDay = new Date(now.getFullYear(), now.getMonth(), targetDay);
-      const logDate = dateForDay.toISOString().split('T')[0];
+      // ใช้ Bangkok timezone utility function
+      const bangkokTime = getBangkokTime();
+      const targetDay = (params.selectedDay ?? bangkokTime.getDate());
+      const logDate = getBangkokDateForDay(targetDay);
+      
+      console.log(`📅 [SearchFoodForAdd] Using Bangkok timezone - target day: ${targetDay}, log date: ${logDate}`);
       
       // Use actual meal info if provided, otherwise fallback to defaults
       const mealLabel = params.mealLabel || ['มื้อเช้า','มื้อกลางวัน','มื้อเย็น'][params.timeIndex ?? 0];
@@ -154,14 +157,23 @@ const SearchFoodForAdd = () => {
         image: food.img || undefined,
       };
       await createEatingRecord(recordData);
-      navigation.navigate('RecordFood', { fromSearch: true });
+      navigation.replace('RecordFood', { 
+        fromSearch: true, 
+        selectedDay: params.selectedDay,
+        timestamp: Date.now() // เพิ่ม timestamp เพื่อบังคับให้ params เปลี่ยน
+      });
     } catch (e) {
       console.error('Save on add failed:', e);
     }
   };
 
   const handleAddNewMenu = () => {
-    navigation.navigate('AddNewFood');
+    navigation.navigate('AddNewFood', {
+      selectedDay: params.selectedDay,
+      timeIndex: params.timeIndex,
+      mealLabel: params.mealLabel,
+      mealTime: params.mealTime
+    });
   };
 
   const renderFoodCard = (food: FoodItem) => {

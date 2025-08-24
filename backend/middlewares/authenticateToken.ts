@@ -48,12 +48,10 @@ const authenticateToken = (req: CustomRequest, res: Response, next: NextFunction
         }
         
         req.user = decoded;
-        console.log('User set on request:', req.user);
-        console.log('=== TOKEN AUTH SUCCESS ===');
+        
         next();
     } catch (error) {
-        console.log('=== TOKEN AUTH FAILED ===');
-        console.log('Token verification failed:', error);
+       
         res.status(401).json({ message: 'Invalid token' });
         return;
     }

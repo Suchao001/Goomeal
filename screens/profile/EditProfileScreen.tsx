@@ -600,7 +600,7 @@ const EditProfileScreen = () => {
             }}
             setValue={setActivityLevel}
             placeholder="เลือกระดับกิจกรรม"
-            containerStyle={{ height: 50, marginBottom: openActivityLevel ? 160 : 10 }}
+            containerStyle={{ height: 50, marginBottom:  10 }}
             style={{
               backgroundColor: '#F3F4F6',
               borderRadius: 14,
@@ -612,7 +612,7 @@ const EditProfileScreen = () => {
               borderRadius: 8,
               borderWidth: 0,
               zIndex: 4000,
-              maxHeight: 150,
+              maxHeight: 200,
             }}
             textStyle={{
               fontFamily: 'Prompt-Regular',
@@ -631,7 +631,11 @@ const EditProfileScreen = () => {
           className={`w-full rounded-xl p-4 justify-center items-center mb-8 ${
             loading ? 'bg-gray-400' : 'bg-primary'
           }`}
-          onPress={handleSave}
+          onPress={handleSave} scrollViewProps={{
+              nestedScrollEnabled: true,
+            }}
+            listMode="SCROLLVIEW"
+           
           disabled={loading}
         >
           <Text className="text-white text-lg font-promptBold">

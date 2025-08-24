@@ -183,7 +183,6 @@ const updateUserProfile = async (userId: number, updateData: {
     }
 }
 
-// Update personal data from setup screens
 const updatePersonalData = async (userId: number, personalData: {
     age?: number;
     weight?: number;
@@ -282,4 +281,68 @@ const updatePersonalData = async (userId: number, personalData: {
     }
 };
 
-export {register, login, getUserProfile, updatePersonalData,updateUserProfile};
+const updatePersonalWeight = async (userId: number, newWeight: number) => {
+    try {
+        // Check if user exists
+        const currentUser = await db('users').where({ id: userId }).first();
+        if (!currentUser) {
+            throw new Error('User not found');
+        }
+
+        // Validate weight
+        if (!newWeight || newWeight <= 0) {
+            throw new Error('Invalid weight value');
+        }
+
+        // Start transaction
+        const result = await db.transaction(async (trx) => {
+            // Insert weight log
+            await trx('user_weight_logs').insert({
+                user_id: userId,
+                weight: newWeight,
+                logged_at: new Date()
+            });
+
+            // Update user's current weight
+            await trx('users').where({ id: userId }).update({
+                weight: newWeight,
+                last_updated_weight: newWeight,
+                updated_at: new Date()
+            });
+
+            // Get updated user data
+            const updatedUser = await trx('users').where({ id: userId }).first();
+            
+            return {
+                id: updatedUser.id,
+                username: updatedUser.username,
+                email: updatedUser.email,
+                age: updatedUser.age ? yearOfBirthToAge(updatedUser.age) : null,
+                weight: updatedUser.weight,
+                last_updated_weight: updatedUser.last_updated_weight,
+                height: updatedUser.height,
+                gender: updatedUser.gender,
+                body_fat: updatedUser.body_fat === "unknown" ? "don't know" : updatedUser.body_fat,
+                target_goal: updatedUser.target_goal,
+                target_weight: updatedUser.target_weight,
+                activity_level: updatedUser.activity_level,
+                eating_type: updatedUser.eating_type,
+                dietary_restrictions: updatedUser.dietary_restrictions,
+                additional_requirements: updatedUser.additional_requirements,
+                account_status: updatedUser.account_status,
+                suspend_reason: updatedUser.suspend_reason,
+                created_date: updatedUser.created_date,
+                first_time_setting: updatedUser.first_time_setting
+            };
+        });
+
+        console.log('✅ Weight updated successfully for user ID:', userId, 'New weight:', newWeight);
+        return result;
+
+    } catch (error: any) {
+        console.error('❌ Error updating weight:', error.message);
+        throw new Error(error.message || 'Unable to update weight');
+    }
+}
+
+export {register, login, getUserProfile, updatePersonalData, updateUserProfile, updatePersonalWeight};

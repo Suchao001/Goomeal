@@ -181,7 +181,7 @@ export const EditFoodModal: React.FC<EditFoodModalProps> = ({
           </View>
 
           {/* Action Buttons */}
-          <View className="flex-row space-x-3 mt-6">
+          <View className="flex-row space-x-3 mt-6 gap-1">
             <TouchableOpacity
               className="flex-1 bg-gray-200 rounded-lg py-4 items-center justify-center"
               onPress={handleCancel}

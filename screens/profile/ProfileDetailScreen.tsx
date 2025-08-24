@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert, ActivityIndicator, RefreshControl, Modal, TextInput } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -7,6 +7,7 @@ import { RootStackParamList } from '../../types/navigation';
 import { useAuth } from '../../AuthContext';
 import Menu from '../material/Menu';
 import { calculateBMIResult, getBMICategories, isChildForBMI } from '../../utils/bmiCalculator';
+import { apiClient } from '../../utils/apiClient';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -17,6 +18,10 @@ const ProfileDetailScreen = () => {
   const [profileData, setProfileData] = useState(user);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  
+  // Weight update modal states
+  const [showWeightModal, setShowWeightModal] = useState(false);
+  const [newWeight, setNewWeight] = useState('');
 
   const loadProfile = useCallback(async () => {
     try {
@@ -66,6 +71,58 @@ const ProfileDetailScreen = () => {
   const startWeight = profileData?.last_updated_weight || 0;
   const targetGoal = profileData?.target_goal;
 
+  // Weight update functions
+  const showEditWeight = () => {
+    setNewWeight(weight.toString());
+    setShowWeightModal(true);
+  };
+
+  const handleWeightUpdate = async () => {
+    try {
+      const weightValue = parseFloat(newWeight);
+      
+      if (!weightValue || weightValue <= 0) {
+        Alert.alert('ข้อผิดพลาด', 'กรุณากรอกน้ำหนักที่ถูกต้อง');
+        return;
+      }
+
+      // Call API to update weight
+      await apiClient.updateWeight(weightValue);
+      
+      // Close modal first
+      setShowWeightModal(false);
+      setNewWeight('');
+      
+      // Show success message
+      Alert.alert('สำเร็จ', 'อัพเดทน้ำหนักเรียบร้อยแล้ว');
+      
+      // Refresh profile data
+      await loadProfile();
+      
+    } catch (error: any) {
+      console.error('Error updating weight:', error);
+      Alert.alert('ข้อผิดพลาด', 'ไม่สามารถอัพเดทน้ำหนักได้ กรุณาลองใหม่อีกครั้ง');
+    }
+  };
+
+  const closeWeightModal = () => {
+    setShowWeightModal(false);
+    setNewWeight('');
+  };
+
+  // Helper functions for weight adjustment
+  const increaseWeight = () => {
+    const currentValue = parseFloat(newWeight) || weight;
+    const newValue = currentValue + 0.1;
+    setNewWeight(newValue.toFixed(1));
+  };
+
+  const decreaseWeight = () => {
+    const currentValue = parseFloat(newWeight) || weight;
+    const newValue = Math.max(0, currentValue - 0.1);
+    setNewWeight(newValue.toFixed(1));
+  };
+
   const WeightProgressChart = ({
     currentWeight,
     startWeight,
@@ -97,7 +154,7 @@ const ProfileDetailScreen = () => {
     const weightLost = Math.max(0, startWeight - currentWeight).toFixed(1);
     const weightGained = Math.max(0, currentWeight - startWeight).toFixed(1);
     const weightRemaining = Math.abs(targetWeight - currentWeight).toFixed(1);
-  
+
     return (
       <View className="bg-white mx-4 mt-4 rounded-xl p-5 shadow-sm">
         <Text className="text-lg font-promptBold text-gray-800 mb-5 text-center">
@@ -238,6 +295,12 @@ const ProfileDetailScreen = () => {
                 <Text className="text-lg text-gray-800 font-promptSemiBold">
                   {weight > 0 ? `${weight} kg` : 'ไม่ระบุ'}
                 </Text>
+                <TouchableOpacity
+                  className="absolute right-4 top-4"
+                  onPress={() => showEditWeight()}
+                >
+                  <Icon name="pencil" size={16} color="#ffb800" />
+                </TouchableOpacity>
               </View>
               <View className="flex-1 bg-gray-50 p-4 rounded-xl mx-1 items-center">
                 <Text className="text-sm text-gray-500 mb-1 font-prompt">ส่วนสูง</Text>
@@ -376,8 +439,139 @@ const ProfileDetailScreen = () => {
         )}
       </ScrollView>
 
-      {/* Bottom Navigation */}
       <Menu />
+
+      {/* Weight Update Modal */}
+      <Modal
+        visible={showWeightModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={closeWeightModal}
+      >
+        <View className="flex-1 justify-center items-center bg-black bg-opacity-50">
+          <View className="bg-white mx-6 rounded-2xl p-6 w-80">
+            {/* Modal Header */}
+            <View className="flex-row justify-between items-center mb-4">
+              <Text className="text-xl font-promptBold text-gray-800">อัพเดทน้ำหนัก</Text>
+              <TouchableOpacity onPress={closeWeightModal}>
+                <Icon name="close" size={24} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Description */}
+            <View className="bg-blue-50 rounded-xl p-3 mb-6">
+              <View className="flex-row items-center mb-1">
+                <Icon name="information-circle" size={16} color="#3b82f6" />
+                <Text className="text-sm font-promptMedium text-blue-700 ml-2">เกี่ยวกับการอัพเดทน้ำหนัก</Text>
+              </View>
+              <Text className="text-xs text-blue-600 font-prompt leading-4">
+                การบันทึกน้ำหนักจะถูกเก็บไว้ในระบบเพื่อติดตามสถิติและความเปลี่ยนแปลงของคุณเมื่อเวลาผ่านไป
+              </Text>
+            </View>
+
+           
+
+            {/* New Weight Input */}
+            <View className="mb-6">
+              <Text className="text-base font-promptMedium text-gray-700 mb-2">น้ำหนักใหม่</Text>
+              <View className="flex-row items-center">
+                {/* Weight Input Container */}
+                <View className="flex-1 bg-gray-50 rounded-xl px-4 py-3 flex-row items-center">
+                  <TextInput
+                    className="flex-1 text-lg font-promptMedium text-gray-800"
+                    value={newWeight}
+                    onChangeText={setNewWeight}
+                    placeholder="กรอกน้ำหนักใหม่"
+                    keyboardType="numeric"
+                    autoFocus={true}
+                    selectTextOnFocus={true}
+                  />
+                  <Text className="text-gray-500 font-prompt ml-2">kg</Text>
+                </View>
+                
+                
+                {/* Helper Buttons - Vertical Stack */}
+                <View className="ml-3 items-center">
+                  {/* Plus Button */}
+                  <TouchableOpacity
+                    className="bg-primary w-10 h-10 rounded-lg items-center justify-center mb-2"
+                    onPress={increaseWeight}
+                  >
+                    <Icon name="add" size={20} color="white" />
+                  </TouchableOpacity>
+                  
+                  {/* Minus Button */}
+                  <TouchableOpacity
+                    className="bg-gray-400 w-10 h-10 rounded-lg items-center justify-center"
+                    onPress={decreaseWeight}
+                  >
+                    <Icon name="remove" size={20} color="white" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+
+            {/* Weight Change Indicator */}
+            {newWeight && !isNaN(parseFloat(newWeight)) && (
+              <View className="mb-6">
+                {(() => {
+                  const newWeightValue = parseFloat(newWeight);
+                  const weightDiff = newWeightValue - weight;
+                  const isIncrease = weightDiff > 0;
+                  const isDecrease = weightDiff < 0;
+                  
+                  if (Math.abs(weightDiff) < 0.1) {
+                    return (
+                      <View className="bg-gray-50 rounded-xl p-3">
+                        <Text className="text-center text-gray-600 font-prompt">ไม่มีการเปลี่ยนแปลงน้ำหนัก</Text>
+                      </View>
+                    );
+                  }
+                  
+                  return (
+                    <View className={`rounded-xl p-3 ${isIncrease ? 'bg-orange-50' : 'bg-green-50'}`}>
+                      <View className="flex-row items-center justify-center">
+                        <Icon 
+                          name={isIncrease ? "trending-up" : "trending-down"} 
+                          size={16} 
+                          color={isIncrease ? "#f97316" : "#22c55e"} 
+                        />
+                        <Text className={`ml-2 font-promptMedium ${isIncrease ? 'text-orange-600' : 'text-green-600'}`}>
+                          {isIncrease ? 'เพิ่มขึ้น' : 'ลดลง'} {Math.abs(weightDiff).toFixed(1)} kg
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })()}
+              </View>
+            )}
+
+            {/* Action Buttons */}
+            <View className="flex-row space-x-3 gap-1">
+              <TouchableOpacity
+                className="flex-1 bg-gray-200 rounded-xl py-3 items-center"
+                onPress={closeWeightModal}
+              >
+                <Text className="text-gray-700 font-promptMedium">ยกเลิก</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                className={`flex-1 rounded-xl py-3 items-center ${
+                  newWeight && !isNaN(parseFloat(newWeight)) ? 'bg-primary' : 'bg-gray-300'
+                }`}
+                onPress={handleWeightUpdate}
+                disabled={!newWeight || isNaN(parseFloat(newWeight))}
+              >
+                <Text className={`font-promptMedium ${
+                  newWeight && !isNaN(parseFloat(newWeight)) ? 'text-white' : 'text-gray-500'
+                }`}>
+                  บันทึก
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };

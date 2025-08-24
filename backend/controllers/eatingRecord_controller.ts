@@ -286,10 +286,7 @@ export const updateEatingRecord = async (req: Request, res: Response): Promise<v
 
     await db('eating_record')
       .where({ id, user_id: userId })
-      .update({
-        ...updateData,
-        updated_at: new Date()
-      });
+      .update(updateData);
 
     const updatedRecord = await db('eating_record')
       .where({ id })

@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, TextInput, Alert, Image } from 'react-native';
 import { useTypedNavigation } from '../../hooks/Navigation';
+import { useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import * as ImagePicker from 'expo-image-picker';
 import { ApiClient } from '../../utils/apiClient';
@@ -11,6 +12,8 @@ import { ApiClient } from '../../utils/apiClient';
  */
 const AddNewFoodScreen = () => {
   const navigation = useTypedNavigation();
+  const route = useRoute();
+  const params = route.params as any;
   const apiClient = useMemo(() => new ApiClient(), []);
   
   // Form states
@@ -75,7 +78,18 @@ const AddNewFoodScreen = () => {
           [
             {
               text: 'ตกลง',
-              onPress: () => navigation.goBack()
+              onPress: () => {
+                if (params?.selectedDay) {
+                  // กลับไปหน้า RecordFood พร้อม selectedDay
+                  navigation.replace('RecordFood', {
+                    fromSearch: true,
+                    selectedDay: params.selectedDay,
+                    timestamp: Date.now()
+                  });
+                } else {
+                  navigation.goBack();
+                }
+              }
             }
           ]
         );
@@ -204,7 +218,13 @@ const AddNewFoodScreen = () => {
         {/* Back Button */}
         <TouchableOpacity 
           className="w-10 h-10 rounded-lg items-center justify-center"
-          onPress={() => navigation.goBack()}
+          onPress={() => {
+            if (params?.selectedDay) {
+              navigation.navigate('SearchFoodForAdd', params);
+            } else {
+              navigation.goBack();
+            }
+          }}
         >
           <Icon name="arrow-back" size={24} color="white" />
         </TouchableOpacity>

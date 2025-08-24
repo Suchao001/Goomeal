@@ -141,6 +141,19 @@ export class ApiClient extends BaseApiClient {
   async clearChatHistory() {
     return this.goodChatClient.clearChatHistory();
   }
+
+  // ===== USER WEIGHT UPDATE METHOD =====
+  async updateWeight(weight: number) {
+    try {
+      const response = await this.axiosInstance.put('/user/update-weight', {
+        weight: weight
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating weight:', error);
+      throw error;
+    }
+  }
 }
 
 // Export a singleton instance

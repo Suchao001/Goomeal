@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { register, login, getUserProfile, updatePersonalData,updateUserProfile } from "../controllers/user_controller";
+import { register, login, getUserProfile, updatePersonalData, updateUserProfile, updatePersonalWeight } from "../controllers/user_controller";
 import authenticateToken from "../middlewares/authenticateToken";
 import { sendPasswordResetEmail, resetPassword, verifyResetToken } from "../controllers/forgotpassword";
 
@@ -329,6 +329,45 @@ router.get("/verify-reset-token", async (req: Request, res: Response) => {
         
     } catch (error: any) {
         console.error("Verify token error:", error);
+        res.status(400).json({
+            message: error.message,
+            success: false
+        });
+    }
+});
+
+// Update weight endpoint
+router.put("/update-weight", authenticateToken, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        const userId = req.user?.id;
+        const { weight } = req.body;
+        
+        if (!userId) {
+            res.status(401).json({
+                message: "User ID not found in token",
+                success: false
+            });
+            return;
+        }
+        
+        if (!weight || weight <= 0) {
+            res.status(400).json({
+                message: "Valid weight value is required",
+                success: false
+            });
+            return;
+        }
+        
+        const updatedUser = await updatePersonalWeight(userId, parseFloat(weight));
+        
+        res.status(200).json({
+            message: "Weight updated successfully",
+            user: updatedUser,
+            success: true
+        });
+        
+    } catch (error: any) {
+        console.error("Update weight error:", error);
         res.status(400).json({
             message: error.message,
             success: false

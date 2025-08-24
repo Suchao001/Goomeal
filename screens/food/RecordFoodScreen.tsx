@@ -5,8 +5,12 @@ import { useFocusEffect, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Menu from '../material/Menu';
 import { fetchTodayMeals, TodayMealData, TodayMealItem } from '../../utils/todayMealApi';
-import { createEatingRecord, EatingRecord, getEatingRecordsByDate, deleteEatingRecord, checkSavedPlanItems, generateUniqueId } from '../../utils/api/eatingRecordApi';
+import { createEatingRecord, EatingRecord, getEatingRecordsByDate, deleteEatingRecord, updateEatingRecord, checkSavedPlanItems, generateUniqueId } from '../../utils/api/eatingRecordApi';
 import { AddMealModal } from '../../components/AddMealModal';
+import { EditFoodModal } from '../../components/EditFoodModal';
+import { FoodEntryMenuModal } from '../../components/FoodEntryMenuModal';
+import { getBangkokTime, getBangkokDateForDay, getCurrentBangkokDay, getTodayBangkokDate } from '../../utils/bangkokTime';
+import { type FoodItem } from '../../stores/mealPlanStore';
 
 interface FoodEntry {
   id: string;
@@ -35,12 +39,7 @@ const RecordFoodScreen = () => {
   const params = route.params as any;
 
   // Get current day for limiting navigation and initial state
-  const getCurrentDay = () => {
-    const now = new Date();
-    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-    const bangkokTime = new Date(utc + (7 * 3600000)); // UTC+7 for Bangkok
-    return bangkokTime.getDate();
-  };
+  const getCurrentDay = () => getCurrentBangkokDay();
   const getDefaultMeals = (): MealTime[] => [
     {
       time: '7:30',
@@ -62,8 +61,17 @@ const RecordFoodScreen = () => {
     }
   ];
 
-  // Always start with today's date
-  const [selectedDay, setSelectedDay] = useState(() => getCurrentDay());
+  // Always start with today's date, but use params.selectedDay if coming from search
+  const [selectedDay, setSelectedDay] = useState(() => {
+   
+    if (params?.selectedDay) {
+     
+      return params.selectedDay;
+    }
+    const currentDay = getCurrentDay();
+    
+    return currentDay;
+  });
   const [mealTimes, setMealTimes] = useState<MealTime[]>(() => getDefaultMeals());
   const [todayMealData, setTodayMealData] = useState<TodayMealData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,6 +79,38 @@ const RecordFoodScreen = () => {
   const [hasSavedToday, setHasSavedToday] = useState(false);
   const [savedRecords, setSavedRecords] = useState<EatingRecord[]>([]);
   const [showAddMealModal, setShowAddMealModal] = useState(false);
+  
+  // Edit food modal states
+  const [showEditFoodModal, setShowEditFoodModal] = useState(false);
+  const [editingFood, setEditingFood] = useState<{
+    food: FoodItem;
+    mealIndex: number;
+    entryId: string;
+  } | null>(null);
+
+  // Menu modal states
+  const [showMenuModal, setShowMenuModal] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+  const [selectedEntry, setSelectedEntry] = useState<{
+    timeIndex: number;
+    entryId: string;
+  } | null>(null);
+
+  // Handle selectedDay from navigation params
+  useFocusEffect(
+    useCallback(() => {
+      console.log('📅 [RecordFood] Navigation params:', params);
+      console.log('📅 [RecordFood] Current selectedDay:', selectedDay);
+      
+      if (params?.fromSearch && params?.selectedDay) {
+        console.log('📅 [RecordFood] Updating selectedDay from params:', params.selectedDay);
+        setSelectedDay(params.selectedDay);
+        
+        // Clear the params after using them to prevent re-triggering
+        navigation.setParams({ fromSearch: false, selectedDay: undefined, timestamp: undefined } as any);
+      }
+    }, [params?.timestamp, navigation]) // ใช้ timestamp เป็น dependency
+  );
 
   // Load appropriate data when selected day changes
   useEffect(() => {
@@ -177,21 +217,7 @@ const RecordFoodScreen = () => {
     }
   }, []); // ลบ selectedDay dependency เพื่อหลีกเลี่ยงการ re-call ซ้ำ
 
-  const getIsoDateForDay = (day: number) => {
-
-  const now = new Date();
-  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-  const bangkokTime = new Date(utc + (7 * 3600000)); // UTC+7 for Bangkok
-  const targetDate = new Date(bangkokTime.getFullYear(), bangkokTime.getMonth(), day);
-  const year = targetDate.getFullYear();
-  const month = String(targetDate.getMonth() + 1).padStart(2, '0');
-  const dayStr = String(targetDate.getDate()).padStart(2, '0');
-  
-  const isoDate = `${year}-${month}-${dayStr}`;
-  console.log(`📅 [RecordFood] Converting day ${day} to ISO date: ${isoDate} (Bangkok timezone)`);
-  
-  return isoDate;
-};
+  const getIsoDateForDay = (day: number) => getBangkokDateForDay(day);
 
   // Check which plan items are already saved using unique_id
   const checkPlanItemsSavedStatus = async () => {
@@ -388,6 +414,302 @@ const RecordFoodScreen = () => {
     setMealTimes(updatedMealTimes);
   };
 
+  // Menu modal handlers
+  const handleMenuPress = (event: any, timeIndex: number, entryId: string) => {
+    const { pageX, pageY } = event.nativeEvent;
+
+    setMenuPosition({ x: pageX - 30, y: pageY - 22 });
+    setSelectedEntry({ timeIndex, entryId });
+    setShowMenuModal(true);
+  };
+
+  const handleMenuEdit = () => {
+    if (selectedEntry) {
+      handleEditFood(selectedEntry.timeIndex, selectedEntry.entryId);
+    }
+  };
+
+  const handleMenuDelete = () => {
+    if (selectedEntry) {
+      handleDeleteFood(selectedEntry.timeIndex, selectedEntry.entryId);
+    }
+  };
+
+  const handleCloseMenu = () => {
+    setShowMenuModal(false);
+    setSelectedEntry(null);
+  };
+
+  // Edit food functions
+  const handleEditFood = (timeIndex: number, entryId: string) => {
+    console.log('🔍 [EditFood] Looking for entry:', entryId, 'in meal index:', timeIndex);
+    
+    let entry: FoodEntry | undefined;
+    
+    // Get the current day info to determine which entries to search
+    const currentDay = getCurrentDay();
+    const isTodaySelected = selectedDay === currentDay;
+    const meal = mealTimes[timeIndex];
+    
+    if (!isTodaySelected) {
+      // For past days, search in savedEntries (displayed entries)
+      const savedForMeal = savedRecords.filter(r => r.meal_type === meal.label);
+      const savedEntries: FoodEntry[] = savedForMeal.map((r, idx) => ({
+        id: r.id?.toString() || `saved-${timeIndex}-${idx}`,
+        name: r.food_name,
+        calories: r.calories || 0,
+        carbs: r.carbs || 0,
+        fat: r.fat || 0,
+        protein: r.protein || 0,
+        confirmed: true,
+        fromPlan: false,
+        saved: true,
+        recordId: r.id,
+      }));
+      entry = savedEntries.find(e => e.id === entryId);
+    } else {
+      // For today, search in allEntries (plan + manual saved entries)
+      const namesInPlan = new Set(meal.entries.map(e => e.name));
+      const savedForMeal = savedRecords.filter(r => r.meal_type === meal.label);
+      const savedMap = new Map(savedForMeal.map(r => [r.food_name, r] as const));
+      const planEntriesWithSaved: FoodEntry[] = meal.entries.map(e => {
+        const sr = savedMap.get(e.name);
+        return { ...e, saved: !!sr, recordId: sr?.id };
+      });
+      const savedManualEntries: FoodEntry[] = savedForMeal
+        .filter(r => !namesInPlan.has(r.food_name))
+        .map((r, idx) => ({
+          id: `saved-${timeIndex}-${idx}`,
+          name: r.food_name,
+          calories: r.calories || 0,
+          carbs: r.carbs || 0,
+          fat: r.fat || 0,
+          protein: r.protein || 0,
+          confirmed: true,
+          fromPlan: false,
+          saved: true,
+          recordId: r.id,
+        }));
+
+      const allEntries = [...planEntriesWithSaved, ...savedManualEntries];
+      entry = allEntries.find(e => e.id === entryId);
+    }
+    
+    console.log('🔍 [EditFood] Found entry:', entry);
+    
+    if (!entry) {
+      console.error('❌ [EditFood] Entry not found!');
+      Alert.alert('ไม่พบข้อมูล', 'ไม่สามารถหาอาหารที่ต้องการแก้ไขได้');
+      return;
+    }
+
+    if (!entry.saved && (!entry.confirmed || entry.fromPlan)) {
+      Alert.alert('ไม่สามารถแก้ไขได้', 'สามารถแก้ไขได้เฉพาะอาหารที่บันทึกแล้วหรืออาหารที่เพิ่มแล้วเท่านั้น');
+      return;
+    }
+
+    console.log('✅ [EditFood] Found entry:', entry);
+
+    // Convert FoodEntry to FoodItem format for EditFoodModal
+    const foodItem: FoodItem = {
+      id: entry.id,
+      name: entry.name,
+      cal: entry.calories,
+      carb: entry.carbs || 0,
+      protein: entry.protein || 0,
+      fat: entry.fat || 0,
+      img: '',
+      ingredient: '',
+      source: 'user_food',
+      isUserFood: true
+    };
+
+    setEditingFood({
+      food: foodItem,
+      mealIndex: timeIndex,
+      entryId: entry.id
+    });
+    setShowEditFoodModal(true);
+  };
+
+  const handleSaveEditedFood = async (updatedFood: FoodItem) => {
+    if (!editingFood) return;
+
+    console.log('💾 [SaveEditedFood] Starting update:', updatedFood.name);
+    console.log('💾 [SaveEditedFood] Editing food data:', editingFood);
+
+    try {
+      // Find the entry to get recordId
+      let entry: FoodEntry | undefined;
+      let recordId: number | undefined;
+
+      // Get the current day info to determine search strategy
+      const currentDay = getCurrentDay();
+      const isTodaySelected = selectedDay === currentDay;
+      const meal = mealTimes[editingFood.mealIndex];
+      
+      if (!isTodaySelected) {
+        // For past days, search in savedEntries
+        const savedForMeal = savedRecords.filter(r => r.meal_type === meal.label);
+        const savedEntries: FoodEntry[] = savedForMeal.map((r, idx) => ({
+          id: r.id?.toString() || `saved-${editingFood.mealIndex}-${idx}`,
+          name: r.food_name,
+          calories: r.calories || 0,
+          carbs: r.carbs || 0,
+          fat: r.fat || 0,
+          protein: r.protein || 0,
+          confirmed: true,
+          fromPlan: false,
+          saved: true,
+          recordId: r.id,
+        }));
+        entry = savedEntries.find(e => e.id === editingFood.entryId);
+        recordId = entry?.recordId;
+      } else {
+        // For today, search in allEntries
+        const namesInPlan = new Set(meal.entries.map(e => e.name));
+        const savedForMeal = savedRecords.filter(r => r.meal_type === meal.label);
+        const savedMap = new Map(savedForMeal.map(r => [r.food_name, r] as const));
+        const planEntriesWithSaved: FoodEntry[] = meal.entries.map(e => {
+          const sr = savedMap.get(e.name);
+          return { ...e, saved: !!sr, recordId: sr?.id };
+        });
+        const savedManualEntries: FoodEntry[] = savedForMeal
+          .filter(r => !namesInPlan.has(r.food_name))
+          .map((r, idx) => ({
+            id: `saved-${editingFood.mealIndex}-${idx}`,
+            name: r.food_name,
+            calories: r.calories || 0,
+            carbs: r.carbs || 0,
+            fat: r.fat || 0,
+            protein: r.protein || 0,
+            confirmed: true,
+            fromPlan: false,
+            saved: true,
+            recordId: r.id,
+          }));
+
+        const allEntries = [...planEntriesWithSaved, ...savedManualEntries];
+        entry = allEntries.find(e => e.id === editingFood.entryId);
+        recordId = entry?.recordId;
+      }
+
+      if (!recordId) {
+        Alert.alert('ไม่สามารถแก้ไขได้', 'ไม่พบข้อมูลการบันทึกในฐานข้อมูล');
+        return;
+      }
+
+      console.log('💾 [SaveEditedFood] Found recordId:', recordId);
+
+      // Call update API
+      const updateData = {
+        food_name: updatedFood.name,
+        calories: updatedFood.cal,
+        carbs: updatedFood.carb,
+        protein: updatedFood.protein,
+        fat: updatedFood.fat
+      };
+
+      await updateEatingRecord(recordId, updateData);
+
+      console.log('✅ [SaveEditedFood] API update successful');
+
+      // Refresh data from server
+      await loadSavedRecords();
+      
+      if (isTodaySelected) {
+        await loadTodayMeals();
+      }
+
+      setShowEditFoodModal(false);
+      setEditingFood(null);
+      
+      Alert.alert('สำเร็จ', 'แก้ไขข้อมูลอาหารเรียบร้อยแล้ว');
+
+    } catch (error) {
+      console.error('❌ [SaveEditedFood] Error:', error);
+      Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถแก้ไขข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
+    }
+  };
+
+  const handleCloseEditFood = () => {
+    setShowEditFoodModal(false);
+    setEditingFood(null);
+  };
+
+  // Delete food function
+  const handleDeleteFood = async (timeIndex: number, entryId: string) => {
+    // Find entry in both places
+    let entry: FoodEntry | undefined;
+    let entryName = '';
+    let recordId: number | undefined;
+    
+    // First try to find in mealTimes
+    const meal = mealTimes[timeIndex];
+    entry = meal?.entries.find(e => e.id === entryId);
+    
+    if (entry) {
+      entryName = entry.name;
+      // Check if this entry has a recordId (saved)
+      recordId = (entry as any).recordId;
+    } else {
+      // Try to find in savedRecords
+      const savedRecord = savedRecords.find(r => r.id?.toString() === entryId);
+      if (savedRecord) {
+        entryName = savedRecord.food_name;
+        recordId = savedRecord.id;
+      }
+    }
+
+    if (!entryName) {
+      Alert.alert('ไม่พบข้อมูล', 'ไม่สามารถหาอาหารที่ต้องการลบได้');
+      return;
+    }
+
+    Alert.alert(
+      'ยืนยันการลบ',
+      `ต้องการลบ "${entryName}" หรือไม่?`,
+      [
+        {
+          text: 'ยกเลิก',
+          style: 'cancel',
+        },
+        {
+          text: 'ลบ',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Remove from mealTimes
+              const updatedEntries = meal?.entries.filter(e => e.id !== entryId) || [];
+              const updatedMealTimes = [...mealTimes];
+              updatedMealTimes[timeIndex] = {
+                ...meal,
+                entries: updatedEntries
+              };
+              setMealTimes(updatedMealTimes);
+              
+              // If it has recordId, delete from backend and savedRecords
+              if (recordId) {
+                await deleteEatingRecord(recordId);
+                setSavedRecords(prev => prev.filter(r => r.id !== recordId));
+                await loadSavedRecords();
+                console.log('✅ [DeleteFood] Successfully deleted record:', recordId);
+              } else {
+                // Just remove from local state
+                setSavedRecords(prev => prev.filter(r => r.id?.toString() !== entryId));
+              }
+              
+              console.log('🗑️ [DeleteFood] Deleted entry:', entryId);
+            } catch (e) {
+              console.error('❌ [DeleteFood] Failed to delete:', e);
+              Alert.alert('ลบไม่สำเร็จ', 'กรุณาลองใหม่อีกครั้ง');
+            }
+          },
+        },
+      ],
+    );
+  };
+
   const handleConfirmAll = async () => {
     const totalMeals = mealTimes.reduce((total, meal) => total + meal.entries.length, 0);
     
@@ -447,11 +769,8 @@ const RecordFoodScreen = () => {
     try {
       setIsSaving(true);
       
-      // ใช้ timezone ไทยในการสร้างวันที่สำหรับบันทึก
-      const now = new Date();
-      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-      const bangkokTime = new Date(utc + (7 * 3600000)); // UTC+7 for Bangkok
-      const logDate = bangkokTime.toISOString().split('T')[0]; // YYYY-MM-DD format
+      // ใช้ Bangkok timezone utility function
+      const logDate = getTodayBangkokDate();
       
       let savedCount = 0;
       let errorCount = 0;
@@ -516,7 +835,14 @@ const RecordFoodScreen = () => {
     }
   };
 
-  const FoodEntryCard = ({ entry, onRemove, onSave, onDelete }: { entry: FoodEntry; onRemove?: () => void; onSave?: () => void; onDelete?: () => void }) => (
+    const FoodEntryCard = ({ entry, onRemove, onSave, onDelete, onEdit, onMenuPress }: { 
+    entry: FoodEntry; 
+    onRemove?: () => void; 
+    onSave?: () => void; 
+    onDelete?: () => void;
+    onEdit?: () => void;
+    onMenuPress?: (event: any) => void;
+  }) => (
     <View className={`${entry.fromPlan ? 'bg-blue-50 border border-blue-200' : 'bg-green-100'} rounded-lg p-3 mb-2`}>
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center flex-1">
@@ -555,9 +881,9 @@ const RecordFoodScreen = () => {
               <Icon name="save" size={16} color="white" />
             </TouchableOpacity>
           )}
-          {entry.saved && onDelete && (
-            <TouchableOpacity onPress={onDelete} className="ml-2 bg-red-500 p-2 rounded-full">
-              <Icon name="trash" size={16} color="white" />
+          {entry.saved && onMenuPress && (
+            <TouchableOpacity onPress={onMenuPress} className="ml-2 p-2">
+              <Icon name="ellipsis-vertical" size={20} color="#6b7280" />
             </TouchableOpacity>
           )}
           {!entry.saved && !entry.fromPlan && onRemove && (
@@ -593,7 +919,7 @@ const RecordFoodScreen = () => {
       const savedForMeal = savedRecords.filter(r => r.meal_type === meal.label);
      
       const savedEntries: FoodEntry[] = savedForMeal.map((r, idx) => ({
-        id: `saved-${timeIndex}-${idx}`,
+        id: r.id?.toString() || `saved-${timeIndex}-${idx}`,
         name: r.food_name,
         calories: r.calories || 0,
         carbs: r.carbs || 0,
@@ -660,7 +986,7 @@ const RecordFoodScreen = () => {
                 <FoodEntryCard
                   key={entry.id}
                   entry={entry}
-                  onDelete={() => handleDeleteSavedItem(entry)}
+                  onMenuPress={(event) => handleMenuPress(event, timeIndex, entry.id)}
                 />
               ))}
             </View>
@@ -714,11 +1040,8 @@ const RecordFoodScreen = () => {
     const handleSavePlanItem = async (entry: FoodEntry) => {
       try {
         setIsSaving(true);
-        // ใช้ timezone ไทยในการสร้างวันที่สำหรับบันทึก
-        const now = new Date();
-        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-        const bangkokTime = new Date(utc + (7 * 3600000)); // UTC+7 for Bangkok
-        const logDate = bangkokTime.toISOString().split('T')[0];
+        // ใช้ Bangkok timezone utility function
+        const logDate = getTodayBangkokDate();
         
         const recordData: Omit<EatingRecord, 'id' | 'user_id' | 'created_at' | 'updated_at'> = {
           log_date: logDate,
@@ -789,7 +1112,8 @@ const RecordFoodScreen = () => {
                 key={entry.id}
                 entry={entry}
                 onSave={entry.fromPlan && !entry.saved && isTodaySelected ? () => handleSavePlanItem(entry) : undefined}
-                onDelete={entry.saved ? () => handleDeleteSavedItem(entry) : undefined}
+                onRemove={!entry.saved && !entry.fromPlan ? () => handleRemoveFood(timeIndex, entry.id) : undefined}
+                onMenuPress={(entry.saved || (!entry.fromPlan && entry.confirmed)) ? (event) => handleMenuPress(event, timeIndex, entry.id) : undefined}
               />
             ))}
           </View>
@@ -813,12 +1137,9 @@ const RecordFoodScreen = () => {
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <View className="bg-primary px-4 py-4 mt-6 flex-row items-center justify-between border-b border-gray-100">
-        <TouchableOpacity
-          className="w-10 h-10 rounded-lg items-center justify-center"
-          onPress={() => navigation.goBack()}
-        >
-          <Icon name="arrow-back" size={24} color="white" />
-        </TouchableOpacity>
+       <View>
+
+       </View>
         <Text className="text-xl font-bold text-white">บันทึก/ยืนยันอาหาร</Text>
         <TouchableOpacity 
           className="w-10 h-10 rounded-lg items-center justify-center"
@@ -961,6 +1282,21 @@ const RecordFoodScreen = () => {
         visible={showAddMealModal}
         onClose={() => setShowAddMealModal(false)}
         onAddMeal={handleAddNewMeal}
+      />
+
+      <EditFoodModal
+        visible={showEditFoodModal}
+        food={editingFood?.food || null}
+        onClose={handleCloseEditFood}
+        onSave={handleSaveEditedFood}
+      />
+
+      <FoodEntryMenuModal
+        visible={showMenuModal}
+        onClose={handleCloseMenu}
+        onEdit={handleMenuEdit}
+        onDelete={handleMenuDelete}
+        position={menuPosition}
       />
 
       <Menu />

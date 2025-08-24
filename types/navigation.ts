@@ -29,6 +29,8 @@ export type RootStackParamList = {
       selectedFood?: any;
       timeIndex?: number;
       fromSearch?: boolean;
+      selectedDay?: number;
+      timestamp?: number;
     } | undefined;
     PlanSelection: undefined;
     Menu: undefined;
@@ -68,7 +70,12 @@ export type RootStackParamList = {
         mealLabel?: string;
         mealTime?: string;
     } | undefined;
-    AddNewFood: undefined;
+    AddNewFood: {
+        selectedDay?: number;
+        timeIndex?: number;
+        mealLabel?: string;
+        mealTime?: string;
+    } | undefined;
     EditFood: { foodId: string; food?: any };
 
     OptionPlan: {
