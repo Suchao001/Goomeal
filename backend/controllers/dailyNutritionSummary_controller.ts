@@ -1,6 +1,23 @@
 import { Request, Response } from 'express';
 import db from '../db_config';
 
+// Import Bangkok timezone utility
+const getBangkokDate = (date: Date) => {
+  return new Date(date.toLocaleString("en-US", { timeZone: "Asia/Bangkok" }));
+};
+
+const toBangkokDate = (dateString: string) => {
+  // If the string is already in YYYY-MM-DD format, use it directly
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    return dateString;
+  }
+  
+  // Otherwise, parse and convert to Bangkok timezone
+  const date = new Date(dateString);
+  const bangkokDate = getBangkokDate(date);
+  return bangkokDate.toISOString().split('T')[0]; // Return YYYY-MM-DD format
+};
+
 interface DailyNutritionSummary {
   id?: number;
   user_id: number;
@@ -18,12 +35,17 @@ interface DailyNutritionSummary {
  */
 export const upsertDailyNutritionSummary = async (userId: number, date: string): Promise<DailyNutritionSummary | null> => {
   try {
+    const bangkokDate = toBangkokDate(date);
+    console.log(`📊 [DailyNutrition] Upserting summary for user ${userId} on ${bangkokDate}`);
+    
     // Calculate totals from eating records for this date
     const records = await db('eating_record')
       .where({
         user_id: userId,
-        log_date: date
+        log_date: bangkokDate
       });
+
+    console.log(`📊 [DailyNutrition] Found ${records.length} eating records for ${bangkokDate}`);
 
     const totals = records.reduce((acc, record) => ({
       total_calories: acc.total_calories + (record.calories || 0),
@@ -37,45 +59,53 @@ export const upsertDailyNutritionSummary = async (userId: number, date: string):
       total_carbs: 0
     });
 
+    console.log(`📊 [DailyNutrition] Calculated totals:`, totals);
+
     // Check if summary already exists
     const existingSummary = await db('daily_nutrition_summary')
       .where({
         user_id: userId,
-        summary_date: date
+        summary_date: bangkokDate
       })
       .first();
 
     const summaryData: Partial<DailyNutritionSummary> = {
       user_id: userId,
-      summary_date: date,
+      summary_date: bangkokDate,
       ...totals
     };
 
     if (existingSummary) {
-      // Update existing summary
+      // Update existing summary (preserve existing target values)
       await db('daily_nutrition_summary')
         .where({
           user_id: userId,
-          summary_date: date
+          summary_date: bangkokDate
         })
         .update(summaryData);
         
-      return await db('daily_nutrition_summary')
+      const updated = await db('daily_nutrition_summary')
         .where({
           user_id: userId,
-          summary_date: date
+          summary_date: bangkokDate
         })
         .first();
+        
+      console.log(`📊 [DailyNutrition] Updated existing summary with target_cal: ${updated?.target_cal || 'null'}`);
+      return updated;
     } else {
       // Create new summary
       const [summaryId] = await db('daily_nutrition_summary').insert(summaryData);
       
-      return await db('daily_nutrition_summary')
+      const created = await db('daily_nutrition_summary')
         .where({ id: summaryId })
         .first();
+        
+      console.log(`📊 [DailyNutrition] Created new summary with target_cal: ${created?.target_cal || 'null'}`);
+      return created;
     }
   } catch (error) {
-    console.error('Error upserting daily nutrition summary:', error);
+    console.error('❌ [DailyNutrition] Error upserting daily nutrition summary:', error);
     return null;
   }
 };
@@ -104,17 +134,27 @@ export const getDailyNutritionSummary = async (req: Request, res: Response): Pro
       return;
     }
 
+    const bangkokDate = toBangkokDate(date);
+    console.log(`📊 [DailyNutrition] Getting summary for user ${userId} on ${bangkokDate}`);
+
     // Try to get existing summary first
     let summary = await db('daily_nutrition_summary')
       .where({
         user_id: userId,
-        summary_date: date
+        summary_date: bangkokDate
       })
       .first();
 
+    console.log(`📊 [DailyNutrition] Found summary:`, summary ? 'Yes' : 'No');
+
     // If no summary exists, create one from eating records
     if (!summary) {
-      summary = await upsertDailyNutritionSummary(userId, date);
+      console.log(`📊 [DailyNutrition] Creating summary from eating records for ${bangkokDate}`);
+      summary = await upsertDailyNutritionSummary(userId, bangkokDate);
+    }
+
+    if (summary) {
+      console.log(`📊 [DailyNutrition] Returning summary with target_cal: ${summary.target_cal || 'null'}`);
     }
 
     res.status(200).json({
@@ -123,7 +163,7 @@ export const getDailyNutritionSummary = async (req: Request, res: Response): Pro
     });
 
   } catch (error) {
-    console.error('Error getting daily nutrition summary:', error);
+    console.error('❌ [DailyNutrition] Error getting daily nutrition summary:', error);
     res.status(500).json({
       success: false,
       error: 'เกิดข้อผิดพลาดในการดึงข้อมูลสรุป'

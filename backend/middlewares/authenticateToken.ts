@@ -32,14 +32,8 @@ const authenticateToken = (req: CustomRequest, res: Response, next: NextFunction
         return;
     }
     try {
-        console.log('=== AUTHENTICATING TOKEN ===');
-        console.log('Token received:', token.substring(0, 20) + '...');
-        
         const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
-        console.log('Decoded token payload:', decoded);
-        
         const currentTime = Math.floor(Date.now() / 1000);
-        console.log('Current time:', currentTime, 'Token exp:', decoded.exp);
        
         if (decoded.exp && decoded.exp < currentTime) {
             console.log('TOKEN EXPIRED');

@@ -6,6 +6,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import Menu from '../material/Menu';
 import { fetchTodayMeals, TodayMealData, TodayMealItem } from '../../utils/todayMealApi';
 import { createEatingRecord, EatingRecord, getEatingRecordsByDate, deleteEatingRecord, updateEatingRecord, checkSavedPlanItems, generateUniqueId } from '../../utils/api/eatingRecordApi';
+import { getDailyNutritionSummary, type DailyNutritionSummary } from '../../utils/api/dailyNutritionApi';
 import { AddMealModal } from '../../components/AddMealModal';
 import { EditFoodModal } from '../../components/EditFoodModal';
 import { FoodEntryMenuModal } from '../../components/FoodEntryMenuModal';
@@ -78,6 +79,7 @@ const RecordFoodScreen = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [hasSavedToday, setHasSavedToday] = useState(false);
   const [savedRecords, setSavedRecords] = useState<EatingRecord[]>([]);
+  const [dailyNutritionSummary, setDailyNutritionSummary] = useState<DailyNutritionSummary | null>(null);
   const [showAddMealModal, setShowAddMealModal] = useState(false);
   
   // Edit food modal states
@@ -121,7 +123,30 @@ const RecordFoodScreen = () => {
       setTodayMealData(null);
     }
     setHasSavedToday(false);
-   
+    // Load daily nutrition summary when selected day changes
+    const loadSummary = async () => {
+      try {
+        if (!isTodaySelected) {
+          const date = getIsoDateForDay(selectedDay);
+          const res = await getDailyNutritionSummary(date);
+          
+          if (res.success && res.data) {
+            setDailyNutritionSummary(res.data);
+            console.log(`📊 [DailyNutrition] Loaded summary for ${date}:`, res.data);
+          } else {
+            console.log(`⚠️ [DailyNutrition] No summary found for ${date}, will use default target`);
+            setDailyNutritionSummary(null);
+          }
+        } else {
+          setDailyNutritionSummary(null);
+        }
+      } catch (e) {
+    entryId: string;
+        console.error('❌ [RecordFood] Failed to load daily nutrition summary:', e);
+        setDailyNutritionSummary(null);
+      }
+    };
+    loadSummary();
   }, [selectedDay]);
 
 
@@ -262,8 +287,6 @@ const RecordFoodScreen = () => {
     
       if (res.success) {
         const records = res.data.records || [];
-        console.log(`✅ [LoadSaved] Found ${records.length} records for ${date}`);
-        
         setSavedRecords(records);
         setHasSavedToday(records.length > 0);
         
@@ -302,6 +325,33 @@ const RecordFoodScreen = () => {
     }
   }, [selectedDay]);
 
+  const loadDailyNutritionSummary = useCallback(async () => {
+    try {
+      const currentDay = getCurrentDay();
+      const isTodaySelected = selectedDay === currentDay;
+      
+      // Only load daily nutrition summary for past days
+      if (!isTodaySelected) {
+        const date = getIsoDateForDay(selectedDay);
+        const res = await getDailyNutritionSummary(date);
+        
+        if (res.success && res.data) {
+          setDailyNutritionSummary(res.data);
+          console.log(`📊 [DailyNutrition] Loaded summary for ${date}:`, res.data);
+        } else {
+          console.log(`⚠️ [DailyNutrition] No summary found for ${date}, will use default target`);
+          setDailyNutritionSummary(null);
+        }
+      } else {
+        // For today, clear the daily nutrition summary
+        setDailyNutritionSummary(null);
+      }
+    } catch (e) {
+      console.error('❌ [RecordFood] loadDailyNutritionSummary failed:', e);
+      setDailyNutritionSummary(null);
+    }
+  }, [selectedDay]);
+
   // Refresh data when screen comes back into focus
   useFocusEffect(
     useCallback(() => {
@@ -318,7 +368,9 @@ const RecordFoodScreen = () => {
       }
       // Always refresh saved records when focused
       loadSavedRecords();
-    }, [loadTodayMeals, loadSavedRecords, selectedDay])
+      // Load daily nutrition summary for target calories
+      loadDailyNutritionSummary();
+    }, [loadTodayMeals, loadSavedRecords, loadDailyNutritionSummary, selectedDay])
   );
 
   const { isToday } = (() => {
@@ -332,7 +384,26 @@ const RecordFoodScreen = () => {
   );
   const totalCaloriesSaved = savedRecords.reduce((sum, r) => sum + (r.calories || 0), 0);
   const totalCalories = isToday ? totalCaloriesToday : totalCaloriesSaved;
-  const targetCalories = todayMealData?.totalCalories || 0;
+  
+  // Get target calories based on whether it's today or a past day
+  const getTargetCalories = () => {
+    const currentDay = getCurrentDay();
+    const isTodaySelected = selectedDay === currentDay;
+    
+    if (isTodaySelected) {
+      // For today, use todayMealData
+      return todayMealData?.totalCalories || 0;
+    } else {
+      // For past days, use dailyNutritionSummary if available, otherwise fallback to todayMealData
+      if (dailyNutritionSummary?.target_cal) {
+        return dailyNutritionSummary.target_cal;
+      }
+      // Fallback to today's target if no specific target is set for this day
+      return todayMealData?.totalCalories || 0;
+    }
+  };
+  
+  const targetCalories = getTargetCalories();
   // Helpers for header UI
   const progressPercent = targetCalories > 0
     ? Math.min(Math.round((totalCaloriesSaved / targetCalories) * 100), 100)
@@ -630,32 +701,67 @@ const RecordFoodScreen = () => {
 
   // Delete food function
   const handleDeleteFood = async (timeIndex: number, entryId: string) => {
-    // Find entry in both places
     let entry: FoodEntry | undefined;
-    let entryName = '';
     let recordId: number | undefined;
     
-    // First try to find in mealTimes
+    // Get the current day info to determine search strategy
+    const currentDay = getCurrentDay();
+    const isTodaySelected = selectedDay === currentDay;
     const meal = mealTimes[timeIndex];
-    entry = meal?.entries.find(e => e.id === entryId);
     
-    if (entry) {
-      entryName = entry.name;
-      // Check if this entry has a recordId (saved)
-      recordId = (entry as any).recordId;
+    if (!isTodaySelected) {
+      // For past days, search in savedEntries
+      const savedForMeal = savedRecords.filter(r => r.meal_type === meal.label);
+      const savedEntries: FoodEntry[] = savedForMeal.map((r, idx) => ({
+        id: r.id?.toString() || `saved-${timeIndex}-${idx}`,
+        name: r.food_name,
+        calories: r.calories || 0,
+        carbs: r.carbs || 0,
+        fat: r.fat || 0,
+        protein: r.protein || 0,
+        confirmed: true,
+        fromPlan: false,
+        saved: true,
+        recordId: r.id,
+      }));
+      entry = savedEntries.find(e => e.id === entryId);
+      recordId = entry?.recordId;
     } else {
-      // Try to find in savedRecords
-      const savedRecord = savedRecords.find(r => r.id?.toString() === entryId);
-      if (savedRecord) {
-        entryName = savedRecord.food_name;
-        recordId = savedRecord.id;
-      }
+      // For today, search in allEntries (plan + manual saved entries)
+      const namesInPlan = new Set(meal.entries.map(e => e.name));
+      const savedForMeal = savedRecords.filter(r => r.meal_type === meal.label);
+      const savedMap = new Map(savedForMeal.map(r => [r.food_name, r] as const));
+      const planEntriesWithSaved: FoodEntry[] = meal.entries.map(e => {
+        const sr = savedMap.get(e.name);
+        return { ...e, saved: !!sr, recordId: sr?.id };
+      });
+      const savedManualEntries: FoodEntry[] = savedForMeal
+        .filter(r => !namesInPlan.has(r.food_name))
+        .map((r, idx) => ({
+          id: `saved-${timeIndex}-${idx}`,
+          name: r.food_name,
+          calories: r.calories || 0,
+          carbs: r.carbs || 0,
+          fat: r.fat || 0,
+          protein: r.protein || 0,
+          confirmed: true,
+          fromPlan: false,
+          saved: true,
+          recordId: r.id,
+        }));
+
+      const allEntries = [...planEntriesWithSaved, ...savedManualEntries];
+      entry = allEntries.find(e => e.id === entryId);
+      recordId = entry?.recordId;
     }
 
-    if (!entryName) {
+ 
+    if (!entry) {
       Alert.alert('ไม่พบข้อมูล', 'ไม่สามารถหาอาหารที่ต้องการลบได้');
       return;
     }
+
+    const entryName = entry.name;
 
     Alert.alert(
       'ยืนยันการลบ',
@@ -670,26 +776,45 @@ const RecordFoodScreen = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              // Remove from mealTimes
-              const updatedEntries = meal?.entries.filter(e => e.id !== entryId) || [];
-              const updatedMealTimes = [...mealTimes];
-              updatedMealTimes[timeIndex] = {
-                ...meal,
-                entries: updatedEntries
-              };
-              setMealTimes(updatedMealTimes);
-              
-              // If it has recordId, delete from backend and savedRecords
+              // If it has recordId, delete from backend
               if (recordId) {
                 await deleteEatingRecord(recordId);
-                setSavedRecords(prev => prev.filter(r => r.id !== recordId));
-                await loadSavedRecords();
                 console.log('✅ [DeleteFood] Successfully deleted record:', recordId);
+                
+                // Update savedRecords state locally instead of reloading
+                setSavedRecords(prev => prev.filter(r => r.id !== recordId));
+                
+                // If it's a plan item for today, change status to unsaved instead of removing
+                if (isTodaySelected && entry.fromPlan) {
+                  setMealTimes(prev => prev.map(mealTime => ({
+                    ...mealTime,
+                    entries: mealTime.entries.map(e => 
+                      e.id === entryId ? { ...e, saved: false, recordId: undefined } : e
+                    )
+                  })));
+                } else {
+                  // For non-plan items or past days, remove from mealTimes
+                  const updatedEntries = meal?.entries.filter(e => e.id !== entryId) || [];
+                  const updatedMealTimes = [...mealTimes];
+                  updatedMealTimes[timeIndex] = {
+                    ...meal,
+                    entries: updatedEntries
+                  };
+                  setMealTimes(updatedMealTimes);
+                }
               } else {
-                // Just remove from local state
-                setSavedRecords(prev => prev.filter(r => r.id?.toString() !== entryId));
+                console.log('⚠️ [DeleteFood] No recordId found, removing from local state only');
+                
+                // Remove from mealTimes if it exists there
+                const updatedEntries = meal?.entries.filter(e => e.id !== entryId) || [];
+                const updatedMealTimes = [...mealTimes];
+                updatedMealTimes[timeIndex] = {
+                  ...meal,
+                  entries: updatedEntries
+                };
+                setMealTimes(updatedMealTimes);
               }
-              
+
               console.log('🗑️ [DeleteFood] Deleted entry:', entryId);
             } catch (e) {
               console.error('❌ [DeleteFood] Failed to delete:', e);
@@ -1065,6 +1190,7 @@ const RecordFoodScreen = () => {
       if (!entry.recordId) return;
       try {
         await deleteEatingRecord(entry.recordId);
+        console.log(entry.recordId);
         await loadSavedRecords();
       } catch (e) {
         Alert.alert('ลบไม่สำเร็จ', 'กรุณาลองใหม่อีกครั้ง');
@@ -1179,8 +1305,8 @@ const RecordFoodScreen = () => {
             <Text className="font-semibold text-gray-400">กำลังโหลด...</Text>
           ) : (
             <View className="items-end">
-              <Text className={`font-bold text-md ${isOverTarget ? 'text-red-600' : isAtTarget ? 'text-green-600' : 'text-blue-600'}`}>
-                {totalCaloriesSaved.toLocaleString()} แคลอรี่ / {(todayMealData?.totalCalories?.toLocaleString?.() as string) || '0'} แคลอรี่
+              <Text className={`font-bold text-sm ${isOverTarget ? 'text-red-600' : isAtTarget ? 'text-green-600' : 'text-blue-600'}`}>
+                {totalCaloriesSaved.toLocaleString()} แคลอรี่ / {(todayMealData?.totalCalories?.toLocaleString?.() as string) || dailyNutritionSummary?.target_cal} แคลอรี่
               </Text>
               <View className={`px-2 py-0.5 rounded-full mt-1 ${chipBg}`}>
                 <Text className={`text-xs font-medium ${chipText}`}>{progressPercent}% ของเป้าหมาย</Text>
