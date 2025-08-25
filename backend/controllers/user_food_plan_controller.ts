@@ -474,45 +474,48 @@ export const setPlanSettings = async (req: Request, res: Response): Promise<void
       return;
     }
 
-
-    
+    // Check if the food plan exists and belongs to user
     const foodPlan = await db('user_food_plans')
       .where({ id: food_plan_id, user_id: userId })
       .first();
 
-   
-
     if (!foodPlan) {
-        res.status(404).json({ 
+      res.status(404).json({ 
         success: false, 
         error: 'ไม่พบแผนอาหารที่ระบุ' 
       });
       return;
     }
 
-    // Check if user has settings record
-    const existingSettings = await db('user_food_plan_using')
-      .where('user_id', userId)
+    // Update plan settings in user_food_plans table
+    await db('user_food_plans')
+      .where({ id: food_plan_id, user_id: userId })
+      .update({
+        plan_start_date: start_date,
+        is_repeat: auto_loop || false
+      });
+
+    // Also update current plan in user_food_plan_using for backward compatibility
+    const existingCurrentPlan = await db('user_food_plan_using')
+      .where({ user_id: userId })
       .first();
 
-    if (existingSettings) {
-      // Update existing settings
+    if (existingCurrentPlan) {
+      // Update existing record
       await db('user_food_plan_using')
-        .where('user_id', userId)
+        .where({ user_id: userId })
         .update({
           food_plan_id: food_plan_id,
           start_date: start_date,
-          is_repeat: auto_loop || false,
-         
+          is_repeat: auto_loop || false
         });
     } else {
-      // Create new settings record
+      // Create new recordป
       await db('user_food_plan_using').insert({
         food_plan_id: food_plan_id,
         user_id: userId,
         start_date: start_date,
-        is_repeat: auto_loop || false,
-    
+        is_repeat: auto_loop || false
       });
     }
 
@@ -537,11 +540,8 @@ export const setPlanSettings = async (req: Request, res: Response): Promise<void
 
 // Get plan settings (start date and auto loop)
 export const getPlanSettings = async (req: Request, res: Response): Promise<void> => {
-  
-  
   try {
     const userId = (req as any).user?.id;
-    
     
     if (!userId) {
       console.log('No userId found, returning 401');
@@ -552,36 +552,93 @@ export const getPlanSettings = async (req: Request, res: Response): Promise<void
       return;
     }
 
-    
-    const userSettings = await db('user_food_plan_using')
+    // Helper function to convert date to Bangkok timezone
+    const toBangkokDate = (date: string | Date) => {
+      if (!date) return null;
+      
+      try {
+        let d: Date;
+        
+        // Handle different date formats
+        if (typeof date === 'string') {
+          // If it's already in YYYY-MM-DD format, just return it
+          if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+            return date;
+          }
+          
+          // Parse the date string
+          d = new Date(date);
+        } else {
+          d = date;
+        }
+        
+        // Check if date is valid
+        if (isNaN(d.getTime())) {
+          console.warn('⚠️ Invalid date parsed, using current date');
+          d = new Date();
+        }
+        
+        // Convert to Bangkok timezone (UTC+7)
+        const bangkokTime = new Date(d.getTime() + (7 * 60 * 60 * 1000));
+        return bangkokTime.toISOString().split('T')[0]; // Return only YYYY-MM-DD
+        
+      } catch (error) {
+        console.warn('⚠️ Error parsing date, using current date:', error);
+        const now = new Date();
+        const bangkokNow = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+        return bangkokNow.toISOString().split('T')[0];
+      }
+    };
+
+    // First check if user has a current active plan
+    const currentPlan = await db('user_food_plan_using')
       .where('user_id', userId)
       .first();
 
-  
-
-    if (!userSettings) {
-      console.log('No settings found, returning default');
-      // Return default settings if none exist
+    if (!currentPlan) {
+      console.log('No current plan found, returning default');
       res.status(200).json({
         success: true,
         message: 'ดึงการตั้งค่าสำเร็จ',
         data: {
           food_plan_id: null,
-          start_date: new Date().toISOString().split('T')[0], // Today as default
+          start_date: new Date().toISOString().split('T')[0],
           auto_loop: false
         }
       });
       return;
     }
 
-    console.log('Settings found, returning data');
+    // Get plan settings from user_food_plans table
+    const planSettings = await db('user_food_plans')
+      .where({ id: currentPlan.food_plan_id, user_id: userId })
+      .select('id', 'plan_start_date', 'is_repeat')
+      .first();
+
+    if (!planSettings) {
+      console.log('Plan not found, returning current plan data');
+      res.status(200).json({
+        success: true,
+        message: 'ดึงการตั้งค่าสำเร็จ',
+        data: {
+          food_plan_id: currentPlan.food_plan_id,
+          start_date: toBangkokDate(currentPlan.start_date) || new Date().toISOString().split('T')[0],
+          auto_loop: currentPlan.is_repeat || false
+        }
+      });
+      return;
+    }
+
+    console.log('Settings found, returning plan data');
+    const bangkokStartDate = toBangkokDate(planSettings.plan_start_date) || toBangkokDate(currentPlan.start_date) || new Date().toISOString().split('T')[0];
+    
     res.status(200).json({
       success: true,
       message: 'ดึงการตั้งค่าสำเร็จ',
       data: {
-        food_plan_id: userSettings.food_plan_id,
-        start_date: userSettings.start_date,
-        auto_loop: userSettings.is_repeat || false
+        food_plan_id: planSettings.id,
+        start_date: bangkokStartDate,
+        auto_loop: planSettings.is_repeat || false
       }
     });
 

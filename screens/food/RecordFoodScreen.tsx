@@ -99,11 +99,9 @@ const RecordFoodScreen = () => {
   // Handle selectedDay from navigation params
   useFocusEffect(
     useCallback(() => {
-      console.log('📅 [RecordFood] Navigation params:', params);
-      console.log('📅 [RecordFood] Current selectedDay:', selectedDay);
-      
+   
       if (params?.fromSearch && params?.selectedDay) {
-        console.log('📅 [RecordFood] Updating selectedDay from params:', params.selectedDay);
+      
         setSelectedDay(params.selectedDay);
         
         // Clear the params after using them to prevent re-triggering
@@ -141,7 +139,7 @@ const RecordFoodScreen = () => {
       setIsLoading(true);
       const todayMeals = await fetchTodayMeals();
       setTodayMealData(todayMeals);
-      console.log(todayMeals);
+      
       if (todayMeals) {
         // Convert API data to MealTime format but preserve any manually added (non-plan) entries
         setMealTimes(prev => {
@@ -259,12 +257,9 @@ const RecordFoodScreen = () => {
   const loadSavedRecords = useCallback(async () => {
     try {
       const date = getIsoDateForDay(selectedDay);
-      console.log(`🔍 [LoadSaved] Requesting date: ${date} for selectedDay: ${selectedDay}`);
-      
+  
       const res = await getEatingRecordsByDate(date);
-      console.log(`📥 [LoadSaved] API Response records count: ${res.data?.records?.length || 0}`);
-      console.log(JSON.stringify(res, null, 2));
-      
+    
       if (res.success) {
         const records = res.data.records || [];
         console.log(`✅ [LoadSaved] Found ${records.length} records for ${date}`);
@@ -285,8 +280,7 @@ const RecordFoodScreen = () => {
             .filter(mt => mt && !defaultMealLabels.has(mt))
         )];
         
-        console.log(`🍽️ [LoadSaved] Custom meal types found:`, customMealTypes);
-        
+ 
         if (customMealTypes.length > 0) {
           setMealTimes(prev => {
             const existing = new Set(prev.map(m => m.label));
@@ -298,7 +292,7 @@ const RecordFoodScreen = () => {
                 mealType: mt.toLowerCase(),
                 entries: []
               }));
-            console.log(`➕ [LoadSaved] Adding ${newMeals.length} custom meals:`, newMeals.map(m => m.label));
+            
             return [...prev, ...newMeals];
           });
         }
@@ -314,14 +308,11 @@ const RecordFoodScreen = () => {
       const currentDay = getCurrentDay();
       const isTodaySelected = selectedDay === currentDay;
       
-      console.log(`🔄 [Focus] selectedDay: ${selectedDay}, currentDay: ${currentDay}, isTodaySelected: ${isTodaySelected}`);
       
       if (isTodaySelected) {
-        console.log('📅 [Focus] Loading today meals...');
         loadTodayMeals();
       } else {
-        console.log('📅 [Focus] Loading saved records for past day...');
-        // For past days, just load saved records
+       
         setTodayMealData(null);
         setMealTimes(getDefaultMeals());
       }
@@ -333,7 +324,7 @@ const RecordFoodScreen = () => {
   const { isToday } = (() => {
     const currentDay = getCurrentDay();
     const isTodaySelected = selectedDay === currentDay;
-    console.log(`📅 [IsToday] selectedDay: ${selectedDay}, currentDay: ${currentDay}, isToday: ${isTodaySelected}`);
+   
     return { isToday: isTodaySelected };
   })();
   const totalCaloriesToday = mealTimes.reduce((total, meal) =>
@@ -792,7 +783,7 @@ const RecordFoodScreen = () => {
 
             await createEatingRecord(recordData);
             savedCount++;
-            console.log(`✅ [RecordFood] Saved: ${entry.name} for ${meal.label}`);
+           
           } catch (error) {
             console.error(`❌ [RecordFood] Failed to save: ${entry.name}`, error);
             errorCount++;
@@ -908,7 +899,7 @@ const RecordFoodScreen = () => {
   };
 
   const renderMealCard = (meal: MealTime, timeIndex: number) => {
-    console.log(`🔍 [RenderMeal] Rendering ${meal.label}...`);
+    
     
     const currentDay = getCurrentDay();
     const isTodaySelected = selectedDay === currentDay;
@@ -946,7 +937,7 @@ const RecordFoodScreen = () => {
                 try {
                   await deleteEatingRecord(entry.recordId!);
                   await loadSavedRecords();
-                  console.log('✅ [RecordFood] Successfully deleted record:', entry.recordId);
+                
                 } catch (e) {
                   console.error('❌ [RecordFood] Failed to delete record:', e);
                   Alert.alert('ลบไม่สำเร็จ', 'กรุณาลองใหม่อีกครั้ง');
@@ -1008,8 +999,6 @@ const RecordFoodScreen = () => {
       );
     }
 
-    // สำหรับวันนี้: แสดง plan + saved records
-    console.log(`📋 [RenderMeal] Today - ${meal.label}: Processing plan items...`);
     
     const namesInPlan = new Set(meal.entries.map(e => e.name));
     const savedForMeal = savedRecords.filter(r => r.meal_type === meal.label);
@@ -1035,7 +1024,6 @@ const RecordFoodScreen = () => {
 
     const allEntries = [...planEntriesWithSaved, ...savedManualEntries];
     
-    console.log(`📋 [RenderMeal] ${meal.label} - Plan: ${planEntriesWithSaved.length}, Manual: ${savedManualEntries.length}, Total: ${allEntries.length}`);
 
     const handleSavePlanItem = async (entry: FoodEntry) => {
       try {
@@ -1273,6 +1261,8 @@ const RecordFoodScreen = () => {
           <Icon name="add-circle" size={22} color="#9ca3af" />
           <Text className="text-gray-600 font-medium mt-2">เพิ่มมื้อเพิ่มเติม</Text>
         </TouchableOpacity>
+
+        <View className='h-24' />
       </ScrollView>
 
   {/* Removed bottom summary and group save to simplify UI as requested */}

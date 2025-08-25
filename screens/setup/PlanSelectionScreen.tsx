@@ -210,10 +210,8 @@ const PlanSelectionScreen = () => {
       const result = await apiClient.getPlanSettings();
       if (result.success && result.data) {
         if (result.data.start_date) {
-          // Parse date safely without timezone issues
+          console.log(result.data.start_date);
           const dateStr = result.data.start_date;
-          
-          
           let loadedDate: Date;
           
           // Handle different date formats
@@ -223,7 +221,7 @@ const PlanSelectionScreen = () => {
               const [year, month, day] = dateStr.split('-').map(Number);
               loadedDate = new Date(year, month - 1, day); // month is 0-indexed
             } else if (dateStr.includes('/')) {
-              // Format: MM/DD/YYYY or DD/MM/YYYY
+              
               loadedDate = new Date(dateStr);
             } else {
               // Try parsing as is
@@ -292,14 +290,14 @@ const PlanSelectionScreen = () => {
   };
 
   const getMinDate = () => {
-    const today = new Date();
-    const oneMonthAgo = new Date();
-    oneMonthAgo.setMonth(today.getMonth() - 1);
-    return oneMonthAgo;
+    return new Date(); // Today as minimum date
   };
 
   const getMaxDate = () => {
-    return new Date(); // Today
+    const today = new Date();
+    const oneMonthAhead = new Date();
+    oneMonthAhead.setMonth(today.getMonth() + 1);
+    return oneMonthAhead;
   };
 
   const refreshPlans = async () => {
@@ -796,8 +794,8 @@ const PlanSelectionScreen = () => {
           mode="date"
           display={Platform.OS === 'ios' ? 'spinner' : 'default'}
           onChange={onDateChange}
-          maximumDate={new Date()}
-          minimumDate={getMinDate()}
+          minimumDate={new Date()}
+          maximumDate={getMaxDate()}
         />
       )}
     </View>
