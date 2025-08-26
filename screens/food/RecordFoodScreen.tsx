@@ -159,6 +159,36 @@ const RecordFoodScreen = () => {
   }, []);
 
   // Load today's meals from API
+  // Helper functions for meal processing
+  const convertMealToFoodEntry = (meal: TodayMealItem, mealIndex: number, itemIndex: number): FoodEntry => ({
+    id: `${['breakfast', 'lunch', 'dinner'][mealIndex]}-${itemIndex}`,
+    name: meal.name,
+    calories: meal.calories,
+    carbs: meal.carb,
+    fat: meal.fat,
+    protein: meal.protein,
+    confirmed: true,
+    fromPlan: true,
+    uniqueId: generateUniqueId(selectedDay, mealIndex, itemIndex)
+  });
+
+  const preserveNonPlanEntries = (mealTimes: MealTime[]): FoodEntry[][] => {
+    return mealTimes.map(mt => mt.entries.filter(e => !e.fromPlan));
+  };
+
+  const createMealTimeWithPlanItems = (
+    originalMeal: MealTime, 
+    planMeals: TodayMealItem[], 
+    preservedEntries: FoodEntry[], 
+    mealIndex: number
+  ): MealTime => ({
+    ...originalMeal,
+    entries: [
+      ...planMeals.map((meal, index) => convertMealToFoodEntry(meal, mealIndex, index)),
+      ...preservedEntries
+    ]
+  });
+
   const loadTodayMeals = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -168,62 +198,12 @@ const RecordFoodScreen = () => {
       if (todayMeals) {
         // Convert API data to MealTime format but preserve any manually added (non-plan) entries
         setMealTimes(prev => {
-          const preserved = prev.map(mt => mt.entries.filter(e => !e.fromPlan));
+          const preserved = preserveNonPlanEntries(prev);
           const next = [...prev];
 
-          next[0] = {
-            ...next[0],
-            entries: [
-              ...todayMeals.breakfast.map((meal, index) => ({
-                id: `breakfast-${index}`,
-                name: meal.name,
-                calories: meal.calories,
-                carbs: meal.carb,
-                fat: meal.fat,
-                protein: meal.protein,
-                confirmed: true,
-                fromPlan: true,
-                uniqueId: generateUniqueId(selectedDay, 0, index)
-              })),
-              ...preserved[0]
-            ]
-          };
-
-          next[1] = {
-            ...next[1],
-            entries: [
-              ...todayMeals.lunch.map((meal, index) => ({
-                id: `lunch-${index}`,
-                name: meal.name,
-                calories: meal.calories,
-                carbs: meal.carb,
-                fat: meal.fat,
-                protein: meal.protein,
-                confirmed: true,
-                fromPlan: true,
-                uniqueId: generateUniqueId(selectedDay, 1, index)
-              })),
-              ...preserved[1]
-            ]
-          };
-
-          next[2] = {
-            ...next[2],
-            entries: [
-              ...todayMeals.dinner.map((meal, index) => ({
-                id: `dinner-${index}`,
-                name: meal.name,
-                calories: meal.calories,
-                carbs: meal.carb,
-                fat: meal.fat,
-                protein: meal.protein,
-                confirmed: true,
-                fromPlan: true,
-                uniqueId: generateUniqueId(selectedDay, 2, index)
-              })),
-              ...preserved[2]
-            ]
-          };
+          next[0] = createMealTimeWithPlanItems(next[0], todayMeals.breakfast, preserved[0], 0);
+          next[1] = createMealTimeWithPlanItems(next[1], todayMeals.lunch, preserved[1], 1);
+          next[2] = createMealTimeWithPlanItems(next[2], todayMeals.dinner, preserved[2], 2);
 
           return next;
         });
@@ -279,10 +259,39 @@ const RecordFoodScreen = () => {
     }
   };
 
+  // Helper functions for saved records processing
+  const createCustomMealTime = (mealType: string, index: number): MealTime => ({
+    time: `${12 + index * 2}:00`, // Generate times for custom meals
+    label: mealType,
+    mealType: mealType.toLowerCase(),
+    entries: []
+  });
+
+  const getCustomMealTypes = (records: EatingRecord[]): string[] => {
+    const defaultMealLabels = new Set(['มื้อเช้า', 'มื้อกลางวัน', 'มื้อเย็น']);
+    return [...new Set(
+      records
+        .map(r => r.meal_type)
+        .filter(mt => mt && !defaultMealLabels.has(mt))
+    )];
+  };
+
+  const addCustomMealsToState = (customMealTypes: string[]) => {
+    if (customMealTypes.length > 0) {
+      setMealTimes(prev => {
+        const existing = new Set(prev.map(m => m.label));
+        const newMeals: MealTime[] = customMealTypes
+          .filter((mt): mt is string => mt !== undefined && !existing.has(mt))
+          .map((mt, idx) => createCustomMealTime(mt, idx));
+        
+        return [...prev, ...newMeals];
+      });
+    }
+  };
+
   const loadSavedRecords = useCallback(async () => {
     try {
       const date = getIsoDateForDay(selectedDay);
-  
       const res = await getEatingRecordsByDate(date);
     
       if (res.success) {
@@ -296,29 +305,8 @@ const RecordFoodScreen = () => {
         });
         
         // Add custom meals from saved records that don't match default meal types
-        const defaultMealLabels = new Set(['มื้อเช้า', 'มื้อกลางวัน', 'มื้อเย็น']);
-        const customMealTypes = [...new Set(
-          records
-            .map(r => r.meal_type)
-            .filter(mt => mt && !defaultMealLabels.has(mt))
-        )];
-        
- 
-        if (customMealTypes.length > 0) {
-          setMealTimes(prev => {
-            const existing = new Set(prev.map(m => m.label));
-            const newMeals: MealTime[] = customMealTypes
-              .filter((mt): mt is string => mt !== undefined && !existing.has(mt))
-              .map((mt, idx) => ({
-                time: `${12 + idx * 2}:00`, // Generate times for custom meals
-                label: mt,
-                mealType: mt.toLowerCase(),
-                entries: []
-              }));
-            
-            return [...prev, ...newMeals];
-          });
-        }
+        const customMealTypes = getCustomMealTypes(records);
+        addCustomMealsToState(customMealTypes);
       }
     } catch (e) {
       console.error('❌ [RecordFood] loadSavedRecords failed:', e);
@@ -826,46 +814,24 @@ const RecordFoodScreen = () => {
     );
   };
 
-  const handleConfirmAll = async () => {
-    const totalMeals = mealTimes.reduce((total, meal) => total + meal.entries.length, 0);
-    
+  // Helper functions for confirming and saving all meals
+  const validateSaveConditions = (totalMeals: number): string | null => {
     if (totalMeals === 0) {
-      Alert.alert('ไม่มีอาหารที่จะบันทึก', 'กรุณาเพิ่มอาหารก่อนทำการยืนยัน');
-      return;
+      return 'ไม่มีอาหารที่จะบันทึก';
     }
     
-    // Only allow saving for today
     if (!isToday) {
-      Alert.alert('ไม่สามารถบันทึกได้', 'สามารถบันทึกอาหารได้เฉพาะวันนี้เท่านั้น');
-      return;
+      return 'ไม่สามารถบันทึกได้ สามารถบันทึกอาหารได้เฉพาะวันนี้เท่านั้น';
     }
-
-    // Check if already saving
-    if (isSaving) {
-      return;
-    }
-
-    // Check if already saved today
-    if (hasSavedToday) {
-      Alert.alert(
-        'เคยบันทึกแล้ว',
-        'คุณได้บันทึกอาหารวันนี้ไปแล้ว ต้องการบันทึกเพิ่มหรือไม่?',
-        [
-          { text: 'ยกเลิก', style: 'cancel' },
-          { 
-            text: 'บันทึกเพิ่ม', 
-            onPress: async () => {
-              await saveAllMealsToDatabase();
-            }
-          }
-        ]
-      );
-      return;
-    }
-
-    // Show plan information in confirmation
-    const planInfo = todayMealData?.planName ? `\nตามแผน: ${todayMealData.planName}` : '';
     
+    if (isSaving) {
+      return 'กำลังบันทึกอยู่';
+    }
+    
+    return null;
+  };
+
+  const showSaveConfirmation = (totalMeals: number, planInfo: string) => {
     Alert.alert(
       'ยืนยันการบันทึก', 
       `คุณต้องการบันทึกอาหาร ${totalMeals} รายการหรือไม่?${planInfo}`,
@@ -881,6 +847,81 @@ const RecordFoodScreen = () => {
     );
   };
 
+  const showAlreadySavedConfirmation = () => {
+    Alert.alert(
+      'เคยบันทึกแล้ว',
+      'คุณได้บันทึกอาหารวันนี้ไปแล้ว ต้องการบันทึกเพิ่มหรือไม่?',
+      [
+        { text: 'ยกเลิก', style: 'cancel' },
+        { 
+          text: 'บันทึกเพิ่ม', 
+          onPress: async () => {
+            await saveAllMealsToDatabase();
+          }
+        }
+      ]
+    );
+  };
+
+  const handleConfirmAll = async () => {
+    const totalMeals = mealTimes.reduce((total, meal) => total + meal.entries.length, 0);
+    
+    // Validate save conditions
+    const errorMessage = validateSaveConditions(totalMeals);
+    if (errorMessage) {
+      if (errorMessage !== 'กำลังบันทึกอยู่') {
+        Alert.alert('ไม่สามารถบันทึกได้', errorMessage);
+      }
+      return;
+    }
+
+    // Check if already saved today
+    if (hasSavedToday) {
+      showAlreadySavedConfirmation();
+      return;
+    }
+
+    // Show plan information in confirmation
+    const planInfo = todayMealData?.planName ? `\nตามแผน: ${todayMealData.planName}` : '';
+    showSaveConfirmation(totalMeals, planInfo);
+  };
+
+  // Helper functions for saving meals to database
+  const createEatingRecordData = (entry: FoodEntry, meal: MealTime, logDate: string): Omit<EatingRecord, 'id' | 'user_id' | 'created_at' | 'updated_at'> => ({
+    log_date: logDate,
+    food_name: entry.name,
+    meal_type: meal.label,
+    calories: entry.calories || 0,
+    carbs: entry.carbs || 0,
+    fat: entry.fat || 0,
+    protein: entry.protein || 0,
+    meal_time: meal.time + ':00', // Convert to HH:MM:SS format
+    image: undefined // No image for now
+  });
+
+  const showSaveResult = (savedCount: number, errorCount: number) => {
+    if (errorCount === 0) {
+      Alert.alert(
+        'สำเร็จ!', 
+        `บันทึกอาหาร ${savedCount} รายการเรียบร้อยแล้ว`,
+        [
+          {
+            text: 'ตกลง',
+            onPress: () => {
+              // Optionally navigate back or refresh
+            }
+          }
+        ]
+      );
+    } else {
+      Alert.alert(
+        'บันทึกเสร็จสิ้น', 
+        `บันทึกสำเร็จ ${savedCount} รายการ\nไม่สำเร็จ ${errorCount} รายการ`,
+        [{ text: 'ตกลง' }]
+      );
+    }
+  };
+
   const saveAllMealsToDatabase = async () => {
     try {
       setIsSaving(true);
@@ -894,18 +935,7 @@ const RecordFoodScreen = () => {
       for (const meal of mealTimes) {
         for (const entry of meal.entries) {
           try {
-            const recordData: Omit<EatingRecord, 'id' | 'user_id' | 'created_at' | 'updated_at'> = {
-              log_date: logDate,
-              food_name: entry.name,
-              meal_type: meal.label,
-              calories: entry.calories || 0,
-              carbs: entry.carbs || 0,
-              fat: entry.fat || 0,
-              protein: entry.protein || 0,
-              meal_time: meal.time + ':00', // Convert to HH:MM:SS format
-              image: undefined // No image for now
-            };
-
+            const recordData = createEatingRecordData(entry, meal, logDate);
             await createEatingRecord(recordData);
             savedCount++;
            
@@ -922,26 +952,7 @@ const RecordFoodScreen = () => {
       }
 
       // Show result
-      if (errorCount === 0) {
-        Alert.alert(
-          'สำเร็จ!', 
-          `บันทึกอาหาร ${savedCount} รายการเรียบร้อยแล้ว`,
-          [
-            {
-              text: 'ตกลง',
-              onPress: () => {
-                // Optionally navigate back or refresh
-              }
-            }
-          ]
-        );
-      } else {
-        Alert.alert(
-          'บันทึกเสร็จสิ้น', 
-          `บันทึกสำเร็จ ${savedCount} รายการ\nไม่สำเร็จ ${errorCount} รายการ`,
-          [{ text: 'ตกลง' }]
-        );
-      }
+      showSaveResult(savedCount, errorCount);
 
     } catch (error) {
       console.error('❌ [RecordFood] Error in saveAllMealsToDatabase:', error);

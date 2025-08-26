@@ -189,7 +189,7 @@ export const getWeeklyNutritionSummary = async (req: AuthenticatedRequest, res: 
       };
     }
 
-    const summary: WeeklyNutritionSummary = weeklyResults.length > 0 ? weeklyResults[0] : {
+    const summary: WeeklyNutritionSummary = weeklyResults.length > 0 && weeklyResults[0].days_count > 0 ? weeklyResults[0] : {
       user_id,
       week_start_date: startDateStr,
       week_end_date: endDateStr,
@@ -210,7 +210,7 @@ export const getWeeklyNutritionSummary = async (req: AuthenticatedRequest, res: 
       calories_deficit_surplus: 0
     };
 
-    console.log(`✅ [WeeklyReport] Generated summary for ${dailyDetails.length} days, ${summary.total_days_with_data} days with data`);
+    console.log(`✅ [WeeklyReport] Generated summary for ${dailyDetails.length} days, ${summary.total_days_with_data} days with actual data`);
 
     res.json({
       success: true,
@@ -291,28 +291,38 @@ export const getWeeklyInsights = async (req: AuthenticatedRequest, res: Response
     // Generate dynamic recommendations based on the data
     const recommendations = [];
 
-    // Consistency recommendation
-    if (insights.days_logged >= 5) {
+    // No data recommendation (highest priority)
+    if (insights.days_logged === 0) {
       recommendations.push({
-        icon: 'checkmark-circle',
-        color: '#22c55e',
-        title: 'ดีมาก!',
-        message: `คุณบันทึกอาหารสม่ำเสมอ ${insights.days_logged} วันในสัปดาห์นี้`
-      });
-    } else if (insights.days_logged >= 3) {
-      recommendations.push({
-        icon: 'warning',
-        color: '#f59e0b',
-        title: 'บันทึกเพิ่มเติม',
-        message: 'ควรบันทึกการกินอาหารให้ครบทุกวันเพื่อผลลัพธ์ที่แม่นยำ'
+        icon: 'clipboard-outline',
+        color: '#6b7280',
+        title: 'เริ่มบันทึกการกิน',
+        message: 'ยังไม่มีการบันทึกการกินในสัปดาห์นี้ เริ่มบันทึกอาหารเพื่อติดตามความคืบหน้า'
       });
     } else {
-      recommendations.push({
-        icon: 'alert-circle',
-        color: '#ef4444',
-        title: 'ต้องปรับปรุง',
-        message: 'บันทึกการกินน้อยเกินไป ควรบันทึกทุกวันเพื่อติดตามความคืบหน้า'
-      });
+      // Consistency recommendation
+      if (insights.days_logged >= 5) {
+        recommendations.push({
+          icon: 'checkmark-circle',
+          color: '#22c55e',
+          title: 'ดีมาก!',
+          message: `คุณบันทึกอาหารสม่ำเสมอ ${insights.days_logged} วันในสัปดาห์นี้`
+        });
+      } else if (insights.days_logged >= 3) {
+        recommendations.push({
+          icon: 'warning',
+          color: '#f59e0b',
+          title: 'บันทึกเพิ่มเติม',
+          message: 'ควรบันทึกการกินอาหารให้ครบทุกวันเพื่อผลลัพธ์ที่แม่นยำ'
+        });
+      } else {
+        recommendations.push({
+          icon: 'alert-circle',
+          color: '#ef4444',
+          title: 'ต้องปรับปรุง',
+          message: 'บันทึกการกินน้อยเกินไป ควรบันทึกทุกวันเพื่อติดตามความคืบหน้า'
+        });
+      }
     }
 
     // Calorie balance recommendation

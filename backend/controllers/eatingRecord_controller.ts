@@ -345,7 +345,11 @@ export const deleteEatingRecord = async (req: Request, res: Response): Promise<v
       .where({ id, user_id: userId })
       .del();
 
-    console.log(`🍽️ [EatingRecord] User ${userId} deleted record ${id}: "${existingRecord.food_name}"`);
+        console.log(`🍽️ [EatingRecord] User ${userId} deleted record ${id}: "${existingRecord.food_name}"`);
+    console.log(`🍽️ [EatingRecord] Record log_date: ${existingRecord.log_date}, Upserting summary for: ${existingRecord.log_date}`);
+
+    // Update daily nutrition summary after deletion
+    await upsertDailyNutritionSummary(userId, existingRecord.log_date);
 
     // Update daily nutrition summary
     await upsertDailyNutritionSummary(userId, existingRecord.log_date);
@@ -446,9 +450,7 @@ export const getEatingStats = async (req: Request, res: Response): Promise<void>
   }
 };
 
-/**
- * Check if plan items are saved by unique_ids
- */
+
 export const checkSavedPlanItems = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = (req as any).user?.id;

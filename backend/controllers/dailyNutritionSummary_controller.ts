@@ -6,16 +6,26 @@ const getBangkokDate = (date: Date) => {
   return new Date(date.toLocaleString("en-US", { timeZone: "Asia/Bangkok" }));
 };
 
-const toBangkokDate = (dateString: string) => {
+const toBangkokDate = (dateInput: string | Date) => {
   // If the string is already in YYYY-MM-DD format, use it directly
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-    return dateString;
+  if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+    return dateInput;
   }
   
-  // Otherwise, parse and convert to Bangkok timezone
-  const date = new Date(dateString);
-  const bangkokDate = getBangkokDate(date);
-  return bangkokDate.toISOString().split('T')[0]; // Return YYYY-MM-DD format
+  // Convert to Date object
+  const date = new Date(dateInput);
+  
+  // Check if the date parsing resulted in a valid date
+  if (isNaN(date.getTime())) {
+    console.warn(`⚠️ Invalid date: ${dateInput}`);
+    return String(dateInput); // Return as string if invalid
+  }
+  
+  // Use UTC methods to avoid timezone conversion issues
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 interface DailyNutritionSummary {
@@ -71,6 +81,7 @@ export const upsertDailyNutritionSummary = async (userId: number, date: string):
 
     console.log(`📊 [DailyNutrition] Found ${records.length} eating records for ${bangkokDate}`);
 
+    // Calculate totals (even if 0 records - this will give us 0 values)
     const totals = records.reduce((acc, record) => ({
       total_calories: acc.total_calories + (record.calories || 0),
       total_fat: acc.total_fat + (record.fat || 0),
@@ -100,7 +111,7 @@ export const upsertDailyNutritionSummary = async (userId: number, date: string):
     };
 
     if (existingSummary) {
-      // Update existing summary (preserve existing target values)
+      // Update existing summary (preserve existing target values, update totals even if 0)
       await db('daily_nutrition_summary')
         .where({
           user_id: userId,
@@ -115,18 +126,22 @@ export const upsertDailyNutritionSummary = async (userId: number, date: string):
         })
         .first();
         
-      console.log(`📊 [DailyNutrition] Updated existing summary with target_cal: ${updated?.target_cal || 'null'}`);
+      console.log(`📊 [DailyNutrition] Updated existing summary: ${totals.total_calories} kcal (${records.length} records)`);
       return updated;
-    } else {
-      // Create new summary
+    } else if (records.length > 0) {
+      // Only create new summary if there are eating records
       const [summaryId] = await db('daily_nutrition_summary').insert(summaryData);
       
       const created = await db('daily_nutrition_summary')
         .where({ id: summaryId })
         .first();
         
-      console.log(`📊 [DailyNutrition] Created new summary with target_cal: ${created?.target_cal || 'null'}`);
+      console.log(`📊 [DailyNutrition] Created new summary: ${totals.total_calories} kcal (${records.length} records)`);
       return created;
+    } else {
+      // No eating records found and no existing summary
+      console.log(`📊 [DailyNutrition] No eating records and no existing summary for ${bangkokDate}`);
+      return null;
     }
   } catch (error) {
     console.error('❌ [DailyNutrition] Error upserting daily nutrition summary:', error);
@@ -171,10 +186,34 @@ export const getDailyNutritionSummary = async (req: Request, res: Response): Pro
 
     console.log(`📊 [DailyNutrition] Found summary:`, summary ? 'Yes' : 'No');
 
-    // If no summary exists, create one from eating records
+    // If no summary exists, check if there are eating records before creating one
     if (!summary) {
-      console.log(`📊 [DailyNutrition] Creating summary from eating records for ${bangkokDate}`);
-      summary = await upsertDailyNutritionSummary(userId, bangkokDate);
+      // Check if there are any eating records for this date first
+      const hasEatingRecords = await db('eating_record')
+        .where({
+          user_id: userId,
+          log_date: bangkokDate
+        })
+        .count('id as count')
+        .first();
+
+      const recordCount = Number(hasEatingRecords?.count || 0);
+      console.log(`📊 [DailyNutrition] Found ${recordCount} eating records for ${bangkokDate}`);
+
+      // Only create summary if there are eating records
+      if (recordCount > 0) {
+        console.log(`📊 [DailyNutrition] Creating summary from eating records for ${bangkokDate}`);
+        summary = await upsertDailyNutritionSummary(userId, bangkokDate);
+      } else {
+        console.log(`📊 [DailyNutrition] No eating records found, not creating summary for ${bangkokDate}`);
+        // Return empty response indicating no data
+        res.json({
+          success: true,
+          data: null,
+          message: 'No nutrition data available for this date'
+        });
+        return;
+      }
     }
 
     // If we have target_cal but missing recommended_*, populate recommended_* using simple ratios
