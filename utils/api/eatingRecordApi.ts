@@ -116,7 +116,6 @@ export const getEatingRecordsByDate = async (date: string): Promise<EatingRecord
  */
 export const getEatingRecordsByDateRange = async (startDate: string, endDate: string): Promise<EatingRecordsRangeResponse> => {
   try {
-    console.log('🍽️ [EatingRecordAPI] Getting records for range:', startDate, 'to', endDate);
     const response = await apiClient.get(`/api/eating-records/range?start_date=${startDate}&end_date=${endDate}`);
     return response.data;
   } catch (error: any) {
@@ -130,7 +129,6 @@ export const getEatingRecordsByDateRange = async (startDate: string, endDate: st
  */
 export const updateEatingRecord = async (id: number, recordData: Partial<EatingRecord>): Promise<EatingRecordResponse> => {
   try {
-    console.log('🍽️ [EatingRecordAPI] Updating record:', id);
     const response = await apiClient.put(`/api/eating-records/${id}`, recordData);
     return response.data;
   } catch (error: any) {
@@ -144,7 +142,6 @@ export const updateEatingRecord = async (id: number, recordData: Partial<EatingR
  */
 export const deleteEatingRecord = async (id: number): Promise<{ success: boolean; message: string }> => {
   try {
-    console.log('🍽️ [EatingRecordAPI] Deleting record:', id);
     const response = await apiClient.delete(`/api/eating-records/${id}`);
     return response.data;
   } catch (error: any) {
@@ -158,7 +155,6 @@ export const deleteEatingRecord = async (id: number): Promise<{ success: boolean
  */
 export const getEatingStats = async (periodDays: number = 7): Promise<EatingStatsResponse> => {
   try {
-    console.log('🍽️ [EatingRecordAPI] Getting stats for period:', periodDays, 'days');
     const response = await apiClient.get(`/api/eating-records/stats?period=${periodDays}`);
     return response.data;
   } catch (error: any) {
@@ -211,9 +207,7 @@ export const calculateTotalNutrients = (records: EatingRecord[]) => {
  */
 export const checkSavedPlanItems = async (uniqueIds: string[]): Promise<{ [key: string]: { saved: boolean, recordId?: number } }> => {
   try {
-    console.log('🍽️ [EatingRecordAPI] Checking saved plan items:', uniqueIds);
     const response = await apiClient.post('/api/eating-records/check-saved', { unique_ids: uniqueIds });
-    console.log('✅ [EatingRecordAPI] Check saved plan items success:', response.data.data);
     return response.data.data;
   } catch (error: any) {
     console.error('❌ [EatingRecordAPI] Error checking saved items:', error.response?.data || error.message);

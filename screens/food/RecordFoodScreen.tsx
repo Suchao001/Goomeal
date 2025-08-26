@@ -104,16 +104,12 @@ const RecordFoodScreen = () => {
   // Handle selectedDay from navigation params
   useFocusEffect(
     useCallback(() => {
-      
-      // Handle returning from the search screen
       if (params?.fromSearch && params?.selectedDay !== undefined) {
-        
-        // Update selectedDay to match the day user was viewing before search
         if (selectedDay !== params.selectedDay) {
           setSelectedDay(params.selectedDay);
         } else {
         }
-        // Clean up params to prevent re-triggering
+     
         navigation.setParams({ fromSearch: false, selectedDay: undefined, timestamp: undefined } as any);
       } else {
       }
@@ -125,37 +121,55 @@ const RecordFoodScreen = () => {
     const currentDay = getCurrentDay();
     const isTodaySelected = selectedDay === currentDay;
 
+    // Reset meal times and state
     setMealTimes(getDefaultMeals()); 
-
-    if (isTodaySelected) {
-      loadTodayMeals();
-    } else {
-      setTodayMealData(null);    
-    }
     setHasSavedToday(false);
 
-    loadSavedRecords();
-    loadDailyNutritionSummary();
-    const loadSummary = async () => {
-      try {
-        if (!isTodaySelected) {
-          const date = getIsoDateForDay(selectedDay);
-          const res = await getDailyNutritionSummary(date);
-          
-          if (res.success && res.data) {
-            setDailyNutritionSummary(res.data);
-          } else {
-            setDailyNutritionSummary(null);
-          }
-        } else {
-          setDailyNutritionSummary(null);
-        }
-      } catch (e) {
-        console.error('❌ [RecordFood] Failed to load daily nutrition summary:', e);
+    if (isTodaySelected) {
+      loadTodayMenus();
+    } else {
+      loadHistoricalMenus();
+    }
+  }, [selectedDay]);
+
+  // Load menus for today (using meal plan + saved status)
+  const loadTodayMenus = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setTodayMealData(null);
+      await loadTodayMeals();
+      await loadSavedRecords();
+      // For today, nutrition summary comes from today meals calculation
+      setDailyNutritionSummary(null);
+    } catch (error) {
+      console.error('❌ [RecordFood] Error loading today menus:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Load menus for historical days (from saved records only)  
+  const loadHistoricalMenus = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setTodayMealData(null);
+      await loadSavedRecords();
+      
+      // Load daily nutrition summary for historical days
+      const date = getIsoDateForDay(selectedDay);
+      const res = await getDailyNutritionSummary(date);
+      
+      if (res.success && res.data) {
+        setDailyNutritionSummary(res.data);
+      } else {
         setDailyNutritionSummary(null);
       }
-    };
-    loadSummary();
+    } catch (error) {
+      console.error('❌ [RecordFood] Error loading historical menus:', error);
+      setDailyNutritionSummary(null);
+    } finally {
+      setIsLoading(false);
+    }
   }, [selectedDay]);
 
   // Load today's meals from API
@@ -292,8 +306,9 @@ const RecordFoodScreen = () => {
   const loadSavedRecords = useCallback(async () => {
     try {
       const date = getIsoDateForDay(selectedDay);
+      
       const res = await getEatingRecordsByDate(date);
-    
+      
       if (res.success) {
         const records = res.data.records || [];
         setSavedRecords(records);
@@ -302,9 +317,12 @@ const RecordFoodScreen = () => {
         // Add custom meals from saved records that don't match default meal types
         const customMealTypes = getCustomMealTypes(records);
         addCustomMealsToState(customMealTypes);
+      } else {
+        setSavedRecords([]);
       }
     } catch (e) {
       console.error('❌ [RecordFood] loadSavedRecords failed:', e);
+      setSavedRecords([]);
     }
   }, [selectedDay]);
 
@@ -337,8 +355,14 @@ const RecordFoodScreen = () => {
   useFocusEffect(
     useCallback(() => {
       
-      // Skip if we just returned from search - let the first useFocusEffect handle it
+      // When returning from search, we need to refresh saved records
       if (params?.fromSearch) {
+        const refreshAfterSearch = async () => {
+          setIsLoading(true);
+          await loadSavedRecords();
+          setIsLoading(false);
+        };
+        refreshAfterSearch();
         return;
       }
       
@@ -346,15 +370,17 @@ const RecordFoodScreen = () => {
       const isTodaySelected = selectedDay === currentDay;
       
       if (isTodaySelected) {
-        loadTodayMeals();
+        loadTodayMenus();
       } else {
-        setTodayMealData(null);
-        setMealTimes(getDefaultMeals());
+        loadHistoricalMenus();
       }
-      loadSavedRecords();
-      loadDailyNutritionSummary();
-    }, [selectedDay, params?.fromSearch])
-  );
+
+    }, [selectedDay, params?.fromSearch, loadTodayMenus, loadHistoricalMenus, loadSavedRecords])
+);
+
+  // Debug: Log savedRecords changes
+  useEffect(() => {
+  }, [savedRecords]);
 
   const { isToday } = (() => {
     const currentDay = getCurrentDay();
