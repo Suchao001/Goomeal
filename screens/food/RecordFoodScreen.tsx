@@ -63,16 +63,19 @@ const RecordFoodScreen = () => {
   ];
 
   // Always start with today's date, but use params.selectedDay if coming from search
-  const [selectedDay, setSelectedDay] = useState(() => {
-   
+  const [selectedDay, setSelectedDayRaw] = useState(() => {
     if (params?.selectedDay) {
-     
       return params.selectedDay;
     }
     const currentDay = getCurrentDay();
-    
     return currentDay;
   });
+
+  // Wrapper function to log state changes
+  const setSelectedDay = (newDay: number | ((prev: number) => number)) => {
+    const actualNewDay = typeof newDay === 'function' ? newDay(selectedDay) : newDay;
+    setSelectedDayRaw(actualNewDay);
+  };
   const [mealTimes, setMealTimes] = useState<MealTime[]>(() => getDefaultMeals());
   const [todayMealData, setTodayMealData] = useState<TodayMealData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -101,29 +104,38 @@ const RecordFoodScreen = () => {
   // Handle selectedDay from navigation params
   useFocusEffect(
     useCallback(() => {
-   
-      if (params?.fromSearch && params?.selectedDay) {
       
-        setSelectedDay(params.selectedDay);
+      // Handle returning from the search screen
+      if (params?.fromSearch && params?.selectedDay !== undefined) {
         
-        // Clear the params after using them to prevent re-triggering
+        // Update selectedDay to match the day user was viewing before search
+        if (selectedDay !== params.selectedDay) {
+          setSelectedDay(params.selectedDay);
+        } else {
+        }
+        // Clean up params to prevent re-triggering
         navigation.setParams({ fromSearch: false, selectedDay: undefined, timestamp: undefined } as any);
+      } else {
       }
-    }, [params?.timestamp, navigation]) // ใช้ timestamp เป็น dependency
+    }, [params?.fromSearch, params?.selectedDay, params?.timestamp, selectedDay, navigation]) 
   );
 
   // Load appropriate data when selected day changes
   useEffect(() => {
     const currentDay = getCurrentDay();
     const isTodaySelected = selectedDay === currentDay;
+
+    setMealTimes(getDefaultMeals()); 
+
     if (isTodaySelected) {
       loadTodayMeals();
     } else {
-      setMealTimes(getDefaultMeals());
-      setTodayMealData(null);
+      setTodayMealData(null);    
     }
     setHasSavedToday(false);
-    // Load daily nutrition summary when selected day changes
+
+    loadSavedRecords();
+    loadDailyNutritionSummary();
     const loadSummary = async () => {
       try {
         if (!isTodaySelected) {
@@ -132,31 +144,19 @@ const RecordFoodScreen = () => {
           
           if (res.success && res.data) {
             setDailyNutritionSummary(res.data);
-            console.log(`📊 [DailyNutrition] Loaded summary for ${date}:`, res.data);
           } else {
-            console.log(`⚠️ [DailyNutrition] No summary found for ${date}, will use default target`);
             setDailyNutritionSummary(null);
           }
         } else {
           setDailyNutritionSummary(null);
         }
       } catch (e) {
-    entryId: string;
         console.error('❌ [RecordFood] Failed to load daily nutrition summary:', e);
         setDailyNutritionSummary(null);
       }
     };
     loadSummary();
   }, [selectedDay]);
-
-
-  // Ensure we start with today's date when component mounts
-  useEffect(() => {
-    const currentDay = getCurrentDay();
-    if (selectedDay !== currentDay) {
-      setSelectedDay(currentDay);
-    }
-  }, []);
 
   // Load today's meals from API
   // Helper functions for meal processing
@@ -272,7 +272,7 @@ const RecordFoodScreen = () => {
     return [...new Set(
       records
         .map(r => r.meal_type)
-        .filter(mt => mt && !defaultMealLabels.has(mt))
+        .filter((mt): mt is string => mt !== undefined && mt !== null && !defaultMealLabels.has(mt))
     )];
   };
 
@@ -299,11 +299,6 @@ const RecordFoodScreen = () => {
         setSavedRecords(records);
         setHasSavedToday(records.length > 0);
         
-        // Log each record for debugging
-        records.forEach((record, idx) => {
-          console.log(`📋 [LoadSaved] Record ${idx + 1}: ${record.food_name} (${record.meal_type}) - ${record.calories} cal - ID: ${record.id}`);
-        });
-        
         // Add custom meals from saved records that don't match default meal types
         const customMealTypes = getCustomMealTypes(records);
         addCustomMealsToState(customMealTypes);
@@ -325,9 +320,7 @@ const RecordFoodScreen = () => {
         
         if (res.success && res.data) {
           setDailyNutritionSummary(res.data);
-          console.log(`📊 [DailyNutrition] Loaded summary for ${date}:`, res.data);
         } else {
-          console.log(`⚠️ [DailyNutrition] No summary found for ${date}, will use default target`);
           setDailyNutritionSummary(null);
         }
       } else {
@@ -343,22 +336,24 @@ const RecordFoodScreen = () => {
   // Refresh data when screen comes back into focus
   useFocusEffect(
     useCallback(() => {
+      
+      // Skip if we just returned from search - let the first useFocusEffect handle it
+      if (params?.fromSearch) {
+        return;
+      }
+      
       const currentDay = getCurrentDay();
       const isTodaySelected = selectedDay === currentDay;
-      
       
       if (isTodaySelected) {
         loadTodayMeals();
       } else {
-       
         setTodayMealData(null);
         setMealTimes(getDefaultMeals());
       }
-      // Always refresh saved records when focused
       loadSavedRecords();
-      // Load daily nutrition summary for target calories
       loadDailyNutritionSummary();
-    }, [loadTodayMeals, loadSavedRecords, loadDailyNutritionSummary, selectedDay])
+    }, [selectedDay, params?.fromSearch])
   );
 
   const { isToday } = (() => {
@@ -492,8 +487,6 @@ const RecordFoodScreen = () => {
 
   // Edit food functions
   const handleEditFood = (timeIndex: number, entryId: string) => {
-    console.log('🔍 [EditFood] Looking for entry:', entryId, 'in meal index:', timeIndex);
-    
     let entry: FoodEntry | undefined;
     
     // Get the current day info to determine which entries to search
@@ -545,8 +538,6 @@ const RecordFoodScreen = () => {
       entry = allEntries.find(e => e.id === entryId);
     }
     
-    console.log('🔍 [EditFood] Found entry:', entry);
-    
     if (!entry) {
       console.error('❌ [EditFood] Entry not found!');
       Alert.alert('ไม่พบข้อมูล', 'ไม่สามารถหาอาหารที่ต้องการแก้ไขได้');
@@ -557,8 +548,6 @@ const RecordFoodScreen = () => {
       Alert.alert('ไม่สามารถแก้ไขได้', 'สามารถแก้ไขได้เฉพาะอาหารที่บันทึกแล้วหรืออาหารที่เพิ่มแล้วเท่านั้น');
       return;
     }
-
-    console.log('✅ [EditFood] Found entry:', entry);
 
     // Convert FoodEntry to FoodItem format for EditFoodModal
     const foodItem: FoodItem = {
@@ -584,9 +573,6 @@ const RecordFoodScreen = () => {
 
   const handleSaveEditedFood = async (updatedFood: FoodItem) => {
     if (!editingFood) return;
-
-    console.log('💾 [SaveEditedFood] Starting update:', updatedFood.name);
-    console.log('💾 [SaveEditedFood] Editing food data:', editingFood);
 
     try {
       // Find the entry to get recordId
@@ -649,8 +635,6 @@ const RecordFoodScreen = () => {
         return;
       }
 
-      console.log('💾 [SaveEditedFood] Found recordId:', recordId);
-
       // Call update API
       const updateData = {
         food_name: updatedFood.name,
@@ -661,8 +645,6 @@ const RecordFoodScreen = () => {
       };
 
       await updateEatingRecord(recordId, updateData);
-
-      console.log('✅ [SaveEditedFood] API update successful');
 
       // Refresh data from server
       await loadSavedRecords();
@@ -767,7 +749,6 @@ const RecordFoodScreen = () => {
               // If it has recordId, delete from backend
               if (recordId) {
                 await deleteEatingRecord(recordId);
-                console.log('✅ [DeleteFood] Successfully deleted record:', recordId);
                 
                 // Update savedRecords state locally instead of reloading
                 setSavedRecords(prev => prev.filter(r => r.id !== recordId));
@@ -791,8 +772,6 @@ const RecordFoodScreen = () => {
                   setMealTimes(updatedMealTimes);
                 }
               } else {
-                console.log('⚠️ [DeleteFood] No recordId found, removing from local state only');
-                
                 // Remove from mealTimes if it exists there
                 const updatedEntries = meal?.entries.filter(e => e.id !== entryId) || [];
                 const updatedMealTimes = [...mealTimes];
@@ -802,8 +781,6 @@ const RecordFoodScreen = () => {
                 };
                 setMealTimes(updatedMealTimes);
               }
-
-              console.log('🗑️ [DeleteFood] Deleted entry:', entryId);
             } catch (e) {
               console.error('❌ [DeleteFood] Failed to delete:', e);
               Alert.alert('ลบไม่สำเร็จ', 'กรุณาลองใหม่อีกครั้ง');
@@ -1201,7 +1178,6 @@ const RecordFoodScreen = () => {
       if (!entry.recordId) return;
       try {
         await deleteEatingRecord(entry.recordId);
-        console.log(entry.recordId);
         await loadSavedRecords();
       } catch (e) {
         Alert.alert('ลบไม่สำเร็จ', 'กรุณาลองใหม่อีกครั้ง');

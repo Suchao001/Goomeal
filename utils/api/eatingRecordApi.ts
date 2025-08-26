@@ -90,7 +90,6 @@ export interface EatingStatsResponse {
  */
 export const createEatingRecord = async (recordData: Omit<EatingRecord, 'id' | 'user_id' | 'created_at' | 'updated_at'>): Promise<EatingRecordResponse> => {
   try {
-    console.log('🍽️ [EatingRecordAPI] Creating eating record:', recordData.food_name);
     const response = await apiClient.post('/api/eating-records', recordData);
     return response.data;
   } catch (error: any) {
@@ -104,7 +103,6 @@ export const createEatingRecord = async (recordData: Omit<EatingRecord, 'id' | '
  */
 export const getEatingRecordsByDate = async (date: string): Promise<EatingRecordsResponse> => {
   try {
-    console.log('🍽️ [EatingRecordAPI] Getting records for date:', date);
     const response = await apiClient.get(`/api/eating-records/date/${date}`);
     return response.data;
   } catch (error: any) {

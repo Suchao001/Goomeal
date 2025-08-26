@@ -176,13 +176,10 @@ export const fetchTodayMeals = async (targetDate?: Date): Promise<TodayMealData 
   try {
     const today = targetDate || new Date();
     
-    console.log('🍽️ [TodayMealApi] Fetching today\'s meals for:', today.toLocaleDateString('th-TH'));
-    
     // Call API to get current active food plan
     const response = await apiClient.get('/user-food-plans/current');
     
     if (!response.data.success) {
-      console.log('⚠️ [TodayMealApi] No active food plan found:', response.data.error);
       return null;
     }
 
@@ -202,7 +199,6 @@ export const fetchTodayMeals = async (targetDate?: Date): Promise<TodayMealData 
     };
 
     if (!currentFoodPlan.usingInfo) {
-      console.log('❌ [TodayMealApi] No using info found');
       return null;
     }
     
@@ -229,7 +225,6 @@ export const fetchTodayMeals = async (targetDate?: Date): Promise<TodayMealData 
     );
     
     if (!planDay || !planJsonData) {
-      console.log('❌ [TodayMealApi] No plan day found or no plan data');
       return null;
     }
     
@@ -248,7 +243,6 @@ export const fetchTodayMeals = async (targetDate?: Date): Promise<TodayMealData 
     const mealsData = dayData?.meals || dayData || null;
     
     if (!mealsData) {
-      console.log('❌ [TodayMealApi] No meals data found for plan day:', planDay);
       return null;
     }
 

@@ -33,13 +33,10 @@ export interface DailyNutritionResponse {
 export const getDailyNutritionSummary = async (date: string): Promise<DailyNutritionResponse> => {
   try {
     const url = `/api/daily-summary/${date}`;
-    console.log(`📊 [DailyNutrition] Getting summary for date: ${date}`);
-    console.log(`📊 [DailyNutrition] Full API URL: ${url}`);
     
     const response = await apiClient.get(url);
     
     if (response.data.success) {
-      console.log(`✅ [DailyNutrition] Got summary:`, response.data.data);
       return response.data;
     } else {
       console.error('❌ [DailyNutrition] API returned error:', response.data.error);
@@ -64,14 +61,12 @@ export const getDailyNutritionSummary = async (date: string): Promise<DailyNutri
  */
 export const getDailyNutritionSummariesByRange = async (startDate: string, endDate: string) => {
   try {
-    console.log(`📊 [DailyNutrition] Getting summaries from ${startDate} to ${endDate}`);
     
     const response = await apiClient.get(`/api/daily-summary/range`, {
       params: { start_date: startDate, end_date: endDate }
     });
     
     if (response.data.success) {
-      console.log(`✅ [DailyNutrition] Got ${response.data.data.summaries.length} summaries`);
       return response.data;
     } else {
       console.error('❌ [DailyNutrition] API returned error:', response.data.error);
@@ -91,12 +86,10 @@ export const getDailyNutritionSummariesByRange = async (startDate: string, endDa
  */
 export const updateDailyWeight = async (date: string, weight: number) => {
   try {
-    console.log(`⚖️ [DailyNutrition] Updating weight for ${date}: ${weight}kg`);
     
     const response = await apiClient.put(`/api/daily-summary/${date}/weight`, { weight });
     
     if (response.data.success) {
-      console.log(`✅ [DailyNutrition] Weight updated successfully`);
       return response.data;
     } else {
       console.error('❌ [DailyNutrition] API returned error:', response.data.error);
@@ -116,12 +109,10 @@ export const updateDailyWeight = async (date: string, weight: number) => {
  */
 export const updateDailyRecommendation = async (date: string, recommendation: string) => {
   try {
-    console.log(`💡 [DailyNutrition] Updating recommendation for ${date}`);
     
     const response = await apiClient.put(`/api/daily-summary/${date}/recommendation`, { recommendation });
     
     if (response.data.success) {
-      console.log(`✅ [DailyNutrition] Recommendation updated successfully`);
       return response.data;
     } else {
       console.error('❌ [DailyNutrition] API returned error:', response.data.error);

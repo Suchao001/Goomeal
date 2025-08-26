@@ -23,7 +23,6 @@ export const getBangkokDateForDay = (day: number): string => {
   const dayStr = String(targetDate.getDate()).padStart(2, '0');
   
   const isoDate = `${year}-${month}-${dayStr}`;
-  console.log(`📅 [BangkokTime] Converting day ${day} to ISO date: ${isoDate} (Bangkok timezone)`);
   
   return isoDate;
 };

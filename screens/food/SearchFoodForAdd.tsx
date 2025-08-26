@@ -36,6 +36,8 @@ const SearchFoodForAdd = () => {
   const navigation = useTypedNavigation();
   const route = useRoute();
   const params = route.params as RouteParams || {};
+  console.log('🔍 [SearchFoodForAdd] Component initialized with params:', params);
+  
   const apiClient = useMemo(() => new ApiClient(), []);
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -157,6 +159,11 @@ const SearchFoodForAdd = () => {
         image: food.img || undefined,
       };
       await createEatingRecord(recordData);
+      console.log('🔄 [SearchFoodForAdd] Navigating back to RecordFood with params:', { 
+        fromSearch: true, 
+        selectedDay: params.selectedDay,
+        timestamp: Date.now()
+      });
       navigation.replace('RecordFood', { 
         fromSearch: true, 
         selectedDay: params.selectedDay,

@@ -56,13 +56,7 @@ export function mapAuthUserToUserProfile(authUser: AuthUser | null): UserProfile
     activity_level: authUser.activity_level!
   };
 
-  console.log('✅ [UserProfileMapper] Successfully mapped auth user to profile:', {
-    age: userProfile.age,
-    weight: userProfile.weight,
-    height: userProfile.height,
-    gender: userProfile.gender,
-    target_goal: userProfile.target_goal
-  });
+  console.log('✅ [UserProfileMapper] Successfully mapped auth user to profile');
 
   return userProfile;
 }

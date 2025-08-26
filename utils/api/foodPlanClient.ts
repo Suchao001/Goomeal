@@ -132,7 +132,6 @@ export class FoodPlanApiClient extends BaseApiClient {
 
       } else {
         // If no new image, or if the image is an existing URL/path, use application/json
-        console.log('📤 [foodPlanApiClient] Updating with JSON (no new image).');
         const payload: any = {
           name: data.name,
           description: data.description,
@@ -142,8 +141,6 @@ export class FoodPlanApiClient extends BaseApiClient {
           image: data.image ? data.image.replace(/^(http?:\/\/[^\/]+)/, '') : undefined
         };
         
-        console.log('📤 [foodPlanApiClient] Sending JSON payload:', JSON.stringify(payload, null, 2));
-
         const response = await this.axiosInstance.put(`/user-food-plans/${planId}`, payload, {
           headers: { 'Content-Type': 'application/json' },
         });

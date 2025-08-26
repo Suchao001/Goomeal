@@ -89,13 +89,11 @@ export interface ApiResponse<T> {
  */
 export const getWeeklyNutritionSummary = async (weekOffset = 0): Promise<ApiResponse<WeeklyReportData>> => {
   try {
-    console.log(`📊 [WeeklyApi] Getting weekly summary, offset: ${weekOffset}`);
     
     const response = await apiClient.get(`/api/weekly-report/summary`, {
       params: { weekOffset }
     });
 
-    console.log(`✅ [WeeklyApi] Successfully got weekly summary`);
     return response.data;
   } catch (error: any) {
     console.error('❌ [WeeklyApi] Error getting weekly summary:', error);
@@ -113,13 +111,11 @@ export const getWeeklyNutritionSummary = async (weekOffset = 0): Promise<ApiResp
  */
 export const getWeeklyInsights = async (weekOffset = 0): Promise<ApiResponse<WeeklyInsightsData>> => {
   try {
-    console.log(`💡 [WeeklyApi] Getting weekly insights, offset: ${weekOffset}`);
     
     const response = await apiClient.get(`/api/weekly-report/insights`, {
       params: { weekOffset }
     });
 
-    console.log(`✅ [WeeklyApi] Successfully got weekly insights`);
     return response.data;
   } catch (error: any) {
     console.error('❌ [WeeklyApi] Error getting weekly insights:', error);
