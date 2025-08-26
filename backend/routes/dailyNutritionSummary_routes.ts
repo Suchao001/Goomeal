@@ -2,7 +2,6 @@ import express from 'express';
 import {
   getDailyNutritionSummary,
   getDailyNutritionSummariesByRange,
-  updateDailyWeight,
   updateDailyRecommendation
 } from '../controllers/dailyNutritionSummary_controller';
 import authenticateToken from '../middlewares/authenticateToken';
@@ -35,7 +34,6 @@ router.get('/:date', getDailyNutritionSummary);
  * @params  date (YYYY-MM-DD format)
  * @body    { weight: number }
  */
-router.put('/:date/weight', updateDailyWeight);
 
 /**
  * @route   PUT /api/daily-summary/:date/recommendation

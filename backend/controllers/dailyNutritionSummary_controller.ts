@@ -28,7 +28,31 @@ interface DailyNutritionSummary {
   total_carbs?: number;
   recommendation?: string;
   weight?: number;
+  // user targets
+  target_cal?: number | null;
+  target_fat?: number | null;
+  target_carb?: number | null;
+  target_protein?: number | null;
+  // system recommended (duration-independent moderate approach)
+  recommended_cal?: number | null;
+  recommended_carb?: number | null;
+  recommended_protein?: number | null;
+  recommended_fat?: number | null;
 }
+
+// Calculate recommended macros from calories with simple balanced ratios (doesn't require weight)
+const calcRecommendedFromCalories = (cal: number) => {
+  // 50% carb, 20% protein, 30% fat
+  const carbCal = cal * 0.5;
+  const proteinCal = cal * 0.2;
+  const fatCal = cal * 0.3;
+  return {
+    recommended_cal: Math.round(cal),
+    recommended_carb: Math.round(carbCal / 4),
+    recommended_protein: Math.round(proteinCal / 4),
+    recommended_fat: Math.round(fatCal / 9)
+  };
+};
 
 /**
  * Create or update daily nutrition summary
@@ -153,8 +177,28 @@ export const getDailyNutritionSummary = async (req: Request, res: Response): Pro
       summary = await upsertDailyNutritionSummary(userId, bangkokDate);
     }
 
+    // If we have target_cal but missing recommended_*, populate recommended_* using simple ratios
+    if (summary && summary.target_cal && (
+      summary.recommended_cal == null ||
+      summary.recommended_carb == null ||
+      summary.recommended_protein == null ||
+      summary.recommended_fat == null
+    )) {
+      const rec = calcRecommendedFromCalories(summary.target_cal);
+      try {
+        await db('daily_nutrition_summary')
+          .where({ user_id: userId, summary_date: bangkokDate })
+          .update(rec);
+        // Reflect changes in memory
+        summary = { ...summary, ...rec } as any;
+        console.log(`✅ [DailyNutrition] Auto-filled recommended_* from target_cal for ${bangkokDate}`);
+      } catch (err) {
+        console.warn('⚠️ [DailyNutrition] Failed to update recommended_*:', err);
+      }
+    }
+
     if (summary) {
-      console.log(`📊 [DailyNutrition] Returning summary with target_cal: ${summary.target_cal || 'null'}`);
+      console.log(`📊 [DailyNutrition] Returning summary with target_cal: ${summary.target_cal || 'null'}, recommended_cal: ${summary.recommended_cal || 'null'}`);
     }
 
     res.status(200).json({
@@ -243,75 +287,6 @@ export const getDailyNutritionSummariesByRange = async (req: Request, res: Respo
   }
 };
 
-/**
- * Update weight for a specific date
- */
-export const updateDailyWeight = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const userId = (req as any).user?.id;
-    const { date } = req.params;
-    const { weight } = req.body;
-    
-    if (!userId) {
-      res.status(401).json({
-        success: false,
-        error: 'ไม่พบข้อมูลผู้ใช้'
-      });
-      return;
-    }
-
-    if (!date || weight === undefined) {
-      res.status(400).json({
-        success: false,
-        error: 'กรุณาระบุวันที่และน้ำหนัก'
-      });
-      return;
-    }
-
-    // Ensure summary exists for this date
-    let summary = await db('daily_nutrition_summary')
-      .where({
-        user_id: userId,
-        summary_date: date
-      })
-      .first();
-
-    if (!summary) {
-      // Create summary if it doesn't exist
-      summary = await upsertDailyNutritionSummary(userId, date);
-    }
-
-    // Update weight
-    await db('daily_nutrition_summary')
-      .where({
-        user_id: userId,
-        summary_date: date
-      })
-      .update({ weight });
-
-    const updatedSummary = await db('daily_nutrition_summary')
-      .where({
-        user_id: userId,
-        summary_date: date
-      })
-      .first();
-
-    console.log(`⚖️ [DailyNutrition] User ${userId} updated weight for ${date}: ${weight}kg`);
-
-    res.status(200).json({
-      success: true,
-      data: updatedSummary,
-      message: 'อัปเดตน้ำหนักเรียบร้อยแล้ว'
-    });
-
-  } catch (error) {
-    console.error('Error updating daily weight:', error);
-    res.status(500).json({
-      success: false,
-      error: 'เกิดข้อผิดพลาดในการอัปเดตน้ำหนัก'
-    });
-  }
-};
 
 /**
  * Update recommendation for a specific date

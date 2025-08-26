@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: my_database:3306
--- Generation Time: Aug 13, 2025 at 09:05 AM
+-- Generation Time: Aug 26, 2025 at 06:33 AM
 -- Server version: 10.11.13-MariaDB-ubu2204
 -- PHP Version: 8.2.27
 
@@ -74,9 +74,17 @@ CREATE TABLE `daily_nutrition_summary` (
   `total_calories` int(11) DEFAULT NULL,
   `total_fat` int(11) DEFAULT NULL,
   `total_protein` int(11) DEFAULT NULL,
-  `total_carbs` int(11) DEFAULT NULL,
+  `target_cal` int(11) DEFAULT NULL,
+  `target_fat` int(11) DEFAULT NULL,
+  `target_carb` int(11) DEFAULT NULL,
+  `target_protein` int(11) DEFAULT NULL,
   `recommendation` text DEFAULT NULL,
-  `weight` decimal(5,2) DEFAULT NULL
+  `weight` decimal(5,2) DEFAULT NULL,
+  `total_carbs` int(11) NOT NULL,
+  `recommended_cal` int(11) DEFAULT NULL,
+  `recommended_carb` int(11) DEFAULT NULL,
+  `recommended_protein` int(11) DEFAULT NULL,
+  `recommended_fat` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -114,7 +122,8 @@ CREATE TABLE `eating_record` (
   `fat` int(11) DEFAULT NULL,
   `protein` int(11) DEFAULT NULL,
   `meal_time` time DEFAULT NULL,
-  `image` varchar(255) DEFAULT NULL
+  `image` varchar(255) DEFAULT NULL,
+  `unique_id` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -226,7 +235,7 @@ CREATE TABLE `users` (
   `email` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
   `created_date` datetime NOT NULL,
-  `age` int(3) DEFAULT NULL,
+  `age` int(4) DEFAULT NULL,
   `weight` decimal(5,2) DEFAULT NULL,
   `last_updated_weight` decimal(5,2) DEFAULT NULL,
   `height` decimal(5,2) DEFAULT NULL,
@@ -277,7 +286,9 @@ CREATE TABLE `user_food_plans` (
   `description` text DEFAULT NULL,
   `plan` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`plan`)),
   `img` varchar(255) DEFAULT NULL,
-  `user_id` int(11) DEFAULT NULL
+  `user_id` int(11) DEFAULT NULL,
+  `plan_start_date` date DEFAULT NULL,
+  `is_repeat` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -292,6 +303,19 @@ CREATE TABLE `user_food_plan_using` (
   `user_id` int(11) NOT NULL,
   `start_date` date NOT NULL,
   `is_repeat` tinyint(1) DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_weight_logs`
+--
+
+CREATE TABLE `user_weight_logs` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `weight` decimal(5,2) NOT NULL,
+  `logged_at` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -433,6 +457,13 @@ ALTER TABLE `user_food_plan_using`
   ADD KEY `user_id` (`user_id`);
 
 --
+-- Indexes for table `user_weight_logs`
+--
+ALTER TABLE `user_weight_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_user_logged_at` (`user_id`,`logged_at`);
+
+--
 -- Indexes for table `weekly_nutrition_summary`
 --
 ALTER TABLE `weekly_nutrition_summary`
@@ -528,6 +559,12 @@ ALTER TABLE `user_food_plan_using`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `user_weight_logs`
+--
+ALTER TABLE `user_weight_logs`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `weekly_nutrition_summary`
 --
 ALTER TABLE `weekly_nutrition_summary`
@@ -582,6 +619,12 @@ ALTER TABLE `user_food_plans`
 ALTER TABLE `user_food_plan_using`
   ADD CONSTRAINT `user_food_plan_using_ibfk_1` FOREIGN KEY (`food_plan_id`) REFERENCES `user_food_plans` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `user_food_plan_using_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `user_weight_logs`
+--
+ALTER TABLE `user_weight_logs`
+  ADD CONSTRAINT `user_weight_logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `weekly_nutrition_summary`

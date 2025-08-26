@@ -4,6 +4,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import { useFocusEffect } from '@react-navigation/native';
 import Menu from '../material/Menu';
+import CaloriesSummary from '../../components/CaloriesSummary';
 import { getDailyNutritionSummary, type DailyNutritionSummary } from '../../utils/api/dailyNutritionApi';
 import { getEatingRecordsByDate, type EatingRecord } from '../../utils/api/eatingRecordApi';
 import { getBangkokDateForDay, getCurrentBangkokDay, getTodayBangkokDate } from '../../utils/bangkokTime';
@@ -24,6 +25,7 @@ const EatingReportScreen = () => {
   const [dailyNutrition, setDailyNutrition] = useState<DailyNutritionSummary | null>(null);
   const [eatingRecords, setEatingRecords] = useState<EatingRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [useRecommended, setUseRecommended] = useState(true); // Toggle between recommended and target
   
 
   const handleBackPress = () => {
@@ -38,11 +40,11 @@ const EatingReportScreen = () => {
       
       console.log(`📊 [EatingReport] Loading data for day ${selectedDay} (${date})`);
       
-      // Load daily nutrition summary
+     
       const nutritionRes = await getDailyNutritionSummary(date);
       if (nutritionRes.success && nutritionRes.data) {
         setDailyNutrition(nutritionRes.data);
-        console.log(`📊 [EatingReport] Loaded nutrition summary:`, nutritionRes.data);
+        console.log(`📊 [EatingReport] Loaded nutrition summary:`, JSON.stringify(nutritionRes.data));
       } else {
         setDailyNutrition(null);
         console.log(`⚠️ [EatingReport] No nutrition summary for ${date}`);
@@ -122,12 +124,18 @@ const EatingReportScreen = () => {
   // Calculate report data from actual data
   const getReportData = () => {
     if (!dailyNutrition && eatingRecords.length === 0) {
-      return [
-        { label: 'แคลอรี่', value: '0', target: '0', unit: 'kcal', color: '#ef4444', progress: 0 },
-        { label: 'โปรตีน', value: '0', target: '0', unit: 'g', color: '#22c55e', progress: 0 },
-        { label: 'คาร์โบไฮเดรต', value: '0', target: '0', unit: 'g', color: '#3b82f6', progress: 0 },
-        { label: 'ไขมัน', value: '0', target: '0', unit: 'g', color: '#f59e0b', progress: 0 },
-      ];
+      return {
+        totalCalories: 0,
+        totalProtein: 0,
+        totalCarbs: 0,
+        totalFat: 0,
+        targetCalories: 0,
+        targetProtein: 0,
+        targetCarbs: 0,
+        targetFat: 0,
+        hasRecommended: false,
+        hasTarget: false
+      };
     }
 
     // Use dailyNutrition if available, otherwise calculate from eating records
@@ -140,52 +148,37 @@ const EatingReportScreen = () => {
     const totalFat = dailyNutrition?.total_fat || 
       eatingRecords.reduce((sum, record) => sum + (record.fat || 0), 0);
 
-    // Get target values from dailyNutrition
-    const targetCalories = dailyNutrition?.target_cal || 0;
-    const targetProtein = dailyNutrition?.target_protein || 0;
-    const targetCarbs = dailyNutrition?.target_carb || 0;
-    const targetFat = dailyNutrition?.target_fat || 0;
+    // Check what data is available
+    const hasRecommended = !!(dailyNutrition?.recommended_cal || dailyNutrition?.recommended_protein || 
+                             dailyNutrition?.recommended_carb || dailyNutrition?.recommended_fat);
+    const hasTarget = !!(dailyNutrition?.target_cal || dailyNutrition?.target_protein || 
+                        dailyNutrition?.target_carb || dailyNutrition?.target_fat);
 
-    // Calculate progress percentages
-    const caloriesProgress = targetCalories > 0 ? Math.min((totalCalories / targetCalories) * 100, 100) : 0;
-    const proteinProgress = targetProtein > 0 ? Math.min((totalProtein / targetProtein) * 100, 100) : 0;
-    const carbsProgress = targetCarbs > 0 ? Math.min((totalCarbs / targetCarbs) * 100, 100) : 0;
-    const fatProgress = targetFat > 0 ? Math.min((totalFat / targetFat) * 100, 100) : 0;
+    // Get target values based on toggle
+    const getTargetValue = (recommended: number | null | undefined, target: number | null | undefined): number => {
+      if (useRecommended && recommended != null) return recommended;
+      if (!useRecommended && target != null) return target;
+      // Fallback: if preferred type is not available, use the other
+      return recommended ?? target ?? 0;
+    };
 
-    return [
-      { 
-        label: 'แคลอรี่', 
-        value: totalCalories.toLocaleString(), 
-        target: targetCalories > 0 ? targetCalories.toLocaleString() : '-',
-        unit: 'kcal', 
-        color: '#ef4444',
-        progress: caloriesProgress
-      },
-      { 
-        label: 'โปรตีน', 
-        value: Math.round(totalProtein).toString(), 
-        target: targetProtein > 0 ? Math.round(targetProtein).toString() : '-',
-        unit: 'g', 
-        color: '#22c55e',
-        progress: proteinProgress
-      },
-      { 
-        label: 'คาร์โบไฮเดรต', 
-        value: Math.round(totalCarbs).toString(), 
-        target: targetCarbs > 0 ? Math.round(targetCarbs).toString() : '-',
-        unit: 'g', 
-        color: '#3b82f6',
-        progress: carbsProgress
-      },
-      { 
-        label: 'ไขมัน', 
-        value: Math.round(totalFat).toString(), 
-        target: targetFat > 0 ? Math.round(targetFat).toString() : '-',
-        unit: 'g', 
-        color: '#f59e0b',
-        progress: fatProgress
-      },
-    ];
+    const targetCalories = getTargetValue(dailyNutrition?.recommended_cal, dailyNutrition?.target_cal);
+    const targetProtein = getTargetValue(dailyNutrition?.recommended_protein, dailyNutrition?.target_protein);
+    const targetCarbs = getTargetValue(dailyNutrition?.recommended_carb, dailyNutrition?.target_carb);
+    const targetFat = getTargetValue(dailyNutrition?.recommended_fat, dailyNutrition?.target_fat);
+
+    return {
+      totalCalories,
+      totalProtein,
+      totalCarbs,
+      totalFat,
+      targetCalories,
+      targetProtein,
+      targetCarbs,
+      targetFat,
+      hasRecommended,
+      hasTarget
+    };
   };
 
   const reportData = getReportData();
@@ -254,75 +247,9 @@ const EatingReportScreen = () => {
       
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }}>
         {/* Main Content */}
-        <View className="flex-1 px-4 pt-6">
+  <View className="flex-1 px-4 pt-6">
           {/* Daily Summary Header */}
-          {(dailyNutrition || eatingRecords.length > 0) && (
-            <View 
-              className="rounded-2xl p-5 mb-6 shadow-lg"
-              style={{ backgroundColor: '#ffb800' }}
-            >
-              <View className="flex-row items-center justify-between mb-3">
-                <Text className="text-white text-xl font-bold">
-                  สรุปประจำวัน
-                </Text>
-                {dailyNutrition?.weight && (
-                  <View 
-                    className="px-3 py-1 rounded-full"
-                    style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
-                  >
-                    <Text className="text-white text-sm font-medium">
-                      น้ำหนัก {dailyNutrition.weight} kg
-                    </Text>
-                  </View>
-                )}
-              </View>
-              
-              <View className="flex-row justify-between items-center">
-                <View>
-                  <Text className="text-white opacity-80 text-sm">แคลอรี่ที่บริโภค</Text>
-                  <Text className="text-white text-2xl font-bold">
-                    {(dailyNutrition?.total_calories || 
-                      eatingRecords.reduce((sum, r) => sum + (r.calories || 0), 0)
-                    ).toLocaleString()}
-                  </Text>
-                  <Text className="text-white opacity-80 text-sm">kcal</Text>
-                </View>
-                
-                {dailyNutrition?.target_cal && (
-                  <View className="items-end">
-                    <Text className="text-white opacity-80 text-sm">เป้าหมาย</Text>
-                    <Text className="text-white text-lg font-semibold">
-                      {dailyNutrition.target_cal.toLocaleString()}
-                    </Text>
-                    <Text className="text-white opacity-80 text-sm">kcal</Text>
-                    
-                    <View className="mt-2">
-                      <Text className={`text-sm font-medium ${
-                        (dailyNutrition.total_calories || 0) > dailyNutrition.target_cal 
-                          ? 'text-red-200' : 'text-green-200'
-                      }`}>
-                        {(dailyNutrition.total_calories || 0) > dailyNutrition.target_cal 
-                          ? `เกิน ${((dailyNutrition.total_calories || 0) - dailyNutrition.target_cal).toLocaleString()} kcal`
-                          : `เหลือ ${(dailyNutrition.target_cal - (dailyNutrition.total_calories || 0)).toLocaleString()} kcal`
-                        }
-                      </Text>
-                    </View>
-                  </View>
-                )}
-              </View>
-              
-              {dailyNutrition?.recommendation && (
-                <View 
-                  className="rounded-xl p-3 mt-4"
-                  style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
-                >
-                  <Text className="text-white opacity-80 text-sm mb-1">คำแนะนำ</Text>
-                  <Text className="text-white text-sm">{dailyNutrition.recommendation}</Text>
-                </View>
-              )}
-            </View>
-          )}
-          
+         
           <Text className="text-2xl font-bold text-gray-800 mb-2">สถิติการกินของคุณ</Text>
           <View className="flex-row items-center justify-between mb-8">
             <Text className="text-base text-gray-600 leading-6">
@@ -331,72 +258,74 @@ const EatingReportScreen = () => {
             <TouchableOpacity
               className="bg-primary px-3 py-1 rounded-full"
               onPress={() => {
-                // TODO: Navigate to WeeklyReport when available
-                console.log('Navigate to WeeklyReport');
+                navigation.navigate('WeeklyReport');
               }}
             >
               <Text className="text-white text-xs font-medium">ดูรายสัปดาห์</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Stats Cards */}
-          <View className="flex-row flex-wrap gap-3 mb-6">
-            {reportData.map((item, index) => (
-              <View key={index} className="bg-white rounded-2xl p-4 items-center flex-1 min-w-[45%] shadow-lg shadow-slate-800">
-                <View 
-                  className="w-12 h-12 rounded-full items-center justify-center mb-2"
-                  style={{ backgroundColor: `${item.color}20` }}
+          {/* Nutrition Toggle */}
+          <View className="flex-row justify-between items-center mb-4">
+            <Text className="text-lg font-bold text-gray-800">สรุปโภชนาการ</Text>
+            {(reportData.hasRecommended && reportData.hasTarget) && (
+              <View className="flex-row bg-gray-100 rounded-lg p-1">
+                <TouchableOpacity 
+                  className={`px-4 py-2 rounded-md ${!useRecommended ? 'bg-blue-500' : ''}`}
+                  onPress={() => setUseRecommended(false)}
                 >
-                  <Icon name="analytics" size={24} color={item.color} />
-                </View>
-                
-                {/* Current vs Target */}
-                <View className="items-center mb-2">
-                  <Text className="text-2xl font-bold text-gray-800">{item.value}</Text>
-                  <Text className="text-xs text-gray-600">{item.unit}</Text>
-                  {item.target !== '-' && (
-                    <Text className="text-xs text-gray-500 mt-1">
-                      เป้าหมาย: {item.target} {item.unit}
-                    </Text>
-                  )}
-                </View>
-
-                {/* Progress Bar */}
-                {item.target !== '-' && (
-                  <View className="w-full mb-2">
-                    <View className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <View 
-                        className="h-full rounded-full transition-all duration-300"
-                        style={{ 
-                          width: `${Math.min(item.progress, 100)}%`,
-                          backgroundColor: item.progress > 100 ? '#ef4444' : item.color 
-                        }}
-                      />
-                    </View>
-                    <Text 
-                      className="text-xs text-center mt-1"
-                      style={{ 
-                        color: item.progress > 100 ? '#ef4444' : item.color 
-                      }}
-                    >
-                      {Math.round(item.progress)}%
-                    </Text>
-                  </View>
-                )}
-                
-                <Text className="text-sm text-gray-700 text-center">{item.label}</Text>
+                  <Text className={`text-sm ${!useRecommended ? 'text-white font-semibold' : 'text-gray-600'}`}>เป้าหมาย</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  className={`px-4 py-2 rounded-md ${useRecommended ? 'bg-green-500' : ''}`}
+                  onPress={() => setUseRecommended(true)}
+                >
+                  <Text className={`text-sm ${useRecommended ? 'text-white font-semibold' : 'text-gray-600'}`}>แนะนำ</Text>
+                </TouchableOpacity>
               </View>
-            ))}
+            )}
           </View>
 
-          {/* Chart Placeholder */}
-          <View className="bg-white rounded-2xl p-5 mb-6 shadow-lg shadow-slate-800">
-            <Text className="text-lg font-bold text-gray-800 mb-4">กราฟการบริโภคแคลอรี่</Text>
-            <View className="h-50 items-center justify-center bg-gray-50 rounded-xl">
-              <Icon name="bar-chart" size={80} color="#9ca3af" />
-              <Text className="text-base text-gray-500 mt-2">กราฟจะแสดงที่นี่</Text>
+          {/* CaloriesSummary Component */}
+          {(reportData.targetCalories > 0 || reportData.targetProtein > 0 || reportData.targetCarbs > 0 || reportData.targetFat > 0) ? (
+            <CaloriesSummary
+              caloriesConsumed={reportData.totalCalories || 0}
+              caloriesTarget={Math.max(reportData.targetCalories || 0, 1)} // Prevent division by zero
+              protein={{
+                current: reportData.totalProtein || 0,
+                target: Math.max(reportData.targetProtein || 0, 1), // Prevent division by zero
+                unit: 'g',
+                color: '#22c55e',
+                icon: 'fitness'
+              }}
+              carbs={{
+                current: reportData.totalCarbs || 0,
+                target: Math.max(reportData.targetCarbs || 0, 1), // Prevent division by zero
+                unit: 'g',
+                color: '#3b82f6',
+                icon: 'leaf'
+              }}
+              fat={{
+                current: reportData.totalFat || 0,
+                target: Math.max(reportData.targetFat || 0, 1), // Prevent division by zero
+                unit: 'g',
+                color: '#f59e0b',
+                icon: 'water'
+              }}
+            />
+          ) : (
+            <View className="bg-white rounded-2xl p-6 mb-6 shadow-lg">
+              <View className="items-center">
+                <Icon name="analytics-outline" size={48} color="#9ca3af" />
+                <Text className="text-lg font-semibold text-gray-700 mt-3">ไม่มีข้อมูลเป้าหมาย</Text>
+                <Text className="text-sm text-gray-500 text-center mt-2">
+                  กรุณาตั้งค่าเป้าหมายโภชนาการของคุณเพื่อดูสถิติรายละเอียด
+                </Text>
+              </View>
             </View>
-          </View>
+          )}
+
+          <View className='h-4'></View>
 
           {/* Recent Meals */}
           

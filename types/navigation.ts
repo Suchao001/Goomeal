@@ -15,6 +15,7 @@ export type RootStackParamList = {
     FoodMenu: undefined;
     EatingBlog: undefined;
     EatingReport: undefined;
+    WeeklyReport: undefined;
     EatingStyleSettings: undefined;
     NotificationSettings: undefined;
     RecordSettings: undefined;

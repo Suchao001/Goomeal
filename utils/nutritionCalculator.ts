@@ -50,6 +50,24 @@ const CALORIES_PER_GRAM = {
   fat: 9
 };
 
+// ระยะเวลาแผนมาตรฐาน 1 เดือน และค่าคงที่ที่ใช้ในการคำนวณแบบไม่สุดโต่ง
+const PLAN_DURATION_DAYS = 30; // 1 เดือน
+const CALORIES_PER_KG_WEIGHT = 7700; // 1 kg ≈ 7700 kcal
+
+// ขอบเขตแบบ "กลางๆ" สำหรับส่วนเกิน/ขาดแคลอรี่ต่อวัน (kcal/day)
+// - decrease: เน้นลดแบบยั่งยืน 300–600 kcal/วัน (กลางๆ = 500)
+// - increase: เพิ่มแบบยั่งยืน 250–500 kcal/วัน (กลางๆ = 350)
+const DAILY_ADJUSTMENT_BOUNDS = {
+  increase: { min: 250, max: 500, fallback: 350 },
+  decrease: { min: 300, max: 600, fallback: 500 }
+} as const;
+
+function clampModerate(raw: number, goal: 'increase' | 'decrease') {
+  const b = DAILY_ADJUSTMENT_BOUNDS[goal];
+  if (!isFinite(raw) || raw <= 0) return b.fallback; // ถ้าไม่มีเป้าหมายที่ชัดเจน ให้ใช้ค่า "กลางๆ"
+  return Math.min(Math.max(raw, b.min), b.max);
+}
+
 /**
  * คำนวณ BMR (Basal Metabolic Rate) ด้วยสูตร Mifflin-St Jeor
  */
@@ -76,8 +94,8 @@ export function calculateTDEE(bmr: number, activityLevel: string): number {
 }
 
 /**
- * คำนวณแคลอรี่เป้าหมายตามเป้าหมายของผู้ใช้
- * ใช้ระยะเวลา 1 เดือน (30 วัน) เป็นมาตรฐาน
+ * คำนวณแคลอรี่เป้าหมายตามเป้าหมายของผู้ใช้ (ไม่ผูกกับจำนวนวัน)
+ * ใช้การปรับแบบ "กลางๆ" ต่อวัน เพื่อความยั่งยืนและไม่เหวี่ยงค่าแคลอรี่
  */
 export function calculateTargetCalories(
   tdee: number,
@@ -86,27 +104,18 @@ export function calculateTargetCalories(
   goal: string
 ): number {
   let targetCalories = tdee;
-  const PLAN_DURATION_DAYS = 30; // คาดหวัง 1 เดือน
-  
   if (goal === 'healthy') {
     // รักษาน้ำหนัก = TDEE
     targetCalories = tdee;
   } else {
-    // คำนวณน้ำหนักที่ต้องเปลี่ยน
-    const weightDifference = Math.abs(targetWeight - currentWeight);
-    
-    // การเปลี่ยนแปลงน้ำหนัก 1 kg ≈ 7700 kcal
-    const totalCaloriesDifference = weightDifference * 7700;
-    
-    // แคลอรี่ส่วนเกิน/ขาดแคลนต่อวัน (ใน 1 เดือน)
-    const dailyCaloriesDifference = totalCaloriesDifference / PLAN_DURATION_DAYS;
-    
     if (goal === 'increase') {
-      // เพิ่มน้ำหนัก = TDEE + แคลอรี่ส่วนเกิน
-      targetCalories = tdee + dailyCaloriesDifference;
+    // เพิ่มน้ำหนักแบบกลางๆ โดยไม่อิงจำนวนวัน
+    const surplus = DAILY_ADJUSTMENT_BOUNDS.increase.fallback; // ค่ากลาง ~350 kcal
+    targetCalories = tdee + surplus;
     } else if (goal === 'decrease') {
-      // ลดน้ำหนัก = TDEE - แคลอรี่ขาดแคลน
-      targetCalories = tdee - dailyCaloriesDifference;
+    // ลดน้ำหนักแบบกลางๆ โดยไม่อิงจำนวนวัน
+    const deficit = DAILY_ADJUSTMENT_BOUNDS.decrease.fallback; // ค่ากลาง ~500 kcal
+    targetCalories = tdee - deficit;
       // ป้องกันไม่ให้แคลอรี่ต่ำเกินไป (ขั้นต่ำ 1200 kcal)
       targetCalories = Math.max(targetCalories, 1200);
     }
@@ -115,15 +124,7 @@ export function calculateTargetCalories(
   return Math.round(targetCalories);
 }
 
-/**
- * คำนวณสัดส่วนสารอาหารหลัก (Macronutrients) ด้วยวิธี Hybrid Method
- * 
- * วิธีการใหม่:
- * 1. คำนวณโปรตีนก่อน: ใช้หลักการ "อิงตามน้ำหนักตัว" 
- * 2. คำนวณพลังงานจากโปรตีน: แปลงโปรตีนจากกรัมเป็นแคลอรี่
- * 3. หาพลังงานที่เหลือ: แคลอรี่เป้าหมาย - แคลอรี่โปรตีน
- * 4. แบ่งพลังงานที่เหลือ: แบ่งให้คาร์บและไขมันตามสัดส่วนที่เหมาะสม
- */
+
 export function calculateMacronutrients(targetCalories: number, goal: string, targetWeight: number) {
   // ขั้นตอนที่ 1: คำนวณโปรตีนตามน้ำหนักตัว
   const proteinPerKg = PROTEIN_PER_KG[goal as keyof typeof PROTEIN_PER_KG] || PROTEIN_PER_KG.healthy;
@@ -208,13 +209,19 @@ export function getCalculationDetails(userProfile: UserProfileData) {
   const weight = parseFloat(userProfile.weight);
   const height = parseFloat(userProfile.height);
   const targetWeight = parseFloat(userProfile.target_weight);
-  const PLAN_DURATION_DAYS = 30; // คาดหวัง 1 เดือน
   
   const bmr = calculateBMR(weight, height, age, userProfile.gender);
   const tdee = calculateTDEE(bmr, userProfile.activity_level);
   const targetCalories = calculateTargetCalories(tdee, weight, targetWeight, userProfile.target_goal);
   const macros = calculateMacronutrients(targetCalories, userProfile.target_goal, targetWeight);
   
+  const goal = userProfile.target_goal;
+  const defaultAdjustment = goal === 'increase'
+    ? DAILY_ADJUSTMENT_BOUNDS.increase.fallback
+    : goal === 'decrease'
+    ? DAILY_ADJUSTMENT_BOUNDS.decrease.fallback
+    : 0;
+
   return {
     userProfile,
     calculations: {
@@ -229,10 +236,9 @@ export function getCalculationDetails(userProfile: UserProfileData) {
         result: tdee
       },
       targetCalories: {
-        weightDifference: Math.abs(targetWeight - weight),
-        totalCaloriesDifference: Math.abs(targetWeight - weight) * 7700,
-        dailyCaloriesDifference: (Math.abs(targetWeight - weight) * 7700) / PLAN_DURATION_DAYS,
-        planDuration: PLAN_DURATION_DAYS,
+        approach: 'moderate-default-per-day (duration-independent)',
+        defaultAdjustment,
+        bounds: DAILY_ADJUSTMENT_BOUNDS,
         result: targetCalories
       },
       macronutrients: macros

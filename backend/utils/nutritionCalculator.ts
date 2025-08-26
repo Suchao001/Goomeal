@@ -50,6 +50,24 @@ const CALORIES_PER_GRAM = {
   fat: 9
 };
 
+// ระยะเวลาแผนมาตรฐาน 1 เดือน และค่าคงที่ที่ใช้ในการคำนวณแบบไม่สุดโต่ง
+const PLAN_DURATION_DAYS = 30; // 1 เดือน (คงไว้เป็นข้อมูลอ้างอิง ไม่ได้ใช้ตรงๆ ในสูตรใหม่)
+const CALORIES_PER_KG_WEIGHT = 7700; // 1 kg ≈ 7700 kcal (สำหรับใช้ภายหลังถ้าต้องการ)
+
+// ขอบเขตแบบ "กลางๆ" สำหรับส่วนเกิน/ขาดแคลอรี่ต่อวัน (kcal/day)
+// - decrease: เน้นลดแบบยั่งยืน 300–600 kcal/วัน (กลางๆ = 500)
+// - increase: เพิ่มแบบยั่งยืน 250–500 kcal/วัน (กลางๆ = 350)
+const DAILY_ADJUSTMENT_BOUNDS = {
+  increase: { min: 250, max: 500, fallback: 350 },
+  decrease: { min: 300, max: 600, fallback: 500 }
+} as const;
+
+function clampModerate(raw: number, goal: 'increase' | 'decrease') {
+  const b = DAILY_ADJUSTMENT_BOUNDS[goal];
+  if (!isFinite(raw) || raw <= 0) return b.fallback; // ถ้าไม่มีเป้าหมายที่ชัดเจน ให้ใช้ค่า "กลางๆ"
+  return Math.min(Math.max(raw, b.min), b.max);
+}
+
 /**
  * คำนวณ BMR (Basal Metabolic Rate) ด้วยสูตร Mifflin-St Jeor
  */
@@ -74,7 +92,8 @@ export function calculateTDEE(bmr: number, activityLevel: string): number {
 }
 
 /**
- * คำนวณแคลอรี่เป้าหมายตามเป้าหมายของผู้ใช้
+ * คำนวณแคลอรี่เป้าหมายตามเป้าหมายของผู้ใช้ (ไม่ผูกกับจำนวนวัน)
+ * ใช้การปรับแบบ "กลางๆ" ต่อวัน เพื่อความยั่งยืนและไม่เหวี่ยงค่าแคลอรี่
  */
 export function calculateTargetCalories(
   tdee: number,
@@ -83,19 +102,18 @@ export function calculateTargetCalories(
   goal: string
 ): number {
   let targetCalories = tdee;
-  const PLAN_DURATION_DAYS = 30; // 1 เดือน
   
   if (goal === 'healthy') {
     targetCalories = tdee;
   } else {
-    const weightDifference = Math.abs(targetWeight - currentWeight);
-    const totalCaloriesDifference = weightDifference * 7700; // 1 kg = 7700 kcal
-    const dailyCaloriesDifference = totalCaloriesDifference / PLAN_DURATION_DAYS;
-    
     if (goal === 'increase') {
-      targetCalories = tdee + dailyCaloriesDifference;
+      // เพิ่มน้ำหนักแบบกลางๆ โดยไม่อิงจำนวนวัน
+      const surplus = DAILY_ADJUSTMENT_BOUNDS.increase.fallback; // ~350 kcal/day
+      targetCalories = tdee + surplus;
     } else if (goal === 'decrease') {
-      targetCalories = tdee - dailyCaloriesDifference;
+      // ลดน้ำหนักแบบกลางๆ โดยไม่อิงจำนวนวัน
+      const deficit = DAILY_ADJUSTMENT_BOUNDS.decrease.fallback; // ~500 kcal/day
+      targetCalories = tdee - deficit;
       targetCalories = Math.max(targetCalories, 1200); // ขั้นต่ำ 1200 kcal
     }
   }
@@ -131,7 +149,8 @@ export function calculateRecommendedNutrition(userProfile: UserProfileData): Rec
   const { age, weight, height, gender, target_goal, target_weight, activity_level } = userProfile;
   
   // คำนวณ BMR
-  const bmr = calculateBMR(weight, height, age, gender);
+  const effectiveAge = typeof age === 'number' && isFinite(age) ? age : 25; // ค่าเริ่มต้นแบบปลอดภัย
+  const bmr = calculateBMR(weight, height, effectiveAge, gender);
   
   // คำนวณ TDEE
   const tdee = calculateTDEE(bmr, activity_level);
