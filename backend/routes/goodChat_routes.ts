@@ -6,7 +6,8 @@ import {
   clearChatHistory,
   checkAiHealth,
   getConversationSummary,
-  triggerRollingSummary
+  triggerRollingSummary,
+  updateChatStyle
 } from '../controllers/goodChat_controller';
 import authenticateToken from '../middlewares/authenticateToken';
 
@@ -26,6 +27,9 @@ router.get('/messages', getChatMessages);
 
 // Send message to chat
 router.post('/message', sendMessage);
+
+// Update chat style
+router.post('/style', updateChatStyle);
 
 // Clear chat history
 router.delete('/history', clearChatHistory);

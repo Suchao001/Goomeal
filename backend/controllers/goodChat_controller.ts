@@ -19,6 +19,96 @@ interface ChatSession {
   started_at?: Date;
   updated_at?: Date;
   summary?: string;
+  style?: string;
+}
+
+interface UserInfo {
+  age?: number;
+  weight?: number;
+  height?: number;
+  gender?: string;
+  body_fat?: number;
+  target_weight?: number;
+  eating_type?: string;
+  dietary_restrictions?: string[];
+  additional_requirements?: string;
+  activity_level?: string;
+  summary?: string;
+}
+
+/**
+ * Create system message based on chat style
+ */
+function createStyleSystemMessage(style: string, userInfo: UserInfo) {
+  const {
+    age, weight, height, gender, body_fat, target_weight,
+    eating_type, dietary_restrictions, additional_requirements, 
+    activity_level, summary
+  } = userInfo;
+
+  // Base prompt ที่ใช้ร่วมกัน
+  const basePrompt = `คุณเป็น AI ผู้เชี่ยวชาญด้านโภชนาการและสุขภาพ ชื่อ "GoodMeal AI" 
+  ให้คำแนะนำเกี่ยวกับ:
+  - การกินเพื่อสุขภาพ
+  - โภชนาการ
+  - เมนูอาหาร
+  - การลดน้ำหนัก
+  - การเพิ่มกล้ามเนื้อ
+  - วิธีทำอาหารเพื่อสุขภาพ
+  
+  โดยมีข้อมูลผู้ใช้ดังนี้:
+  - อายุ: ${age} ปี
+  - น้ำหนัก: ${weight} กิโลกรัม
+  - ส่วนสูง: ${height} เซนติเมตร
+  - เพศ: ${gender}
+  - อัตราไขมันในร่างกาย: ${body_fat}%
+  - น้ำหนักเป้าหมาย: ${target_weight} กิโลกรัม
+  - ประเภทการกิน: ${eating_type}
+  - ข้อจำกัดด้านอาหาร: ${dietary_restrictions}
+  - ความต้องการเพิ่มเติม: ${additional_requirements}
+  - ระดับกิจกรรม: ${activity_level}
+
+  โดยมีข้อมูลสรุปการสนทนาที่ผ่านมาดังนี้:
+  - สรุป: ${summary || 'ไม่มีข้อมูลสรุป'}`;
+
+  // Style-specific prompts
+  const stylePrompts = {
+    style1: `${basePrompt}
+    
+    🎯 รูปแบบการสนทนา: เป็นมิตรและให้กำลังใจ
+    - ใช้น้ำเสียงอบอุ่น เป็นกันเอง
+    - เรียกผู้ใช้ว่า "คุณ" หรือ "น้อง"
+    - ใช้อิโมจิประกอบ
+    - ให้กำลังใจและสนับสนุน
+    - ตอบเป็นภาษาไทยเสมอ`,
+
+    style2: `${basePrompt}
+    
+    🎯 รูปแบบการสนทนา: เป็นทางการและเชี่ยวชาญ
+    - ใช้น้ำเสียงเป็นทางการ แต่ไม่เย็นชา
+    - เรียกผู้ใช้ว่า "คุณ" หรือ "ท่าน"
+    - มุ่งเน้นข้อมูลทางวิทยาศาสตร์
+    - อ้างอิงข้อมูลที่เชื่อถือได้
+    - ใช้คำศัพท์ทางการแพทย์และโภชนาการ
+    - ตอบเป็นภาษาไทยเสมอ`,
+
+    style3: `${basePrompt}
+    
+    🎯 รูปแบบการสนทนา: สบายๆ และเข้าถึงง่าย
+    - ใช้น้ำเสียงสบายๆ เหมือนเพื่อน
+    - เรียกผู้ใช้ว่า "เธอ" หรือ "นาย/นาง"
+    - ใช้ภาษาง่ายๆ เข้าใจง่าย
+    - หลีกเลี่ยงคำศัพท์เทคนิค
+    - ให้ตัวอย่างจากชีวิตประจำวัน
+    - ตอบเป็นภาษาไทยเสมอ`
+  };
+
+  const selectedPrompt = stylePrompts[style as keyof typeof stylePrompts] || stylePrompts.style1;
+
+  return {
+    role: 'system',
+    content: selectedPrompt
+  };
 }
 
 const getUserInfo = async (userId: number) => {
@@ -66,7 +156,8 @@ export const getChatSession = async (req: Request, res: Response): Promise<void>
       await db('chat_session').insert({
         user_id: userId,
         started_at: new Date(),
-        updated_at: new Date()
+        updated_at: new Date(),
+        style: 'style1' // default style
       });
 
       // Add initial system message
@@ -96,11 +187,70 @@ export const getChatSession = async (req: Request, res: Response): Promise<void>
   }
 };
 
+export const updateChatStyle = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req as any).user?.id;
+    const { style } = req.body;
+    
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: 'ไม่พบข้อมูลผู้ใช้'
+      });
+      return;
+    }
+
+    if (!style || !['style1', 'style2', 'style3'].includes(style)) {
+      res.status(400).json({
+        success: false,
+        error: 'รูปแบบการสนทนาไม่ถูกต้อง'
+      });
+      return;
+    }
+
+    // Check if session exists
+    let session = await db('chat_session')
+      .where({ user_id: userId })
+      .first();
+
+    if (!session) {
+      // Create new session with style
+      await db('chat_session').insert({
+        user_id: userId,
+        started_at: new Date(),
+        updated_at: new Date(),
+        style: style
+      });
+    } else {
+      // Update existing session
+      await db('chat_session')
+        .where({ user_id: userId })
+        .update({
+          style: style,
+          updated_at: new Date()
+        });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `อัปเดตรูปแบบการสนทนาเป็น ${style} เรียบร้อยแล้ว`,
+      style: style
+    });
+
+  } catch (error) {
+    console.error('Error updating chat style:', error);
+    res.status(500).json({
+      success: false,
+      error: 'เกิดข้อผิดพลาดในการอัปเดตรูปแบบการสนทนา'
+    });
+  }
+};
+
 
 export const getChatMessages = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = (req as any).user?.id;
-    const { limit = 50, offset = 0 } = req.query;
+    const { limit = 30, offset = 0 } = req.query;
     
     if (!userId) {
       res.status(401).json({
@@ -296,14 +446,14 @@ async function getAiResponse(userMessage: string, userId: number): Promise<strin
     const recentMessages = await db('chat_message')
       .where({ user_id: userId })
       .orderBy('created_at', 'desc')
-      .limit(10)
+      .limit(8) 
       .select('role', 'message');
 
-    const getSummary = await db('chat_session')
+    const session = await db('chat_session')
       .where({ user_id: userId })
       .first();
     
-    const {summary} = getSummary || {};
+    const { summary, style } = session || {};
 
     const { age, weight, height, gender, body_fat, target_weight,
        eating_type, dietary_restrictions, additional_requirements, 
@@ -314,36 +464,20 @@ async function getAiResponse(userMessage: string, userId: number): Promise<strin
       content: msg.message
     }));
 
-    
-    const systemMessage = {
-      role: 'system',
-      content: `คุณเป็น AI ผู้เชี่ยวชาญด้านโภชนาการและสุขภาพ ชื่อ "GoodMeal AI" 
-      ให้คำแนะนำเกี่ยวกับ:
-      - การกินเพื่อสุขภาพ
-      - โภชนาการ
-      - เมนูอาหาร
-      - การลดน้ำหนัก
-      - การเพิ่มกล้ามเนื้อ
-      - วิธีทำอาหารเพื่อสุขภาพ
-      
-      โดยมีข้อมูลผู้ใช้ดังนี้:
-      - อายุ: ${age} ปี
-      - น้ำหนัก: ${weight} กิโลกรัม
-      - ส่วนสูง: ${height} เซนติเมตร
-      - เพศ: ${gender}
-      - อัตราไขมันในร่างกาย: ${body_fat}%
-      - น้ำหนักเป้าหมาย: ${target_weight} กิโลกรัม
-      - ประเภทการกิน: ${eating_type}
-      - ข้อจำกัดด้านอาหาร: ${dietary_restrictions}
-      - ความต้องการเพิ่มเติม: ${additional_requirements}
-      - ระดับกิจกรรม: ${activity_level}
-
-      โดยมีข้อมูลสรุปการสนทนาที่ผ่านมาดังนี้:
-      - สรุป: ${summary || 'ไม่มีข้อมูลสรุป'}
-
-      ตอบเป็นภาษาไทยเสมอ และให้คำแนะนำที่เป็นประโยชน์ ถูกต้อง และเข้าใจง่าย
-      ใช้น้ำเสียงที่เป็นมิตรและให้กำลังใจ`
-    };
+    // สร้าง system message ตาม style
+    const systemMessage = createStyleSystemMessage(style || 'style1', {
+      age: age || undefined, 
+      weight: weight || undefined, 
+      height: height || undefined, 
+      gender, 
+      body_fat: body_fat || undefined, 
+      target_weight: target_weight || undefined,
+      eating_type, 
+      dietary_restrictions, 
+      additional_requirements, 
+      activity_level, 
+      summary
+    });
 
     const messages = [
       systemMessage,
@@ -355,7 +489,7 @@ async function getAiResponse(userMessage: string, userId: number): Promise<strin
     const response = await axios.post(OPENAI_API_URL, {
       model: 'gpt-3.5-turbo',
       messages: messages,
-      max_tokens: 500,
+      max_tokens: 1000,
       temperature: 0.7,
       top_p: 0.9
     }, {

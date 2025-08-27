@@ -15,11 +15,34 @@ const ChatScreen = () => {
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [selectedStyle, setSelectedStyle] = useState<'style1' | 'style2' | 'style3'>('style1');
 
   // Load chat history when component mounts
   useEffect(() => {
     loadChatHistory();
+    loadChatStyle();
   }, []);
+
+  const loadChatStyle = async () => {
+    try {
+      const session = await apiClient.getChatSession();
+      if (session.style && ['style1', 'style2', 'style3'].includes(session.style)) {
+        setSelectedStyle(session.style);
+      }
+    } catch (error) {
+      console.error('Error loading chat style:', error);
+    }
+  };
+
+  const toggleChatStyle = async (style: 'style1' | 'style2' | 'style3') => {
+    try {
+      setSelectedStyle(style);
+      await apiClient.updateChatStyle(style);
+    } catch (error) {
+      console.error('Error updating chat style:', error);
+      Alert.alert('ข้อผิดพลาด', 'ไม่สามารถเปลี่ยนรูปแบบการสนทนาได้');
+    }
+  };
 
   const loadChatHistory = async () => {
     try {
@@ -27,14 +50,12 @@ const ChatScreen = () => {
       // Get or create session first
       await apiClient.getChatSession();
       
-      // Then get chat messages
-      const messages = await apiClient.getChatMessages();
-      console.log('Loaded chat messages:', messages);
+      // Then get chat messages (limit to last 30 messages for performance)
+      const messages = await apiClient.getChatMessages(30, 0);
       
       if (Array.isArray(messages)) {
         setChatMessages(messages);
       } else {
-        console.warn('Messages is not an array:', messages);
         setChatMessages([]);
       }
     } catch (error) {
@@ -55,20 +76,73 @@ const ChatScreen = () => {
     if (message.trim() && !isSending) {
       try {
         setIsSending(true);
-        const result = await apiClient.sendChatMessage(message.trim());
         
-        console.log('SendMessage result:', result);
+        // สร้าง user message และแสดงทันทีในหน้าจอ
+        const userMessage = {
+          id: Date.now(), // temporary ID
+          text: message.trim(),
+          isBot: false,
+          role: 'user' as const,
+          timestamp: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
+        };
         
-        // Add both user and bot messages to the chat - access via result.data
-        if (result && result.userMessage && result.botMessage) {
-          setChatMessages(prev => [...prev, result.userMessage, result.botMessage]);
+        // แสดง user message ทันทีก่อนส่งไป API
+        setChatMessages(prev => {
+          const newMessages = [...prev, userMessage];
+          // จำกัดข้อความในหน่วยความจำไว้ที่ 50 ข้อความ
+          return newMessages.length > 50 ? newMessages.slice(-50) : newMessages;
+        });
+        setMessage(''); // ล้าง input ทันที
+        
+        // ส่งข้อความไป API
+        const result = await apiClient.sendChatMessage(userMessage.text);
+        
+        
+        // เพิ่มเฉพาะ bot message เมื่อได้รับการตอบกลับ
+        if (result && result.botMessage) {
+          setChatMessages(prev => {
+            const newMessages = [...prev, result.botMessage];
+            // จำกัดข้อความในหน่วยความจำไว้ที่ 50 ข้อความ
+            return newMessages.length > 50 ? newMessages.slice(-50) : newMessages;
+          });
+        } else if (result && result.userMessage && result.botMessage) {
+          // กรณีที่ API ส่ง user message กลับมาด้วย ให้ใช้ bot message อย่างเดียว
+          setChatMessages(prev => {
+            const newMessages = [...prev, result.botMessage];
+            // จำกัดข้อความในหน่วยความจำไว้ที่ 50 ข้อความ
+            return newMessages.length > 50 ? newMessages.slice(-50) : newMessages;
+          });
         } else {
-          console.warn('Invalid result structure:', result);
+          // เพิ่ม fallback message หาก API ไม่ตอบกลับ
+          const errorMessage = {
+            id: Date.now() + 1,
+            text: 'ขออภัยครับ เกิดข้อผิดพลาดในการประมวลผล กรุณาลองใหม่อีกครั้ง',
+            isBot: true,
+            role: 'assistant' as const,
+            timestamp: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
+          };
+          setChatMessages(prev => {
+            const newMessages = [...prev, errorMessage];
+            // จำกัดข้อความในหน่วยความจำไว้ที่ 50 ข้อความ
+            return newMessages.length > 50 ? newMessages.slice(-50) : newMessages;
+          });
         }
-        setMessage('');
       } catch (error) {
         console.error('Error sending message:', error);
-        Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถส่งข้อความได้ กรุณาลองใหม่อีกครั้ง');
+        
+        // เพิ่ม error message ใน chat แทน Alert
+        const errorMessage = {
+          id: Date.now() + 2,
+          text: 'เกิดข้อผิดพลาดในการส่งข้อความ กรุณาลองใหม่อีกครั้ง',
+          isBot: true,
+          role: 'assistant' as const,
+          timestamp: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
+        };
+        setChatMessages(prev => {
+          const newMessages = [...prev, errorMessage];
+          // จำกัดข้อความในหน่วยความจำไว้ที่ 50 ข้อความ
+          return newMessages.length > 50 ? newMessages.slice(-50) : newMessages;
+        });
       } finally {
         setIsSending(false);
       }
@@ -99,7 +173,7 @@ const ChatScreen = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1 bg-white">
       {/* Header */}
       <View className="bg-primary px-4 pt-10 pb-1">
         <View className="flex-row items-center justify-between mb-2">
@@ -122,29 +196,29 @@ const ChatScreen = () => {
       </View>
 
       {/* Chat Messages */}
-      <ScrollView className="flex-1 px-4 py-4" showsVerticalScrollIndicator={false}>
+      <ScrollView className="flex-1 px-4 py-2" showsVerticalScrollIndicator={false}>
         {isLoading ? (
           <View className="flex-1 items-center justify-center">
             <Text className="text-gray-500">กำลังโหลดประวัติการสนทนา...</Text>
           </View>
         ) : (
           Array.isArray(chatMessages) && chatMessages.length > 0 ? chatMessages.map((msg, index) => (
-            <View key={msg.id || index} className={`mb-4 ${msg.isBot ? 'items-start' : 'items-end'}`}>
-              <View className={`max-w-[80%] p-3 rounded-2xl ${
+            <View key={msg.id || index} className={`mb-6 ${msg.isBot ? 'items-center' : 'items-end'}`}>
+              <View className={`${msg.isBot ? 'max-w-[90%]' : 'max-w-[80%]'} p-4 rounded-2xl ${
                 msg.isBot 
-                  ? 'bg-white border border-gray-200 rounded-bl-sm' 
+                  ? 'bg-gray-50 rounded-bl-md' 
                   : 'bg-primary rounded-br-sm'
               }`}>
                 {msg.isBot && (
-                  <View className="flex-row items-center mb-1">
-                    <Icon name="chatbubble-ellipses" size={16} color="#77DD77" />
-                    <Text className="text-[#77DD77] text-xs font-medium ml-1">GoodMeal AI</Text>
+                  <View className="flex-row items-center justify-start mb-2">
+                    <Icon name="sparkles" size={18} color="#77DD77" />
+                    <Text className="text-[#77DD77] text-sm font-semibold ml-2">GoodMeal AI</Text>
                   </View>
                 )}
-                <Text className={`text-base ${msg.isBot ? 'text-gray-800' : 'text-white'}`}>
+                <Text className={`text-base leading-6 ${msg.isBot ? 'text-gray-700 ' : 'text-white'}`}>
                   {msg.text || ''}
                 </Text>
-                <Text className={`text-xs mt-1 ${msg.isBot ? 'text-gray-500' : 'text-yellow-100'}`}>
+                <Text className={`text-xs mt-2 ${msg.isBot ? 'text-gray-400 text-center' : 'text-yellow-100'}`}>
                   {msg.timestamp || ''}
                 </Text>
               </View>
@@ -157,39 +231,62 @@ const ChatScreen = () => {
         )}
         
         {isSending && (
-          <View className="items-start mb-4">
-            <View className="bg-white border border-gray-200 rounded-2xl rounded-bl-sm p-3 max-w-[80%]">
-              <View className="flex-row items-center mb-1">
-                <Icon name="chatbubble-ellipses" size={16} color="#77DD77" />
-                <Text className="text-[#77DD77] text-xs font-medium ml-1">GoodMeal AI</Text>
+          <View className="items-center mb-6">
+            <View className="bg-gray-50 rounded-2xl rounded-bl-md p-4 max-w-[90%]">
+              <View className="flex-row items-center justify-center mb-2">
+                <Icon name="sparkles" size={18} color="#77DD77" />
+                <Text className="text-[#77DD77] text-sm font-semibold ml-2">GoodMeal AI</Text>
               </View>
-              <Text className="text-gray-500">กำลังพิมพ์...</Text>
+              <View className="flex-row items-center justify-center">
+                <View className="w-2 h-2 bg-gray-400 rounded-full mr-1 animate-pulse"></View>
+                <View className="w-2 h-2 bg-gray-400 rounded-full mr-1 animate-pulse"></View>
+                <View className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></View>
+                <Text className="text-gray-500 ml-3">กำลังพิมพ์...</Text>
+              </View>
             </View>
           </View>
         )}
       </ScrollView>
 
-      {/* Quick Suggestions */}
-      <View className="px-4 py-2">
-        <Text className="text-gray-600 text-sm mb-2">คำถามแนะนำ:</Text>
+      {/* Chat Style Selector */}
+      <View className="px-4 py-2 border-t border-gray-200">
+        <Text className="text-myBlack text-sm mb-2">รูปแบบการสนทนา:</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <TouchableOpacity 
-            className="bg-white border border-gray-200 rounded-full px-4 py-2 mr-2"
-            onPress={() => setMessage('แนะนำเมนูอาหารเพื่อลดน้ำหนัก')}
+            className={`rounded-full px-4 py-2 mr-2 border ${
+              selectedStyle === 'style1' 
+                ? 'bg-primary border-primary' 
+                : 'bg-gray-100 border border-transparent'
+            }`}
+            onPress={() => toggleChatStyle('style1')}
           >
-            <Text className="text-gray-700 text-sm">แนะนำเมนูอาหารเพื่อลดน้ำหนัก</Text>
+            <Text className={`text-sm ${
+              selectedStyle === 'style1' ? 'text-white' : 'text-gray-700'
+            }`}>😊 เป็นมิตร</Text>
           </TouchableOpacity>
           <TouchableOpacity 
-            className="bg-white border border-gray-200 rounded-full px-4 py-2 mr-2"
-            onPress={() => setMessage('อาหารที่มีโปรตีนสูง')}
+            className={`rounded-full px-4 py-2 mr-2 border ${
+              selectedStyle === 'style2' 
+                ? 'bg-primary border-primary' 
+                : 'bg-gray-100 border-transparent'
+            }`}
+            onPress={() => toggleChatStyle('style2')}
           >
-            <Text className="text-gray-700 text-sm">อาหารที่มีโปรตีนสูง</Text>
+            <Text className={`text-sm ${
+              selectedStyle === 'style2' ? 'text-white' : 'text-gray-700'
+            }`}>👔 เป็นทางการ</Text>
           </TouchableOpacity>
           <TouchableOpacity 
-            className="bg-white border border-gray-200 rounded-full px-4 py-2 mr-2"
-            onPress={() => setMessage('วิธีการทำอาหารเพื่อสุขภาพ')}
+            className={`rounded-full px-4 py-2 mr-2 border ${
+              selectedStyle === 'style3' 
+                ? 'bg-primary border-primary' 
+                : 'bg-gray-100 border border-transparent'
+            }`}
+            onPress={() => toggleChatStyle('style3')}
           >
-            <Text className="text-gray-700 text-sm">วิธีการทำอาหารเพื่อสุขภาพ</Text>
+            <Text className={`text-sm ${
+              selectedStyle === 'style3' ? 'text-white' : 'text-gray-700'
+            }`}>😎 สบายๆ</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>

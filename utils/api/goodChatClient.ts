@@ -13,6 +13,7 @@ export interface ChatSession {
   started_at: string;
   updated_at: string;
   summary?: string;
+  style?: 'style1' | 'style2' | 'style3';
 }
 
 export class GoodChatApiClient extends BaseApiClient {
@@ -27,7 +28,7 @@ export class GoodChatApiClient extends BaseApiClient {
   /**
    * Get chat messages history
    */
-  async getChatMessages(limit = 50, offset = 0): Promise<ChatMessage[]> {
+  async getChatMessages(limit = 30, offset = 0): Promise<ChatMessage[]> {
     const response = await this.get(`/api/goodchat/messages?limit=${limit}&offset=${offset}`);
     return response.data.data; // API returns { data: messages[], success: true }
   }
@@ -49,5 +50,13 @@ export class GoodChatApiClient extends BaseApiClient {
   async clearChatHistory(): Promise<{ message: string }> {
     const response = await this.delete('/api/goodchat/history');
     return response.data; // API might return { message: string, success: true }
+  }
+
+  /**
+   * Update chat style
+   */
+  async updateChatStyle(style: string): Promise<{ message: string; style: string }> {
+    const response = await this.post('/api/goodchat/style', { style });
+    return response.data; // API returns { message: string, style: string, success: true }
   }
 }

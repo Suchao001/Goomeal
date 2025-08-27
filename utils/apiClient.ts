@@ -142,6 +142,10 @@ export class ApiClient extends BaseApiClient {
     return this.goodChatClient.clearChatHistory();
   }
 
+  async updateChatStyle(style: string) {
+    return this.goodChatClient.updateChatStyle(style);
+  }
+
   // ===== USER WEIGHT UPDATE METHOD =====
   async updateWeight(weight: number) {
     try {
