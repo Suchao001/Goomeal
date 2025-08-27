@@ -81,7 +81,7 @@ const PromptForm3 = () => {
   };
 
   const handleSubmit = () => {
-    // Validate form
+    // Validate form - allow submission if at least one field is filled
     if (additionalRequirements.trim().length < 10 && selectedRestrictions.length === 0 && selectedGoals.length === 0) {
       Alert.alert(
         'กรุณากรอกข้อมูล',
@@ -100,39 +100,27 @@ const PromptForm3 = () => {
     
     console.log('Final Form Data:', finalFormData);
     
-    // Show success message
-    Alert.alert(
-      'สำเร็จ!',
-      'ระบบกำลังสร้างแผนการกินสำหรับคุณ',
-      [
-        {
-          text: 'ตกลง',
-          onPress: () => {
-            // TODO: Navigate to result screen or processing screen
-            navigation.navigate('Home');
-          }
-        }
-      ]
-    );
+    // Navigate to summary screen
+    navigation.navigate('PromptSummary', { data: finalFormData });
   };
 
   return (
-    <ScrollView className="flex-1 bg-white">
+    <ScrollView className="flex-1 bg-white p-6">
       {/* Back Arrow */}
       <ArrowLeft />
 
       {/* Header Text */}
       <View className="px-6 mt-20 mb-8">
-        <Text className="text-3xl text-gray-800 mb-2 font-promptSemiBold text-center">
-          ความต้องการ
-          เพิ่มเติม
+        <Text 
+          className="text-3xl text-gray-800 mb-2 font-promptSemiBold text-center"
+          style={{ lineHeight: 36 }}
+        >
+          ความต้องการเพิ่มเติม
         </Text>
-        <Text className="text-gray-600 mb-2 font-promptMedium text-lg text-center">
+        <Text className="text-myBlack mb-2 font-promptMedium text-lg text-center">
           บอกเราเกี่ยวกับข้อจำกัดและเป้าหมายของคุณ
         </Text>
-        <Text className="text-primary font-promptMedium text-base text-center">
-          หน้า 3/3
-        </Text>
+
       </View>
 
       <View className="px-6">
@@ -148,7 +136,7 @@ const PromptForm3 = () => {
                 className={`rounded-full px-3 py-2 mr-1 mb-2 flex-row items-center ${
                   selectedRestrictions.includes(restriction.key)
                     ? 'bg-red-100 border-2 border-red-400'
-                    : 'bg-gray-100 border border-gray-200'
+                    : 'bg-gray-100 border border-transparent'
                 }`}
                 onPress={() => handleRestrictionToggle(restriction.key)}
               >
@@ -180,7 +168,7 @@ const PromptForm3 = () => {
                 className={`rounded-full px-3 py-2 mr-1 mb-2 flex-row items-center ${
                   selectedGoals.includes(goal.key)
                     ? 'bg-[#77dd77] border-2 border-[#77dd77]'
-                    : 'bg-gray-100 border border-gray-200'
+                    : 'bg-gray-100 border border-transparent'
                 }`}
                 onPress={() => handleGoalToggle(goal.key)}
               >
@@ -205,13 +193,12 @@ const PromptForm3 = () => {
           <Text className="text-gray-800 mb-4 font-promptSemiBold text-lg">
             💬 ความต้องการเพิ่มเติม
           </Text>
-          <Text className="text-gray-600 font-promptLight text-sm mb-3">
+          <Text className="text-myBlack font-promptLight text-sm mb-3">
             บอกเราเกี่ยวกับความต้องการพิเศษ เช่น เวลาที่สะดวกในการกิน, อาหารที่ชื่นชอบ, หรือข้อมูลอื่นๆ
           </Text>
           <View className="relative">
             <TextInput
               className="border border-gray-300 rounded-lg p-4 font-promptRegular text-base min-h-[120px]"
-              placeholder="เช่น ชอบกินอาหารเช้าง่ายๆ, ไม่ชอบกินผัก, ต้องการอาหารที่ทำง่าย, มีเวลาทำอาหารเพียง 30 นาที..."
               value={additionalRequirements}
               onChangeText={setAdditionalRequirements}
               maxLength={maxCharacters}
@@ -267,8 +254,8 @@ const PromptForm3 = () => {
             className="flex-1 bg-primary rounded-xl p-4 justify-center items-center flex-row"
             onPress={handleSubmit}
           >
-            <Icon name="checkmark-circle" size={24} color="white" className="mr-2" />
-            <Text className="text-white text-lg font-promptBold ml-2">สร้างแผน</Text>
+            <Icon name="arrow-forward" size={24} color="white" className="mr-2" />
+            <Text className="text-white text-lg font-promptBold ml-2">ต่อไป</Text>
           </TouchableOpacity>
         </View>
         

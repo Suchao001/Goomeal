@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import { ArrowLeft } from '../../components/GeneralMaterial';
@@ -20,7 +20,7 @@ const PromptForm1 = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   
   // Budget state
-  const [selectedBudget, setSelectedBudget] = useState<'low' | 'medium' | 'high' | ''>('');
+  const [selectedBudget, setSelectedBudget] = useState<'low' | 'medium' | 'high' | 'flexible' | ''>('');
   
   useEffect(() => {
     console.log('Screen: PromptForm1');
@@ -52,7 +52,8 @@ const PromptForm1 = () => {
   const budgetOptions = [
     { key: 'low', label: 'ประหยัด', desc: '50-150 บาท/มื้อ', icon: '💰' },
     { key: 'medium', label: 'ปานกลาง', desc: '150-300 บาท/มื้อ', icon: '💰💰' },
-    { key: 'high', label: 'หรูหรา', desc: '300+ บาท/มื้อ', icon: '💰💰💰' }
+    { key: 'high', label: 'หรูหรา', desc: '300+ บาท/มื้อ', icon: '💰💰💰' },
+    { key: 'flexible', label: 'งบยืดหยุ่น', desc: 'ปรับตามสถานการณ์', icon: '🎯' }
   ];
 
   const handlePlanDuration = (duration: string) => {
@@ -73,19 +74,27 @@ const PromptForm1 = () => {
     );
   };
 
-  const handleContinue = () => {
-    // Save form data and navigate to next screen
-    const formData = {
-      planDuration,
-      selectedCategories,
-      selectedBudget
-    };
-    console.log('Form Data:', formData);
-    navigation.navigate('PromptForm2', { data: formData });
+    const handleContinue = () => {
+    if (!planDuration || !selectedBudget) {
+      Alert.alert(
+        'ข้อมูลไม่ครบถ้วน',
+        'กรุณาเลือกระยะเวลาแผนและงบประมาณก่อนดำเนินการต่อ',
+        [{ text: 'ตกลง', style: 'default' }]
+      );
+      return;
+    }
+
+    navigation.navigate('PromptForm2', {
+      data: {
+        planDuration,
+        selectedCategories,
+        selectedBudget
+      }
+    });
   };
 
   return (
-    <ScrollView className="flex-1 bg-white">
+    <ScrollView className="flex-1 bg-white p-6">
       {/* Back Arrow */}
       <ArrowLeft />
 
@@ -95,11 +104,8 @@ const PromptForm1 = () => {
           สร้างแผนการกิน
           จาก Prompt
         </Text>
-        <Text className="text-gray-600 mb-2 font-promptMedium text-lg text-center">
+        <Text className="text-myBlack mb-2 font-promptMedium text-lg text-center">
           กรอกข้อมูลเพื่อสร้างแผนที่เหมาะกับคุณ
-        </Text>
-        <Text className="text-primary font-promptMedium text-base text-center">
-          หน้า 1/3
         </Text>
       </View>
 
@@ -115,8 +121,8 @@ const PromptForm1 = () => {
                 key={duration}
                 className={`flex-1 rounded-xl p-3 items-center ${
                   planDuration === duration && !isCustomPlan
-                    ? 'border-2 border-primary bg-primary/10'
-                    : 'bg-gray-100'
+                    ? 'border-2 border-primary '
+                    : 'bg-gray-100 border border-transparent'    
                 }`}
                 onPress={() => handlePlanDuration(duration)}
               >
@@ -155,17 +161,23 @@ const PromptForm1 = () => {
                 borderRadius: 8,
                 borderWidth: 1,
                 borderColor: '#ffb800',
+                maxHeight: 200, // Limit height to make it scrollable
               }}
               textStyle={{
                 fontFamily: 'Prompt-Regular',
                 fontSize: 16,
+              }}
+              listMode="SCROLLVIEW"
+              scrollViewProps={{
+                nestedScrollEnabled: true,
+                showsVerticalScrollIndicator: true,
               }}
               zIndex={3000}
               zIndexInverse={1000}
             />
           ) : (
             <TouchableOpacity
-              className="w-full rounded-xl p-3 items-center bg-gray-100 border border-gray-200"
+              className="w-full rounded-xl p-3 items-center bg-gray-100 border border-transparent"
               onPress={handleCustomPlan}
             >
               <Text className="font-promptMedium text-gray-700">กำหนดเอง</Text>
@@ -182,10 +194,10 @@ const PromptForm1 = () => {
             {foodCategories.map((category) => (
               <TouchableOpacity
                 key={category.key}
-                className={`rounded-full px-4 py-2 mr-2 mb-2 flex-row items-center ${
+                className={`rounded-full px-4 py-2 mr-2 mb-1 flex-row items-center ${
                   selectedCategories.includes(category.key)
                     ? 'bg-primary border-2 border-primary'
-                    : 'bg-gray-100 border border-gray-200'
+                    : 'bg-gray-100 border border-transparent'
                 }`}
                 onPress={() => handleCategoryToggle(category.key)}
               >
@@ -210,56 +222,56 @@ const PromptForm1 = () => {
           <Text className="text-gray-800 mb-4 font-promptSemiBold text-lg">
             💰 งบต่อมื้อ
           </Text>
-          <View className="space-y-3">
+          <View className="flex flex-col gap-1">
             {budgetOptions.map((budget) => (
               <TouchableOpacity
-                key={budget.key}
-                className={`rounded-xl p-4 border-2 ${
-                  selectedBudget === budget.key
-                    ? 'border-primary bg-primary/10'
-                    : 'border-gray-200 bg-gray-50'
-                }`}
-                onPress={() => setSelectedBudget(budget.key as 'low' | 'medium' | 'high')}
+            key={budget.key}
+            className={`rounded-xl p-4 border-2 ${
+              selectedBudget === budget.key
+                ? 'border-primary'
+                : ' bg-gray-100 border-transparent'
+            }`}
+            onPress={() => setSelectedBudget(budget.key as 'low' | 'medium' | 'high')}
               >
-                <View className="flex-row items-center justify-between">
-                  <View className="flex-row items-center">
-                    <Text className="text-xl mr-3">{budget.icon}</Text>
-                    <View>
-                      <Text className={`font-promptSemiBold text-base ${
-                        selectedBudget === budget.key ? 'text-primary' : 'text-gray-800'
-                      }`}>
-                        {budget.label}
-                      </Text>
-                      <Text className="text-gray-600 font-promptLight text-sm">
-                        {budget.desc}
-                      </Text>
-                    </View>
-                  </View>
-                  {selectedBudget === budget.key && (
-                    <View className="w-6 h-6 rounded-full bg-primary items-center justify-center">
-                      <Text className="text-white text-xs">✓</Text>
-                    </View>
-                  )}
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center">
+                <Text className="text-xl mr-3">{budget.icon}</Text>
+                <View>
+                  <Text className={`font-promptSemiBold text-base ${
+                selectedBudget === budget.key ? 'text-primary' : 'text-gray-800'
+                  }`}>
+                {budget.label}
+                  </Text>
+                  <Text className="text-myBlack font-promptLight text-sm">
+                {budget.desc}
+                  </Text>
                 </View>
+              </View>
+              {selectedBudget === budget.key && (
+                <View className="w-6 h-6 rounded-full bg-primary items-center justify-center">
+                  <Text className="text-white text-xs">✓</Text>
+                </View>
+              )}
+            </View>
               </TouchableOpacity>
             ))}
           </View>
         </View>
-      </View>
+          </View>
 
       {/* Next Button */}
       <View className="px-6 pb-8">
         <TouchableOpacity
           className={`w-full rounded-xl p-4 justify-center items-center ${
-            planDuration && selectedCategories.length > 0 && selectedBudget
+            planDuration && selectedBudget
               ? 'bg-primary'
               : 'bg-gray-300'
           }`}
           onPress={handleContinue}
-          disabled={!planDuration || selectedCategories.length === 0 || !selectedBudget}
+          disabled={!planDuration || !selectedBudget}
         >
           <Text className={`text-lg font-promptBold ${
-            planDuration && selectedCategories.length > 0 && selectedBudget
+            planDuration && selectedBudget
               ? 'text-white'
               : 'text-gray-500'
           }`}>
@@ -268,7 +280,7 @@ const PromptForm1 = () => {
         </TouchableOpacity>
         
         {/* Progress indicator */}
-        <View className="flex-row justify-center mt-4 space-x-2">
+        <View className="flex-row justify-center mt-4 space-x-2 gap-1">
           <View className="w-8 h-2 bg-primary rounded-full" />
           <View className="w-8 h-2 bg-gray-300 rounded-full" />
           <View className="w-8 h-2 bg-gray-300 rounded-full" />

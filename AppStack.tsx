@@ -14,6 +14,7 @@ import PersonalPlanScreen3 from './screens/firstForm/PersonalPlanScreen3';
 import PersonalPlanScreen4 from './screens/firstForm/PersonalPlanScreen4';
 import PersonalDataSummaryScreen from './screens/firstForm/PersonalDataSummaryScreen';
 import { PromptForm1, PromptForm2, PromptForm3 } from './screens/formprompt';
+import PromptSummaryScreen from './screens/formprompt/PromptSummaryScreen';
 import { FirstTimeSetupScreen, PlanSelectionScreen } from './screens/setup';
 import { EatingReportScreen ,WeeklyReportScreen} from './screens/reports';
 import { EatingStyleSettingsScreen, NotificationSettingsScreen, RecordSettingsScreen, MealTimeSettingsScreen } from './screens/settings';
@@ -72,6 +73,7 @@ export default function AppStack() {
       <Stack.Screen name="PromptForm1" component={PromptForm1} />
       <Stack.Screen name="PromptForm2" component={PromptForm2} />
       <Stack.Screen name="PromptForm3" component={PromptForm3} />
+      <Stack.Screen name="PromptSummary" component={PromptSummaryScreen} />
 
       <Stack.Screen name="OptionPlan" component={OptionPlanScreen} />
       <Stack.Screen name="SelectGlobalPlan" component={SelectGlobalPlan} />

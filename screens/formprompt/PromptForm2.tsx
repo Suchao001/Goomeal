@@ -120,7 +120,7 @@ const PromptForm2 = () => {
   };
 
   return (
-    <ScrollView className="flex-1 bg-white">
+    <ScrollView className="flex-1 bg-white p-6">
       {/* Back Arrow */}
       <ArrowLeft />
 
@@ -130,12 +130,10 @@ const PromptForm2 = () => {
           ความหลากหลาย
           และวัตถุดิบ
         </Text>
-        <Text className="text-gray-600 mb-2 font-promptMedium text-lg text-center">
+        <Text className="text-myBlack mb-2 font-promptMedium text-lg text-center">
           เลือกระดับความหลากหลายและวัตถุดิบที่ชอบ
         </Text>
-        <Text className="text-primary font-promptMedium text-base text-center">
-          หน้า 2/3
-        </Text>
+       
       </View>
 
       <View className="px-6">
@@ -144,14 +142,14 @@ const PromptForm2 = () => {
           <Text className="text-gray-800 mb-4 font-promptSemiBold text-lg">
             🎯 ระดับความหลากหลาย
           </Text>
-          <View className="space-y-3">
+          <View className="space-y-3 gap-1">
             {varietyOptions.map((option) => (
               <TouchableOpacity
                 key={option.key}
                 className={`rounded-xl p-4 border-2 ${
                   varietyLevel === option.key
                     ? 'bg-primary border-primary'
-                    : 'bg-white border-gray-200'
+                    : 'bg-gray-100 border-transparent'
                 }`}
                 onPress={() => setVarietyLevel(option.key as 'low' | 'medium' | 'high')}
               >
@@ -164,7 +162,7 @@ const PromptForm2 = () => {
                       {option.title}
                     </Text>
                     <Text className={`font-promptLight text-sm ${
-                      varietyLevel === option.key ? 'text-white/90' : 'text-gray-600'
+                      varietyLevel === option.key ? 'text-white/90' : 'text-myBlack'
                     }`}>
                       {option.description}
                     </Text>
@@ -187,7 +185,7 @@ const PromptForm2 = () => {
                 className={`rounded-full px-3 py-2 mr-1 mb-2 flex-row items-center ${
                   selectedIngredients.includes(ingredient.key)
                     ? 'bg-[#77dd77] border-2 border-[#77dd77]'
-                    : 'bg-gray-100 border border-gray-200'
+                    : 'bg-gray-100 border border-transparent '
                 }`}
                 onPress={() => handleIngredientToggle(ingredient.key)}
               >
@@ -274,7 +272,7 @@ const PromptForm2 = () => {
         </View>
         
         {/* Progress indicator */}
-        <View className="flex-row justify-center mt-4 space-x-2">
+        <View className="flex-row justify-center mt-4 space-x-2 gap-1">
           <View className="w-8 h-2 bg-gray-300 rounded-full" />
           <View className="w-8 h-2 bg-primary rounded-full" />
           <View className="w-8 h-2 bg-gray-300 rounded-full" />

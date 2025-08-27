@@ -15,6 +15,7 @@ export type RootStackParamList = {
     PromptForm1: {isForAi?: boolean};
     PromptForm2: {data?: any};
     PromptForm3: {data?: any};
+    PromptSummary: {data?: any};
     FoodMenu: undefined;
     EatingBlog: undefined;
     EatingReport: undefined;

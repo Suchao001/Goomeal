@@ -3,6 +3,7 @@ import { useRoute } from '@react-navigation/native';
 import { View, Text, TouchableOpacity, ScrollView, Alert, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTypedNavigation } from '../hooks/Navigation';
+import e from 'cors';
 
 const { width } = Dimensions.get('window');
 
@@ -38,7 +39,7 @@ const OptionPlanScreen = () => {
       title: 'สร้างแผนการกินตาม prompt ที่ท่านกรอก',
       subtitle: 'หรือสอบถามเกี่ยวกับการกิน',
       icon: 'chatbubble-outline',
-      to: 'ChatScreen'
+      to: 'PersonalPlan1'
     }
   ];
 
@@ -103,6 +104,8 @@ const OptionPlanScreen = () => {
                       navigation.navigate('SelectGlobalPlan');
                     } else if (option.to === 'MealPlan') {
                       navigation.navigate('MealPlan', { from: 'OptionPlan' });
+                    } else if (option.to === 'PersonalPlan1') {
+                      navigation.navigate('PersonalPlan1',{isForAi: true});
                     } else {
                       handleOptionPress(option.to);
                     }

@@ -2,18 +2,20 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useAuth } from '../../AuthContext';
 import Menu from '../material/Menu';
 import CaloriesSummary from '../../components/CaloriesSummary';
 import { getDailyNutritionSummary, type DailyNutritionSummary } from '../../utils/api/dailyNutritionApi';
 import { getEatingRecordsByDate, type EatingRecord } from '../../utils/api/eatingRecordApi';
 import { getBangkokDateForDay, getCurrentBangkokDay, getTodayBangkokDate } from '../../utils/bangkokTime';
 import { generateDailyRecommendation, type DailyRecommendation } from '../../utils/dailyRecommendationService';
+import { mapAuthUserToUserProfile, isUserProfileComplete, getDefaultNutritionData } from '../../utils/userProfileMapper';
 
-/**
- * EatingReportScreen Component
- * หน้ารายงานการกิน
- */
+
 const EatingReportScreen = () => {
+  // Auth context for user data
+  const { user } = useAuth();
+  
   // Safe navigation hook with fallback
   let navigation;
   try {
@@ -34,7 +36,7 @@ const EatingReportScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [useRecommended, setUseRecommended] = useState(true); // Toggle between recommended and target
   const [dailyRecommendation, setDailyRecommendation] = useState<DailyRecommendation | null>(null);
-  const [mockScenario, setMockScenario] = useState(0); // For cycling through mock scenarios
+  const [hasUserProfile, setHasUserProfile] = useState(false); // Track if user has complete profile
   
 
   const handleBackPress = () => {
@@ -274,70 +276,86 @@ const EatingReportScreen = () => {
     useRecommended
   ]);
 
-  // Generate daily recommendation
+  // Generate daily recommendation using real user data only
   const generateRecommendation = useCallback(() => {
-    // Mock scenarios for demo
-    const mockScenarios = [
-      {
-        name: "คนลดน้ำหนัก - กินดี",
-        userProfile: { target_goal: 'decrease' as const, weight: 70, age: 28, activity_level: 'moderate' },
-        actualIntake: { calories: 1847, protein: 85, carbs: 234, fat: 62 },
-        recommendedIntake: { calories: 1800, protein: 90, carbs: 225, fat: 60 }
-      },
-      {
-        name: "คนลดน้ำหนัก - กินน้อย",
-        userProfile: { target_goal: 'decrease' as const, weight: 70, age: 28, activity_level: 'moderate' },
-        actualIntake: { calories: 1450, protein: 65, carbs: 180, fat: 45 },
-        recommendedIntake: { calories: 1800, protein: 90, carbs: 225, fat: 60 }
-      },
-      {
-        name: "นักกีฬา - โปรตีนสูง",
-        userProfile: { target_goal: 'increase' as const, weight: 65, age: 25, activity_level: 'high' },
-        actualIntake: { calories: 2200, protein: 120, carbs: 280, fat: 80 },
-        recommendedIntake: { calories: 2400, protein: 100, carbs: 320, fat: 85 }
-      },
-      {
-        name: "คนทำงานออฟฟิศ - สมดุล",
-        userProfile: { target_goal: 'healthy' as const, weight: 65, age: 30, activity_level: 'low' },
-        actualIntake: { calories: 1950, protein: 75, carbs: 250, fat: 70 },
-        recommendedIntake: { calories: 2000, protein: 78, carbs: 275, fat: 67 }
-      }
-    ];
+    // Check if user has complete profile
+    const userProfile = mapAuthUserToUserProfile(user);
+    const hasProfile = isUserProfileComplete(user);
+    setHasUserProfile(hasProfile);
 
-    // ใช้ข้อมูลจริงถ้ามี ไม่งั้นใช้ mock scenario
-    const useRealData = reportData && (reportData.totalCalories > 0 || reportData.totalProtein > 0);
+    // Only generate recommendation if we have either user profile OR eating data
+    const hasEatingData = reportData.totalCalories > 0 || reportData.totalProtein > 0 || reportData.totalCarbs > 0 || reportData.totalFat > 0;
     
-    let actualIntake, recommendedIntake, userProfile;
+    if (!hasProfile && !hasEatingData) {
+      console.log('⚠️ [EatingReport] No user profile and no eating data available');
+      setDailyRecommendation(null);
+      return;
+    }
+
+    // If no user profile but has eating data, show recommendation with limited accuracy
+    if (!hasProfile && hasEatingData) {
+      console.log('⚠️ [EatingReport] No user profile, showing basic recommendation based on eating data only');
+    }
+
+    let actualIntake, recommendedIntake, userProfileForRecommendation;
     
-    if (useRealData) {
-      actualIntake = {
-        calories: reportData.totalCalories,
-        protein: reportData.totalProtein,
-        carbs: reportData.totalCarbs,
-        fat: reportData.totalFat
-      };
+    // Use real eating data
+    actualIntake = {
+      calories: reportData.totalCalories,
+      protein: reportData.totalProtein,
+      carbs: reportData.totalCarbs,
+      fat: reportData.totalFat
+    };
+
+    // Use recommended/target values if available, otherwise use general defaults
+    if (reportData.targetCalories > 0) {
       recommendedIntake = {
         calories: reportData.targetCalories,
         protein: reportData.targetProtein,
         carbs: reportData.targetCarbs,
         fat: reportData.targetFat
       };
-      userProfile = { target_goal: 'decrease' as const, weight: 70, age: 28, activity_level: 'moderate' };
     } else {
-      // ใช้ mock scenario
-      const scenario = mockScenarios[mockScenario % mockScenarios.length];
-      actualIntake = scenario.actualIntake;
-      recommendedIntake = scenario.recommendedIntake;
-      userProfile = scenario.userProfile;
+      // Use general nutritional guidelines (not mockup data)
+      const defaultNutrition = getDefaultNutritionData();
+      recommendedIntake = {
+        calories: defaultNutrition.cal,
+        protein: defaultNutrition.protein,
+        carbs: defaultNutrition.carb,
+        fat: defaultNutrition.fat
+      };
     }
 
-    const recommendation = generateDailyRecommendation(
-      actualIntake,
-      recommendedIntake,
-      userProfile
-    );
+    // Use user profile if available
+    if (hasProfile && userProfile) {
+      userProfileForRecommendation = {
+        target_goal: userProfile.target_goal,
+        weight: parseFloat(userProfile.weight),
+        age: parseInt(userProfile.age),
+        activity_level: userProfile.activity_level
+      };
+    } else {
+      // If no user profile, use general health maintenance profile
+      // This is based on general nutritional guidelines, not mockup data
+      userProfileForRecommendation = {
+        target_goal: 'healthy' as const,
+        weight: 65, // Average adult weight for calculations
+        age: 30, // Average adult age for metabolism calculations
+        activity_level: 'moderate' // Moderate activity as baseline
+      };
+    }
 
-    setDailyRecommendation(recommendation);
+    try {
+      const recommendation = generateDailyRecommendation(
+        actualIntake,
+        recommendedIntake,
+        userProfileForRecommendation
+      );
+      setDailyRecommendation(recommendation);
+    } catch (error) {
+      console.error('❌ [EatingReport] Error generating recommendation:', error);
+      setDailyRecommendation(null);
+    }
   }, [
     reportData.totalCalories,
     reportData.totalProtein, 
@@ -347,13 +365,16 @@ const EatingReportScreen = () => {
     reportData.targetProtein,
     reportData.targetCarbs,
     reportData.targetFat,
-    mockScenario
+    user?.age,
+    user?.weight,
+    user?.target_goal,
+    user?.activity_level
   ]);
 
   // Generate recommendation when report data changes
   useEffect(() => {
     if (!isLoading) {
-      // สร้างคำแนะนำเสมอ แม้ไม่มีข้อมูลจริงก็ใช้ mockup data
+      // Generate recommendation based on available real data
       generateRecommendation();
     }
   }, [generateRecommendation, isLoading]);
@@ -524,6 +545,41 @@ const EatingReportScreen = () => {
                 </Text>
               </View>
             </View>
+          ) : !dailyRecommendation ? (
+            <View className="bg-white rounded-2xl p-6 mb-6 shadow-lg">
+              <View className="items-center">
+                <View className="bg-gray-200 w-10 h-10 rounded-full items-center justify-center mb-3">
+                  <Text className="text-2xl">😔</Text>
+                </View>
+                <Text className="text-lg font-semibold text-gray-700 text-center mb-2">
+                  ไม่สามารถสร้างคำแนะนำได้
+                </Text>
+                <Text className="text-sm text-gray-500 text-center mb-4">
+                  {!hasUserProfile 
+                    ? 'กรุณากรอกข้อมูลส่วนตัวให้ครบถ้วนและลองกินอาหารบางอย่างก่อน'
+                    : 'ไม่มีข้อมูลการกินในวันนี้ กรุณาบันทึกอาหารที่กินแล้วลองอีกครั้ง'
+                  }
+                </Text>
+                {!hasUserProfile && (
+                  <TouchableOpacity
+                    className="bg-primary px-4 py-2 rounded-full"
+                    onPress={() => {
+                      try {
+                        if (navigation) {
+                          navigation.navigate('EditProfile' as never);
+                        } else {
+                          Alert.alert('แจ้งเตือน', 'กรุณาไปที่หน้าโปรไฟล์เพื่อกรอกข้อมูลให้ครบถ้วน');
+                        }
+                      } catch (error) {
+                        Alert.alert('แจ้งเตือน', 'กรุณาไปที่หน้าโปรไฟล์เพื่อกรอกข้อมูลให้ครบถ้วน');
+                      }
+                    }}
+                  >
+                    <Text className="text-white text-sm font-medium">กรอกข้อมูลส่วนตัว</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
           ) : dailyRecommendation && (
             <View className="bg-white rounded-2xl p-5 mb-6 shadow-lg">
               {/* Header */}
@@ -549,26 +605,54 @@ const EatingReportScreen = () => {
                 </View>
               </View>
 
-              {/* Demo Notice */}
-              {(!reportData || reportData.totalCalories === 0) && (
-                <View className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
-                  <View className="flex-row items-center justify-between">
-                    <View className="flex-row items-center flex-1">
-                      <Text className="text-yellow-600 mr-2">ℹ️</Text>
-                      <Text className="text-yellow-800 text-sm font-medium flex-1">
-                        แสดงตัวอย่างคำแนะนำด้วยข้อมูล Mockup
+              {/* No Data Notice - แสดงเมื่อไม่มีข้อมูลหรือ user profile ไม่ครบ */}
+              {!hasUserProfile && (
+                <View className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+                  <View className="flex-row items-center">
+                    <Text className="text-amber-600 mr-2">⚠️</Text>
+                    <View className="flex-1">
+                      <Text className="text-amber-800 text-sm font-medium">
+                        ข้อมูลส่วนตัวยังไม่ครบถ้วน
+                      </Text>
+                      <Text className="text-amber-700 text-xs mt-1">
+                        คำแนะนำอาจไม่ถูกต้องตามความต้องการเฉพาะของคุณ
+                      </Text>
+                      <TouchableOpacity
+                        className="mt-2"
+                        onPress={() => {
+                          try {
+                            if (navigation) {
+                              navigation.navigate('EditProfile' as never);
+                            } else {
+                              Alert.alert('แจ้งเตือน', 'กรุณาไปที่หน้าโปรไฟล์เพื่อกรอกข้อมูลให้ครบถ้วน');
+                            }
+                          } catch (error) {
+                            Alert.alert('แจ้งเตือน', 'กรุณาไปที่หน้าโปรไฟล์เพื่อกรอกข้อมูลให้ครบถ้วน');
+                          }
+                        }}
+                      >
+                        <Text className="text-amber-700 text-sm underline font-medium">
+                          กรอกข้อมูลส่วนตัวเพื่อความแม่นยำ →
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              )}
+
+              {reportData.totalCalories === 0 && (
+                <View className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                  <View className="flex-row items-center">
+                    <Text className="text-blue-600 mr-2">ℹ️</Text>
+                    <View className="flex-1">
+                      <Text className="text-blue-800 text-sm font-medium">
+                        ยังไม่มีข้อมูลการกินในวันนี้
+                      </Text>
+                      <Text className="text-blue-700 text-xs mt-1">
+                        เริ่มบันทึกอาหารเพื่อรับคำแนะนำที่แม่นยำ
                       </Text>
                     </View>
-                    <TouchableOpacity
-                      className="bg-yellow-500 px-3 py-1 rounded-full ml-2"
-                      onPress={() => setMockScenario((prev) => prev + 1)}
-                    >
-                      <Text className="text-white text-xs font-medium">เปลี่ยนตัวอย่าง</Text>
-                    </TouchableOpacity>
                   </View>
-                  <Text className="text-yellow-700 text-xs mt-2">
-                    {['คนลดน้ำหนัก - กินดี', 'คนลดน้ำหนัก - กินน้อย', 'นักกีฬา - โปรตีนสูง', 'คนทำงานออฟฟิศ - สมดุล'][mockScenario % 4]}
-                  </Text>
                 </View>
               )}
 
@@ -651,7 +735,7 @@ const EatingReportScreen = () => {
           
 
           {/* Food Details Section */}
-          {eatingRecords.length > 0 && !isLoading && (
+          {eatingRecords.length > 0 && !isLoading ? (
             <View className="bg-white rounded-2xl p-5 shadow-lg shadow-slate-800">
               <View className="flex-row items-center justify-between mb-4">
                 <Text className="text-lg font-bold text-gray-800">รายการอาหารทั้งหมด</Text>
@@ -687,25 +771,17 @@ const EatingReportScreen = () => {
                     </View>
                     
                     {/* Nutritional Info */}
-                    {(record.protein || record.carbs || record.fat) && (
-                      <View className="flex-row items-center mt-2">
-                        {record.protein && (
-                          <Text className="text-xs text-green-600 mr-3">
-                            โปรตีน {Math.round(record.protein)}g
-                          </Text>
-                        )}
-                        {record.carbs && (
-                          <Text className="text-xs text-blue-600 mr-3">
-                            คาร์บ {Math.round(record.carbs)}g
-                          </Text>
-                        )}
-                        {record.fat && (
-                          <Text className="text-xs text-orange-600">
-                            ไขมัน {Math.round(record.fat)}g
-                          </Text>
-                        )}
-                      </View>
-                    )}
+                    <View className="flex-row items-center mt-2">
+                      <Text className="text-xs text-green-600 mr-3">
+                        โปรตีน {Math.round(record.protein || 0)}g
+                      </Text>
+                      <Text className="text-xs text-blue-600 mr-3">
+                        คาร์บ {Math.round(record.carbs || 0)}g
+                      </Text>
+                      <Text className="text-xs text-orange-600">
+                        ไขมัน {Math.round(record.fat || 0)}g
+                      </Text>
+                    </View>
                   </View>
                   
                   <View className="items-end">
@@ -716,6 +792,36 @@ const EatingReportScreen = () => {
                   </View>
                 </View>
               ))}
+            </View>
+          ) : !isLoading && (
+            <View className="bg-white rounded-2xl p-6 shadow-lg shadow-slate-800">
+              <View className="items-center">
+                <View className="bg-gray-100 w-16 h-16 rounded-full items-center justify-center mb-4">
+                  <Text className="text-3xl">🍽️</Text>
+                </View>
+                <Text className="text-lg font-semibold text-gray-700 text-center mb-2">
+                  ยังไม่มีรายการอาหารในวันนี้
+                </Text>
+                <Text className="text-sm text-gray-500 text-center mb-4">
+                  เริ่มต้นบันทึกอาหารที่คุณกินเพื่อดูสถิติและคำแนะนำ
+                </Text>
+                <TouchableOpacity
+                  className="bg-primary px-4 py-2 rounded-full"
+                  onPress={() => {
+                    try {
+                      if (navigation) {
+                        navigation.navigate('FoodSearch' as never);
+                      } else {
+                        Alert.alert('แจ้งเตือน', 'กรุณาไปที่หน้าค้นหาอาหารเพื่อเพิ่มรายการอาหาร');
+                      }
+                    } catch (error) {
+                      Alert.alert('แจ้งเตือน', 'กรุณาไปที่หน้าค้นหาอาหารเพื่อเพิ่มรายการอาหาร');
+                    }
+                  }}
+                >
+                  <Text className="text-white text-sm font-medium">เพิ่มอาหาร</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           )}
         </View>

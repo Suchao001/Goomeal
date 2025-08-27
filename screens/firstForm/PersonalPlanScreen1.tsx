@@ -82,7 +82,7 @@ const PersonalPlanScreen1 = () => {
         กรอกข้อมูลในการสร้าง
         แพลนในการกินอาหาร
       </Text>
-      <Text className="text-gray-600 mb-6 font-promptMedium text-[20px] text-center">
+      <Text className="text-myBlack mb-6 font-promptMedium text-[20px] text-center">
         เป้าหมายของคุณ
       </Text>
 
@@ -101,7 +101,7 @@ const PersonalPlanScreen1 = () => {
               onPress={() => setSelectedTarget(target.key as 'decrease' | 'increase' | 'healthy')}
               accessibilityLabel={`เลือกเป้าหมาย ${target.label}`}
             >
-              <Text className="font-prompt text-black">
+              <Text className="font-prompt text-myBlack">
                 {target.label}
               </Text>
             </TouchableOpacity>
@@ -113,7 +113,7 @@ const PersonalPlanScreen1 = () => {
 
       {/* Plan Duration Selection */}
       <View className="w-5/6 mb-4">
-        <Text className="text-gray-600 mb-6 font-promptMedium text-center text-[20px]">
+        <Text className="text-myBlack mb-6 font-promptMedium text-center text-[20px]">
           ระยะเวลาของแพลนอาหาร
         </Text>
         <View className="flex-row gap-1">
@@ -179,7 +179,7 @@ const PersonalPlanScreen1 = () => {
       {/* Target Weight Dropdown - แสดงเฉพาะเมื่อเลือก เพิ่ม หรือ ลดน้ำหนัก */}
       {selectedTarget !== 'healthy' && (
         <View className="w-full mb-6">
-          <Text className="text-gray-600 mb-2 font-promptMedium text-center text-[20px]">
+          <Text className="text-myBlack mb-2 font-promptMedium text-center text-[20px]">
             {selectedTarget === 'increase' ? 'น้ำหนักที่ต้องการเพิ่ม' : 'น้ำหนักที่ต้องการลด'}
           </Text>
          
