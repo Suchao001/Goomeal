@@ -24,7 +24,7 @@ const OptionPlanScreen = () => {
       title: 'สร้างแผนการกินจากระบบ โดยกรอกข้อมูล',
       subtitle: 'เบื้องต้นระบบจะสร้างแผนการกินตามที่ท่านต้องการ',
       icon: 'sparkles-outline',
-      to: 'PersonalPlan1'
+      to: 'PromptForm1'
     },
     {
       id: '3',
@@ -97,8 +97,8 @@ const OptionPlanScreen = () => {
                   key={index}
                   className="mx-[8%] mb-4"
                   onPress={() => {
-                    if (option.to === 'PersonalPlan1') {
-                      navigation.navigate('PersonalPlan1', { isForAi: true });
+                    if (option.to === 'PromptForm1') {
+                      navigation.navigate('PromptForm1', { isForAi: true });
                     } else if (option.to === 'SelectGlobalPlan') {
                       navigation.navigate('SelectGlobalPlan');
                     } else if (option.to === 'MealPlan') {

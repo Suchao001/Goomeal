@@ -12,6 +12,9 @@ export type RootStackParamList = {
     PersonalPlan2: undefined;
     PersonalPlan3: undefined;
     PersonalPlan4: undefined;
+    PromptForm1: {isForAi?: boolean};
+    PromptForm2: {data?: any};
+    PromptForm3: {data?: any};
     FoodMenu: undefined;
     EatingBlog: undefined;
     EatingReport: undefined;
