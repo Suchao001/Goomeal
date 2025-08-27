@@ -1,20 +1,27 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useTypedNavigation } from '../../hooks/Navigation';
-import { useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Menu from '../material/Menu';
 import CaloriesSummary from '../../components/CaloriesSummary';
 import { getDailyNutritionSummary, type DailyNutritionSummary } from '../../utils/api/dailyNutritionApi';
 import { getEatingRecordsByDate, type EatingRecord } from '../../utils/api/eatingRecordApi';
 import { getBangkokDateForDay, getCurrentBangkokDay, getTodayBangkokDate } from '../../utils/bangkokTime';
+import { generateDailyRecommendation, type DailyRecommendation } from '../../utils/dailyRecommendationService';
 
 /**
  * EatingReportScreen Component
  * หน้ารายงานการกิน
  */
 const EatingReportScreen = () => {
-  const navigation = useTypedNavigation<'EatingReport'>();
+  // Safe navigation hook with fallback
+  let navigation;
+  try {
+    navigation = useNavigation();
+  } catch (error) {
+    console.log('Navigation context not available:', error);
+    navigation = null;
+  }
   
   // Get current day for initial state
   const getCurrentDay = () => getCurrentBangkokDay();
@@ -26,10 +33,21 @@ const EatingReportScreen = () => {
   const [eatingRecords, setEatingRecords] = useState<EatingRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [useRecommended, setUseRecommended] = useState(true); // Toggle between recommended and target
+  const [dailyRecommendation, setDailyRecommendation] = useState<DailyRecommendation | null>(null);
+  const [mockScenario, setMockScenario] = useState(0); // For cycling through mock scenarios
   
 
   const handleBackPress = () => {
-    navigation.goBack();
+    try {
+      if (navigation) {
+        navigation.goBack();
+      } else {
+        console.log('Navigation not available for goBack');
+      }
+    } catch (error) {
+      console.log('Navigation error:', error);
+      // Fallback - could show alert or handle differently
+    }
   };
 
   // Load data functions
@@ -89,14 +107,51 @@ const EatingReportScreen = () => {
   // Load data when selectedDay changes
   useEffect(() => {
     loadDailyData();
-  }, [loadDailyData, selectedDay]);
+  }, [selectedDay]); // ลบ loadDailyData dependency เพื่อป้องกัน infinite loop
 
-  // Load data when screen comes into focus
-  useFocusEffect(
-    useCallback(() => {
-      loadDailyData();
-    }, [loadDailyData])
-  );
+  // Load data when screen comes into focus (only if navigation context available)
+  try {
+    useFocusEffect(
+      useCallback(() => {
+        const loadData = async () => {
+          try {
+            setIsLoading(true);
+            const date = getBangkokDateForDay(selectedDay);
+            
+            console.log(`📊 [EatingReport] Loading data for day ${selectedDay} (${date})`);
+            
+            const nutritionRes = await getDailyNutritionSummary(date);
+            if (nutritionRes.success && nutritionRes.data) {
+              setDailyNutrition(nutritionRes.data);
+              console.log(`📊 [EatingReport] Loaded nutrition summary:`, JSON.stringify(nutritionRes.data));
+            } else {
+              setDailyNutrition(null);
+              console.log(`⚠️ [EatingReport] No nutrition summary for ${date}`);
+            }
+            
+            // Load eating records
+            const recordsRes = await getEatingRecordsByDate(date);
+            if (recordsRes.success && recordsRes.data.records) {
+              setEatingRecords(recordsRes.data.records);
+              console.log(`📊 [EatingReport] Loaded ${recordsRes.data.records.length} eating records`);
+            } else {
+              setEatingRecords([]);
+              console.log(`⚠️ [EatingReport] No eating records for ${date}`);
+            }
+          } catch (error) {
+            console.error('❌ [EatingReport] Failed to load daily data:', error);
+            Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
+          } finally {
+            setIsLoading(false);
+          }
+        };
+        
+        loadData();
+      }, [selectedDay]) // ใช้ selectedDay โดยตรง
+    );
+  } catch (error) {
+    console.log('useFocusEffect not available:', error);
+  }
 
   const getDayName = (day: number) => {
     const currentDay = getCurrentDay();
@@ -122,6 +177,27 @@ const EatingReportScreen = () => {
   const dayName = getDayName(selectedDay);
 
   // Calculate report data from actual data
+  // Memoize eating records calculation to prevent unnecessary re-computations
+  const totalCaloriesFromRecords = React.useMemo(() => 
+    eatingRecords.reduce((sum, record) => sum + (record.calories || 0), 0), 
+    [eatingRecords]
+  );
+  
+  const totalProteinFromRecords = React.useMemo(() => 
+    eatingRecords.reduce((sum, record) => sum + (record.protein || 0), 0), 
+    [eatingRecords]
+  );
+  
+  const totalCarbsFromRecords = React.useMemo(() => 
+    eatingRecords.reduce((sum, record) => sum + (record.carbs || 0), 0), 
+    [eatingRecords]
+  );
+  
+  const totalFatFromRecords = React.useMemo(() => 
+    eatingRecords.reduce((sum, record) => sum + (record.fat || 0), 0), 
+    [eatingRecords]
+  );
+
   const getReportData = () => {
     if (!dailyNutrition && eatingRecords.length === 0) {
       return {
@@ -139,14 +215,10 @@ const EatingReportScreen = () => {
     }
 
     // Use dailyNutrition if available, otherwise calculate from eating records
-    const totalCalories = dailyNutrition?.total_calories || 
-      eatingRecords.reduce((sum, record) => sum + (record.calories || 0), 0);
-    const totalProtein = dailyNutrition?.total_protein || 
-      eatingRecords.reduce((sum, record) => sum + (record.protein || 0), 0);
-    const totalCarbs = dailyNutrition?.total_carbs || 
-      eatingRecords.reduce((sum, record) => sum + (record.carbs || 0), 0);
-    const totalFat = dailyNutrition?.total_fat || 
-      eatingRecords.reduce((sum, record) => sum + (record.fat || 0), 0);
+    const totalCalories = dailyNutrition?.total_calories || totalCaloriesFromRecords;
+    const totalProtein = dailyNutrition?.total_protein || totalProteinFromRecords;
+    const totalCarbs = dailyNutrition?.total_carbs || totalCarbsFromRecords;
+    const totalFat = dailyNutrition?.total_fat || totalFatFromRecords;
 
     // Check what data is available
     const hasRecommended = !!(dailyNutrition?.recommended_cal || dailyNutrition?.recommended_protein || 
@@ -181,7 +253,110 @@ const EatingReportScreen = () => {
     };
   };
 
-  const reportData = getReportData();
+  // Memoize report data to prevent unnecessary re-renders
+  const reportData = React.useMemo(() => getReportData(), [
+    dailyNutrition?.total_calories,
+    dailyNutrition?.total_protein,
+    dailyNutrition?.total_carbs,
+    dailyNutrition?.total_fat,
+    dailyNutrition?.recommended_cal,
+    dailyNutrition?.recommended_protein,
+    dailyNutrition?.recommended_carb,
+    dailyNutrition?.recommended_fat,
+    dailyNutrition?.target_cal,
+    dailyNutrition?.target_protein,
+    dailyNutrition?.target_carb,
+    dailyNutrition?.target_fat,
+    totalCaloriesFromRecords,
+    totalProteinFromRecords,
+    totalCarbsFromRecords,
+    totalFatFromRecords,
+    useRecommended
+  ]);
+
+  // Generate daily recommendation
+  const generateRecommendation = useCallback(() => {
+    // Mock scenarios for demo
+    const mockScenarios = [
+      {
+        name: "คนลดน้ำหนัก - กินดี",
+        userProfile: { target_goal: 'decrease' as const, weight: 70, age: 28, activity_level: 'moderate' },
+        actualIntake: { calories: 1847, protein: 85, carbs: 234, fat: 62 },
+        recommendedIntake: { calories: 1800, protein: 90, carbs: 225, fat: 60 }
+      },
+      {
+        name: "คนลดน้ำหนัก - กินน้อย",
+        userProfile: { target_goal: 'decrease' as const, weight: 70, age: 28, activity_level: 'moderate' },
+        actualIntake: { calories: 1450, protein: 65, carbs: 180, fat: 45 },
+        recommendedIntake: { calories: 1800, protein: 90, carbs: 225, fat: 60 }
+      },
+      {
+        name: "นักกีฬา - โปรตีนสูง",
+        userProfile: { target_goal: 'increase' as const, weight: 65, age: 25, activity_level: 'high' },
+        actualIntake: { calories: 2200, protein: 120, carbs: 280, fat: 80 },
+        recommendedIntake: { calories: 2400, protein: 100, carbs: 320, fat: 85 }
+      },
+      {
+        name: "คนทำงานออฟฟิศ - สมดุล",
+        userProfile: { target_goal: 'healthy' as const, weight: 65, age: 30, activity_level: 'low' },
+        actualIntake: { calories: 1950, protein: 75, carbs: 250, fat: 70 },
+        recommendedIntake: { calories: 2000, protein: 78, carbs: 275, fat: 67 }
+      }
+    ];
+
+    // ใช้ข้อมูลจริงถ้ามี ไม่งั้นใช้ mock scenario
+    const useRealData = reportData && (reportData.totalCalories > 0 || reportData.totalProtein > 0);
+    
+    let actualIntake, recommendedIntake, userProfile;
+    
+    if (useRealData) {
+      actualIntake = {
+        calories: reportData.totalCalories,
+        protein: reportData.totalProtein,
+        carbs: reportData.totalCarbs,
+        fat: reportData.totalFat
+      };
+      recommendedIntake = {
+        calories: reportData.targetCalories,
+        protein: reportData.targetProtein,
+        carbs: reportData.targetCarbs,
+        fat: reportData.targetFat
+      };
+      userProfile = { target_goal: 'decrease' as const, weight: 70, age: 28, activity_level: 'moderate' };
+    } else {
+      // ใช้ mock scenario
+      const scenario = mockScenarios[mockScenario % mockScenarios.length];
+      actualIntake = scenario.actualIntake;
+      recommendedIntake = scenario.recommendedIntake;
+      userProfile = scenario.userProfile;
+    }
+
+    const recommendation = generateDailyRecommendation(
+      actualIntake,
+      recommendedIntake,
+      userProfile
+    );
+
+    setDailyRecommendation(recommendation);
+  }, [
+    reportData.totalCalories,
+    reportData.totalProtein, 
+    reportData.totalCarbs,
+    reportData.totalFat,
+    reportData.targetCalories,
+    reportData.targetProtein,
+    reportData.targetCarbs,
+    reportData.targetFat,
+    mockScenario
+  ]);
+
+  // Generate recommendation when report data changes
+  useEffect(() => {
+    if (!isLoading) {
+      // สร้างคำแนะนำเสมอ แม้ไม่มีข้อมูลจริงก็ใช้ mockup data
+      generateRecommendation();
+    }
+  }, [generateRecommendation, isLoading]);
 
   // Group eating records by meal type
   const getMealData = () => {
@@ -258,7 +433,16 @@ const EatingReportScreen = () => {
             <TouchableOpacity
               className="bg-primary px-3 py-1 rounded-full"
               onPress={() => {
-                navigation.navigate('WeeklyReport');
+                try {
+                  if (navigation) {
+                    (navigation as any).navigate('WeeklyReport');
+                  } else {
+                    Alert.alert('ขณะนี้ไม่สามารถเข้าหน้ารายสัปดาห์ได้', 'Navigation ไม่พร้อมใช้งาน');
+                  }
+                } catch (error) {
+                  console.log('Navigation error:', error);
+                  Alert.alert('ขณะนี้ไม่สามารถเข้าหน้ารายสัปดาห์ได้', 'กรุณาลองใหม่อีกครั้ง');
+                }
               }}
             >
               <Text className="text-white text-xs font-medium">ดูรายสัปดาห์</Text>
@@ -326,6 +510,142 @@ const EatingReportScreen = () => {
           )}
 
           <View className='h-4'></View>
+
+          {/* Daily Recommendation Section */}
+          {isLoading ? (
+            <View className="bg-white rounded-2xl p-6 mb-6 shadow-lg">
+              <View className="items-center">
+                <View className="bg-gray-200 w-10 h-10 rounded-full items-center justify-center mb-3">
+                  <Text className="text-2xl">🎯</Text>
+                </View>
+                <Text className="text-lg font-semibold text-gray-700">กำลังสร้างคำแนะนำ...</Text>
+                <Text className="text-sm text-gray-500 text-center mt-2">
+                  กำลังวิเคราะห์ข้อมูลการกินของคุณ
+                </Text>
+              </View>
+            </View>
+          ) : dailyRecommendation && (
+            <View className="bg-white rounded-2xl p-5 mb-6 shadow-lg">
+              {/* Header */}
+              <View className="flex-row items-center justify-between mb-4">
+                <View className="flex-row items-center">
+                  <View className="bg-blue-100 w-10 h-10 rounded-full items-center justify-center mr-3">
+                    <Text className="text-2xl">🎯</Text>
+                  </View>
+                  <View>
+                    <Text className="text-lg font-bold text-gray-800">คำแนะนำรายวัน</Text>
+                    <Text className="text-sm text-gray-600">{dailyRecommendation.date}</Text>
+                  </View>
+                </View>
+                <View className={`px-4 py-2 rounded-full shadow-md ${
+                  dailyRecommendation.totalScore >= 90 ? 'bg-green-500' :
+                  dailyRecommendation.totalScore >= 80 ? 'bg-blue-500' :
+                  dailyRecommendation.totalScore >= 70 ? 'bg-yellow-500' :
+                  dailyRecommendation.totalScore >= 60 ? 'bg-orange-500' : 'bg-red-500'
+                }`}>
+                  <Text className="text-white font-bold text-sm">
+                    {dailyRecommendation.totalScore}/100
+                  </Text>
+                </View>
+              </View>
+
+              {/* Demo Notice */}
+              {(!reportData || reportData.totalCalories === 0) && (
+                <View className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                  <View className="flex-row items-center justify-between">
+                    <View className="flex-row items-center flex-1">
+                      <Text className="text-yellow-600 mr-2">ℹ️</Text>
+                      <Text className="text-yellow-800 text-sm font-medium flex-1">
+                        แสดงตัวอย่างคำแนะนำด้วยข้อมูล Mockup
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      className="bg-yellow-500 px-3 py-1 rounded-full ml-2"
+                      onPress={() => setMockScenario((prev) => prev + 1)}
+                    >
+                      <Text className="text-white text-xs font-medium">เปลี่ยนตัวอย่าง</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <Text className="text-yellow-700 text-xs mt-2">
+                    {['คนลดน้ำหนัก - กินดี', 'คนลดน้ำหนัก - กินน้อย', 'นักกีฬา - โปรตีนสูง', 'คนทำงานออฟฟิศ - สมดุล'][mockScenario % 4]}
+                  </Text>
+                </View>
+              )}
+
+              {/* Score Summary */}
+              <View className="bg-gray-50 rounded-xl p-4 mb-4">
+                <Text className="text-center text-lg font-semibold text-gray-800 mb-2">
+                  {dailyRecommendation.summary}
+                </Text>
+                
+                {/* Score Grid */}
+                <View className="flex-row justify-between mt-3">
+                  {[
+                    { label: '🔥 แคลอรี่', score: dailyRecommendation.assessments.calories.score, percent: dailyRecommendation.assessments.calories.percentage },
+                    { label: '💪 โปรตีน', score: dailyRecommendation.assessments.protein.score, percent: dailyRecommendation.assessments.protein.percentage },
+                    { label: '🍚 คาร์บ', score: dailyRecommendation.assessments.carbs.score, percent: dailyRecommendation.assessments.carbs.percentage },
+                    { label: '🥑 ไขมัน', score: dailyRecommendation.assessments.fat.score, percent: dailyRecommendation.assessments.fat.percentage }
+                  ].map((item, index) => (
+                    <View key={index} className="items-center flex-1">
+                      <Text className="text-xs text-gray-600 mb-1">{item.label}</Text>
+                      <Text className={`text-sm font-bold ${
+                        item.score >= 23 ? 'text-green-600' :
+                        item.score >= 18 ? 'text-blue-600' :
+                        item.score >= 15 ? 'text-yellow-600' :
+                        'text-red-600'
+                      }`}>{item.score}/25</Text>
+                      <Text className={`text-xs ${
+                        item.percent >= 90 && item.percent <= 110 ? 'text-green-600' : 
+                        item.percent >= 80 && item.percent <= 120 ? 'text-blue-600' : 
+                        'text-orange-600'
+                      }`}>
+                        {item.percent.toFixed(0)}%
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              {/* Nutrition Advice */}
+              {dailyRecommendation.nutritionAdvice.length > 0 && (
+                <View className="mb-4">
+                  <Text className="text-base font-semibold text-gray-800 mb-3">💪 โภชนาการวันนี้</Text>
+                  {dailyRecommendation.nutritionAdvice.slice(0, 3).map((advice, index) => (
+                    <View key={index} className="flex-row items-start mb-2">
+                      <Text className="text-sm text-gray-700 leading-5">{advice}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {/* Activity Advice */}
+              {dailyRecommendation.activityAdvice.length > 0 && (
+                <View className="mb-4">
+                  <Text className="text-base font-semibold text-gray-800 mb-3">🏃‍♂️ กิจกรรมแนะนำ</Text>
+                  {dailyRecommendation.activityAdvice.map((advice, index) => (
+                    <View key={index} className="flex-row items-start mb-2">
+                      <Text className="text-sm text-blue-700 leading-5">{advice}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {/* Tomorrow Tips */}
+              {dailyRecommendation.tomorrowTips.length > 0 && (
+                <View className="bg-blue-50 rounded-xl p-4">
+                  <Text className="text-base font-semibold text-blue-800 mb-3">🎯 เคล็ดลับสำหรับพรุ่งนี้</Text>
+                  {dailyRecommendation.tomorrowTips.slice(0, 3).map((tip, index) => (
+                    <View key={index} className="flex-row items-start mb-2 last:mb-0">
+                      <View className="w-5 h-5 bg-blue-500 rounded-full items-center justify-center mr-3 mt-0.5">
+                        <Text className="text-white text-xs font-bold">{index + 1}</Text>
+                      </View>
+                      <Text className="text-sm text-blue-800 leading-5 flex-1">{tip}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
 
           {/* Recent Meals */}
           
