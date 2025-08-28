@@ -34,7 +34,7 @@ const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
     
     return (
       <View className="flex-1 mx-1">
-        <View className="bg-white rounded-2xl p-4 shadow-sm border border-gray-50">
+        <View className="bg-white rounded-2xl p-4 shadow-md shadow-slate-600 border border-gray-50">
           {/* Label */}
           <View className="items-center mb-3">
             <Text className="text-xs font-promptMedium text-myBlack uppercase tracking-wide">
@@ -89,7 +89,7 @@ const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
   return (
     <View className="mx-3 mt-4">
       {/* Main Calories Card */}
-      <View className="bg-white rounded-2xl p-4 shadow-lg border border-blue-100 mb-3">
+      <View className="bg-white rounded-2xl p-4 shadow-lg shadow-slate-600 border border-transparent mb-3">
         {/* Header */}
         <View className="flex-row items-center justify-between mb-4">
           <Text className="text-lg font-promptBold text-myBlack">แคลอรี่วันนี้</Text>

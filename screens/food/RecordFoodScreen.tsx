@@ -1120,7 +1120,7 @@ const RecordFoodScreen = () => {
       };
 
       return (
-        <View key={timeIndex} className="bg-white rounded-xl p-4 mb-4 shadow-sm">
+        <View key={timeIndex} className="bg-white rounded-xl p-4 mb-4 shadow-sm shadow-slate-600">
           <View className="flex-row items-center justify-between mb-3">
             <View className="flex-row items-center">
               <View className="w-12 h-12 bg-primary/20 rounded-full items-center justify-center mr-3">
@@ -1243,7 +1243,7 @@ const RecordFoodScreen = () => {
     };
 
     return (
-      <View key={timeIndex} className="bg-white rounded-xl p-4 mb-4 shadow-sm">
+      <View key={timeIndex} className="bg-white rounded-xl p-4 mb-4 shadow-sm shadow-slate-600">
         <View className="flex-row items-center justify-between mb-3">
           <View className="flex-row items-center">
             <View className="w-12 h-12 bg-primary/20 rounded-full items-center justify-center mr-3">

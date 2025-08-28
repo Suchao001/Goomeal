@@ -117,12 +117,7 @@ const CalendarScreen = () => {
   useEffect(() => {
     const planDay = getCurrentPlanDay();
     setCurrentDayMeals(planDay);
-    if (planDay && planDay.meals) {
-      // console.log('🍽️ [CalendarScreen] Meals Structure:', JSON.stringify(planDay.meals, null, 2));
-      // console.log('🥘 [CalendarScreen] Breakfast:', planDay.meals.breakfast);
-      // console.log('🍱 [CalendarScreen] Lunch:', planDay.meals.lunch);
-      // console.log('🍜 [CalendarScreen] Dinner:', planDay.meals.dinner);
-    }
+   
   }, [selectedDate, currentFoodPlan]);
 
   // Transform meal data for current day (improved to handle the actual JSON structure)
@@ -223,13 +218,11 @@ const CalendarScreen = () => {
   const renderMealSection = (mealType: 'breakfast' | 'lunch' | 'dinner', meals: MealItem[], icon: string, title: string) => {    
     const totalCalories = calculateMealCalories(meals);
     
-    // Get total calories from the meal data if available (dynamic lookup)
     let mealTotalCal = totalCalories;
     
     if (currentDayMeals?.meals) {
       let mealsData = currentDayMeals.meals;
       
-      // Handle JSON string parsing
       if (typeof mealsData === 'string') {
         try {
           mealsData = JSON.parse(mealsData);
@@ -283,7 +276,7 @@ const CalendarScreen = () => {
             meals.map((meal, index) => (
               <View key={index} className="mb-4">
                 {/* Food Item Card */}
-                <View className="bg-white rounded-xl p-4 shadow-sm">
+                <View className="bg-white rounded-xl p-4 shadow-md shadow-slate-400">
                   <View className="flex-row">
                     {/* Food Image */}
                     <View className="w-16 h-16 mr-4">
@@ -433,16 +426,13 @@ const CalendarScreen = () => {
           <Text className="text-lg font-medium font-prompt text-gray-800">
             {dayName}
           </Text>
-          {/* <Text className="text-sm text-gray-500">
-            {planDayText}
-          </Text> */}
-          {/* Show total calories if available */}
+    
           {currentDayMeals && currentDayMeals.meals && (
             <Text className="text-xs font-bold text-primary">
               {(() => {
                 let mealsData = currentDayMeals.meals;
                 
-                // Handle JSON string parsing
+            
                 if (typeof mealsData === 'string') {
                   try {
                     mealsData = JSON.parse(mealsData);
@@ -832,16 +822,7 @@ const CalendarScreen = () => {
             
             <View className="border-t border-gray-100 my-1" />
             
-            <TouchableOpacity
-              className="px-4 py-3 flex-row items-center"
-              onPress={() => {
-                setShowKebabMenu(false);
-                // นำไปยังหน้าการตั้งค่า
-              }}
-            >
-              <Icon name="settings" size={20} color="#6b7280" />
-              <Text className="ml-3 text-gray-700">ตั้งค่า</Text>
-            </TouchableOpacity>
+           
           </View>
         </TouchableOpacity>
       </Modal>

@@ -75,7 +75,7 @@ const MenuScreen = () => {
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }}>
         
         {/* User Profile Section */}
-        <View className="bg-white mx-4 mt-8 rounded-xl shadow-sm p-6">
+        <View className="bg-white mx-4 mt-8 rounded-xl shadow-md shadow-slate-500 p-6 ">
           <View className="flex-row items-center">
         {/* Avatar with gradient background */}
         <View className="relative">
@@ -147,26 +147,26 @@ const MenuScreen = () => {
         {/* Quick Actions - 2 Columns */}
         <View className="mx-4 mt-6">
           <Text className="text-lg font-promptBold text-myBlack mb-3">การจัดการอาหาร</Text>
-          <View className="bg-white rounded-xl shadow-sm overflow-hidden flex-row">
+          <View className="bg-white rounded-xl shadow-md shadow-slate-500 overflow-hidden flex-row ">
             {/* เพิ่มแผนอาหาร */}
             <TouchableOpacity 
-              className="flex-1 bg-green-50 p-3 items-center border-r border-gray-200"
+              className="flex-1 bg-white p-3 items-center border-r border-gray-200"
               onPress={() => navigation.navigate('OptionPlan',{from:'Menu'})}
             >
-              <View className="w-10 h-10 bg-green-100 rounded-full items-center justify-center mb-2">
-                <Icon name="add-circle" size={20} color="#22c55e" />
-              </View>
+                <View className="w-10 h-10  rounded-full items-center justify-center mb-2">
+                <Icon name="restaurant" size={20} color="#22c55e" />
+                </View>
               <Text className="text-xs font-promptSemiBold text-green-800 text-center">เพิ่มแผนอาหาร</Text>
               <Text className="text-xs text-green-600 mt-1 text-center font-prompt">สร้างแผนใหม่</Text>
             </TouchableOpacity>
 
             {/* จัดการเมนูอาหาร */}
             <TouchableOpacity 
-              className="flex-1 bg-blue-50 p-3 items-center"
+              className="flex-1 bg-white p-3 items-center"
               onPress={() => navigation.navigate('MyFood' as any)}
             >
-              <View className="w-10 h-10 bg-blue-100 rounded-full items-center justify-center mb-2">
-                <Icon name="restaurant" size={20} color="#3b82f6" />
+              <View className="w-10 h-10  rounded-full items-center justify-center mb-2">
+                <Icon name="fast-food" size={20} color="#3b82f6" />
               </View>
               <Text className="text-xs font-promptSemiBold text-blue-800 text-center">จัดการเมนูอาหาร</Text>
               <Text className="text-xs text-blue-600 mt-1 text-center font-prompt">ดูและแก้ไขเมนู</Text>
@@ -177,14 +177,14 @@ const MenuScreen = () => {
         {/* Main Menu */}
         <View className="mx-4 mt-6">
           <Text className="text-lg font-promptBold text-myBlack mb-3">เมนูหลัก</Text>
-          <View className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <View className="bg-white rounded-xl shadow-md shadow-slate-500 overflow-hidden">
 
 
              <TouchableOpacity 
               className="flex-row items-center p-4 border-b border-gray-100"
               onPress={handleEatingReportPress}
             >
-              <View className="w-10 h-10 bg-yellow-100 rounded-full items-center justify-center mr-4">
+              <View className="w-10 h-10  rounded-full items-center justify-center mr-4">
                 <Icon name="analytics" size={20} color="#f59e0b" />
               </View>
               <View className="flex-1">
@@ -198,7 +198,7 @@ const MenuScreen = () => {
               className="flex-row items-center p-4 border-b border-gray-100"
               onPress={handlePlanSelectionPress}
             >
-              <View className="w-10 h-10 bg-green-100 rounded-full items-center justify-center mr-4">
+              <View className="w-10 h-10  rounded-full items-center justify-center mr-4">
                 <Icon name="restaurant" size={20} color="#22c55e" />
               </View>
               <View className="flex-1">
@@ -213,7 +213,7 @@ const MenuScreen = () => {
               className="flex-row items-center p-4 border-b border-gray-100"
               onPress={handleEatingStyleSettingsPress}
             >
-              <View className="w-10 h-10 bg-purple-100 rounded-full items-center justify-center mr-4">
+              <View className="w-10 h-10  rounded-full items-center justify-center mr-4">
                 <Icon name="options" size={20} color="#8b5cf6" />
               </View>
               <View className="flex-1">
@@ -227,7 +227,7 @@ const MenuScreen = () => {
               className="flex-row items-center p-4 border-b border-gray-100"
               onPress={handleNotificationSettingsPress}
             >
-              <View className="w-10 h-10 bg-orange-100 rounded-full items-center justify-center mr-4">
+              <View className="w-10 h-10  rounded-full items-center justify-center mr-4">
                 <Icon name="notifications" size={20} color="#f97316" />
               </View>
               <View className="flex-1">
@@ -241,7 +241,7 @@ const MenuScreen = () => {
               className="flex-row items-center p-4 border-b border-gray-100"
               onPress={handleRecordSettingsPress}
             >
-              <View className="w-10 h-10 bg-indigo-100 rounded-full items-center justify-center mr-4">
+              <View className="w-10 h-10  rounded-full items-center justify-center mr-4">
                 <Icon name="create" size={20} color="#6366f1" />
               </View>
               <View className="flex-1">
@@ -255,7 +255,7 @@ const MenuScreen = () => {
               className="flex-row items-center p-4"
               onPress={handleMealTimeSettingsPress}
             >
-              <View className="w-10 h-10 bg-teal-100 rounded-full items-center justify-center mr-4">
+              <View className="w-10 h-10  rounded-full items-center justify-center mr-4">
                 <Icon name="time" size={20} color="#14b8a6" />
               </View>
               <View className="flex-1">
@@ -271,12 +271,12 @@ const MenuScreen = () => {
         {/* Additional Options */}
         <View className="mx-4 mt-6">
           <Text className="text-lg font-promptBold text-myBlack mb-3">อื่นๆ</Text>
-          <View className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <View className="bg-white rounded-xl shadow-md shadow-slate-500 overflow-hidden">
             <TouchableOpacity 
               className="flex-row items-center p-4"
               onPress={handleLogout}
             >
-              <View className="w-10 h-10 bg-red-100 rounded-full items-center justify-center mr-4">
+              <View className="w-10 h-10  rounded-full items-center justify-center mr-4">
                 <Icon name="log-out" size={20} color="#ef4444" />
               </View>
               <View className="flex-1">

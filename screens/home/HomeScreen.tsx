@@ -469,7 +469,7 @@ const Home = () => {
         )}
         {/* firsttime setting */}
         {firstTimeSetting === false && (
-          <View className="w-[90%] bg-white rounded-lg shadow-md p-6 mt-4 mx-auto items-center">
+          <View className="w-[90%] bg-white rounded-lg shadow-md shadow-slate-600 p-6 mt-4 mx-auto items-center">
             <View className="flex-row items-center mb-4">
               <View className="w-6 h-6 bg-orange-400 rounded-full mr-2 items-center justify-center">
                 <Text className="text-white font-promptBold">✎</Text>
@@ -505,7 +505,7 @@ const Home = () => {
                 className="mr-4 w-72"
                 onPress={() => handleArticleClick(item)}
               >
-                <View className="bg-white rounded-lg shadow-md overflow-hidden h-64">
+                <View className="bg-white rounded-lg shadow-md shadow-slate-600  overflow-hidden h-64">
                   {/* Article Image */}
                   <View className="h-40 bg-gray-200 items-center justify-center">
                     <Image
@@ -544,7 +544,7 @@ const Home = () => {
 
           <View className="px-4">
             {recommendedMeals.map((meal) => (
-              <TouchableOpacity key={meal.id} className="bg-white rounded-lg shadow-md mb-4 overflow-hidden">
+              <TouchableOpacity key={meal.id} className="bg-white rounded-lg shadow-md shadow-slate-600 mb-4 overflow-hidden">
                 <View className="flex-row">
                   
                   <View className="w-24 h-24 bg-gray-200 items-center justify-center">

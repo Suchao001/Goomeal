@@ -142,7 +142,7 @@ const TodayMeals: React.FC<TodayMealsProps> = ({ meals, onAddMeal, onEditMeal })
   );
 
   return (
-    <View className="mx-4 mt-4 bg-white rounded-xl p-5 shadow-sm">
+    <View className="mx-4 mt-4 bg-white rounded-xl p-5 shadow-md shadow-slate-600 border border-transparent">
       <View className="flex-row items-center justify-between mb-4">
         <Text className="text-lg font-promptBold text-myBlack">มื้ออาหารวันนี้</Text>
         <Text className="text-sm text-gray-500 font-prompt">

@@ -363,7 +363,7 @@ const PlanSelectionScreen = () => {
 
   return (
     <View className="flex-1 bg-gray-100">
-      <View className="flex-row items-center justify-between px-4 pt-10 pb-4 bg-white">
+      <View className="flex-row items-center justify-between px-4 pt-10 pb-4 bg-white shadow-md">
         <TouchableOpacity 
           className="w-10 h-10 rounded-full items-center justify-center"
           onPress={handleBackPress}
@@ -373,7 +373,7 @@ const PlanSelectionScreen = () => {
         
         <View className="flex-row items-center gap-2">
           <Icon name="restaurant" size={32} color="#9ca3af" />
-          <Text className="text-xl font-semibold text-gray-800">แผนการกิน</Text>
+          <Text className="text-xl font-promptBold text-myBlack">แผนการกิน</Text>
         </View>
         <View className="flex-row items-center gap-1">
           <TouchableOpacity 
@@ -398,7 +398,7 @@ const PlanSelectionScreen = () => {
             <View className="flex-1 items-center justify-center py-20">
               <View className="bg-white rounded-3xl p-8 shadow-lg">
                 <ActivityIndicator size="large" color="#f59e0b" />
-                <Text className="text-gray-600 mt-4 text-center font-medium">กำลังโหลดรายการแผนอาหาร...</Text>
+                <Text className="text-gray-600 mt-4 text-center font-promptMedium">กำลังโหลดรายการแผนอาหาร...</Text>
               </View>
             </View>
           ) : (
@@ -410,7 +410,7 @@ const PlanSelectionScreen = () => {
 
                   {/* Plans Container - Single Card */}
                   <View 
-                    className="bg-white rounded-3xl p-4 shadow-lg"
+                    className="bg-white rounded-3xl p-4 shadow-md shadow-slate-500"
                     style={{
                       shadowColor: '#000',
                       shadowOffset: { width: 0, height: 4 },
@@ -465,7 +465,7 @@ const PlanSelectionScreen = () => {
                               <View className="flex-1">
                                 <View className="flex-row items-center mb-1">
                                   <Text 
-                                    className={`text-lg font-bold ${isCurrentPlan ? 'text-primary' : 'text-gray-800'}`}
+                                    className={`text-lg font-promptBold ${isCurrentPlan ? 'text-primary' : 'text-gray-800'}`}
                                     style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 2 }}
                                   >
                                     {plan.name}
@@ -532,7 +532,7 @@ const PlanSelectionScreen = () => {
                     <View className="w-8 h-8 rounded-full bg-opacity-20 items-center justify-center mr-3">
                       <Icon name="add" size={20} color="white" />
                     </View>
-                    <Text className="text-lg font-bold text-white">สร้างแผนใหม่</Text>
+                    <Text className="text-lg font-promptBold text-white">สร้างแผนใหม่</Text>
                   </TouchableOpacity>
                 </>
               ) : (
@@ -545,7 +545,7 @@ const PlanSelectionScreen = () => {
                     </View>
                     
                     {/* Empty State Text */}
-                    <Text className="text-xl font-bold text-gray-800 mb-2 text-center">
+                    <Text className="text-xl font-promptBold text-gray-800 mb-2 text-center">
                       ยังไม่มีแผนอาหาร
                     </Text>
                     <Text className="text-sm text-gray-500 text-center mb-8 leading-6">
@@ -567,7 +567,7 @@ const PlanSelectionScreen = () => {
                     >
                       <View className="flex-row items-center">
                         <Icon name="add-circle" size={24} color="white" />
-                        <Text className="text-base font-bold text-white ml-2">สร้างแผนใหม่</Text>
+                        <Text className="text-base font-promptBold text-white ml-2">สร้างแผนใหม่</Text>
                       </View>
                     </TouchableOpacity>
                   </View>
@@ -617,7 +617,7 @@ const PlanSelectionScreen = () => {
                 <View className="w-8 h-8 rounded-full bg-green-100 items-center justify-center mr-3">
                   <Icon name="checkmark" size={16} color="#10b981" />
                 </View>
-                <Text className="text-sm font-medium text-green-600">ตั้งเป็นแผนปัจจุบัน</Text>
+                <Text className="text-sm font-promptMedium text-green-600">ตั้งเป็นแผนปัจจุบัน</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity 
@@ -628,7 +628,7 @@ const PlanSelectionScreen = () => {
               <View className="w-8 h-8 rounded-full bg-blue-100 items-center justify-center mr-3">
                 <Icon name="restaurant" size={16} color="#3b82f6" />
               </View>
-              <Text className="text-sm font-medium text-blue-600">แก้ไขแผนการกิน</Text>
+              <Text className="text-sm font-promptMedium text-blue-600">แก้ไขแผนการกิน</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               className="py-4 px-5 border-b border-gray-100 flex-row items-center"
@@ -638,7 +638,7 @@ const PlanSelectionScreen = () => {
               <View className="w-8 h-8 rounded-full bg-orange-100 items-center justify-center mr-3">
                 <Icon name="create" size={16} color="#f59e0b" />
               </View>
-              <Text className="text-sm font-medium text-gray-700">แก้ไขข้อมูลแผน</Text>
+              <Text className="text-sm font-promptMedium text-gray-700">แก้ไขข้อมูลแผน</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               className="py-4 px-5 flex-row items-center"
@@ -647,7 +647,7 @@ const PlanSelectionScreen = () => {
               <View className="w-8 h-8 rounded-full bg-red-100 items-center justify-center mr-3">
                 <Icon name="trash" size={16} color="#ef4444" />
               </View>
-              <Text className="text-sm font-medium text-red-500">ลบแผน</Text>
+              <Text className="text-sm font-promptMedium text-red-500">ลบแผน</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -697,7 +697,7 @@ const PlanSelectionScreen = () => {
               >
                 {/* Header */}
                 <View className="flex-row items-center justify-between mb-6">
-                  <Text className="text-xl font-bold text-gray-800">ตั้งค่าแผนการกิน</Text>
+                  <Text className="text-xl font-promptBold text-gray-800">ตั้งค่าแผนการกิน</Text>
                   <TouchableOpacity 
                     onPress={() => setShowSettingsModal(false)}
                     className="p-2 rounded-full bg-gray-100"
@@ -708,7 +708,7 @@ const PlanSelectionScreen = () => {
 
                 {/* Start Date Setting */}
                 <View className="mb-6">
-                  <Text className="text-lg font-semibold text-gray-800 mb-2">ตั้งค่าวันเริ่มต้นแผน</Text>
+                  <Text className="text-lg font-promptSemiBold text-gray-800 mb-2">ตั้งค่าวันเริ่มต้นแผน</Text>
                   <Text className="text-sm text-gray-500 mb-4 leading-5">
                     ระบบปกติจะเลือกวันที่เริ่มต้นแผนการกินเป็นวันที่เซ็ทอาหารวันนั้น ๆ
                   </Text>
@@ -722,8 +722,8 @@ const PlanSelectionScreen = () => {
                         <Icon name="calendar" size={20} color="#ffb800" />
                       </View>
                       <View>
-                        <Text className="text-sm font-medium text-gray-700">วันเริ่มต้นแผน</Text>
-                        <Text className="text-lg font-semibold text-gray-800">
+                        <Text className="text-sm font-promptMedium text-gray-700">วันเริ่มต้นแผน</Text>
+                        <Text className="text-lg font-promptSemiBold text-gray-800">
                           {(() => {
                             try {
                               if (isNaN(selectedStartDate.getTime())) {
@@ -750,7 +750,7 @@ const PlanSelectionScreen = () => {
                 <View className="mb-8">
                   <View className="flex-row items-center justify-between mb-4">
                     <View className="flex-1 mr-4">
-                      <Text className="text-lg font-semibold text-gray-800 mb-1">วนซ้ำแผนการกิน</Text>
+                      <Text className="text-lg font-promptSemiBold text-gray-800 mb-1">วนซ้ำแผนการกิน</Text>
                       <Text className="text-sm text-gray-500 leading-5">
                         เมื่อสิ้นสุดแผนการกินของคุณระบบจะวนรอบ และเริ่มต้นแผนการกินของวันแรกให้อัตโนมัติ
                       </Text>
@@ -771,14 +771,14 @@ const PlanSelectionScreen = () => {
                     className="flex-1 bg-gray-100 rounded-2xl py-4 items-center"
                     onPress={() => setShowSettingsModal(false)}
                   >
-                    <Text className="text-base font-semibold text-gray-600">ยกเลิก</Text>
+                    <Text className="text-base font-promptSemiBold text-gray-600">ยกเลิก</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
                     className="flex-1 rounded-2xl py-4 items-center"
                     style={{ backgroundColor: '#ffb800' }}
                     onPress={handleSaveSettings}
                   >
-                    <Text className="text-base font-bold text-white">บันทึก</Text>
+                    <Text className="text-base font-promptBold text-white">บันทึก</Text>
                   </TouchableOpacity>
                 </View>
               </View>

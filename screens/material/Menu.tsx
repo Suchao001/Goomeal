@@ -80,9 +80,9 @@ const styles = StyleSheet.create({
       width: 0,
       height: -3,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.5,
     shadowRadius: 3,
-    elevation: 5, // For Android shadow
+    elevation: 5, 
   },  
   menuItem: {
     alignItems: 'center',
