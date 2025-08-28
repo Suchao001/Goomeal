@@ -87,7 +87,9 @@ const TodayMeals: React.FC<TodayMealsProps> = ({ meals, onAddMeal, onEditMeal })
       </View>
 
       {/* Edit Icon */}
-      <Icon name="chevron-forward" size={16} color="#9ca3af" />
+      <TouchableOpacity className="ml-2" onPress={() => onEditMeal(meal)}>
+        <Icon name="save" size={16} color="#ffb800" />
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 
@@ -97,8 +99,8 @@ const TodayMeals: React.FC<TodayMealsProps> = ({ meals, onAddMeal, onEditMeal })
       <View className="flex-row items-center justify-between mb-3">
         <View className="flex-row items-center">
           <View 
-            className="w-8 h-8 rounded-full items-center justify-center mr-2"
-            style={{ backgroundColor: getMealTypeColor(type) + '20' }}
+            className="w-8 h-8  items-center justify-center mr-2"
+           
           >
             <Icon 
               name={getMealTypeIcon(type)} 
@@ -116,12 +118,7 @@ const TodayMeals: React.FC<TodayMealsProps> = ({ meals, onAddMeal, onEditMeal })
           )}
         </View>
         
-        <TouchableOpacity
-          className="w-8 h-8 rounded-full bg-primary items-center justify-center"
-          onPress={() => onAddMeal(type)}
-        >
-          <Icon name="add" size={16} color="white" />
-        </TouchableOpacity>
+       
       </View>
 
       {/* Meals List */}

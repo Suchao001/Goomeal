@@ -183,7 +183,7 @@ const ChatScreen = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-gray-50">
       {/* Header */}
       <View className="bg-primary px-4 pt-10 pb-1">
         <View className="flex-row items-center justify-between mb-2">
@@ -208,7 +208,7 @@ const ChatScreen = () => {
       {/* Chat Messages */}
       <ScrollView 
         ref={scrollViewRef}
-        className="flex-1 px-4 py-2" 
+        className="flex-1  " 
         showsVerticalScrollIndicator={false}
         onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
       >

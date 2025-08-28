@@ -1005,7 +1005,7 @@ const RecordFoodScreen = () => {
     onEdit?: () => void;
     onMenuPress?: (event: any) => void;
   }) => (
-    <View className={`${entry.fromPlan ? 'bg-blue-50 border border-blue-200' : 'bg-green-100'} rounded-lg p-3 mb-2`}>
+    <View className={`${entry.fromPlan ? 'bg-blue-50 border border-transparent' : 'bg-green-100'} rounded-lg p-3 mb-2`}>
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center flex-1">
           <Icon 
@@ -1017,13 +1017,13 @@ const RecordFoodScreen = () => {
             <View className="flex-row items-center">
               <Text className="font-promptSemiBold text-gray-800">{entry.name}</Text>
               {entry.fromPlan && (
-                <View className="ml-2 px-2 py-1 bg-blue-100 rounded-full">
+                <View className="ml-2 px-2 py-1 rounded-full">
                   <Text className="text-blue-600 text-xs font-promptMedium">ตามแผน</Text>
                 </View>
               )}
-              {entry.saved && (
-                <View className="ml-2 px-2 py-1 bg-green-100 rounded-full">
-                  <Text className="text-green-700 text-xs font-promptMedium">บันทึกแล้ว</Text>
+              {entry.saved && entry.fromPlan && (
+                <View className="ml-2 px-2 py-1 ">
+                  <Icon name="checkmark-circle" size={16} color="#22c55e" />
                 </View>
               )}
             </View>
@@ -1039,8 +1039,8 @@ const RecordFoodScreen = () => {
         </View>
         <View className="flex-row items-center">
           {entry.fromPlan && !entry.saved && onSave && (
-            <TouchableOpacity onPress={onSave} className="ml-2 bg-primary p-2 rounded-full">
-              <Icon name="save" size={16} color="white" />
+            <TouchableOpacity onPress={onSave} className="ml-2 ">
+              <Icon name="save" size={16} color="#ffb800" />
             </TouchableOpacity>
           )}
           {entry.saved && onMenuPress && (
@@ -1120,14 +1120,14 @@ const RecordFoodScreen = () => {
       };
 
       return (
-        <View key={timeIndex} className="bg-white rounded-xl p-4 mb-4 shadow-sm shadow-slate-600">
+        <View key={timeIndex} className="bg-white rounded-xl p-4 mb-4 shadow-md shadow-slate-600">
           <View className="flex-row items-center justify-between mb-3">
             <View className="flex-row items-center">
-              <View className="w-12 h-12 bg-primary/20 rounded-full items-center justify-center mr-3">
+              <View className="w-12 h-12  rounded-full items-center justify-center mr-3">
                 <Icon
                   name={timeIndex === 0 ? 'sunny' : timeIndex === 1 ? 'partly-sunny' : 'moon'}
                   size={24}
-                  color="#eab308"
+                  color="#ffb800"
                 />
               </View>
               <View>
@@ -1243,14 +1243,14 @@ const RecordFoodScreen = () => {
     };
 
     return (
-      <View key={timeIndex} className="bg-white rounded-xl p-4 mb-4 shadow-sm shadow-slate-600">
+      <View key={timeIndex} className="bg-white rounded-xl p-4 mb-4 shadow-md shadow-slate-600">
         <View className="flex-row items-center justify-between mb-3">
           <View className="flex-row items-center">
-            <View className="w-12 h-12 bg-primary/20 rounded-full items-center justify-center mr-3">
+            <View className="w-12 h-12  rounded-full items-center justify-center mr-3">
               <Icon
                 name={timeIndex === 0 ? 'sunny' : timeIndex === 1 ? 'partly-sunny' : 'moon'}
                 size={24}
-                color="#eab308"
+                color="#ffb800"
               />
             </View>
             <View>
@@ -1258,7 +1258,7 @@ const RecordFoodScreen = () => {
               <Text className="text-sm text-gray-500">{meal.time}</Text>
             </View>
           </View>
-          <View className={`px-3 py-1 rounded-full ${allEntries.length > 0 ? 'bg-green-100' : 'bg-gray-100'}`}>
+          <View className={`px-3 py-1 `}>
             <Text className={`text-xs font-promptMedium ${allEntries.length > 0 ? 'text-green-600' : 'text-gray-600'}`}>
               {allEntries.length > 0 ? `${allEntries.length} รายการ` : 'ยังไม่มีอาหาร'}
             </Text>

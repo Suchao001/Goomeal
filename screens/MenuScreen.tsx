@@ -75,7 +75,7 @@ const MenuScreen = () => {
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }}>
         
         {/* User Profile Section */}
-        <View className="bg-white mx-4 mt-8 rounded-xl shadow-md shadow-slate-500 p-6 ">
+        <View className="bg-white mx-4 mt-8 rounded-xl shadow-md shadow-slate-600 p-6 ">
           <View className="flex-row items-center">
         {/* Avatar with gradient background */}
         <View className="relative">
@@ -147,7 +147,7 @@ const MenuScreen = () => {
         {/* Quick Actions - 2 Columns */}
         <View className="mx-4 mt-6">
           <Text className="text-lg font-promptBold text-myBlack mb-3">การจัดการอาหาร</Text>
-          <View className="bg-white rounded-xl shadow-md shadow-slate-500 overflow-hidden flex-row ">
+          <View className="bg-white rounded-xl shadow-md shadow-slate-600 overflow-hidden flex-row ">
             {/* เพิ่มแผนอาหาร */}
             <TouchableOpacity 
               className="flex-1 bg-white p-3 items-center border-r border-gray-200"
@@ -177,7 +177,7 @@ const MenuScreen = () => {
         {/* Main Menu */}
         <View className="mx-4 mt-6">
           <Text className="text-lg font-promptBold text-myBlack mb-3">เมนูหลัก</Text>
-          <View className="bg-white rounded-xl shadow-md shadow-slate-500 overflow-hidden">
+          <View className="bg-white rounded-xl shadow-md shadow-slate-600 overflow-hidden">
 
 
              <TouchableOpacity 
@@ -271,7 +271,7 @@ const MenuScreen = () => {
         {/* Additional Options */}
         <View className="mx-4 mt-6">
           <Text className="text-lg font-promptBold text-myBlack mb-3">อื่นๆ</Text>
-          <View className="bg-white rounded-xl shadow-md shadow-slate-500 overflow-hidden">
+          <View className="bg-white rounded-xl shadow-md shadow-slate-600 overflow-hidden">
             <TouchableOpacity 
               className="flex-row items-center p-4"
               onPress={handleLogout}
