@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTypedNavigation } from '../../hooks/Navigation';
@@ -16,12 +16,22 @@ const ChatScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [selectedStyle, setSelectedStyle] = useState<'style1' | 'style2' | 'style3'>('style1');
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Load chat history when component mounts
   useEffect(() => {
     loadChatHistory();
     loadChatStyle();
   }, []);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (scrollViewRef.current && chatMessages.length > 0) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [chatMessages, isSending]);
 
   const loadChatStyle = async () => {
     try {
@@ -186,7 +196,7 @@ const ChatScreen = () => {
           
           <View className="flex-row items-center">
         <Icon name="restaurant" size={28} color="white" />
-        <Text className="text-2xl font-bold text-white ml-2">GoodMealChat</Text>
+        <Text className="text-2xl font-promptBold text-white ml-2">GoodMealChat</Text>
           </View>
           
           <TouchableOpacity onPress={clearHistory} className="p-2">
@@ -196,10 +206,15 @@ const ChatScreen = () => {
       </View>
 
       {/* Chat Messages */}
-      <ScrollView className="flex-1 px-4 py-2" showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        ref={scrollViewRef}
+        className="flex-1 px-4 py-2" 
+        showsVerticalScrollIndicator={false}
+        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+      >
         {isLoading ? (
           <View className="flex-1 items-center justify-center">
-            <Text className="text-gray-500">กำลังโหลดประวัติการสนทนา...</Text>
+            <Text className="text-gray-500 font-promptRegular">กำลังโหลดประวัติการสนทนา...</Text>
           </View>
         ) : (
           Array.isArray(chatMessages) && chatMessages.length > 0 ? chatMessages.map((msg, index) => (
@@ -212,20 +227,29 @@ const ChatScreen = () => {
                 {msg.isBot && (
                   <View className="flex-row items-center justify-start mb-2">
                     <Icon name="sparkles" size={18} color="#77DD77" />
-                    <Text className="text-[#77DD77] text-sm font-semibold ml-2">GoodMeal AI</Text>
+                    <Text className="text-[#77DD77] text-sm font-promptSemiBold ml-2">GoodMeal AI</Text>
                   </View>
                 )}
-                <Text className={`text-base leading-6 ${msg.isBot ? 'text-gray-700 ' : 'text-white'}`}>
+                <Text 
+                  className={`text-base leading-6 ${msg.isBot ? 'text-gray-700' : 'text-white'}`}
+                  style={{ fontFamily: 'Prompt-Regular' }}
+                >
                   {msg.text || ''}
                 </Text>
-                <Text className={`text-xs mt-2 ${msg.isBot ? 'text-gray-400 text-center' : 'text-yellow-100'}`}>
+                {msg.isBot &&(
+                  <Text 
+                  className={`text-xs mt-2 ${msg.isBot ? 'text-gray-400 text-center' : 'text-gray-400'}`}
+                  style={{ fontFamily: 'Prompt-Light' }}
+                >
                   {msg.timestamp || ''}
                 </Text>
+                )}
+                
               </View>
             </View>
           )) : (
             <View className="flex-1 items-center justify-center">
-              <Text className="text-gray-500">ยังไม่มีการสนทนา</Text>
+              <Text className="text-gray-500 font-promptRegular">ยังไม่มีการสนทนา</Text>
             </View>
           )
         )}
@@ -235,13 +259,18 @@ const ChatScreen = () => {
             <View className="bg-gray-50 rounded-2xl rounded-bl-md p-4 max-w-[90%]">
               <View className="flex-row items-center justify-center mb-2">
                 <Icon name="sparkles" size={18} color="#77DD77" />
-                <Text className="text-[#77DD77] text-sm font-semibold ml-2">GoodMeal AI</Text>
+                <Text className="text-[#77DD77] text-sm font-promptSemiBold ml-2">GoodMeal AI</Text>
               </View>
               <View className="flex-row items-center justify-center">
                 <View className="w-2 h-2 bg-gray-400 rounded-full mr-1 animate-pulse"></View>
                 <View className="w-2 h-2 bg-gray-400 rounded-full mr-1 animate-pulse"></View>
                 <View className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></View>
-                <Text className="text-gray-500 ml-3">กำลังพิมพ์...</Text>
+                <Text 
+                  className="text-gray-500 ml-3"
+                  style={{ fontFamily: 'Prompt-Regular' }}
+                >
+                  กำลังพิมพ์...
+                </Text>
               </View>
             </View>
           </View>
@@ -250,7 +279,7 @@ const ChatScreen = () => {
 
       {/* Chat Style Selector */}
       <View className="px-4 py-2 border-t border-gray-200">
-        <Text className="text-myBlack text-sm mb-2">รูปแบบการสนทนา:</Text>
+        <Text className="text-myBlack text-sm mb-2 font-promptMedium">รูปแบบการสนทนา:</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <TouchableOpacity 
             className={`rounded-full px-4 py-2 mr-2 border ${
@@ -260,7 +289,7 @@ const ChatScreen = () => {
             }`}
             onPress={() => toggleChatStyle('style1')}
           >
-            <Text className={`text-sm ${
+            <Text className={`text-sm font-promptMedium ${
               selectedStyle === 'style1' ? 'text-white' : 'text-gray-700'
             }`}>😊 เป็นมิตร</Text>
           </TouchableOpacity>
@@ -272,7 +301,7 @@ const ChatScreen = () => {
             }`}
             onPress={() => toggleChatStyle('style2')}
           >
-            <Text className={`text-sm ${
+            <Text className={`text-sm font-promptMedium ${
               selectedStyle === 'style2' ? 'text-white' : 'text-gray-700'
             }`}>👔 เป็นทางการ</Text>
           </TouchableOpacity>
@@ -284,7 +313,7 @@ const ChatScreen = () => {
             }`}
             onPress={() => toggleChatStyle('style3')}
           >
-            <Text className={`text-sm ${
+            <Text className={`text-sm font-promptMedium ${
               selectedStyle === 'style3' ? 'text-white' : 'text-gray-700'
             }`}>😎 สบายๆ</Text>
           </TouchableOpacity>
@@ -296,6 +325,7 @@ const ChatScreen = () => {
         <View className="flex-row items-center bg-gray-100 rounded-full px-4 py-2">
           <TextInput
             className="flex-1 text-gray-800 text-base"
+            style={{ fontFamily: 'Prompt-Regular' }}
             placeholder="แนะนำการกินเพื่อสุขภาพ..."
             placeholderTextColor="#9ca3af"
             value={message}
@@ -324,7 +354,7 @@ const ChatScreen = () => {
           >
             <View className="flex-row items-center">
               <Icon name="chatbubbles" size={20} color="white" />
-              <Text className="text-white font-bold text-lg ml-2">เริ่ม</Text>
+              <Text className="text-white font-promptBold text-lg ml-2">เริ่ม</Text>
             </View>
           </TouchableOpacity>
         )}

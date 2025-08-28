@@ -114,29 +114,29 @@ const SuggestionMenuScreen = () => {
           <Icon name="arrow-back" size={24} color="#374151" />
         </TouchableOpacity>
         
-        <Text className="text-xl font-bold text-gray-900">แนะนำเมนูอาหาร</Text>
+        <Text className="text-xl font-promptBold text-gray-900">แนะนำเมนูอาหาร</Text>
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
         {/* AI Assistant Message */}
-        <View className="bg-white mx-4 mt-6 p-4 rounded-lg shadow-sm">
+        <View className="bg-white mx-4 mt-6 p-4 rounded-xl shadow-sm">
           <View className="flex-row items-center mb-2">
-            <Icon name="chatbubble-ellipses" size={24} color="#3b82f6" />
-            <Text className="text-blue-600 font-semibold ml-2">AI Assistant</Text>
+            <Icon name="sparkles" size={24} color="#ffb800" />
+            <Text className="text-primary font-promptSemiBold ml-2">AI Assistant</Text>
           </View>
-          <Text className="text-gray-700">
+          <Text className="text-gray-700 font-promptMedium">
             กรุณาบอกความต้องการของคุณเพื่อให้ AI แนะนำเมนูที่เหมาะสม
           </Text>
         </View>
 
         {/* Meal Type Selection */}
-        <View className="bg-white mx-4 mt-4 p-4 rounded-lg shadow-sm">
-          <Text className="text-lg font-semibold text-gray-800 mb-3">เลือกมื้ออาหาร</Text>
+        <View className="bg-white mx-4 mt-4 p-4 rounded-xl shadow-sm">
+          <Text className="text-lg font-promptSemiBold text-gray-800 mb-3">เลือกมื้ออาหาร</Text>
           <View className="flex-row flex-wrap">
             {mealTypes.map((meal) => (
               <TouchableOpacity
                 key={meal.id}
-                className={`flex-1 min-w-[45%] p-3 m-1 rounded-lg border ${
+                className={`flex-1 min-w-[45%] p-3 m-1 rounded-xl border-2 ${
                   selectedMealType === meal.id
                     ? 'bg-primary border-primary'
                     : 'bg-gray-50 border-gray-200'
@@ -149,7 +149,7 @@ const SuggestionMenuScreen = () => {
                     size={24} 
                     color={selectedMealType === meal.id ? 'white' : '#6b7280'} 
                   />
-                  <Text className={`mt-1 font-medium ${
+                  <Text className={`mt-1 font-promptMedium ${
                     selectedMealType === meal.id ? 'text-white' : 'text-gray-700'
                   }`}>
                     {meal.label}
@@ -161,24 +161,24 @@ const SuggestionMenuScreen = () => {
         </View>
 
         {/* Hunger Level */}
-        <View className="bg-white mx-4 mt-4 p-4 rounded-lg shadow-sm">
-          <Text className="text-lg font-semibold text-gray-800 mb-3">ระดับความหิว</Text>
+        <View className="bg-white mx-4 mt-4 p-4 rounded-xl shadow-sm">
+          <Text className="text-lg font-promptSemiBold text-gray-800 mb-3">ระดับความหิว</Text>
           <View className="flex-row items-center justify-between px-2">
             {hungerLevels.map((level, index) => (
               <View key={index} className="items-center">
                 <TouchableOpacity
-                  className={`w-12 h-12 rounded-full items-center justify-center ${
-                    hungerLevel === index ? 'bg-primary' : 'bg-gray-200'
+                  className={`w-14 h-14 rounded-full items-center justify-center border-2 ${
+                    hungerLevel === index ? 'bg-primary border-primary' : 'bg-gray-100 border-gray-200'
                   }`}
                   onPress={() => setHungerLevel(index)}
                 >
-                  <Text className={`font-bold ${
+                  <Text className={`font-promptBold ${
                     hungerLevel === index ? 'text-white' : 'text-gray-600'
                   }`}>
                     {index + 1}
                   </Text>
                 </TouchableOpacity>
-                <Text className="text-sm text-gray-600 mt-1">{level}</Text>
+                <Text className="text-sm text-gray-600 mt-1 font-promptRegular">{level}</Text>
               </View>
             ))}
           </View>
@@ -194,18 +194,18 @@ const SuggestionMenuScreen = () => {
         </View>
 
         {/* Ingredients */}
-        <View className="bg-white mx-4 mt-4 p-4 rounded-lg shadow-sm">
-          <Text className="text-lg font-semibold text-gray-800 mb-3">วัตถุดิบ</Text>
+        <View className="bg-white mx-4 mt-4 p-4 rounded-xl shadow-sm">
+          <Text className="text-lg font-promptSemiBold text-gray-800 mb-3">วัตถุดิบที่มี</Text>
           <View className="flex-row items-center mb-3">
             <TextInput
-              className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 mr-2"
+              className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mr-2 font-promptRegular"
               placeholder="พิมพ์ชื่อวัตถุดิบ..."
               value={currentIngredient}
               onChangeText={setCurrentIngredient}
               onSubmitEditing={addIngredient}
             />
             <TouchableOpacity
-              className="w-10 h-10 bg-primary rounded-lg items-center justify-center"
+              className="w-12 h-12 bg-primary rounded-xl items-center justify-center"
               onPress={addIngredient}
             >
               <Icon name="add" size={20} color="white" />
@@ -215,31 +215,31 @@ const SuggestionMenuScreen = () => {
             {ingredients.map((ingredient, index) => (
               <TouchableOpacity
                 key={index}
-                className="bg-yellow-100 border border-yellow-300 rounded-full px-3 py-1 m-1 flex-row items-center"
+                className="bg-green-100 border border-green-300 rounded-full px-3 py-1 m-1 flex-row items-center"
                 onPress={() => removeIngredient(ingredient)}
               >
-                <Text className="text-yellow-800 mr-1">{ingredient}</Text>
-                <Icon name="close" size={16} color="#d97706" />
+                <Text className="text-green-800 mr-1 font-promptMedium">{ingredient}</Text>
+                <Icon name="close" size={16} color="#059669" />
               </TouchableOpacity>
             ))}
           </View>
         </View>
 
         {/* Food Type */}
-        <View className="bg-white mx-4 mt-4 p-4 rounded-lg shadow-sm">
-          <Text className="text-lg font-semibold text-gray-800 mb-3">ประเภทอาหาร</Text>
+        <View className="bg-white mx-4 mt-4 p-4 rounded-xl shadow-sm">
+          <Text className="text-lg font-promptSemiBold text-gray-800 mb-3">ประเภทอาหารที่ต้องการ</Text>
           <View className="flex-row flex-wrap">
             {foodTypes.map((type) => (
               <TouchableOpacity
                 key={type}
-                className={`px-4 py-2 m-1 rounded-full border ${
+                className={`px-4 py-2 m-1 rounded-full border-2 ${
                   selectedFoodType === type
                     ? 'bg-primary border-primary'
                     : 'bg-gray-50 border-gray-200'
                 }`}
                 onPress={() => setSelectedFoodType(type)}
               >
-                <Text className={`${
+                <Text className={`font-promptMedium ${
                   selectedFoodType === type ? 'text-white' : 'text-gray-700'
                 }`}>
                   {type}
@@ -250,20 +250,20 @@ const SuggestionMenuScreen = () => {
         </View>
 
         {/* Dietary Restrictions */}
-        <View className="bg-white mx-4 mt-4 p-4 rounded-lg shadow-sm">
-          <Text className="text-lg font-semibold text-gray-800 mb-3">ข้อจำกัดทางอาหาร</Text>
+        <View className="bg-white mx-4 mt-4 p-4 rounded-xl shadow-sm">
+          <Text className="text-lg font-promptSemiBold text-gray-800 mb-3">ข้อจำกัดทางอาหาร</Text>
           <View className="flex-row flex-wrap mb-3">
             {commonRestrictions.map((restriction) => (
               <TouchableOpacity
                 key={restriction}
-                className={`px-4 py-2 m-1 rounded-full border ${
+                className={`px-4 py-2 m-1 rounded-full border-2 ${
                   dietaryRestrictions.includes(restriction)
                     ? 'bg-red-500 border-red-500'
                     : 'bg-gray-50 border-gray-200'
                 }`}
                 onPress={() => toggleDietaryRestriction(restriction)}
               >
-                <Text className={`${
+                <Text className={`font-promptMedium ${
                   dietaryRestrictions.includes(restriction) ? 'text-white' : 'text-gray-700'
                 }`}>
                   {restriction}
@@ -273,14 +273,14 @@ const SuggestionMenuScreen = () => {
           </View>
           
           <TouchableOpacity
-            className="flex-row items-center justify-center py-2"
+            className="flex-row items-center justify-center py-2 bg-gray-50 rounded-xl"
             onPress={() => setShowMoreRestrictions(!showMoreRestrictions)}
           >
-            <Text className="text-blue-600 mr-1">เพิ่มเติม</Text>
+            <Text className="text-primary font-promptMedium mr-1">เพิ่มเติม</Text>
             <Icon 
               name={showMoreRestrictions ? "chevron-up" : "chevron-down"} 
               size={16} 
-              color="#2563eb" 
+              color="#ffb800" 
             />
           </TouchableOpacity>
 
@@ -289,14 +289,14 @@ const SuggestionMenuScreen = () => {
               {additionalRestrictions.map((restriction) => (
                 <TouchableOpacity
                   key={restriction}
-                  className={`px-4 py-2 m-1 rounded-full border ${
+                  className={`px-4 py-2 m-1 rounded-full border-2 ${
                     dietaryRestrictions.includes(restriction)
                       ? 'bg-red-500 border-red-500'
                       : 'bg-gray-50 border-gray-200'
                   }`}
                   onPress={() => toggleDietaryRestriction(restriction)}
                 >
-                  <Text className={`${
+                  <Text className={`font-promptMedium ${
                     dietaryRestrictions.includes(restriction) ? 'text-white' : 'text-gray-700'
                   }`}>
                     {restriction}
@@ -308,13 +308,13 @@ const SuggestionMenuScreen = () => {
         </View>
 
         {/* Complexity Level */}
-        <View className="bg-white mx-4 mt-4 p-4 rounded-lg shadow-sm">
-          <Text className="text-lg font-semibold text-gray-800 mb-3">ระดับความซับซ้อน</Text>
+        <View className="bg-white mx-4 mt-4 p-4 rounded-xl shadow-sm">
+          <Text className="text-lg font-promptSemiBold text-gray-800 mb-3">ระดับความซับซ้อน</Text>
           <View className="flex-row justify-between">
             {complexityLevels.map((level) => (
               <TouchableOpacity
                 key={level.id}
-                className={`flex-1 p-3 mx-1 rounded-lg border ${
+                className={`flex-1 p-4 mx-1 rounded-xl border-2 ${
                   complexityLevel === level.id
                     ? 'bg-primary border-primary'
                     : 'bg-gray-50 border-gray-200'
@@ -324,10 +324,10 @@ const SuggestionMenuScreen = () => {
                 <View className="items-center">
                   <Icon 
                     name={level.icon} 
-                    size={24} 
+                    size={28} 
                     color={complexityLevel === level.id ? 'white' : '#6b7280'} 
                   />
-                  <Text className={`mt-1 font-medium ${
+                  <Text className={`mt-2 font-promptMedium ${
                     complexityLevel === level.id ? 'text-white' : 'text-gray-700'
                   }`}>
                     {level.label}
@@ -341,7 +341,7 @@ const SuggestionMenuScreen = () => {
         {/* Get Suggestion Button */}
         <View className="mx-4 mt-6 mb-8">
           <TouchableOpacity
-            className={`bg-primary rounded-xl p-4 flex-row items-center justify-center shadow-md ${loading ? 'opacity-60' : ''}`}
+            className={`bg-primary rounded-xl p-4 flex-row items-center justify-center shadow-lg ${loading ? 'opacity-60' : ''}`}
             onPress={handleGetSuggestion}
             disabled={loading}
           >
@@ -350,7 +350,7 @@ const SuggestionMenuScreen = () => {
             ) : (
               <Icon name="sparkles" size={24} color="white" />
             )}
-            <Text className="text-white font-bold text-lg ml-2">
+            <Text className="text-white font-promptBold text-lg ml-2">
               {loading ? 'กำลังขอเมนู...' : 'ขอแนะนำเมนู'}
             </Text>
           </TouchableOpacity>
