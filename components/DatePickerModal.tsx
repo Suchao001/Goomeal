@@ -70,13 +70,8 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
             }}
             columnWrapperStyle={{ justifyContent: 'space-between' }}
           />
+
           
-          <TouchableOpacity
-            className="bg-primary rounded-lg py-3 items-center mt-2"
-            onPress={onClose}
-          >
-            <Text className="text-white font-semibold">ยืนยัน</Text>
-          </TouchableOpacity>
         </View>
       </TouchableOpacity>
     </Modal>

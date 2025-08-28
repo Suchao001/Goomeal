@@ -1005,7 +1005,7 @@ const RecordFoodScreen = () => {
     onEdit?: () => void;
     onMenuPress?: (event: any) => void;
   }) => (
-    <View className={`${entry.fromPlan ? 'bg-blue-50 border border-transparent' : 'bg-green-100'} rounded-lg p-3 mb-2`}>
+    <View className={`${entry.fromPlan && entry.saved ? 'bg-green-100 border border-green-200' : entry.fromPlan ? 'bg-blue-50 border border-blue-200' : 'bg-green-100 border border-green-200'} rounded-lg p-3 mb-2`}>
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center flex-1">
           <Icon 
@@ -1039,8 +1039,8 @@ const RecordFoodScreen = () => {
         </View>
         <View className="flex-row items-center">
           {entry.fromPlan && !entry.saved && onSave && (
-            <TouchableOpacity onPress={onSave} className="ml-2 ">
-              <Icon name="save" size={16} color="#ffb800" />
+            <TouchableOpacity onPress={onSave} className="ml-2 rounded-full bg-primary p-2">
+              <Icon name="save" size={16} color="white" />
             </TouchableOpacity>
           )}
           {entry.saved && onMenuPress && (

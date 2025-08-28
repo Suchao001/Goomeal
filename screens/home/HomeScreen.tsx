@@ -26,6 +26,8 @@ import {
   getDailyNutritionSummary,
   DailyNutritionSummary 
 } from '../../utils/api/dailyNutritionSummaryApi';
+import { getEatingRecordsByDate, EatingRecord } from '../../utils/api/eatingRecordApi';
+import { getTodayBangkokDate } from '../../utils/bangkokTime';
 import { blog_url, base_url } from '../../config';
 import { ApiClient } from '../../utils/apiClient';
 
@@ -56,6 +58,10 @@ const Home = () => {
   const [dailySummary, setDailySummary] = useState<DailyNutritionSummary | null>(null);
   const [loadingSummary, setLoadingSummary] = useState(true);
 
+  // Saved records state
+  const [savedRecords, setSavedRecords] = useState<EatingRecord[]>([]);
+  const [loadingSavedRecords, setLoadingSavedRecords] = useState(true);
+
   // First time setting state
   const [firstTimeSetting, setFirstTimeSetting] = useState<boolean | null>(null);
 
@@ -72,6 +78,7 @@ const Home = () => {
     loadBlogArticles();
     loadTodayMeals();
     loadDailySummary();
+    loadSavedRecords();
     fetchRecommendedMeals();
     console.log(JSON.stringify(todayMealData, null, 2));
   }, []);
@@ -122,6 +129,27 @@ const Home = () => {
       setDailySummary(null);
     } finally {
       setLoadingSummary(false);
+    }
+  }, []);
+
+  // Load saved records from API
+  const loadSavedRecords = useCallback(async () => {
+    try {
+      setLoadingSavedRecords(true);
+      const today = getTodayBangkokDate(); // Get today's date in Bangkok timezone
+      const result = await getEatingRecordsByDate(today);
+      
+      if (result.success && result.data) {
+        setSavedRecords(result.data.records || []);
+        console.log('📊 [HomeScreen] Saved records:', result.data.records?.length || 0);
+      } else {
+        setSavedRecords([]);
+      }
+    } catch (error) {
+      console.error('❌ [HomeScreen] Error loading saved records:', error);
+      setSavedRecords([]);
+    } finally {
+      setLoadingSavedRecords(false);
     }
   }, []);
 
@@ -307,7 +335,8 @@ const Home = () => {
       // Refresh data when screen comes into focus
       loadDailySummary();
       loadTodayMeals();
-    }, [loadDailySummary, loadTodayMeals])
+      loadSavedRecords();
+    }, [loadDailySummary, loadTodayMeals, loadSavedRecords])
   );
 
   // Transform API data to component format
@@ -316,47 +345,79 @@ const Home = () => {
 
     const meals: MealData[] = [];
     let mealIdCounter = 1;
+    
+    // Helper function to check if meal is saved
+    const isMealSaved = (mealName: string, mealTypeLabel: string): boolean => {
+      return savedRecords.some(record => 
+        record.food_name === mealName && record.meal_type === mealTypeLabel
+      );
+    };
 
-   
+    // Helper function to generate unique ID
+    const generateUniqueId = (mealType: string, index: number): string => {
+      const today = new Date();
+      return `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}-${mealType}-${index}`;
+    };
+
     // Convert breakfast meals
     todayMealData.breakfast.forEach((meal, index) => {
-      // console.log( meal);
+      const saved = isMealSaved(meal.name, 'มื้อเช้า');
       meals.push({
         id: `breakfast-${mealIdCounter++}`,
         mealType: 'breakfast',
         foodName: meal.name,
         calories: meal.calories,
+        carbs: meal.carb,
+        fat: meal.fat,
+        protein: meal.protein,
         image: meal.image ? { uri: meal.image } : require('../../assets/images/Foodtype_1.png'),
-        time: '07:30' // Could be enhanced to use actual time
+        time: '07:30',
+        fromPlan: true,
+        saved: saved,
+        uniqueId: generateUniqueId('breakfast', index)
       });
     });
 
     // Convert lunch meals
     todayMealData.lunch.forEach((meal, index) => {
+      const saved = isMealSaved(meal.name, 'มื้อกลางวัน');
       meals.push({
         id: `lunch-${mealIdCounter++}`,
         mealType: 'lunch',
         foodName: meal.name,
         calories: meal.calories,
+        carbs: meal.carb,
+        fat: meal.fat,
+        protein: meal.protein,
         image: meal.image ? { uri: meal.image } : require('../../assets/images/Foodtype_3.png'),
-        time: '12:15'
+        time: '12:15',
+        fromPlan: true,
+        saved: saved,
+        uniqueId: generateUniqueId('lunch', index)
       });
     });
 
     // Convert dinner meals
     todayMealData.dinner.forEach((meal, index) => {
+      const saved = isMealSaved(meal.name, 'มื้อเย็น');
       meals.push({
         id: `dinner-${mealIdCounter++}`,
         mealType: 'dinner',
         foodName: meal.name,
         calories: meal.calories,
+        carbs: meal.carb,
+        fat: meal.fat,
+        protein: meal.protein,
         image: meal.image ? { uri: meal.image } : require('../../assets/images/Foodtype_4.png'),
-        time: '19:00'
+        time: '19:00',
+        fromPlan: true,
+        saved: saved,
+        uniqueId: generateUniqueId('dinner', index)
       });
     });
 
     return meals;
-  }, [todayMealData]);
+  }, [todayMealData, savedRecords]);
 
   // Handlers for meal actions
   const handleAddMeal = (mealType: MealData['mealType']) => {
@@ -370,6 +431,12 @@ const Home = () => {
     // Navigate to edit meal screen
     // navigation.navigate('RecordFood');
   };
+
+  // Handle refresh data after saving meals
+  const handleRefreshData = useCallback(() => {
+    loadSavedRecords();
+    loadDailySummary();
+  }, [loadSavedRecords, loadDailySummary]);
 
   // Mock data for recommended meals
   const [recommendedMeals, setRecommendedMeals] = useState<RecommendedMeal[]>([]);
@@ -465,6 +532,7 @@ const Home = () => {
             meals={getTodayMealsForComponent}
             onAddMeal={handleAddMeal}
             onEditMeal={handleEditMeal}
+            onRefreshData={handleRefreshData}
           />
         )}
         {/* firsttime setting */}

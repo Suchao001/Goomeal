@@ -1,28 +1,40 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, Image, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { createEatingRecord, getEatingRecordsByDate, EatingRecord } from '../utils/api/eatingRecordApi';
+import { getTodayBangkokDate } from '../utils/bangkokTime';
 
 export interface MealData {
   id: string;
   mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
   foodName: string;
   calories: number;
+  carbs?: number;
+  fat?: number;
+  protein?: number;
   image?: any; // Local image require()
   imageUrl?: string; // URL image
   time?: string;
+  fromPlan?: boolean; // Indicates if this food is from meal plan
+  saved?: boolean; // Indicates if already saved to backend
+  recordId?: number; // Backend record id for deletion
+  uniqueId?: string; // Unique ID for plan items
 }
 
 interface TodayMealsProps {
   meals: MealData[];
   onAddMeal: (mealType: MealData['mealType']) => void;
   onEditMeal: (meal: MealData) => void;
+  onRefreshData?: () => void; // Callback to refresh data after saving
 }
 
-const TodayMeals: React.FC<TodayMealsProps> = ({ meals, onAddMeal, onEditMeal }) => {
+const TodayMeals: React.FC<TodayMealsProps> = ({ meals, onAddMeal, onEditMeal, onRefreshData }) => {
+  const [isSaving, setIsSaving] = useState(false);
+
   const getMealTypeLabel = (mealType: MealData['mealType']) => {
     switch (mealType) {
       case 'breakfast': return 'มื้อเช้า';
-      case 'lunch': return 'มื้อเที่ยง';
+      case 'lunch': return 'มื้อกลางวัน';
       case 'dinner': return 'มื้อเย็น';
       
       default: return 'มื้ออาหาร';
@@ -56,6 +68,42 @@ const TodayMeals: React.FC<TodayMealsProps> = ({ meals, onAddMeal, onEditMeal })
     meals: meals.filter(meal => meal.mealType === type)
   }));
 
+  // Save meal plan item to backend
+  const handleSaveMeal = async (meal: MealData) => {
+    if (!meal.fromPlan || meal.saved || isSaving) return;
+
+    try {
+      setIsSaving(true);
+      const logDate = getTodayBangkokDate();
+      
+      const recordData: Omit<EatingRecord, 'id' | 'user_id' | 'created_at' | 'updated_at'> = {
+        log_date: logDate,
+        food_name: meal.foodName,
+        meal_type: getMealTypeLabel(meal.mealType),
+        calories: meal.calories || 0,
+        carbs: meal.carbs || 0,
+        fat: meal.fat || 0,
+        protein: meal.protein || 0,
+        meal_time: meal.time ? `${meal.time}:00` : '12:00:00',
+        image: undefined,
+        unique_id: meal.uniqueId
+      };
+      
+      await createEatingRecord(recordData);
+      
+      // Refresh data to show updated save status
+      if (onRefreshData) {
+        onRefreshData();
+      }
+      
+    } catch (error) {
+      console.error('Error saving meal:', error);
+      Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถบันทึกอาหารได้ กรุณาลองใหม่อีกครั้ง');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const renderMealItem = (meal: MealData) => (
     <TouchableOpacity
       key={meal.id}
@@ -86,10 +134,31 @@ const TodayMeals: React.FC<TodayMealsProps> = ({ meals, onAddMeal, onEditMeal })
         </Text>
       </View>
 
-      {/* Edit Icon */}
-      <TouchableOpacity className="ml-2" onPress={() => onEditMeal(meal)}>
-        <Icon name="save" size={16} color="#ffb800" />
-      </TouchableOpacity>
+      {/* Save/Saved Icon */}
+      <View className="ml-2">
+        {meal.fromPlan ? (
+          meal.saved ? (
+            // Show check circle for saved items
+            <View className="flex-row items-center">
+              <Icon name="checkmark-circle" size={20} color="#22c55e" />
+             
+            </View>
+          ) : (
+            // Show save button for unsaved plan items
+            <TouchableOpacity
+              className="bg-primary px-2 py-1 rounded-full h-8 flex-row items-center"
+              onPress={() => handleSaveMeal(meal)}
+              disabled={isSaving}
+            >
+              <Icon name="save-outline" size={14} color="white" />
+            
+            </TouchableOpacity>
+          )
+        ) : (
+          // Show different icon for manually added meals
+          <Icon name="restaurant-outline" size={16} color="#6b7280" />
+        )}
+      </View>
     </TouchableOpacity>
   );
 
@@ -139,7 +208,7 @@ const TodayMeals: React.FC<TodayMealsProps> = ({ meals, onAddMeal, onEditMeal })
   );
 
   return (
-    <View className="mx-4 mt-4 bg-white rounded-xl p-5 shadow-md shadow-slate-600 border border-transparent">
+    <View className="mx-4 mt-4 bg-white border border-transparent rounded-xl p-5 shadow-md shadow-slate-600">
       <View className="flex-row items-center justify-between mb-4">
         <Text className="text-lg font-promptBold text-myBlack">มื้ออาหารวันนี้</Text>
         <Text className="text-sm text-gray-500 font-prompt">
