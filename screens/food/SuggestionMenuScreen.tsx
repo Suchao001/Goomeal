@@ -108,10 +108,10 @@ const SuggestionMenuScreen = () => {
       {/* Header */}
       <View className="bg-white px-4 pt-12 pb-4 flex-row items-center border-b border-gray-100">
         <TouchableOpacity 
-          className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center mr-4"
+          className="w-10 h-10  items-center justify-center mr-4"
           onPress={() => navigation.goBack()}
         >
-          <Icon name="arrow-back" size={24} color="#374151" />
+          <Icon name="arrow-back" size={24} color="#ffb800" />
         </TouchableOpacity>
         
         <Text className="text-xl font-promptBold text-gray-900">แนะนำเมนูอาหาร</Text>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert, Modal } from 'react-native';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import { useFocusEffect, useRoute } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -100,6 +100,10 @@ const RecordFoodScreen = () => {
     timeIndex: number;
     entryId: string;
   } | null>(null);
+
+  // Date picker modal state
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [tempSelectedDate, setTempSelectedDate] = useState(new Date());
 
   // Handle selectedDay from navigation params
   useFocusEffect(
@@ -441,6 +445,34 @@ const RecordFoodScreen = () => {
   };
 
   const { dayName } = getCurrentDate();
+
+  // Date picker functions
+  const selectedDayToDate = (day: number): Date => {
+    const today = new Date();
+    const date = new Date(today.getFullYear(), today.getMonth(), day);
+    return date;
+  };
+
+  const dateToSelectedDay = (date: Date): number => {
+    return date.getDate();
+  };
+
+  const openDatePicker = () => {
+    const currentDate = selectedDayToDate(selectedDay);
+    setTempSelectedDate(currentDate);
+    setShowDatePicker(true);
+  };
+
+  const handleDateSelect = (newDate: Date) => {
+    const newDay = dateToSelectedDay(newDate);
+    const currentDay = getCurrentDay();
+    
+    // Only allow selecting dates from day 1 to current day
+    if (newDay >= 1 && newDay <= currentDay) {
+      setSelectedDay(newDay);
+      setShowDatePicker(false);
+    }
+  };
 
   // Function to go back to today
   const goToToday = () => {
@@ -983,22 +1015,22 @@ const RecordFoodScreen = () => {
           />
           <View className="ml-3 flex-1">
             <View className="flex-row items-center">
-              <Text className="font-semibold text-gray-800">{entry.name}</Text>
+              <Text className="font-promptSemiBold text-gray-800">{entry.name}</Text>
               {entry.fromPlan && (
                 <View className="ml-2 px-2 py-1 bg-blue-100 rounded-full">
-                  <Text className="text-blue-600 text-xs font-medium">ตามแผน</Text>
+                  <Text className="text-blue-600 text-xs font-promptMedium">ตามแผน</Text>
                 </View>
               )}
               {entry.saved && (
                 <View className="ml-2 px-2 py-1 bg-green-100 rounded-full">
-                  <Text className="text-green-700 text-xs font-medium">บันทึกแล้ว</Text>
+                  <Text className="text-green-700 text-xs font-promptMedium">บันทึกแล้ว</Text>
                 </View>
               )}
             </View>
             <View className="flex-row items-center mt-1">
-              <Text className="text-gray-600 text-sm">{entry.calories} แคลอรี่</Text>
+              <Text className="text-gray-600 text-sm font-prompt">{entry.calories} แคลอรี่</Text>
               {entry.carbs && entry.fat && entry.protein && (
-                <Text className="text-gray-500 text-xs ml-2">
+                <Text className="text-gray-500 text-xs font-prompt ml-2">
                   • คาร์บ {entry.carbs}g • ไขมัน {entry.fat}g • โปรตีน {entry.protein}g
                 </Text>
               )}
@@ -1099,12 +1131,12 @@ const RecordFoodScreen = () => {
                 />
               </View>
               <View>
-                <Text className="text-lg font-semibold text-gray-800">{meal.label}</Text>
+                <Text className="text-lg font-promptSemiBold text-gray-800">{meal.label}</Text>
                 <Text className="text-sm text-gray-500">{meal.time}</Text>
               </View>
             </View>
             <View className={`px-3 py-1 rounded-full ${savedEntries.length > 0 ? 'bg-green-100' : 'bg-gray-100'}`}>
-              <Text className={`text-xs font-medium ${savedEntries.length > 0 ? 'text-green-600' : 'text-gray-600'}`}>
+              <Text className={`text-xs font-promptMedium ${savedEntries.length > 0 ? 'text-green-600' : 'text-gray-600'}`}>
                 {savedEntries.length > 0 ? `${savedEntries.length} รายการ` : 'ไม่มีข้อมูล'}
               </Text>
             </View>
@@ -1132,7 +1164,7 @@ const RecordFoodScreen = () => {
             className="bg-primary rounded-lg py-3 flex-row items-center justify-center"
           >
             <Icon name="add" size={20} color="white" />
-            <Text className="text-white font-medium ml-2">เพิ่มอาหาร</Text>
+            <Text className="text-white font-promptMedium ml-2">เพิ่มอาหาร</Text>
           </TouchableOpacity>
         </View>
       );
@@ -1222,12 +1254,12 @@ const RecordFoodScreen = () => {
               />
             </View>
             <View>
-              <Text className="text-lg font-semibold text-gray-800">{meal.label}</Text>
+              <Text className="text-lg font-promptSemiBold text-gray-800">{meal.label}</Text>
               <Text className="text-sm text-gray-500">{meal.time}</Text>
             </View>
           </View>
           <View className={`px-3 py-1 rounded-full ${allEntries.length > 0 ? 'bg-green-100' : 'bg-gray-100'}`}>
-            <Text className={`text-xs font-medium ${allEntries.length > 0 ? 'text-green-600' : 'text-gray-600'}`}>
+            <Text className={`text-xs font-promptMedium ${allEntries.length > 0 ? 'text-green-600' : 'text-gray-600'}`}>
               {allEntries.length > 0 ? `${allEntries.length} รายการ` : 'ยังไม่มีอาหาร'}
             </Text>
           </View>
@@ -1255,7 +1287,7 @@ const RecordFoodScreen = () => {
           className="bg-primary rounded-lg py-3 flex-row items-center justify-center"
         >
           <Icon name="add" size={20} color="white" />
-          <Text className="text-white font-medium ml-2">เพิ่มอาหาร</Text>
+          <Text className="text-white font-promptMedium ml-2">เพิ่มอาหาร</Text>
         </TouchableOpacity>
       </View>
     );
@@ -1267,10 +1299,10 @@ const RecordFoodScreen = () => {
        <View>
 
        </View>
-        <Text className="text-xl font-bold text-white">บันทึก/ยืนยันอาหาร</Text>
+        <Text className="text-xl font-promptBold text-white">บันทึก/ยืนยันอาหาร</Text>
         <TouchableOpacity 
           className="w-10 h-10 rounded-lg items-center justify-center"
-          onPress={goToToday}
+          onPress={openDatePicker}
         >
           <Icon name={isToday ? "calendar" : "today"} size={24} color="white" />
         </TouchableOpacity>
@@ -1284,7 +1316,7 @@ const RecordFoodScreen = () => {
         >
           <Icon name="chevron-back" size={20} color="#374151" />
         </TouchableOpacity>
-        <Text className={`text-lg font-medium ${isToday ? 'text-primary font-bold' : 'text-gray-800'}`}>
+        <Text className={`text-lg font-promptMedium ${isToday ? 'text-primary font-promptBold' : 'text-gray-800'}`}>
           {dayName}
         </Text>
         {!isToday && (
@@ -1292,7 +1324,7 @@ const RecordFoodScreen = () => {
             onPress={goToToday}
             className="absolute right-16 bg-primary/10 px-2 py-1 rounded-full"
           >
-            <Text className="text-primary text-xs font-medium">กลับวันนี้</Text>
+            <Text className="text-primary text-xs font-promptMedium">กลับสู่วันปัจจุบัน</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity
@@ -1310,19 +1342,19 @@ const RecordFoodScreen = () => {
             <View className={`w-8 h-8 rounded-full items-center justify-center ${chipBg}`}>
               <Icon name="flame" size={18} color={iconColor} />
             </View>
-            <Text className="font-medium text-gray-700 ml-2">
+            <Text className="font-promptMedium text-gray-700 ml-2">
               {isToday ? 'แคลอรี่ที่บันทึก' : `แคลอรี่ที่บันทึกวันที่ ${selectedDay} แล้ว`}
             </Text>
           </View>
           {isLoading ? (
-            <Text className="font-semibold text-gray-400">กำลังโหลด...</Text>
+            <Text className="font-promptSemiBold text-gray-400">กำลังโหลด...</Text>
           ) : (
             <View className="items-end">
-              <Text className={`font-bold text-sm ${isOverTarget ? 'text-red-600' : isAtTarget ? 'text-green-600' : 'text-blue-600'}`}>
+              <Text className={`font-promptBold text-sm ${isOverTarget ? 'text-red-600' : isAtTarget ? 'text-green-600' : 'text-blue-600'}`}>
                 {totalCaloriesSaved.toLocaleString()} แคลอรี่ / {(todayMealData?.totalCalories?.toLocaleString?.() as string) || dailyNutritionSummary?.target_cal} แคลอรี่
               </Text>
               <View className={`px-2 py-0.5 rounded-full mt-1 ${chipBg}`}>
-                <Text className={`text-xs font-medium ${chipText}`}>{progressPercent}% ของเป้าหมาย</Text>
+                <Text className={`text-xs font-promptMedium ${chipText}`}>{progressPercent}% ของเป้าหมาย</Text>
               </View>
             </View>
           )}
@@ -1335,17 +1367,17 @@ const RecordFoodScreen = () => {
         </View>
         <View className="flex-row items-center justify-between mt-2">
           <Text className="text-xs text-gray-500">0</Text>
-          <Text className="text-xs text-gray-500">{targetCalories.toLocaleString()} แคลอรี่</Text>
+          <Text className="text-xs text-gray-500 font-prompt">{targetCalories.toLocaleString()} แคลอรี่</Text>
         </View>
         {!isLoading && (
-          <View className="flex-row items-center justify-between mt-2">
-            <Text className={`text-xs ${isUnderTarget ? 'text-orange-600' : isAtTarget ? 'text-green-600' : 'text-red-600'}`}>
+          <View className="flex-row items-center justify-between mt-2 font-prompt">
+            <Text className={`text-xs ${isUnderTarget ? 'text-orange-600 font-prompt' : isAtTarget ? 'text-green-600 font-prompt' : 'text-red-600 font-prompt'}`}>
               {isUnderTarget && `เหลืออีก ${remainingCalories.toLocaleString()} แคลอรี่`}
               {isAtTarget && 'ครบเป้าหมายแล้ว'}
               {isOverTarget && `เกิน ${overCalories.toLocaleString()} แคลอรี่`}
             </Text>
             {isToday && totalCaloriesSaved > 0 && (
-              <Text className="text-xs text-gray-500">
+              <Text className="text-xs text-gray-500 font-prompt">
                 จากการบันทึก {savedRecords.length} รายการ
               </Text>
             )}
@@ -1382,7 +1414,7 @@ const RecordFoodScreen = () => {
             >
               <View className="flex-row items-center">
                 <Icon name="add" size={20} color="white" />
-                <Text className="text-white font-medium ml-2">เลือกแผนการกิน</Text>
+                <Text className="text-white font-promptMedium ml-2">เลือกแผนการกิน</Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -1398,7 +1430,7 @@ const RecordFoodScreen = () => {
           onPress={() => setShowAddMealModal(true)}
         >
           <Icon name="add-circle" size={22} color="#9ca3af" />
-          <Text className="text-gray-600 font-medium mt-2">เพิ่มมื้อเพิ่มเติม</Text>
+          <Text className="text-gray-600 font-promptMedium mt-2">เพิ่มมื้อเพิ่มเติม</Text>
         </TouchableOpacity>
 
         <View className='h-24' />
@@ -1427,6 +1459,180 @@ const RecordFoodScreen = () => {
         onDelete={handleMenuDelete}
         position={menuPosition}
       />
+
+      {/* Date Picker Modal */}
+      <Modal
+        visible={showDatePicker}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowDatePicker(false)}
+      >
+        <View className="flex-1 bg-black bg-opacity-10 justify-start items-center pt-20">
+          <View className="bg-white rounded-2xl p-6 mx-4 shadow-2xl" style={{ minWidth: 320, maxWidth: 350 }}>
+            <View className="flex-row justify-between items-center mb-4">
+              <Text className="text-xl font-promptBold text-gray-800">เลือกวันที่</Text>
+              <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                <Icon name="close" size={24} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+            
+            {/* Calendar Grid */}
+            <View className="mb-4">
+              {/* Current Month/Year */}
+              <View className="flex-row items-center justify-between mb-4">
+                <TouchableOpacity
+                  onPress={() => {
+                    const newDate = new Date(tempSelectedDate);
+                    newDate.setMonth(newDate.getMonth() - 1);
+                    setTempSelectedDate(newDate);
+                  }}
+                  className="w-10 h-10 items-center justify-center"
+                >
+                  <Icon name="chevron-back" size={20} color="#374151" />
+                </TouchableOpacity>
+                
+                <Text className="text-lg font-promptBold text-gray-800">
+                  {tempSelectedDate.toLocaleDateString('th-TH', { 
+                    year: 'numeric', 
+                    month: 'long' 
+                  })}
+                </Text>
+                
+                <TouchableOpacity
+                  onPress={() => {
+                    const newDate = new Date(tempSelectedDate);
+                    newDate.setMonth(newDate.getMonth() + 1);
+                    setTempSelectedDate(newDate);
+                  }}
+                  className="w-10 h-10 items-center justify-center"
+                >
+                  <Icon name="chevron-forward" size={20} color="#374151" />
+                </TouchableOpacity>
+              </View>
+              
+              {/* Week days header */}
+              <View className="flex-row mb-2">
+                {['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'].map((day, index) => (
+                  <View key={index} className="flex-1 items-center py-2">
+                    <Text className="text-sm font-promptMedium text-gray-600">{day}</Text>
+                  </View>
+                ))}
+              </View>
+              
+              {/* Calendar days */}
+              <View>
+                {(() => {
+                  const year = tempSelectedDate.getFullYear();
+                  const month = tempSelectedDate.getMonth();
+                  const firstDay = new Date(year, month, 1);
+                  const lastDay = new Date(year, month + 1, 0);
+                  const startDate = new Date(firstDay);
+                  startDate.setDate(startDate.getDate() - firstDay.getDay());
+                  
+                  const weeks = [];
+                  const currentWeek = [];
+                  
+                  for (let i = 0; i < 42; i++) {
+                    const date = new Date(startDate);
+                    date.setDate(startDate.getDate() + i);
+                    
+                    if (currentWeek.length === 7) {
+                      weeks.push([...currentWeek]);
+                      currentWeek.length = 0;
+                    }
+                    
+                    currentWeek.push(date);
+                  }
+                  
+                  if (currentWeek.length > 0) {
+                    weeks.push(currentWeek);
+                  }
+                  
+                  const currentDay = getCurrentDay();
+                  const selectedDate = selectedDayToDate(selectedDay);
+                  
+                  return weeks.map((week, weekIndex) => (
+                    <View key={weekIndex} className="flex-row">
+                      {week.map((date, dayIndex) => {
+                        const isCurrentMonth = date.getMonth() === month;
+                        const isSelected = date.toDateString() === selectedDate.toDateString();
+                        const isToday = date.toDateString() === new Date().toDateString();
+                        const dayNumber = date.getDate();
+                        
+                        // Only allow selecting days from 1 to current day
+                        const isSelectable = isCurrentMonth && dayNumber >= 1 && dayNumber <= currentDay;
+                        
+                        return (
+                          <TouchableOpacity
+                            key={dayIndex}
+                            className="flex-1 items-center py-3"
+                            onPress={() => {
+                              if (isSelectable) {
+                                handleDateSelect(new Date(date));
+                              }
+                            }}
+                            disabled={!isSelectable}
+                          >
+                            <View 
+                              className={`w-8 h-8 rounded-full items-center justify-center ${
+                                isSelected 
+                                  ? 'bg-primary' 
+                                  : isToday 
+                                    ? 'bg-blue-100' 
+                                    : ''
+                              }`}
+                            >
+                              <Text 
+                                className={`text-sm ${
+                                  isSelected 
+                                    ? 'text-white font-promptBold' 
+                                    : isToday 
+                                      ? 'text-blue-600 font-promptBold'
+                                      : isCurrentMonth && isSelectable
+                                        ? 'text-gray-800' 
+                                        : 'text-gray-300'
+                                }`}
+                              >
+                                {dayNumber}
+                              </Text>
+                            </View>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  ));
+                })()}
+              </View>
+            </View>
+            
+            {/* Quick select buttons */}
+            <View className="flex-row justify-between">
+              <TouchableOpacity
+                onPress={() => {
+                  handleDateSelect(new Date());
+                }}
+                className="flex-1 bg-gray-100 rounded-lg py-3 mr-2"
+              >
+                <Text className="text-center text-gray-700 font-promptMedium">วันนี้</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                onPress={() => {
+                  const yesterday = new Date();
+                  yesterday.setDate(yesterday.getDate() - 1);
+                  const yesterdayDay = dateToSelectedDay(yesterday);
+                  if (yesterdayDay >= 1) {
+                    handleDateSelect(yesterday);
+                  }
+                }}
+                className="flex-1 bg-gray-100 rounded-lg py-3 ml-2"
+              >
+                <Text className="text-center text-gray-700 font-promptMedium">เมื่อวาน</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <Menu />
     </SafeAreaView>

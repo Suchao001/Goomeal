@@ -394,7 +394,7 @@ const CalendarScreen = () => {
         </TouchableOpacity>
         
         {/* Title */}
-        <Text className="text-xl font-bold text-white font-prompt">แผนการกิน</Text>
+        <Text className="text-xl  text-white font-promptBold">แผนการกิน</Text>
         
         {/* Calendar Info */}
         <View className="flex-row items-center">
@@ -430,7 +430,7 @@ const CalendarScreen = () => {
         </TouchableOpacity>
         
         <View className="items-center">
-          <Text className="text-lg font-medium text-gray-800">
+          <Text className="text-lg font-medium font-prompt text-gray-800">
             {dayName}
           </Text>
           {/* <Text className="text-sm text-gray-500">
@@ -527,7 +527,7 @@ const CalendarScreen = () => {
 
             {/* Daily Meals */}
             <View className="mb-6">
-              <Text className="text-xl font-bold text-gray-800 mb-4">
+              <Text className="text-xl font-promptBold text-myBlack mb-4">
                 เมนูอาหาร {planDayText}
               </Text>
               
