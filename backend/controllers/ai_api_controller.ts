@@ -36,16 +36,18 @@ const getUserInfo = async (userId: number) => {
   }
 };
 
-export async function suggestFood(payload?: any) {
+export async function suggestFood(userId: number, payload?: any) {
   try {
     const {
       mealType,
       hungerLevel,
       ingredients,
       foodType,
-      dietaryRestrictions,
+      budget,
       complexityLevel
     } = payload || {};
+
+    const { dietary_restrictions } = await getUserInfo(userId);
 
     const foodSuggestionPrompt = `You are an AI assistant that generates a single Thai food menu suggestion.
 Your response MUST be a single, valid JSON object.
@@ -68,7 +70,8 @@ Now, generate a single food suggestion based on these user preferences:
 - Hunger Level: ${hungerLevel}
 - Available Ingredients: ${ingredients}
 - Food Type: ${foodType}
-- Dietary Restrictions: ${dietaryRestrictions}
+- Budget: ${budget}
+- Dietary Restrictions: ${dietary_restrictions || 'None'}
 - Complexity: ${complexityLevel}
 `;
 

@@ -36,12 +36,13 @@ const SuggestionMenuScreen = () => {
     'อาหารอิตาเลียน', 'อาหารอเมริกัน', 'อาหารอินเดีย', 'อาหารเม็กซิกัน'
   ];
 
-  // State for dietary restrictions
-  const [dietaryRestrictions, setDietaryRestrictions] = useState<string[]>([]);
-  const commonRestrictions = ['มังสวิรัติ', 'ไม่กินหมู'];
-  const additionalRestrictions = [
-    'ไม่กินเนื้อ', 'ไม่กินไข่', 'ไม่กินนม', 'ไม่กินถั่ว',
-    'ไม่กินอาหารทะเล', 'ไม่กินเผ็ด', 'เบาหวาน', 'ความดันสูง'
+  // State for budget
+  const [budget, setBudget] = useState('');
+  const budgetOptions = [
+    { id: 'cheap', label: 'ประหยัด', range: '50-100' },
+    { id: 'medium', label: 'ปานกลาง', range: '100-300' },
+    { id: 'unlimited', label: 'ไม่จำกัด', range: '300+' },
+    { id: 'flexible', label: 'ยืดหยุ่น', range: '' },
   ];
 
   // State for complexity level
@@ -52,7 +53,7 @@ const SuggestionMenuScreen = () => {
     { id: 'hard', label: 'ยาก', icon: 'flame' }
   ];
 
-  // State for showing additional restrictions
+
   const [showMoreRestrictions, setShowMoreRestrictions] = useState(false);
 
   // State for loading indicator
@@ -69,13 +70,7 @@ const SuggestionMenuScreen = () => {
     setIngredients(ingredients.filter(item => item !== ingredient));
   };
 
-  const toggleDietaryRestriction = (restriction: string) => {
-    if (dietaryRestrictions.includes(restriction)) {
-      setDietaryRestrictions(dietaryRestrictions.filter(item => item !== restriction));
-    } else {
-      setDietaryRestrictions([...dietaryRestrictions, restriction]);
-    }
-  };
+  // No dietary restriction logic needed
 
   const handleGetSuggestion = async () => {
     try {
@@ -86,7 +81,7 @@ const SuggestionMenuScreen = () => {
         hungerLevel: hungerLevel + 1,
         ingredients,
         foodType: selectedFoodType,
-        dietaryRestrictions,
+        budget,
         complexityLevel,
       };
       const response = await apiClient.suggestFood(payload);
@@ -249,62 +244,45 @@ const SuggestionMenuScreen = () => {
           </View>
         </View>
 
-        {/* Dietary Restrictions */}
+        {/* Budget Selection */}
         <View className="bg-white mx-4 mt-4 p-4 rounded-xl shadow-sm">
-          <Text className="text-lg font-promptSemiBold text-gray-800 mb-3">ข้อจำกัดทางอาหาร</Text>
-          <View className="flex-row flex-wrap mb-3">
-            {commonRestrictions.map((restriction) => (
+          <Text className="text-lg font-promptSemiBold text-gray-800 mb-3">งบประมาณ</Text>
+          <View className="flex-row flex-wrap">
+            {budgetOptions.map((option) => (
               <TouchableOpacity
-                key={restriction}
-                className={`px-4 py-2 m-1 rounded-full border-2 ${
-                  dietaryRestrictions.includes(restriction)
-                    ? 'bg-red-500 border-red-500'
-                    : 'bg-gray-50 border-gray-200'
-                }`}
-                onPress={() => toggleDietaryRestriction(restriction)}
-              >
-                <Text className={`font-promptMedium ${
-                  dietaryRestrictions.includes(restriction) ? 'text-white' : 'text-gray-700'
-                }`}>
-                  {restriction}
-                </Text>
-              </TouchableOpacity>
+  key={option.id}
+  className={`px-4 py-3.5 m-1 rounded-full border-2 min-h-[44px] ${
+    budget === option.id
+      ? 'bg-[#77dd77] border-[#77dd77]'
+      : 'bg-gray-50 border-gray-200'
+  }`}
+  onPress={() => setBudget(option.id)}
+>
+  <View className="flex-row items-center flex-wrap">
+    <Text
+      className={`text-base font-promptMedium ${
+        budget === option.id ? 'text-white' : 'text-gray-700'
+      }`}
+      style={{ lineHeight: 18 }} 
+    >
+      {option.label}
+    </Text>
+
+    {option.range && (
+      <Text
+        className={`${budget === option.id ? 'text-white/80' : 'text-gray-500'} ml-1 text-xs`}
+        style={{ lineHeight: 14 }} // <<< ให้เล็กลงหน่อยสำหรับตัวเล็ก
+        
+        numberOfLines={1}
+      >
+        ({option.range})
+      </Text>
+    )}
+  </View>
+</TouchableOpacity>
+
             ))}
           </View>
-          
-          <TouchableOpacity
-            className="flex-row items-center justify-center py-2 bg-gray-50 rounded-xl"
-            onPress={() => setShowMoreRestrictions(!showMoreRestrictions)}
-          >
-            <Text className="text-primary font-promptMedium mr-1">เพิ่มเติม</Text>
-            <Icon 
-              name={showMoreRestrictions ? "chevron-up" : "chevron-down"} 
-              size={16} 
-              color="#ffb800" 
-            />
-          </TouchableOpacity>
-
-          {showMoreRestrictions && (
-            <View className="flex-row flex-wrap mt-2">
-              {additionalRestrictions.map((restriction) => (
-                <TouchableOpacity
-                  key={restriction}
-                  className={`px-4 py-2 m-1 rounded-full border-2 ${
-                    dietaryRestrictions.includes(restriction)
-                      ? 'bg-red-500 border-red-500'
-                      : 'bg-gray-50 border-gray-200'
-                  }`}
-                  onPress={() => toggleDietaryRestriction(restriction)}
-                >
-                  <Text className={`font-promptMedium ${
-                    dietaryRestrictions.includes(restriction) ? 'text-white' : 'text-gray-700'
-                  }`}>
-                    {restriction}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
         </View>
 
         {/* Complexity Level */}
