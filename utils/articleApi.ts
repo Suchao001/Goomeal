@@ -1,5 +1,5 @@
-import axios from 'axios';
-import { blog_url, base_url } from '../config';
+import { BaseApiClient } from './api/baseClient';
+import { blog_url } from '../config';
 
 // Interface สำหรับ Article
 export interface Article {
@@ -30,10 +30,13 @@ interface ApiResponse<T> {
   message?: string;
 }
 
+// Create a single instance of the API client
+const apiClient = new BaseApiClient();
+
 // ดึงบทความทั้งหมด
 export const fetchArticles = async (): Promise<Article[]> => {
   try {
-    const response = await axios.get<ApiResponse<Article[]>>(`${base_url}/api/articles`);
+    const response = await apiClient.get<ApiResponse<Article[]>>('/api/articles');
     if (response.data.success) {
       return response.data.data;
     }
@@ -45,10 +48,14 @@ export const fetchArticles = async (): Promise<Article[]> => {
 };
 
 // ดึงบทความแนะนำ
-export const fetchFeaturedArticles = async (limit: number = 3): Promise<Article[]> => {
+export const fetchFeaturedArticles = async (limit: number = 3, userId?: string): Promise<Article[]> => {
   try {
-    const response = await axios.get<ApiResponse<Article[]>>(`${base_url}/api/articles/featured?limit=${limit}`);
+
+    const response = await apiClient.get<ApiResponse<Article[]>>(
+      `/api/articles/featured?limit=${limit}`
+    );
     if (response.data.success) {
+      console.log('✅ API response success, articles count:', response.data.data.length); // Debug log
       return response.data.data;
     }
     throw new Error(response.data.message || 'Failed to fetch featured articles');
@@ -61,21 +68,21 @@ export const fetchFeaturedArticles = async (limit: number = 3): Promise<Article[
 // ดึงบทความโดย ID
 export const fetchArticleById = async (id: number): Promise<Article | null> => {
   try {
-    const response = await axios.get<ApiResponse<Article>>(`${base_url}/api/articles/${id}`);
+    const response = await apiClient.get(`/api/articles/${id}`) as { data: ApiResponse<Article> };
     if (response.data.success) {
       return response.data.data;
     }
     return null;
   } catch (error) {
     console.error('Error fetching article by ID:', error);
-    throw error;
+    return null;
   }
 };
 
 // ดึงบทความตาม tag
 export const fetchArticlesByTag = async (tagName: string): Promise<Article[]> => {
   try {
-    const response = await axios.get<ApiResponse<Article[]>>(`${base_url}/api/articles/tag/${encodeURIComponent(tagName)}`);
+    const response = await apiClient.get(`/api/articles/tag/${encodeURIComponent(tagName)}`) as { data: ApiResponse<Article[]> };
     if (response.data.success) {
       return response.data.data;
     }
@@ -89,7 +96,7 @@ export const fetchArticlesByTag = async (tagName: string): Promise<Article[]> =>
 // ดึง tags ทั้งหมด
 export const fetchAllTags = async (): Promise<Tag[]> => {
   try {
-    const response = await axios.get<ApiResponse<Tag[]>>(`${base_url}/api/tags`);
+    const response = await apiClient.get('/api/tags') as { data: ApiResponse<Tag[]> };
     if (response.data.success) {
       return response.data.data;
     }

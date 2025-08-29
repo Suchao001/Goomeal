@@ -46,7 +46,7 @@ interface RecommendedMeal {
 
 const Home = () => {
   const navigation = useTypedNavigation<'Home'>();
-  const {fetchUserProfile} = useAuth();
+  const {user, fetchUserProfile} = useAuth();
   const [blogArticles, setBlogArticles] = useState<Article[]>([]);
   const [loadingArticles, setLoadingArticles] = useState(false);
   
@@ -75,13 +75,17 @@ const Home = () => {
 
   // Load articles on component mount
   useEffect(() => {
-    loadBlogArticles();
     loadTodayMeals();
     loadDailySummary();
     loadSavedRecords();
     fetchRecommendedMeals();
     console.log(JSON.stringify(todayMealData, null, 2));
   }, []);
+
+  // Load articles when component mounts
+  useEffect(() => {
+    loadBlogArticles();
+  }, []); // Simple dependency array
 
   // Fetch user profile to check first_time_setting
   useEffect(() => {
@@ -157,12 +161,12 @@ const Home = () => {
   const loadBlogArticles = async () => {
     try {
       setLoadingArticles(true);
-      const articles = await fetchFeaturedArticles(2); // ดึง 2 รายการ
+      const articles = await fetchFeaturedArticles(2); // BaseApiClient handles auth automatically
+      console.log('📰 Loaded articles:', articles.length);
       setBlogArticles(articles);
     } catch (error) {
       console.error('Error loading blog articles:', error);
-      // Fallback to mock data if API fails
-    
+      setBlogArticles([]);
     } finally {
       setLoadingArticles(false);
     }
@@ -436,6 +440,7 @@ const Home = () => {
   const handleRefreshData = useCallback(() => {
     loadSavedRecords();
     loadDailySummary();
+    loadBlogArticles(); // Always try to refresh articles
   }, [loadSavedRecords, loadDailySummary]);
 
   // Mock data for recommended meals

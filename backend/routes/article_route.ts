@@ -3,14 +3,31 @@ import {
   getArticles,
   getArticleById,
   getFeaturedArticles,
+  getGenericFeaturedArticles,
   getArticlesByTag,
   getAllTags
 } from '../controllers/article_controller';
+import authenticateToken from '../middlewares/authenticateToken';
 
 const router: Router = express.Router();
 
+// Apply authentication to featured articles only (optional auth pattern)
+const optionalAuth = (req: Request, res: Response, next: Function) => {
+  // Try to authenticate, but don't fail if no token
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    next();
+    return;
+  }
+  
+  authenticateToken(req, res, (err?: any) => {
+    // Continue regardless of auth success/failure
+    next();
+  });
+};
+
 // GET /articles - ดึงบทความทั้งหมด
-const getAllArticles: RequestHandler = async (req: Request, res: Response) => {
+router.get('/articles', async (req: Request, res: Response) => {
   try {
     const articles = await getArticles();
     res.status(200).json({
@@ -24,15 +41,22 @@ const getAllArticles: RequestHandler = async (req: Request, res: Response) => {
       message: 'Failed to fetch articles'
     });
   }
-};
+});
 
-router.get('/articles', getAllArticles);
-
-// GET /articles/featured - ดึงบทความแนะนำ
-const getFeaturedArticlesHandler: RequestHandler = async (req: Request, res: Response) => {
+// GET /articles/featured - ดึงบทความแนะนำ (with optional auth)
+router.get('/articles/featured', optionalAuth, async (req: Request, res: Response) => {
   try {
     const limit = parseInt(req.query.limit as string) || 3;
-    const articles = await getFeaturedArticles(limit);
+    const userId = (req as any).user?.id;
+    
+    let articles;
+    if (userId) {
+      articles = await getFeaturedArticles(parseInt(userId), limit);
+    } else {
+      console.log('No user ID provided, returning generic featured articles');
+      articles = await getGenericFeaturedArticles(limit);
+    }
+    
     res.status(200).json({
       success: true,
       data: articles
@@ -44,12 +68,10 @@ const getFeaturedArticlesHandler: RequestHandler = async (req: Request, res: Res
       message: 'Failed to fetch featured articles'
     });
   }
-};
-
-router.get('/articles/featured', getFeaturedArticlesHandler);
+});
 
 // GET /articles/:id - ดึงบทความโดย ID
-const getArticleByIdHandler: RequestHandler = async (req: Request, res: Response): Promise<void> => {
+router.get('/articles/:id', async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
@@ -80,12 +102,10 @@ const getArticleByIdHandler: RequestHandler = async (req: Request, res: Response
       message: 'Failed to fetch article'
     });
   }
-};
-
-router.get('/articles/:id', getArticleByIdHandler);
+});
 
 // GET /articles/tag/:tagName - ดึงบทความตาม tag
-const getArticlesByTagHandler: RequestHandler = async (req: Request, res: Response) => {
+router.get('/articles/tag/:tagName', async (req: Request, res: Response) => {
   try {
     const tagName = req.params.tagName;
     const articles = await getArticlesByTag(tagName);
@@ -100,12 +120,10 @@ const getArticlesByTagHandler: RequestHandler = async (req: Request, res: Respon
       message: 'Failed to fetch articles by tag'
     });
   }
-};
-
-router.get('/articles/tag/:tagName', getArticlesByTagHandler);
+});
 
 // GET /tags - ดึง tags ทั้งหมด
-const getAllTagsHandler: RequestHandler = async (req: Request, res: Response) => {
+router.get('/tags', async (req: Request, res: Response) => {
   try {
     const tags = await getAllTags();
     res.status(200).json({
@@ -119,8 +137,6 @@ const getAllTagsHandler: RequestHandler = async (req: Request, res: Response) =>
       message: 'Failed to fetch tags'
     });
   }
-};
-
-router.get('/tags', getAllTagsHandler);
+});
 
 export default router;

@@ -132,87 +132,68 @@ const EatingBlogScreen = () => {
     return defaultImage;
   };
 
-  const renderTabButton = (tab: string) => (
-    <TouchableOpacity
-      key={tab}
-      className={`px-4 py-2 mr-3 rounded-full ${
-        selectedTab === tab ? 'bg-yellow-500' : 'bg-gray-200'
-      }`}
-      onPress={() => handleTabChange(tab)}
-    >
-      <Text
-        className={`font-medium ${
-          selectedTab === tab ? 'text-white' : 'text-gray-600'
-        }`}
-      >
-        {tab}
-      </Text>
-    </TouchableOpacity>
-  );
-
   const renderFeaturedArticle = () => {
     if (!featuredArticles || featuredArticles.length === 0) {
       return null;
     }
-
     const featuredArticle = featuredArticles[0];
-
     return (
-      <TouchableOpacity 
-        className="bg-white rounded-lg shadow-md overflow-hidden mb-6 mx-4"
+      <TouchableOpacity
+        className="mx-4 mb-8 rounded-3xl overflow-hidden shadow-2xl"
+        activeOpacity={0.93}
         onPress={() => openArticle(featuredArticle)}
+        style={{ elevation: 8 }}
       >
-        {/* Featured Badge */}
-        <View className="absolute top-3 left-3 bg-yellow-500 px-3 py-1 rounded-full z-10">
-          <Text className="text-white text-xs font-bold">แนะนำ</Text>
-        </View>
-        
-        {/* Featured Image */}
-        <View className="h-48 bg-gray-200">
+        {/* Hero Image with gradient overlay */}
+        <View className="h-56 w-full relative">
           <Image
             source={getImageSource(featuredArticle.img)}
             className="w-full h-full"
             resizeMode="cover"
           />
+          <View
+            className="absolute inset-0"
+            style={{
+              backgroundColor: 'rgba(0,0,0,0.18)',
+              zIndex: 1,
+            }}
+          />
+          {/* Featured Badge */}
+          <View className="absolute top-4 left-4 bg-primary px-4 py-1.5 rounded-full z-10 shadow-md">
+            <Text className="text-white text-xs font-bold tracking-wider">แนะนำ</Text>
+          </View>
         </View>
-        
-        {/* Featured Content */}
-        <View className="p-4">
-          <Text className="text-xl font-bold text-gray-800 mb-2" numberOfLines={2}>
+        {/* Content */}
+        <View className="p-6 bg-white rounded-b-3xl -mt-6 z-10 shadow-lg">
+          <Text className="text-2xl font-promptBold text-gray-900 mb-2" numberOfLines={2}>
             {featuredArticle.title}
           </Text>
-          <Text className="text-gray-600 text-sm mb-3" numberOfLines={3}>
+          <Text className="text-gray-600 text-base mb-4 font-prompt" numberOfLines={3}>
             {featuredArticle.excerpt_content || 'ไม่มีคำอธิบาย'}
           </Text>
-          
           {/* Tags */}
           {featuredArticle.tags && featuredArticle.tags.length > 0 && (
-            <View className="flex-row items-center mb-3">
+            <View className="flex-row items-center mb-4">
               {featuredArticle.tags.slice(0, 3).map((tag, index) => (
-                <View key={index} className="bg-gray-100 px-2 py-1 rounded-full mr-2">
-                  <Text className="text-gray-600 text-xs">{tag}</Text>
+                <View key={index} className="bg-yellow-50 px-3 py-1 rounded-full mr-2 border border-yellow-200">
+                  <Text className="text-yellow-700 text-xs font-promptMedium">#{tag}</Text>
                 </View>
               ))}
             </View>
           )}
-          
           {/* Read More Indicator */}
-          <View className="flex-row items-center mb-3">
-            <Icon name="open-outline" size={16} color="#eab308" />
-            <Text className="text-yellow-600 text-sm ml-2 font-medium">แตะเพื่ออ่านบทความเต็ม</Text>
+          <View className="flex-row items-center mb-4">
+            <Icon name="open-outline" size={18} color="#eab308" />
+            <Text className="text-yellow-600 text-base ml-2 font-promptMedium">แตะเพื่ออ่านบทความเต็ม</Text>
           </View>
-          
           {/* Meta Info */}
           <View className="flex-row items-center justify-between">
+            <Text className="text-gray-400 text-xs font-prompt">GoodMeal</Text>
             <View className="flex-row items-center">
-              <Text className="text-gray-500 text-xs">GoodMeal</Text>
-            </View>
-            <View className="flex-row items-center">
-              <Icon name="time-outline" size={12} color="#9ca3af" />
-              <Text className="text-gray-500 text-xs ml-1">5 นาที</Text>
-              <Text className="text-gray-500 text-xs mx-2">•</Text>
-              <Text className="text-gray-500 text-xs">{formatDate(featuredArticle.publish_date)}</Text>
-              <Icon name="open-outline" size={16} color="#eab308" className="ml-2" />
+              <Icon name="time-outline" size={13} color="#9ca3af" />
+              <Text className="text-gray-400 text-xs ml-1 font-prompt">5 นาที</Text>
+              <Text className="text-gray-400 text-xs mx-2">•</Text>
+              <Text className="text-gray-400 text-xs font-prompt">{formatDate(featuredArticle.publish_date)}</Text>
             </View>
           </View>
         </View>
@@ -220,50 +201,61 @@ const EatingBlogScreen = () => {
     );
   };
 
+  const renderTabButton = (tab: string) => (
+    <TouchableOpacity
+      key={tab}
+      className={`px-5 py-2 mr-3 rounded-full border ${selectedTab === tab ? 'bg-yellow-400 border-yellow-400' : 'bg-white border-gray-200'}`}
+      style={{ shadowColor: selectedTab === tab ? '#eab308' : 'transparent', shadowOpacity: 0.12, shadowRadius: 6, elevation: selectedTab === tab ? 2 : 0 }}
+      onPress={() => handleTabChange(tab)}
+      activeOpacity={0.85}
+    >
+      <Text className={`font-promptSemiBold text-base ${selectedTab === tab ? 'text-white' : 'text-gray-700'}`}>{tab}</Text>
+    </TouchableOpacity>
+  );
+
   const renderArticleItem = ({ item }: { item: Article }) => (
-    <TouchableOpacity 
-      className="bg-white rounded-lg shadow-md overflow-hidden mb-4 mx-4"
+    <TouchableOpacity
+      className="bg-white rounded-2xl shadow-lg overflow-hidden mb-5 mx-4"
       onPress={() => openArticle(item)}
+      activeOpacity={0.92}
+      style={{ elevation: 4 }}
     >
       <View className="flex-row">
         {/* Article Image */}
-        <View className="w-24 h-24 bg-gray-200">
+        <View className="w-24 h-24 bg-gray-200 rounded-xl overflow-hidden m-3">
           <Image
             source={getImageSource(item.img)}
             className="w-full h-full"
             resizeMode="cover"
           />
         </View>
-        
         {/* Article Content */}
-        <View className="flex-1 p-4">
-          <Text className="text-lg font-semibold text-gray-800 mb-1" numberOfLines={2}>
+        <View className="flex-1 py-3 pr-3">
+          <Text className="text-lg font-promptBold text-gray-900 mb-1" numberOfLines={2}>
             {item.title}
           </Text>
-          <Text className="text-gray-600 text-sm mb-2" numberOfLines={2}>
+          <Text className="text-gray-600 text-base mb-2 font-prompt" numberOfLines={2}>
             {item.excerpt_content || 'ไม่มีคำอธิบาย'}
           </Text>
-          
           {/* Tags */}
           {item.tags && item.tags.length > 0 && (
             <View className="flex-row items-center mb-2">
               {item.tags.slice(0, 2).map((tag, index) => (
-                <View key={index} className="bg-gray-100 px-2 py-1 rounded-full mr-2">
-                  <Text className="text-gray-600 text-xs">{tag}</Text>
+                <View key={index} className="bg-yellow-50 px-2 py-1 rounded-full mr-2 border border-yellow-100">
+                  <Text className="text-yellow-700 text-xs font-promptMedium">#{tag}</Text>
                 </View>
               ))}
             </View>
           )}
-          
           {/* Meta Info */}
-          <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center justify-between mt-2">
             <View className="flex-row items-center">
               <Icon name="time-outline" size={12} color="#9ca3af" />
-              <Text className="text-gray-500 text-xs ml-1">3 นาที</Text>
-              <Text className="text-gray-500 text-xs mx-2">•</Text>
-              <Text className="text-gray-500 text-xs">{formatDate(item.publish_date)}</Text>
+              <Text className="text-gray-400 text-xs ml-1 font-prompt">3 นาที</Text>
+              <Text className="text-gray-400 text-xs mx-2">•</Text>
+              <Text className="text-gray-400 text-xs font-prompt">{formatDate(item.publish_date)}</Text>
             </View>
-            <Icon name="open-outline" size={14} color="#eab308" />
+            <Icon name="open-outline" size={15} color="#eab308" />
           </View>
         </View>
       </View>
@@ -273,15 +265,15 @@ const EatingBlogScreen = () => {
   return (
     <View className="flex-1 bg-gray-100">
       {/* Header */}
-      <View className="bg-white px-4 pt-12 pb-4 flex-row items-center shadow-sm">
-      <TouchableOpacity 
-        className="w-10 h-10 rounded-full items-center justify-center mr-4"
+      <View className="bg-white px-4 pt-12 pb-4 flex-row items-center shadow-md sticky top-0 z-20">
+      <TouchableOpacity
+        className="w-10 h-10  items-center justify-center mr-4 "
         onPress={() => navigation.goBack()}
+        activeOpacity={0.8}
       >
-        <Icon name="arrow-back" size={24} color="#eab308" />
+        <Icon name="arrow-back" size={24} color="#ffb800" />
       </TouchableOpacity>
-        
-        <Text className="text-xl font-bold text-gray-800">บทความการกิน</Text>
+        <Text className="text-2xl font-promptBold text-gray-900">บทความการกิน</Text>
       </View>
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
@@ -304,18 +296,19 @@ const EatingBlogScreen = () => {
         {/* Articles List */}
         <View className="pb-6">
           {loading ? (
-            <View className="flex-1 justify-center items-center py-8">
+            <View className="flex-1 justify-center items-center py-12">
               <ActivityIndicator size="large" color="#eab308" />
-              <Text className="text-gray-500 mt-2">กำลังโหลดบทความ...</Text>
+              <Text className="text-gray-400 mt-3 font-prompt">กำลังโหลดบทความ...</Text>
             </View>
           ) : error ? (
-            <View className="flex-1 justify-center items-center py-8 mx-4">
-              <Text className="text-red-500 text-center mb-4">{error}</Text>
-              <TouchableOpacity 
-                className="bg-yellow-500 px-4 py-2 rounded-lg"
+            <View className="flex-1 justify-center items-center py-12 mx-4">
+              <Text className="text-red-500 text-center mb-4 font-promptBold">{error}</Text>
+              <TouchableOpacity
+                className="bg-yellow-400 px-6 py-3 rounded-xl shadow-md"
                 onPress={loadData}
+                activeOpacity={0.85}
               >
-                <Text className="text-white font-medium">ลองใหม่</Text>
+                <Text className="text-white font-promptSemiBold text-base">ลองใหม่</Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -326,8 +319,8 @@ const EatingBlogScreen = () => {
               scrollEnabled={false}
               showsVerticalScrollIndicator={false}
               ListEmptyComponent={() => (
-                <View className="flex-1 justify-center items-center py-8">
-                  <Text className="text-gray-500">ไม่พบบทความ</Text>
+                <View className="flex-1 justify-center items-center py-12">
+                  <Text className="text-gray-400 font-prompt">ไม่พบบทความ</Text>
                 </View>
               )}
             />
