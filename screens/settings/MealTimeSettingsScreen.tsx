@@ -382,10 +382,16 @@ const MealTimeSettingsScreen = () => {
               <Text className="text-lg font-promptMedium text-gray-600">เพิ่มเวลาใหม่</Text>
             </TouchableOpacity>
           )}
+          <TouchableOpacity
+            className="w-full bg-primary rounded-xl p-4 justify-center items-center mt-6"
+            onPress={handleConfirm}
+          >
+            <Text className="text-white text-lg font-promptBold">ยืนยันการตั้งค่า</Text>
+          </TouchableOpacity>
         </View>
 
         {/* แจ้งเตือนเมื่อถึงเวลามื้ออาหาร */}
-        <View className="bg-white mx-4 my-2 rounded-xl p-5 shadow-lg shadow-slate-800">
+        {/* <View className="bg-white mx-4 my-2 rounded-xl p-5 shadow-lg shadow-slate-800">
           <View className="flex-row items-center justify-between">
             <Text className="text-xl font-promptSemiBold text-gray-800">แจ้งเตือนเมื่อถึงเวลามื้ออาหาร</Text>
             <Switch value={notifyOnTime} onValueChange={setNotifyOnTime} />
@@ -397,7 +403,7 @@ const MealTimeSettingsScreen = () => {
           >
             <Text className="text-white text-lg font-promptBold">ยืนยันการตั้งค่า</Text>
           </TouchableOpacity>
-        </View>
+        </View> */}
       </ScrollView>
 
       {/* time picker สำหรับแก้รายการเดิม */}

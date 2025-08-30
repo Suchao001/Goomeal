@@ -92,7 +92,21 @@ const NotificationSettingsScreen = () => {
       return;
     }
 
-    // popup: แค่ state ไว้ก่อน (ถ้าจะคุม iOS popup ลึกๆ ใช้ handler ที่ root)
+    // popup: เก็บค่าไว้ใน storage สำหรับ Android
+    if (key === 'popup') {
+      const next = !notifications.popup;
+      setNotifications(prev => ({ ...prev, popup: next }));
+      await saveNotificationPrefs({
+        mealReminders: notifications.mealReminders,
+        sound: notifications.sound,
+        vibration: notifications.vibration,
+        popup: next,
+        mealTimes,
+      });
+      return;
+    }
+
+    // default fallback
     setNotifications(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
@@ -102,7 +116,7 @@ const NotificationSettingsScreen = () => {
     { key: 'mealReminders' as const, label: 'แจ้งเตือนตามมื้ออาหาร', description: 'รับการแจ้งเตือนเวลามื้ออาหาร' },
     { key: 'sound' as const, label: 'เปิด/ปิดเสียงแจ้งเตือน', description: 'เปิดเสียงเมื่อมีการแจ้งเตือน' },
     { key: 'vibration' as const, label: 'สั่น', description: 'เปิดการสั่นเมื่อมีการแจ้งเตือน' },
-    { key: 'popup' as const, label: 'ป๊อปอัพ', description: 'แสดงป๊อปอัพเมื่อมีการแจ้งเตือน (iOS handler)' },
+    { key: 'popup' as const, label: 'ป๊อปอัพ', description: 'แสดงป๊อปอัพเมื่อมีการแจ้งเตือน' },
   ];
 
   return (
@@ -141,30 +155,7 @@ const NotificationSettingsScreen = () => {
               />
             </View>
           ))}
-
-          {/* removed test buttons */}
-
-          {/* debug: ดูรายการที่ตั้งแล้ว */}
-          <TouchableOpacity
-            className="mt-3 rounded-xl p-3 items-center border border-gray-200"
-            onPress={async () => {
-              const all = await listScheduled();
-              Alert.alert('กำหนดไว้ทั้งหมด', JSON.stringify(all, null, 2));
-            }}
-          >
-            <Text className="text-gray-800">แสดงรายการที่ตั้งไว้</Text>
-          </TouchableOpacity>
-
-          {/* ยกเลิกทั้งหมด */}
-          <TouchableOpacity
-            className="mt-3 rounded-xl p-3 items-center border border-gray-200"
-            onPress={async () => {
-              await cancelAllScheduled();
-              Alert.alert('ยกเลิกแล้ว', 'ยกเลิกแจ้งเตือนทั้งหมด');
-            }}
-          >
-            <Text className="text-gray-800">ยกเลิกแจ้งเตือนทั้งหมด</Text>
-          </TouchableOpacity>
+        
         </View>
       </ScrollView>
     </View>
