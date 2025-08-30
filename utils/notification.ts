@@ -1,6 +1,7 @@
 // utils/notification.ts
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import { getBangkokTime } from './bangkokTime';
 
 export const ANDROID_CHANNEL_ID = 'meal-reminder';
 
@@ -56,6 +57,103 @@ export async function scheduleDailyAt({
     },
   });
   return { notifId, hour, minute, idTag };
+}
+
+export async function scheduleOneTimeAtLocal({
+  title,
+  body,
+  hour,
+  minute,
+  idTag,
+}: {
+  title: string;
+  body: string;
+  hour: number;
+  minute: number;
+  idTag: string;
+}) {
+  const now = new Date();
+  const target = new Date(now);
+  target.setHours(hour, minute, 0, 0);
+  if (target.getTime() <= now.getTime()) {
+    // ถ้าเวลาที่ตั้งผ่านไปแล้ว ให้เลื่อนไปวันพรุ่งนี้
+    target.setDate(target.getDate() + 1);
+  }
+
+  const notifId = await Notifications.scheduleNotificationAsync({
+    content: {
+      title,
+      body,
+      sound: 'default',
+      data: { idTag },
+    },
+    // ใช้รูปแบบใหม่: discriminator-based trigger
+    trigger: {
+      type: 'date',
+      timestamp: target.getTime(),
+      channelId: ANDROID_CHANNEL_ID,
+    } as unknown as Notifications.NotificationTriggerInput,
+  });
+
+  return { notifId, fireDate: target, idTag };
+}
+
+export function computeNextLocalFireDate(hour: number, minute: number): Date {
+  const now = new Date();
+  const target = new Date(now);
+  target.setHours(hour, minute, 0, 0);
+  if (target.getTime() <= now.getTime()) target.setDate(target.getDate() + 1);
+  return target;
+}
+
+export function getTimeDiagnostics(target?: { hour: number; minute: number }) {
+  const now = new Date();
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const offsetMinutesFromUTC = -now.getTimezoneOffset(); // +420 for UTC+7
+  const localDisplay = now.toLocaleString('th-TH', { hour12: false, timeZoneName: 'short' });
+  const bkkNow = getBangkokTime();
+  const bkkDisplay = bkkNow.toLocaleString('th-TH', { hour12: false, timeZoneName: 'short' });
+  const next = target ? computeNextLocalFireDate(target.hour, target.minute) : undefined;
+  const nextDisplay = next ? next.toLocaleString('th-TH', { hour12: false, timeZoneName: 'short' }) : undefined;
+
+  return {
+    tz,
+    offsetMinutesFromUTC,
+    nowISO: now.toISOString(),
+    localDisplay,
+    bangkokDisplay: bkkDisplay,
+    nextTargetDisplay: nextDisplay,
+  };
+}
+
+export async function scheduleOneShotDaily({
+  title,
+  body,
+  hour,
+  minute,
+  idTag,
+}: {
+  title: string;
+  body: string;
+  hour: number;
+  minute: number;
+  idTag: string;
+}) {
+  const target = computeNextLocalFireDate(hour, minute);
+  const notifId = await Notifications.scheduleNotificationAsync({
+    content: {
+      title,
+      body,
+      sound: 'default',
+      data: { idTag, hour, minute },
+    },
+    trigger: {
+      type: 'date',
+      timestamp: target.getTime(),
+      channelId: ANDROID_CHANNEL_ID,
+    } as unknown as Notifications.NotificationTriggerInput,
+  });
+  return { notifId, fireDate: target, idTag };
 }
 
 export async function scheduleMealReminders(times: string[], opts?: { title?: string; body?: string }) {

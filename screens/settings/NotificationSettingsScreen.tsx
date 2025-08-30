@@ -3,7 +3,9 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Switch, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTypedNavigation } from '../../hooks/Navigation';
-import { scheduleMealReminders, cancelAllScheduled, listScheduled, ensurePermissionsAndChannel } from '../../utils/notification';
+import { cancelAllScheduled, listScheduled, ensurePermissionsAndChannel } from '../../utils/notification';
+import { scheduleMealRemindersFromServer } from '../../utils/autoNotifications';
+import { loadNotificationPrefs, saveNotificationPrefs } from '../../utils/notificationStorage';
 
 const NotificationSettingsScreen = () => {
   const navigation = useTypedNavigation<'NotificationSettings'>();
@@ -17,6 +19,27 @@ const NotificationSettingsScreen = () => {
     popup: true, 
   });
 
+  React.useEffect(() => {
+    // โหลดค่าที่บันทึกไว้ ถ้ามี
+    (async () => {
+      const saved = await loadNotificationPrefs();
+      if (saved) {
+        setNotifications({
+          mealReminders: !!saved.mealReminders,
+          sound: !!saved.sound,
+          vibration: !!saved.vibration,
+          popup: !!saved.popup,
+        });
+        if (Array.isArray(saved.mealTimes) && saved.mealTimes.length > 0) {
+          setMealTimes(saved.mealTimes);
+        }
+      } else {
+        // เก็บค่าเริ่มต้นครั้งแรก
+        await saveNotificationPrefs({ ...notifications, mealTimes });
+      }
+    })();
+  }, []);
+
   const handleToggle = async (key: keyof typeof notifications) => {
     // ถ้าเป็น sound/vibration ให้ update channel ด้วย
     if (key === 'sound' || key === 'vibration') {
@@ -27,8 +50,17 @@ const NotificationSettingsScreen = () => {
           sound: key === 'sound' ? next : notifications.sound,
           vibration: key === 'vibration' ? next : notifications.vibration,
         });
+        await saveNotificationPrefs({
+          mealReminders: notifications.mealReminders,
+          sound: key === 'sound' ? next : notifications.sound,
+          vibration: key === 'vibration' ? next : notifications.vibration,
+          popup: notifications.popup,
+          mealTimes,
+        });
       } catch (e) {
         Alert.alert('แจ้งเตือน', 'ตั้งค่า channel ไม่สำเร็จ');
+        // revert state
+        setNotifications(prev => ({ ...prev, [key]: !next }));
       }
       return;
     }
@@ -39,17 +71,23 @@ const NotificationSettingsScreen = () => {
       setNotifications(prev => ({ ...prev, mealReminders: next }));
       try {
         if (next) {
-          await scheduleMealReminders(mealTimes, {
-            title: 'ถึงเวลากินข้าวแล้ว 🍚',
-            body: 'อย่าลืมบันทึกแคลอรี่วันนี้',
-          });
+          await scheduleMealRemindersFromServer();
           Alert.alert('ตั้งสำเร็จ', 'ตั้งแจ้งเตือนตามเวลาที่กำหนดแล้ว');
         } else {
           await cancelAllScheduled();
           Alert.alert('ยกเลิกแล้ว', 'ยกเลิกแจ้งเตือนทั้งหมด');
         }
+        await saveNotificationPrefs({
+          mealReminders: next,
+          sound: notifications.sound,
+          vibration: notifications.vibration,
+          popup: notifications.popup,
+          mealTimes,
+        });
       } catch (e) {
         Alert.alert('ผิดพลาด', 'ตั้งค่าแจ้งเตือนไม่สำเร็จ');
+        // revert
+        setNotifications(prev => ({ ...prev, mealReminders: !next }));
       }
       return;
     }
@@ -58,19 +96,7 @@ const NotificationSettingsScreen = () => {
     setNotifications(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleTestNoti = async () => {
-    // “ลอกตามเวลาที่ set ไว้”: สั่ง schedule ทั้งหมดตรงๆ
-    try {
-      await scheduleMealReminders(mealTimes, {
-        title: '🔔 ทดสอบตามเวลาที่ตั้ง',
-        body: 'นี่คือการทดสอบแจ้งเตือนตามมื้อ',
-      });
-      const all = await listScheduled();
-      Alert.alert('ทดสอบตั้งแล้ว', `กำหนด ${all.length} แจ้งเตือนตามเวลาที่ตั้งไว้`);
-    } catch (e) {
-      Alert.alert('ผิดพลาด', 'ตั้งค่าแจ้งเตือนทดสอบไม่สำเร็จ');
-    }
-  };
+  // removed test handlers
 
   const notificationOptions = [
     { key: 'mealReminders' as const, label: 'แจ้งเตือนตามมื้ออาหาร', description: 'รับการแจ้งเตือนเวลามื้ออาหาร' },
@@ -116,18 +142,7 @@ const NotificationSettingsScreen = () => {
             </View>
           ))}
 
-          {/* ปุ่มทดสอบแจ้งเตือน (ตั้งตามเวลา) */}
-          <TouchableOpacity
-            className="mt-6 rounded-xl p-4 items-center"
-            style={{ backgroundColor: '#ffb800' }}
-            onPress={handleTestNoti}
-            activeOpacity={0.85}
-          >
-            <View className="flex-row items-center gap-2">
-              <Icon name="notifications-outline" size={20} color="#ffffff" />
-              <Text className="text-white font-promptBold text-base">ทดสอบตามเวลาที่ตั้งไว้</Text>
-            </View>
-          </TouchableOpacity>
+          {/* removed test buttons */}
 
           {/* debug: ดูรายการที่ตั้งแล้ว */}
           <TouchableOpacity

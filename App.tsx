@@ -8,6 +8,7 @@ import AppStack from 'AppStack';
 import { Platform, View, ActivityIndicator } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import './global.css';
+// import { initMealReminderRescheduler, scheduleMealRemindersFromServer } from './utils/autoNotifications';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -58,6 +59,18 @@ export default function App() {
       }
     };
     setupNoti();
+    
+    // Notification scheduling disabled temporarily for testing
+    // let sub: Notifications.Subscription | undefined;
+    // const boot = async () => {
+    //   sub = initMealReminderRescheduler();
+    //   await scheduleMealRemindersFromServer();
+    // };
+    // boot();
+    // return () => {
+    //   try { sub?.remove?.(); } catch {}
+    // };
+
   }, []);
 
   return (
