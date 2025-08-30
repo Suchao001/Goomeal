@@ -4,12 +4,14 @@ import { FoodApiClient } from './api/foodClient';
 import { FoodPlanApiClient } from './api/foodPlanClient';
 import { AiApiClient } from './api/aiApiClient';
 import { GoodChatApiClient } from './api/goodChatClient';
+import { MealTimeSetting } from './api/mealTimeSetting';
 
 export class ApiClient extends BaseApiClient {
   private foodClient: FoodApiClient;
   private foodPlanClient: FoodPlanApiClient;
   private aiClient: AiApiClient;
   private goodChatClient: GoodChatApiClient;
+  private mealTimeSetting: MealTimeSetting;
 
   constructor() {
     super();
@@ -17,6 +19,7 @@ export class ApiClient extends BaseApiClient {
     this.foodPlanClient = new FoodPlanApiClient();
     this.aiClient = new AiApiClient();
     this.goodChatClient = new GoodChatApiClient();
+    this.mealTimeSetting = new MealTimeSetting();
   }
 
   // ===== FOOD API METHODS =====
@@ -146,7 +149,6 @@ export class ApiClient extends BaseApiClient {
     return this.goodChatClient.updateChatStyle(style);
   }
 
-  // ===== USER WEIGHT UPDATE METHOD =====
   async updateWeight(weight: number) {
     try {
       const response = await this.axiosInstance.put('/user/update-weight', {
@@ -157,6 +159,16 @@ export class ApiClient extends BaseApiClient {
       console.error('Error updating weight:', error);
       throw error;
     }
+  }
+
+  //get mealtime
+  async getMealTimes() {
+    return this.mealTimeSetting.getMealTime();
+  }
+
+  //setting mealtime
+  async setMealTimes(mealTimes: { breakfast: string; lunch: string; dinner: string }) {
+   return this.mealTimeSetting.setMealTime(mealTimes);
   }
 }
 

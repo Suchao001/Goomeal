@@ -15,6 +15,7 @@ import dailyNutritionSummaryRoute from './routes/dailyNutritionSummary_routes';
 import weeklyReportRoute from './routes/weeklyReport_routes';
 import { verifyResetToken, resetPassword } from './controllers/forgotpassword';
 import { generateResetPasswordForm, generateErrorPage } from './utils/htmlTemplates';
+import mealTimeRoute from './routes/meal_time';
 
 // Load environment variables
 dotenv.config();
@@ -68,6 +69,8 @@ app.use('/api/daily-summary', dailyNutritionSummaryRoute);
 
 // Register weekly report route
 app.use('/api/weekly-report', weeklyReportRoute);
+
+app.use('/api/meal-time', mealTimeRoute);
 
 app.get('/reset-password', async (req, res) => {
     try {
