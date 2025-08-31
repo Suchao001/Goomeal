@@ -36,6 +36,79 @@ const getUserInfo = async (userId: number) => {
   }
 };
 
+const getUserMealTime = async (userId: number) => {
+  try {
+    const mealtime = await db('user_meal_time').where({ user_id: userId });
+    if (!mealtime) {
+      throw new Error('User not found');
+    }
+    return mealtime;
+  } catch (error) {
+    console.error('Error fetching user meal time:', error);
+    throw error;
+  }
+};
+
+// Helper: map Thai meal names to our keys and format HH:mm
+const toHHMM = (t: any) => {
+  const s = String(t ?? '');
+  const parts = s.split(':');
+  if (parts.length >= 2) {
+    const hh = parts[0].padStart(2, '0');
+    const mm = parts[1].padStart(2, '0');
+    return `${hh}:${mm}`;
+  }
+  return '00:00';
+};
+
+const getDefaultMealTimes = async (userId: number) => {
+  try {
+    const rows = await db('user_meal_time')
+      .select('*')
+      .where({ user_id: userId })
+      .orderBy('sort_order', 'asc');
+
+    let breakfast = '07:00';
+    let lunch = '12:00';
+    let dinner = '18:00';
+
+    const active = (rows || []).filter((r: any) => (typeof r.is_active === 'boolean' ? r.is_active : !!Number(r.is_active)));
+
+    // Build meal defs (default + custom)
+    const mealDefs: Array<{ key: string; name: string; time: string; isDefault: boolean; sort: number }> = [];
+    for (const r of active) {
+      const name = String(r.meal_name || '').trim();
+      const hhmm = toHHMM(r.meal_time);
+      if (name === 'มื้อเช้า') {
+        breakfast = hhmm;
+        mealDefs.push({ key: 'breakfast', name, time: hhmm, isDefault: true, sort: r.sort_order || 0 });
+      } else if (name === 'มื้อกลางวัน') {
+        lunch = hhmm;
+        mealDefs.push({ key: 'lunch', name, time: hhmm, isDefault: true, sort: r.sort_order || 0 });
+      } else if (name === 'มื้อเย็น') {
+        dinner = hhmm;
+        mealDefs.push({ key: 'dinner', name, time: hhmm, isDefault: true, sort: r.sort_order || 0 });
+      } else {
+        const key = r.id ? `custom-${r.id}` : `custom-${(r.sort_order || '')}`;
+        mealDefs.push({ key, name, time: hhmm, isDefault: false, sort: r.sort_order || 0 });
+      }
+    }
+
+    const mealsText = active
+      .map((r: any) => `- ${String(r.meal_name || '').trim()}: ${toHHMM(r.meal_time)}`)
+      .join('\n');
+
+    mealDefs.sort((a, b) => a.sort - b.sort);
+
+    return { breakfast, lunch, dinner, mealsText, mealDefs };
+  } catch (_) {
+    return { breakfast: '07:00', lunch: '12:00', dinner: '18:00', mealsText: '', mealDefs: [
+      { key: 'breakfast', name: 'มื้อเช้า', time: '07:00', isDefault: true, sort: 1 },
+      { key: 'lunch', name: 'มื้อกลางวัน', time: '12:00', isDefault: true, sort: 2 },
+      { key: 'dinner', name: 'มื้อเย็น', time: '18:00', isDefault: true, sort: 3 },
+    ] };
+  }
+};
 export async function suggestFood(userId: number, payload?: any) {
   try {
     const {
@@ -49,7 +122,7 @@ export async function suggestFood(userId: number, payload?: any) {
 
     const { dietary_restrictions } = await getUserInfo(userId);
 
-    const foodSuggestionPrompt = `You are an AI assistant that generates a single Thai food menu suggestion.
+    const foodSuggestionPrompt = `You are an AI assistant that generates default for Thai food menu suggestion.
 Your response MUST be a single, valid JSON object.
 It MUST NOT be a JSON array.
 It MUST NOT be wrapped in markdown backticks like \`\`\`json.
@@ -152,7 +225,28 @@ export async function getFoodPlanSuggestions(userId: number, payload?: any) {
     recommendedNutrition = calculateRecommendedNutrition(userProfile);
     const calculationSummary = getCalculationSummary(userProfile);
 
-    const foodPlanPrompt = `You are a nutritionist creating a ${totalPlanDay}-day Thai food plan. Return ONLY a valid JSON object.
+    const { breakfast: bfTime, lunch: lnTime, dinner: dnTime, mealsText, mealDefs } = await getDefaultMealTimes(userId);
+
+    // Calculate per-meal calorie targets based on active meals (default + custom)
+    const baseShare: Record<string, number> = { breakfast: 0.3, lunch: 0.4, dinner: 0.3 };
+    const shares: Record<string, number> = {};
+    const customCount = mealDefs.filter(m => !m.isDefault).length;
+    const customShare = customCount > 0 ? Math.min(0.1, 0.2 / customCount) : 0; // distribute small portion to customs
+    let totalShare = 0;
+    for (const m of mealDefs) {
+      if (m.isDefault) shares[m.key] = baseShare[m.key] ?? 0.3; else shares[m.key] = customShare || 0.1;
+      totalShare += shares[m.key];
+    }
+    // Normalize to 1.0
+    if (totalShare > 0) {
+      for (const k of Object.keys(shares)) shares[k] = shares[k] / totalShare;
+    }
+    const perMealKcal: Record<string, number> = {};
+    for (const m of mealDefs) perMealKcal[m.key] = Math.round(recommendedNutrition.cal * (shares[m.key] || 0.3));
+    const mealsDistributionBlock = mealDefs.map(m => `- ${m.name}: ${perMealKcal[m.key]} kcal at ${m.time}`).join('\n');
+    const mealsExampleBlock = mealDefs.map(m => `      "${m.key}": {\n        "name": "${m.name}",\n        "time": "${m.time}",\n        "totalCal": ${perMealKcal[m.key]},\n        "items": [{\n          "name": "${m.name}",\n          "cal": ${perMealKcal[m.key]},\n          "carb": 45,\n          "fat": 12,\n          "protein": 25,\n          "img": "",\n          "ingredient": "",\n          "source": "ai",\n          "isUserFood": false\n        }]\n      }`).join(',\n');
+
+    const foodPlanPrompt = `You are a nutritionist creating a ${totalPlanDay}-day default for thai food plan. Return ONLY a valid JSON object.
 
 NUTRITIONAL TARGETS (per day):
 - Calories: ${recommendedNutrition.cal} kcal
@@ -164,71 +258,18 @@ USER INFO:
 - Age: ${age}, Weight: ${weight}kg → ${userProfile.target_weight}kg
 - Goal: ${target_goal}, Activity: ${activity_level}
 - Avoid: ${dietary_restrictions}
+\nUSER MEAL TIMES (use these times exactly if applicable):
+${mealsText || `- มื้อเช้า: ${bfTime}\n- มื้อกลางวัน: ${lnTime}\n- มื้อเย็น: ${dnTime}`}
 
 MEAL DISTRIBUTION:
-- Breakfast: ${Math.round(recommendedNutrition.cal * 0.3)} kcal
-- Lunch: ${Math.round(recommendedNutrition.cal * 0.4)} kcal
-- Dinner: ${Math.round(recommendedNutrition.cal * 0.3)} kcal
+${mealsDistributionBlock}
 
 JSON FORMAT (return this structure exactly):
 {
   "1": {
-    "totalCal": 1800,
+    "totalCal": ${recommendedNutrition.cal},
     "meals": {
-      "breakfast": {
-        "name": "ข้าวต้มใส่ไข่",
-        "time": "07:00",
-        "totalCal": 540,
-        "items": [
-          {
-            "name": "ข้าวต้มไข่ไก่",
-            "cal": 540,
-            "carb": 45,
-            "fat": 12,
-            "protein": 25,
-            "img": "",
-            "ingredient": "",
-            "source": "ai",
-            "isUserFood": false
-          }
-        ]
-      },
-      "lunch": {
-        "name": "ผัดกะเพราหมูสับ",
-        "time": "12:00",
-        "totalCal": 720,
-        "items": [
-          {
-            "name": "ผัดกะเพราหมูสับ",
-            "cal": 720,
-            "carb": 65,
-            "fat": 18,
-            "protein": 35,
-            "img": "",
-            "ingredient": "",
-            "source": "ai",
-            "isUserFood": false
-          }
-        ]
-      },
-      "dinner": {
-        "name": "ต้มยำกุ้ง",
-        "time": "18:00",
-        "totalCal": 540,
-        "items": [
-          {
-            "name": "ต้มยำกุ้ง",
-            "cal": 540,
-            "carb": 35,
-            "fat": 15,
-            "protein": 40,
-            "img": "",
-            "ingredient": "",
-            "source": "ai",
-            "isUserFood": false
-          }
-        ]
-      }
+${mealsExampleBlock}
     }
   }
 }
@@ -319,7 +360,8 @@ Generate the complete JSON now:`;
     if (err instanceof Error && err.message.includes('Invalid JSON')) {
       console.warn('🔄 AI failed, creating fallback plan...');
       try {
-        const fallbackPlan = createFallbackPlan(recommendedNutrition, totalPlanDay || 3);
+        const times = await getDefaultMealTimes(userId);
+        const fallbackPlan = createFallbackPlan(recommendedNutrition, totalPlanDay || 3, times);
         console.log('✅ Fallback plan created successfully');
         return fallbackPlan;
       } catch (fallbackErr) {
@@ -411,7 +453,25 @@ export async function getFoodPlanSuggestionsByPrompt(userId: number, payload?: a
     const goalsText = selectedGoals && selectedGoals.length > 0 ? 
                      selectedGoals.join(', ') : 'ไม่มีเป้าหมายเฉพาะ';
 
-    const foodPlanPrompt = `You are a nutritionist creating a ${totalPlanDay}-day Thai food plan based on user's detailed preferences. Return ONLY a valid JSON object.
+    const { breakfast: bfTime2, lunch: lnTime2, dinner: dnTime2, mealsText: mealsText2, mealDefs: mealDefs2 } = await getDefaultMealTimes(userId);
+
+    // Build distribution and example for dynamic meals (including custom)
+    const baseShare2: Record<string, number> = { breakfast: 0.3, lunch: 0.4, dinner: 0.3 };
+    const shares2: Record<string, number> = {};
+    const customCount2 = mealDefs2.filter(m => !m.isDefault).length;
+    const customShare2 = customCount2 > 0 ? Math.min(0.1, 0.2 / customCount2) : 0;
+    let totalShare2 = 0;
+    for (const m of mealDefs2) {
+      if (m.isDefault) shares2[m.key] = baseShare2[m.key] ?? 0.3; else shares2[m.key] = customShare2 || 0.1;
+      totalShare2 += shares2[m.key];
+    }
+    if (totalShare2 > 0) for (const k of Object.keys(shares2)) shares2[k] = shares2[k] / totalShare2;
+    const perMealKcal2: Record<string, number> = {};
+    for (const m of mealDefs2) perMealKcal2[m.key] = Math.round(recommendedNutrition.cal * (shares2[m.key] || 0.3));
+    const mealsDistributionBlock2 = mealDefs2.map(m => `- ${m.name}: ${perMealKcal2[m.key]} kcal at ${m.time}`).join('\\n');
+    const mealsExampleBlock2 = mealDefs2.map(m => `      \"${m.key}\": {\\n        \"name\": \"${m.name}\",\\n        \"time\": \"${m.time}\",\\n        \"totalCal\": ${perMealKcal2[m.key]},\\n        \"items\": [{\\n          \"name\": \"${m.name}\",\\n          \"cal\": ${perMealKcal2[m.key]},\\n          \"carb\": 45,\\n          \"fat\": 12,\\n          \"protein\": 25,\\n          \"img\": \"\",\\n          \"ingredient\": \"\",\\n          \"source\": \"ai\",\\n          \"isUserFood\": false\\n        }]\\n      }`).join(',\\n');
+
+    const foodPlanPrompt = `You are a nutritionist creating a ${totalPlanDay}-day default for Thai food plan based on user's detailed preferences. Return ONLY a valid JSON object.
 
 NUTRITIONAL TARGETS (per day):
 - Calories: ${recommendedNutrition.cal} kcal
@@ -436,70 +496,18 @@ USER PREFERENCES FROM PROMPT:
 
 EXISTING DIETARY RESTRICTIONS: ${userDietaryRestrictions?.join(', ') || 'ไม่มี'}
 
+USER MEAL TIMES (use these times exactly if applicable):
+${mealsText2 || `- มื้อเช้า: ${bfTime2}\n- มื้อกลางวัน: ${lnTime2}\n- มื้อเย็น: ${dnTime2}`}
+
 MEAL DISTRIBUTION:
-- Breakfast: ${Math.round(recommendedNutrition.cal * 0.3)} kcal
-- Lunch: ${Math.round(recommendedNutrition.cal * 0.4)} kcal
-- Dinner: ${Math.round(recommendedNutrition.cal * 0.3)} kcal
+${mealDefs2.map(m => `- ${m.name}: ${perMealKcal2[m.key]} kcal at ${m.time}`).join('\\n')}
 
 JSON FORMAT (return this structure exactly):
 {
   "1": {
-    "totalCal": 1800,
+    "totalCal": ${recommendedNutrition.cal},
     "meals": {
-      "breakfast": {
-        "name": "ข้าวต้มใส่ไข่",
-        "time": "07:00",
-        "totalCal": 540,
-        "items": [
-          {
-            "name": "ข้าวต้มไข่ไก่",
-            "cal": 540,
-            "carb": 45,
-            "fat": 12,
-            "protein": 25,
-            "img": "",
-            "ingredient": "",
-            "source": "ai",
-            "isUserFood": false
-          }
-        ]
-      },
-      "lunch": {
-        "name": "ผัดกะเพราหมูสับ",
-        "time": "12:00",
-        "totalCal": 720,
-        "items": [
-          {
-            "name": "ผัดกะเพราหมูสับ",
-            "cal": 720,
-            "carb": 65,
-            "fat": 18,
-            "protein": 35,
-            "img": "",
-            "ingredient": "",
-            "source": "ai",
-            "isUserFood": false
-          }
-        ]
-      },
-      "dinner": {
-        "name": "ต้มยำกุ้ง",
-        "time": "18:00",
-        "totalCal": 540,
-        "items": [
-          {
-            "name": "ต้มยำกุ้ง",
-            "cal": 540,
-            "carb": 35,
-            "fat": 15,
-            "protein": 40,
-            "img": "",
-            "ingredient": "",
-            "source": "ai",
-            "isUserFood": false
-          }
-        ]
-      }
+${mealsExampleBlock2}
     }
   }
 }
@@ -621,8 +629,11 @@ Generate the complete JSON now:`;
 }
 
 
-function createFallbackPlan(recommendedNutrition: any, totalPlanDay: number) {
+function createFallbackPlan(recommendedNutrition: any, totalPlanDay: number, times?: { breakfast: string; lunch: string; dinner: string }) {
   const fallbackPlan: any = {};
+  const bfTime = times?.breakfast || '07:00';
+  const lnTime = times?.lunch || '12:00';
+  const dnTime = times?.dinner || '18:00';
   
   for (let day = 1; day <= totalPlanDay; day++) {
     const breakfastCal = Math.round(recommendedNutrition.cal * 0.3);
@@ -634,7 +645,7 @@ function createFallbackPlan(recommendedNutrition: any, totalPlanDay: number) {
       meals: {
         breakfast: {
           name: "ข้าวต้มไข่ไก่",
-          time: "07:00",
+          time: bfTime,
           totalCal: breakfastCal,
           items: [{
             name: "ข้าวต้มไข่ไก่",
@@ -650,7 +661,7 @@ function createFallbackPlan(recommendedNutrition: any, totalPlanDay: number) {
         },
         lunch: {
           name: "ผัดกะเพราหมูสับ",
-          time: "12:00",
+          time: lnTime,
           totalCal: lunchCal,
           items: [{
             name: "ผัดกะเพราหมูสับ",
@@ -666,7 +677,7 @@ function createFallbackPlan(recommendedNutrition: any, totalPlanDay: number) {
         },
         dinner: {
           name: "ต้มยำกุ้ง",
-          time: "18:00",
+          time: dnTime,
           totalCal: dinnerCal,
           items: [{
             name: "ต้มยำกุ้ง",

@@ -81,16 +81,8 @@ const PromptForm3 = () => {
   };
 
   const handleSubmit = () => {
-    // Validate form - allow submission if at least one field is filled
-    if (additionalRequirements.trim().length < 10 && selectedRestrictions.length === 0 && selectedGoals.length === 0) {
-      Alert.alert(
-        'กรุณากรอกข้อมูล',
-        'กรุณาเลือกข้อจำกัดในการรับประทาน หรือเป้าหมาย หรือกรอกความต้องการเพิ่มเติมอย่างน้อย 10 ตัวอักษร'
-      );
-      return;
-    }
-
-    // Collect all form data
+    // ไม่บังคับเลือกข้อจำกัดหรือเป้าหมาย และไม่บังคับกรอกความต้องการเพิ่มเติม
+    // เก็บข้อมูลทั้งหมดตามที่กรอกไว้
     const finalFormData = {
       ...route.params?.data,
       additionalRequirements: additionalRequirements.trim(),
@@ -216,28 +208,7 @@ const PromptForm3 = () => {
         </View>
 
         {/* Summary Preview */}
-        <View className="mb-8 bg-primary/5 rounded-xl p-4">
-          <Text className="text-primary font-promptSemiBold text-base mb-3 flex-row items-center">
-            📋 สรุปข้อมูลที่กรอก
-          </Text>
-          <View className="space-y-2">
-            {selectedRestrictions.length > 0 && (
-              <Text className="text-gray-700 font-promptMedium text-sm">
-                ข้อจำกัด: {selectedRestrictions.length} รายการ
-              </Text>
-            )}
-            {selectedGoals.length > 0 && (
-              <Text className="text-gray-700 font-promptMedium text-sm">
-                เป้าหมาย: {selectedGoals.length} รายการ
-              </Text>
-            )}
-            {additionalRequirements.trim() && (
-              <Text className="text-gray-700 font-promptMedium text-sm">
-                ความต้องการเพิ่มเติม: {additionalRequirements.trim().length} ตัวอักษร
-              </Text>
-            )}
-          </View>
-        </View>
+        
       </View>
 
       {/* Navigation Buttons */}

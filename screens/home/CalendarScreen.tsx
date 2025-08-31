@@ -17,11 +17,7 @@ interface MealItem {
   image?: string;
 }
 
-interface DayMealData {
-  breakfast: MealItem[];
-  lunch: MealItem[];
-  dinner: MealItem[];
-}
+type DayMealData = { [key: string]: MealItem[] };
 
 /**
  * CalendarScreen Component
@@ -126,7 +122,7 @@ const CalendarScreen = () => {
       breakfast: [],
       lunch: [],
       dinner: []
-    };
+    } as DayMealData;
 
     if (!currentDayMeals || !currentDayMeals.meals) {
       console.log('❌ [CalendarScreen] No currentDayMeals or meals data');
@@ -157,8 +153,8 @@ const CalendarScreen = () => {
       } else if (lowerName.includes('dinner') || lowerName.includes('เย็น') || lowerName === 'dinner') {
         return 'dinner';
       } else {
-        // If it's a custom name, try to map based on time or order
-        return 'lunch'; // Default fallback
+        // Custom meal: keep original key as its own category
+        return mealTypeName;
       }
     };
     
@@ -178,8 +174,9 @@ const CalendarScreen = () => {
           image: item.img
         }));
         
-        // Add to appropriate category (or combine if multiple map to same category)
-        transformedMealData[category as keyof DayMealData].push(...transformedItems);
+        // Ensure category exists then push
+        if (!transformedMealData[category]) transformedMealData[category] = [];
+        transformedMealData[category].push(...transformedItems);
       }
     });
 
@@ -215,7 +212,7 @@ const CalendarScreen = () => {
     return meals.reduce((total, meal) => total + meal.calories, 0);
   };
 
-  const renderMealSection = (mealType: 'breakfast' | 'lunch' | 'dinner', meals: MealItem[], icon: string, title: string) => {    
+  const renderMealSection = (mealType: string, meals: MealItem[], icon: string, title: string) => {    
     const totalCalories = calculateMealCalories(meals);
     
     let mealTotalCal = totalCalories;
@@ -231,13 +228,14 @@ const CalendarScreen = () => {
         }
       }
       
-      // Find matching meal by type (case insensitive)
+      // Find matching meal by type (case insensitive); for custom, match exact key
       const mealKey = Object.keys(mealsData).find(key => {
         const lowerKey = key.toLowerCase();
-        return lowerKey === mealType || 
-               (mealType === 'breakfast' && (lowerKey.includes('breakfast') || lowerKey.includes('เช้า'))) ||
-               (mealType === 'lunch' && (lowerKey.includes('lunch') || lowerKey.includes('กลางวัน'))) ||
-               (mealType === 'dinner' && (lowerKey.includes('dinner') || lowerKey.includes('เย็น')));
+        const target = mealType.toLowerCase();
+        return lowerKey === target ||
+               (target === 'breakfast' && (lowerKey.includes('breakfast') || lowerKey.includes('เช้า'))) ||
+               (target === 'lunch' && (lowerKey.includes('lunch') || lowerKey.includes('กลางวัน'))) ||
+               (target === 'dinner' && (lowerKey.includes('dinner') || lowerKey.includes('เย็น')));
       });
       
       if (mealKey && mealsData[mealKey]?.totalCal) {
@@ -531,13 +529,22 @@ const CalendarScreen = () => {
                   return (
                     <>
                       {/* Breakfast */}
-                      {renderMealSection('breakfast', transformedMeals.breakfast, 'sunny-outline', 'อาหารเช้า')}
+                      {renderMealSection('breakfast', transformedMeals.breakfast || [], 'sunny-outline', 'อาหารเช้า')}
                       
                       {/* Lunch */}
-                      {renderMealSection('lunch', transformedMeals.lunch, 'restaurant-outline', 'อาหารกลางวัน')}
+                      {renderMealSection('lunch', transformedMeals.lunch || [], 'restaurant-outline', 'อาหารกลางวัน')}
                       
                       {/* Dinner */}
-                      {renderMealSection('dinner', transformedMeals.dinner, 'moon-outline', 'อาหารเย็น')}
+                      {renderMealSection('dinner', transformedMeals.dinner || [], 'moon-outline', 'อาหารเย็น')}
+                      
+                      {/* Custom meals (render remaining keys) */}
+                      {Object.keys(transformedMeals)
+                        .filter(k => !['breakfast','lunch','dinner'].includes(k))
+                        .map((k) => (
+                          <React.Fragment key={k}>
+                            {renderMealSection(k, transformedMeals[k] || [], 'restaurant-outline', k)}
+                          </React.Fragment>
+                        ))}
                     </>
                   );
                 })()}

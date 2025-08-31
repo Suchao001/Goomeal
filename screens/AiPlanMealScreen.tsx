@@ -4,6 +4,8 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useTypedNavigation } from '../hooks/Navigation';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
 import { apiClient } from '../utils/apiClient';
+import { SavePlanModal } from '../components/SavePlanModal';
+import { useImagePicker } from '../hooks/useImagePicker';
 
 const AiPlanMealScreen = () => {
   const navigation = useTypedNavigation();
@@ -14,6 +16,12 @@ const AiPlanMealScreen = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [planSaved, setPlanSaved] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [planName, setPlanName] = useState('แผนอาหารจาก AI');
+  const [planDescription, setPlanDescription] = useState('');
+  const [selectedPlanImage, setSelectedPlanImage] = useState<string | null>(null);
+  const [setAsCurrentPlan, setSetAsCurrentPlan] = useState(true);
+  const { showImagePicker } = useImagePicker();
 
   useEffect(() => {
     if (!aiPlanData) {
@@ -119,17 +127,22 @@ const AiPlanMealScreen = () => {
       setSaving(true);
       
       const response = await apiClient.saveFoodPlan({
-        name: `แผนอาหารจาก AI (${Object.keys(aiPlanData).length} วัน)`,
-        description: `แผนอาหารที่สร้างโดย AI สำหรับ ${Object.keys(aiPlanData).length} วัน`,
+        name: planName?.trim() || `แผนอาหารจาก AI (${Object.keys(aiPlanData).length} วัน)`,
+        description: planDescription?.trim() || `แผนอาหารที่สร้างโดย AI สำหรับ ${Object.keys(aiPlanData).length} วัน`,
         plan: aiPlanData,
-        image: undefined
+        image: selectedPlanImage || undefined
       });
       
       if (response.success) {
+        try {
+          if (setAsCurrentPlan && response.data?.id) {
+            await apiClient.setCurrentFoodPlan(response.data.id);
+          }
+        } catch (e) {}
         setPlanSaved(true);
         Alert.alert(
-          'สำเร็จ!',
-          'บันทึกแผนอาหารเรียบร้อยแล้ว!',
+          'บันทึกสำเร็จ',
+          'แผนอาหารจาก AI ของคุณถูกบันทึกเรียบร้อยแล้ว',
           [
             {
               text: 'ตกลง',
@@ -157,6 +170,18 @@ const AiPlanMealScreen = () => {
       setSaving(false);
     }
   };
+
+  const totalDays = Object.keys(aiPlanData || {}).length;
+  const totalMenus = (() => {
+    try {
+      return Object.values(aiPlanData || {}).reduce((sum: number, day: any) => {
+        if (!day?.meals) return sum;
+        return sum + Object.values(day.meals).reduce((mSum: number, meal: any) => mSum + (Array.isArray(meal.items) ? meal.items.length : 0), 0);
+      }, 0);
+    } catch {
+      return 0;
+    }
+  })();
 
   const handleDayPress = (day: number) => {
     console.log('🎯 View details for day:', day);
@@ -289,7 +314,7 @@ const AiPlanMealScreen = () => {
       {!loading && (
         <View className="bg-white px-4 py-4 border-t border-gray-200">
           <TouchableOpacity
-            onPress={handleSavePlan}
+            onPress={() => setShowSaveModal(true)}
             className={`rounded-lg py-4 items-center justify-center mb-3 ${
               saving ? 'bg-gray-400' : 'bg-primary'
             }`}
@@ -322,6 +347,30 @@ const AiPlanMealScreen = () => {
           </TouchableOpacity>
         </View>
       )}
+
+      <SavePlanModal
+        visible={showSaveModal}
+        onClose={() => setShowSaveModal(false)}
+        onSave={async () => {
+          setShowSaveModal(false);
+          await handleSavePlan();
+        }}
+        planName={planName}
+        setPlanName={setPlanName}
+        planDescription={planDescription}
+        setPlanDescription={setPlanDescription}
+        selectedPlanImage={selectedPlanImage}
+        onImagePicker={async () => {
+          const uri = await showImagePicker('เลือกรูปภาพ', 'เลือกวิธีการเพิ่มรูปภาพแผนอาหาร');
+          if (uri) setSelectedPlanImage(uri);
+        }}
+        onRemoveImage={() => setSelectedPlanImage(null)}
+        totalDays={totalDays}
+        totalMenus={totalMenus}
+        setAsCurrentPlan={setAsCurrentPlan}
+        setSetAsCurrentPlan={setSetAsCurrentPlan}
+        saveButtonText="บันทึกแผนนี้"
+      />
     </View>
   );
 };

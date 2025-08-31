@@ -6,7 +6,7 @@ import { getTodayBangkokDate } from '../utils/bangkokTime';
 
 export interface MealData {
   id: string;
-  mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  mealType: string; // support custom meal types
   foodName: string;
   calories: number;
   carbs?: number;
@@ -31,13 +31,28 @@ interface TodayMealsProps {
 const TodayMeals: React.FC<TodayMealsProps> = ({ meals, onAddMeal, onEditMeal, onRefreshData }) => {
   const [isSaving, setIsSaving] = useState(false);
 
+  // Debug: log incoming meals from API/parent
+  useEffect(() => {
+    try {
+      console.log('🍽️ [TodayMeals] props.meals length:', meals?.length ?? 0);
+      if (Array.isArray(meals)) {
+        console.log('🍽️ [TodayMeals] first 3 meals:', meals.slice(0, 3));
+        const types = Array.from(new Set(meals.map(m => m.mealType)));
+        console.log('🍽️ [TodayMeals] meal types:', types);
+      } else {
+        console.log('🍽️ [TodayMeals] meals is not an array:', meals);
+      }
+    } catch (e) { }
+  }, [meals]);
+
   const getMealTypeLabel = (mealType: MealData['mealType']) => {
+    const t = String(mealType || '').toLowerCase();
     switch (mealType) {
       case 'breakfast': return 'มื้อเช้า';
       case 'lunch': return 'มื้อกลางวัน';
       case 'dinner': return 'มื้อเย็น';
       
-      default: return 'มื้ออาหาร';
+      default: return mealType || 'มื้ออาหาร';
     }
   };
 
@@ -61,12 +76,29 @@ const TodayMeals: React.FC<TodayMealsProps> = ({ meals, onAddMeal, onEditMeal, o
     }
   };
 
-  // Group meals by type
-  const mealTypes: MealData['mealType'][] = ['breakfast', 'lunch', 'dinner'];
-  const groupedMeals = mealTypes.map(type => ({
-    type,
-    meals: meals.filter(meal => meal.mealType === type)
-  }));
+  // Group meals by type (support custom types)
+  const groupsMap = meals.reduce<Record<string, MealData[]>>((acc, m) => {
+    const key = m.mealType || 'other';
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(m);
+    return acc;
+  }, {});
+  const orderedKeys = [
+    'breakfast',
+    'lunch',
+    'dinner',
+    ...Object.keys(groupsMap).filter(k => !['breakfast','lunch','dinner'].includes(k))
+  ];
+  const groupedMeals = orderedKeys.map(type => ({ type, meals: groupsMap[type] || [] }));
+
+  // Debug: log grouped result
+  useEffect(() => {
+    try {
+      console.log('🍱 [TodayMeals] grouped keys:', orderedKeys);
+      const counts = groupedMeals.map(g => ({ type: g.type, count: g.meals.length }));
+      console.log('🍱 [TodayMeals] grouped counts:', counts);
+    } catch (e) { }
+  }, [orderedKeys.join('|'), meals]);
 
   // Save meal plan item to backend
   const handleSaveMeal = async (meal: MealData) => {
@@ -88,6 +120,7 @@ const TodayMeals: React.FC<TodayMealsProps> = ({ meals, onAddMeal, onEditMeal, o
         image: undefined,
         unique_id: meal.uniqueId
       };
+      console.log('📝 [TodayMeals] Saving meal record:', recordData);
       
       await createEatingRecord(recordData);
       

@@ -217,11 +217,71 @@ const RecordFoodScreen = () => {
         // Convert API data to MealTime format but preserve any manually added (non-plan) entries
         setMealTimes(prev => {
           const preserved = preserveNonPlanEntries(prev);
-          const next = [...prev];
+          // Rebuild from defaults to avoid duplicate customs across refreshes
+          const defaults = ['breakfast','lunch','dinner'];
+          const base = prev.filter(m => defaults.includes(m.mealType));
+          // Ensure base has 3 in correct order if possible
+          const ensureBase = (idx: number, key: string) => base.find(b => b.mealType === key) || base[idx] || {
+            time: idx === 0 ? '07:00' : idx === 1 ? '12:00' : '18:00',
+            label: key === 'breakfast' ? 'มื้อเช้า' : key === 'lunch' ? 'มื้อกลางวัน' : 'มื้อเย็น',
+            mealType: key,
+            entries: []
+          };
+          const next = [
+            ensureBase(0,'breakfast'),
+            ensureBase(1,'lunch'),
+            ensureBase(2,'dinner')
+          ];
 
-          next[0] = createMealTimeWithPlanItems(next[0], todayMeals.breakfast, preserved[0], 0);
-          next[1] = createMealTimeWithPlanItems(next[1], todayMeals.lunch, preserved[1], 1);
-          next[2] = createMealTimeWithPlanItems(next[2], todayMeals.dinner, preserved[2], 2);
+          next[0] = createMealTimeWithPlanItems(next[0], todayMeals.breakfast, preserved[0] || [], 0);
+          next[1] = createMealTimeWithPlanItems(next[1], todayMeals.lunch, preserved[1] || [], 1);
+          next[2] = createMealTimeWithPlanItems(next[2], todayMeals.dinner, preserved[2] || [], 2);
+
+          // Append custom meals dynamically (keys other than default)
+          const defaultKeys = new Set(['breakfast','lunch','dinner']);
+          const mealsMap = (todayMeals as any).mealsMap as Record<string, any[]> | undefined;
+          const mealsMeta = (todayMeals as any).mealsMeta as Record<string, { time?: string; label?: string }> | undefined;
+          if (mealsMap) {
+            Object.keys(mealsMap)
+              .filter(k => !defaultKeys.has(k))
+              .forEach((k, idx) => {
+                const items = mealsMap[k] || [];
+                const label = mealsMeta?.[k]?.label || k;
+                const time = mealsMeta?.[k]?.time || '12:00';
+                // Create entries conversion manually
+                const converted = items.map((meal, index) => ({
+                  id: `${k}-${index}`,
+                  name: meal.name,
+                  calories: meal.calories,
+                  carbs: meal.carb,
+                  fat: meal.fat,
+                  protein: meal.protein,
+                  confirmed: true,
+                  fromPlan: true,
+                  uniqueId: generateUniqueId(selectedDay, 3 + idx, index)
+                }));
+
+                // Preserve existing non-plan entries for this custom meal if existed
+                const existingIndex = next.findIndex(m => m.mealType === k);
+                if (existingIndex >= 0) {
+                  const preservedEntries = next[existingIndex].entries.filter(e => !e.fromPlan);
+                  next[existingIndex] = {
+                    ...next[existingIndex],
+                    time: typeof time === 'string' ? time : '12:00',
+                    label,
+                    mealType: k,
+                    entries: [...converted, ...preservedEntries]
+                  };
+                } else {
+                  next.push({
+                    time: typeof time === 'string' ? time : '12:00',
+                    label,
+                    mealType: k,
+                    entries: converted
+                  });
+                }
+              });
+          }
 
           return next;
         });

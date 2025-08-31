@@ -79,7 +79,7 @@ const Home = () => {
     loadDailySummary();
     loadSavedRecords();
     fetchRecommendedMeals();
-    console.log(JSON.stringify(todayMealData, null, 2));
+   
   }, []);
 
   // Load articles when component mounts
@@ -261,7 +261,7 @@ const Home = () => {
     };
     
     const nutritionTargets = getMealPlanNutritionTargets();
-    console.log('🎯 [HomeScreen] Nutrition targets from meal plan:', nutritionTargets);
+    
 
     // Use data from daily_nutrition_summary if available
     if (dailySummary) {
@@ -420,22 +420,40 @@ const Home = () => {
       });
     });
 
+    // Convert custom meals (keys other than default)
+    const defaultKeys = new Set(['breakfast','lunch','dinner']);
+    const mealsMap: any = (todayMealData as any).mealsMap || {};
+    const mealsMeta: any = (todayMealData as any).mealsMeta || {};
+    Object.keys(mealsMap)
+      .filter(k => !defaultKeys.has(k))
+      .forEach((k) => {
+        const items = mealsMap[k] || [];
+        const label = mealsMeta?.[k]?.label || k;
+        const time = mealsMeta?.[k]?.time || '12:00';
+        items.forEach((meal: TodayMealItem, index: number) => {
+          const saved = isMealSaved(meal.name, label);
+          meals.push({
+            id: `${k}-${mealIdCounter++}`,
+            mealType: k,
+            foodName: meal.name,
+            calories: meal.calories,
+            carbs: meal.carb,
+            fat: meal.fat,
+            protein: meal.protein,
+            image: meal.image ? { uri: meal.image } : require('../../assets/images/Foodtype_2.png'),
+            time: typeof time === 'string' ? time : '12:00',
+            fromPlan: true,
+            saved: saved,
+            uniqueId: generateUniqueId(k, index)
+          });
+        });
+      });
+
     return meals;
   }, [todayMealData, savedRecords]);
 
   // Handlers for meal actions
-  const handleAddMeal = (mealType: MealData['mealType']) => {
-    console.log('Add meal for:', mealType);
-    // Navigate to add meal screen or show modal
-    // navigation.navigate('RecordFood');
-  };
-
-  const handleEditMeal = (meal: MealData) => {
-    console.log('Edit meal:', meal);
-    // Navigate to edit meal screen
-    // navigation.navigate('RecordFood');
-  };
-
+ 
   // Handle refresh data after saving meals
   const handleRefreshData = useCallback(() => {
     loadSavedRecords();
@@ -535,8 +553,8 @@ const Home = () => {
         ) : (
           <TodayMeals
             meals={getTodayMealsForComponent}
-            onAddMeal={handleAddMeal}
-            onEditMeal={handleEditMeal}
+            onAddMeal={() => {}}
+            onEditMeal={() => {}}
             onRefreshData={handleRefreshData}
           />
         )}

@@ -18,6 +18,8 @@ export interface TodayMealData {
   totalCalories: number;
   planDay: number | null;
   planName: string | null;
+  mealsMap?: Record<string, TodayMealItem[]>; // dynamic categories incl. custom
+  mealsMeta?: Record<string, { time?: string; label?: string }>; // per-meal metadata
 }
 
 /**
@@ -83,19 +85,21 @@ const categorizeMealType = (mealTypeName: string) => {
   } else if (lowerName.includes('dinner') || lowerName.includes('เย็น') || lowerName === 'dinner') {
     return 'dinner';
   } else {
-    // If it's a custom name, try to map based on time or order
-    return 'lunch'; // Default fallback
+    // Keep custom meal as its own category
+    return mealTypeName;
   }
 };
 
 /**
  * Transform meal data from API response
  */
-const transformMealData = (mealsData: any): { breakfast: TodayMealItem[], lunch: TodayMealItem[], dinner: TodayMealItem[] } => {
+const transformMealData = (mealsData: any): { breakfast: TodayMealItem[], lunch: TodayMealItem[], dinner: TodayMealItem[], mealsMap: Record<string, TodayMealItem[]>, mealsMeta: Record<string, { time?: string; label?: string }> } => {
   const transformedMealData = {
     breakfast: [] as TodayMealItem[],
     lunch: [] as TodayMealItem[],
-    dinner: [] as TodayMealItem[]
+    dinner: [] as TodayMealItem[],
+    mealsMap: {} as Record<string, TodayMealItem[]>,
+    mealsMeta: {} as Record<string, { time?: string; label?: string }>
   };
 
   if (!mealsData) {
@@ -117,6 +121,8 @@ const transformMealData = (mealsData: any): { breakfast: TodayMealItem[], lunch:
   Object.keys(parsedMealsData).forEach(mealKey => {
     const mealData = parsedMealsData[mealKey];
     const category = categorizeMealType(mealKey);
+    // collect meta
+    transformedMealData.mealsMeta[category] = { time: mealData?.time, label: mealKey };
     
     if (mealData && mealData.items && Array.isArray(mealData.items)) {
       const transformedItems = mealData.items.map((item: any) => ({
@@ -129,7 +135,11 @@ const transformMealData = (mealsData: any): { breakfast: TodayMealItem[], lunch:
       }));
       
       // Add to appropriate category (or combine if multiple map to same category)
-      transformedMealData[category as keyof typeof transformedMealData].push(...transformedItems);
+      if (!transformedMealData.mealsMap[category]) transformedMealData.mealsMap[category] = [];
+      transformedMealData.mealsMap[category].push(...transformedItems);
+      if (category === 'breakfast' || category === 'lunch' || category === 'dinner') {
+        transformedMealData[category].push(...transformedItems);
+      }
     }
   });
 
@@ -256,7 +266,9 @@ export const fetchTodayMeals = async (targetDate?: Date): Promise<TodayMealData 
       dinner: transformedMeals.dinner,
       totalCalories,
       planDay,
-      planName: currentFoodPlan.name
+      planName: currentFoodPlan.name,
+      mealsMap: transformedMeals.mealsMap,
+      mealsMeta: transformedMeals.mealsMeta
     };
 
     

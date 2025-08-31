@@ -17,11 +17,7 @@ interface MealItem {
   image?: string;
 }
 
-interface DayMealData {
-  breakfast: MealItem[];
-  lunch: MealItem[];
-  dinner: MealItem[];
-}
+type DayMealData = { [key: string]: MealItem[] };
 
 const GlobalPlanDayDetail = () => {
   const navigation = useTypedNavigation();
@@ -57,11 +53,7 @@ const GlobalPlanDayDetail = () => {
   const transformMealData = () => {
     if (!initialOriginalData) return;
 
-    const transformedMealData: DayMealData = {
-      breakfast: [],
-      lunch: [],
-      dinner: []
-    };
+    const transformedMealData: DayMealData = { breakfast: [], lunch: [], dinner: [] } as DayMealData;
 
     // Helper function to categorize meal types
     const categorizeMealType = (mealTypeName: string) => {
@@ -74,8 +66,8 @@ const GlobalPlanDayDetail = () => {
       } else if (lowerName.includes('dinner') || lowerName.includes('เย็น')) {
         return 'dinner';
       } else {
-        // For custom meal names, default to lunch category for display
-        return 'lunch';
+        // Keep custom meal as its own category (use original key)
+        return mealTypeName;
       }
     };
 
@@ -121,7 +113,8 @@ const GlobalPlanDayDetail = () => {
         return transformedItem;
       });
       
-      transformedMealData[category as keyof DayMealData].push(...transformedItems);
+      if (!transformedMealData[category]) transformedMealData[category] = [];
+      transformedMealData[category].push(...transformedItems);
     });
 
     setMealData(transformedMealData);
@@ -158,7 +151,7 @@ const GlobalPlanDayDetail = () => {
     return meals.reduce((total, meal) => total + meal.calories, 0);
   };
 
-  const renderMealSection = (mealType: 'breakfast' | 'lunch' | 'dinner', meals: MealItem[], icon: string, title: string) => {    
+  const renderMealSection = (mealType: string, meals: MealItem[], icon: string, title: string) => {    
     const totalCalories = calculateMealCalories(meals);
     
     return (
@@ -275,13 +268,20 @@ const GlobalPlanDayDetail = () => {
           <View className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200" />
           
           {/* Breakfast */}
-          {renderMealSection('breakfast', mealData.breakfast, 'sunny-outline', 'อาหารเช้า')}
+          {renderMealSection('breakfast', mealData.breakfast || [], 'sunny-outline', 'อาหารเช้า')}
           
           {/* Lunch */}
-          {renderMealSection('lunch', mealData.lunch, 'restaurant-outline', 'อาหารกลางวัน')}
+          {renderMealSection('lunch', mealData.lunch || [], 'restaurant-outline', 'อาหารกลางวัน')}
           
           {/* Dinner */}
-          {renderMealSection('dinner', mealData.dinner, 'moon-outline', 'อาหารเย็น')}
+          {renderMealSection('dinner', mealData.dinner || [], 'moon-outline', 'อาหารเย็น')}
+          {Object.keys(mealData)
+            .filter(k => !['breakfast','lunch','dinner'].includes(k))
+            .map((k) => (
+              <React.Fragment key={k}>
+                {renderMealSection(k, mealData[k] || [], 'restaurant-outline', k)}
+              </React.Fragment>
+            ))}
         </View>
         
         {/* Bottom spacing */}

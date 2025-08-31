@@ -103,11 +103,6 @@ const PromptForm2 = () => {
       return;
     }
 
-    if (selectedIngredients.length === 0) {
-      Alert.alert('กรุณาเลือกวัตถุดิบ', 'เลือกวัตถุดิบที่คุณชื่นชอบอย่างน้อย 1 รายการ');
-      return;
-    }
-
     // Prepare data to pass to next screen
     const formData = {
       ...route.params?.data,
