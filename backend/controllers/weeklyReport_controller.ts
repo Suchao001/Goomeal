@@ -1,6 +1,29 @@
 import { Request, Response } from 'express';
 import db from '../db_config';
 
+// Format a Date to local YYYY-MM-DD (avoids UTC shift from toISOString)
+const formatLocalDate = (d: Date) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
+// Normalize DB date (string or Date) to YYYY-MM-DD in local time
+const normalizeDbDate = (val: any): string => {
+  try {
+    if (!val) return '';
+    if (typeof val === 'string') {
+      // assume 'YYYY-MM-DD...' or ISO; take first 10 chars
+      return val.slice(0, 10);
+    }
+    const d = new Date(val);
+    return formatLocalDate(d);
+  } catch (_) {
+    return String(val || '');
+  }
+};
+
 interface AuthenticatedRequest extends Request {
   user?: {
     id: number;
@@ -73,8 +96,8 @@ export const getWeeklyNutritionSummary = async (req: AuthenticatedRequest, res: 
     endOfCurrentWeek.setDate(startOfCurrentWeek.getDate() + 6);
     endOfCurrentWeek.setHours(23, 59, 59, 999);
 
-    const startDateStr = startOfCurrentWeek.toISOString().split('T')[0];
-    const endDateStr = endOfCurrentWeek.toISOString().split('T')[0];
+    const startDateStr = formatLocalDate(startOfCurrentWeek);
+    const endDateStr = formatLocalDate(endOfCurrentWeek);
 
     console.log(`📊 [WeeklyReport] Week range: ${startDateStr} to ${endDateStr}`);
 
@@ -129,6 +152,10 @@ export const getWeeklyNutritionSummary = async (req: AuthenticatedRequest, res: 
     `;
 
     const dailyResults = await db.raw(dailyQuery, [user_id, startDateStr, endDateStr]);
+    const dailyRows = (dailyResults[0] || []).map((row: any) => ({
+      ...row,
+      date: normalizeDbDate(row.date),
+    }));
 
     // Create array of 7 days with Thai day names
     const dayNames = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
@@ -137,10 +164,10 @@ export const getWeeklyNutritionSummary = async (req: AuthenticatedRequest, res: 
     for (let i = 0; i < 7; i++) {
       const currentDate = new Date(startOfCurrentWeek);
       currentDate.setDate(startOfCurrentWeek.getDate() + i);
-      const dateStr = currentDate.toISOString().split('T')[0];
+      const dateStr = formatLocalDate(currentDate);
       
-      // Find existing data for this date
-      const dayData = dailyResults[0].find((day: any) => day.date === dateStr);
+      // Find existing data for this date (normalize both sides)
+      const dayData = dailyRows.find((day: any) => day.date === dateStr);
       
       dailyDetails.push({
         date: dateStr,
@@ -263,13 +290,13 @@ export const getWeeklyInsights = async (req: AuthenticatedRequest, res: Response
     endOfCurrentWeek.setDate(startOfCurrentWeek.getDate() + 6);
     endOfCurrentWeek.setHours(23, 59, 59, 999);
 
-    const startDateStr = startOfCurrentWeek.toISOString().split('T')[0];
-    const endDateStr = endOfCurrentWeek.toISOString().split('T')[0];
+    const startDateStr = formatLocalDate(startOfCurrentWeek);
+    const endDateStr = formatLocalDate(endOfCurrentWeek);
 
     // Get insights based on patterns in the week
     const insightsQuery = `
       SELECT 
-        COUNT(*) as days_logged,
+        COUNT(DISTINCT summary_date) as days_logged,
         AVG(total_calories) as avg_calories,
         AVG(COALESCE(recommended_cal, target_cal)) as avg_target,
         COUNT(CASE WHEN total_calories > COALESCE(recommended_cal, target_cal) THEN 1 END) as days_over_target,
