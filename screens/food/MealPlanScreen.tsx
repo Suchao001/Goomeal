@@ -33,6 +33,8 @@ const MealPlanScreen = () => {
   // Zustand store hooks
   const {
     mealPlanData,
+    meals, // subscribe default meals to re-render on time/name changes
+    customMeals, // subscribe custom meals to re-render when changed
     addMeal,
     addFoodToMeal,
     removeFoodFromMeal,
@@ -176,6 +178,7 @@ const MealPlanScreen = () => {
   // Memoized values
   const days = useMemo(() => generateDays(30), []);
   const currentDate = useMemo(() => getCurrentDate(selectedDay), [selectedDay]);
+  const allMealsForDay = useMemo(() => getAllMealsForDay(selectedDay), [getAllMealsForDay, selectedDay, meals, customMeals]);
   
   // Get recommended nutrition from user profile with caching
   const { nutrition: recommendedNutrition, isCalculated, isProfileComplete } = useRecommendedNutrition();
@@ -543,7 +546,7 @@ const MealPlanScreen = () => {
       {/* Main Content */}
       <ScrollView className="flex-1 px-4 py-6" showsVerticalScrollIndicator={false}>
         {/* Meal Cards */}
-        {getAllMealsForDay(selectedDay).map(meal => renderMealCard(meal))}
+        {allMealsForDay.map(meal => renderMealCard(meal))}
 
         {/* Add More Meals Button */}
         <TouchableOpacity

@@ -143,6 +143,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [loadToken]); 
 
+  // Sync meal times after user is available
+  useEffect(() => {
+    if (!user) return;
+    try {
+      const { fetchAndApplyMealTimes } = useMealPlanStore.getState();
+      fetchAndApplyMealTimes();
+    } catch (e) {
+      // no-op
+    }
+  }, [user]);
+
   return (
     <AuthContext.Provider value={{ user, loading, logout, reloadUser, fetchUserProfile, debugTokens }}>
       {children}
