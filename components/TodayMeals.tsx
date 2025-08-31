@@ -34,13 +34,9 @@ const TodayMeals: React.FC<TodayMealsProps> = ({ meals, onAddMeal, onEditMeal, o
   // Debug: log incoming meals from API/parent
   useEffect(() => {
     try {
-      console.log('🍽️ [TodayMeals] props.meals length:', meals?.length ?? 0);
       if (Array.isArray(meals)) {
-        console.log('🍽️ [TodayMeals] first 3 meals:', meals.slice(0, 3));
         const types = Array.from(new Set(meals.map(m => m.mealType)));
-        console.log('🍽️ [TodayMeals] meal types:', types);
       } else {
-        console.log('🍽️ [TodayMeals] meals is not an array:', meals);
       }
     } catch (e) { }
   }, [meals]);
@@ -94,9 +90,7 @@ const TodayMeals: React.FC<TodayMealsProps> = ({ meals, onAddMeal, onEditMeal, o
   // Debug: log grouped result
   useEffect(() => {
     try {
-      console.log('🍱 [TodayMeals] grouped keys:', orderedKeys);
       const counts = groupedMeals.map(g => ({ type: g.type, count: g.meals.length }));
-      console.log('🍱 [TodayMeals] grouped counts:', counts);
     } catch (e) { }
   }, [orderedKeys.join('|'), meals]);
 
@@ -120,7 +114,6 @@ const TodayMeals: React.FC<TodayMealsProps> = ({ meals, onAddMeal, onEditMeal, o
         image: undefined,
         unique_id: meal.uniqueId
       };
-      console.log('📝 [TodayMeals] Saving meal record:', recordData);
       
       await createEatingRecord(recordData);
       

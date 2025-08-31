@@ -51,5 +51,9 @@ export const formatBangkokTime = (date?: Date): string => {
  */
 export const getTodayBangkokDate = (): string => {
   const bangkokTime = getBangkokTime();
-  return bangkokTime.toISOString().split('T')[0];
+  // Format using local components to avoid UTC shift from toISOString
+  const y = bangkokTime.getFullYear();
+  const m = String(bangkokTime.getMonth() + 1).padStart(2, '0');
+  const d = String(bangkokTime.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 };

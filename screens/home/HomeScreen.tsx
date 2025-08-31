@@ -106,7 +106,6 @@ const Home = () => {
       setLoadingTodayMeals(true);
       const todayMeals = await fetchTodayMeals();
       setTodayMealData(todayMeals);
-       console.log(JSON.stringify(todayMealData, null, 2));
    
     } catch (error) {
       console.error('❌ [HomeScreen] Error loading today\'s meals:', error);
@@ -120,11 +119,11 @@ const Home = () => {
   const loadDailySummary = useCallback(async () => {
     try {
       setLoadingSummary(true);
-      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+      const today = getTodayBangkokDate();
       const summary = await getDailyNutritionSummary(today);
+      // console.log('[HomeScreen] today (TH):', today)
       if (summary.success && summary.data) {
         setDailySummary(summary.data);
-        console.log('📊 [HomeScreen] Daily summary:', summary.data);
       } else {
         setDailySummary(null);
       }
@@ -145,7 +144,6 @@ const Home = () => {
       
       if (result.success && result.data) {
         setSavedRecords(result.data.records || []);
-        console.log('📊 [HomeScreen] Saved records:', result.data.records?.length || 0);
       } else {
         setSavedRecords([]);
       }
@@ -162,7 +160,6 @@ const Home = () => {
     try {
       setLoadingArticles(true);
       const articles = await fetchFeaturedArticles(2); // BaseApiClient handles auth automatically
-      console.log('📰 Loaded articles:', articles.length);
       setBlogArticles(articles);
     } catch (error) {
       console.error('Error loading blog articles:', error);
