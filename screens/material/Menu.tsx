@@ -1,12 +1,11 @@
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { useRoute } from '@react-navigation/native';
-import { useTypedNavigation } from '../../hooks/Navigation';
+import { useTypedNavigation, useTypedRoute } from '../../hooks/Navigation';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 const Menu = () => {
   const navigation = useTypedNavigation();
-  const route = useRoute();
+  const route = useTypedRoute<any>();
   
   const getIconColor = (routeName: string) => {
     return route.name === routeName ? '#4a4a4a' : '#fff';

@@ -109,9 +109,9 @@ export function generateNutritionAdvice(assessments: DailyAssessment): string[] 
   // คำแนะนำด้านแคลอรี่
   const caloriePercent = assessments.calories.percentage;
   if (assessments.calories.status === 'excellent') {
-    advice.push(`✅ แคลอรี่: ${caloriePercent.toFixed(0)}% - เหมาะสม`);
+    advice.push(`✅ แคลอรี่: ${caloriePercent.toFixed(0)}% - เหมาะสม (ใกล้เป้าหมาย)`);
   } else if (assessments.calories.status === 'good') {
-    advice.push(`✅ แคลอรี่: ${caloriePercent.toFixed(0)}% - ดี`);
+    advice.push(`✅ แคลอรี่: ${caloriePercent.toFixed(0)}% - เหมาะสม`);
   } else {
     advice.push(`⚠️ แคลอรี่: ${caloriePercent.toFixed(0)}% - ควรปรับปรุง`);
   }

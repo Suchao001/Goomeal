@@ -95,7 +95,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({
           </View>
 
           {/* Action Buttons */}
-          <View className="flex-row space-x-3">
+          <View className="flex-row space-x-3 gap-1">
             <TouchableOpacity
               className="flex-1 bg-gray-200 rounded-lg py-3 items-center"
               onPress={handleClose}
@@ -153,7 +153,7 @@ export const AddMealModal: React.FC<AddMealModalProps> = ({
                   />
                   
                   {Platform.OS === 'ios' && (
-                    <View className="flex-row space-x-3 mt-6">
+                    <View className="flex-row space-x-3 mt-6 gap-1">
                       <TouchableOpacity
                         className="flex-1 bg-gray-200 rounded-lg py-3 items-center"
                         onPress={() => setShowTimePicker(false)}

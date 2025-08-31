@@ -204,7 +204,7 @@ const EatingBlogScreen = () => {
   const renderTabButton = (tab: string) => (
     <TouchableOpacity
       key={tab}
-      className={`px-5 py-2 mr-3 rounded-full border ${selectedTab === tab ? 'bg-yellow-400 border-yellow-400' : 'bg-white border-gray-200'}`}
+      className={`px-5 py-2 mr-3 rounded-full border ${selectedTab === tab ? 'bg-primary border-yellow-400' : 'bg-white border-gray-200'}`}
       style={{ shadowColor: selectedTab === tab ? '#eab308' : 'transparent', shadowOpacity: 0.12, shadowRadius: 6, elevation: selectedTab === tab ? 2 : 0 }}
       onPress={() => handleTabChange(tab)}
       activeOpacity={0.85}

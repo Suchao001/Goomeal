@@ -379,7 +379,7 @@ const EditAccountSettingsScreen = () => {
               />
             </View>
 
-            <View className="flex-row space-x-3">
+            <View className="flex-row space-x-3 gap-1">
               <TouchableOpacity
                 className="flex-1 bg-gray-200 rounded-xl p-4 items-center"
                 onPress={() => {

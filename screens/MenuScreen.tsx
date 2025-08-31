@@ -237,7 +237,7 @@ const MenuScreen = () => {
               <Icon name="chevron-forward" size={20} color="#9ca3af" />
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            {/* <TouchableOpacity 
               className="flex-row items-center p-4 border-b border-gray-100"
               onPress={handleRecordSettingsPress}
             >
@@ -249,7 +249,7 @@ const MenuScreen = () => {
                 <Text className="text-xs text-gray-500 font-prompt">กำหนดวิธีการบันทึกอาหาร</Text>
               </View>
               <Icon name="chevron-forward" size={20} color="#9ca3af" />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             <TouchableOpacity 
               className="flex-row items-center p-4"

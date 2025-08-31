@@ -12,7 +12,8 @@ import {
   getShortThaiDayName,
   type WeeklyReportData,
   type WeeklyInsightsData,
-  type DayDetail
+  type DayDetail,
+  type Recommendation
 } from '../../utils/api/weeklyReportApi';
 
 /**
@@ -30,6 +31,7 @@ const WeeklyReportScreen = () => {
   const [reportData, setReportData] = useState<WeeklyReportData | null>(null);
   const [insightsData, setInsightsData] = useState<WeeklyInsightsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showPrinciples, setShowPrinciples] = useState(false);
 
   const handleBackPress = () => {
     navigation.goBack();
@@ -191,14 +193,144 @@ const WeeklyReportScreen = () => {
 
   const displayData = getDisplayData();
 
+  // Principles for weekly recommendations
+  // - Calorie adherence: compare average calories vs target; flag if |diff| >= 150 kcal/day or >= 8%
+  // - Macro balance: compute % of energy from protein/carbs/fat vs baseline 25/50/25; flag if deviation >= 7%
+  // - Consistency: flag if days logged < 5 per week
+  // - Variability: flag if coefficient of variation (sd/mean) of daily calories >= 0.20
+  // - Worst day: highlight the day with the largest absolute deviation (>= 200 kcal) and suggest pre-planning
+  // Note: Baselines can be adjusted later per user goal
+  // Generate more actionable weekly recommendations from summary data
+  const generateSmartRecommendations = useCallback((): Recommendation[] => {
+    if (!reportData) return [];
+
+    const recs: Recommendation[] = [];
+    const sum = reportData.summary;
+    const daysLogged = (reportData as any)?.summary?.total_days_with_data ?? (insightsData?.insights?.days_logged ?? 0);
+
+    // 1) Calorie adherence vs target
+    const targetCal = sum.avg_recommended_cal || sum.avg_target_cal || 0;
+    const actualCal = sum.avg_total_calories || 0;
+    if (targetCal > 0 && actualCal > 0) {
+      const diff = Math.round(actualCal - targetCal);
+      const pct = Math.round(((actualCal - targetCal) / Math.max(1, targetCal)) * 100);
+      const over = diff > 0;
+      if (Math.abs(diff) >= 150 || Math.abs(pct) >= 8) {
+        recs.push({
+          icon: over ? 'flame' : 'leaf',
+          color: over ? '#ef4444' : '#22c55e',
+          title: over ? 'พลังงานเฉลี่ยเกินเป้า' : 'พลังงานเฉลี่ยต่ำกว่าเป้า',
+          message: over
+            ? `เฉลี่ย +${diff} kcal/วัน (≈ ${pct}%) ลองลดของหวาน/ของทอด 1 มื้อต่อวัน หรือเพิ่มผักและโปรตีนไม่ติดมัน`
+            : `เฉลี่ย ${diff} kcal/วัน (≈ ${pct}%) ลองเพิ่มของว่างที่โปรตีนสูง เช่น โยเกิร์ต/นมถั่วเหลือง หรือเพิ่มปริมาณคาร์บเชิงซ้อน`
+        });
+      }
+    }
+
+    // 2) Macro balance analysis (as % of calories)
+    const p = sum.avg_total_protein || 0;
+    const c = sum.avg_total_carbs || 0;
+    const f = sum.avg_total_fat || 0;
+    const kcalFromMacros = p * 4 + c * 4 + f * 9;
+    if (kcalFromMacros > 0) {
+      const pPct = Math.round(((p * 4) / kcalFromMacros) * 100);
+      const cPct = Math.round(((c * 4) / kcalFromMacros) * 100);
+      const fPct = Math.round(((f * 9) / kcalFromMacros) * 100);
+
+      // Baseline ranges (can be refined per user goal)
+      const ideal = { p: 25, c: 50, f: 25 };
+      const delta = {
+        p: pPct - ideal.p,
+        c: cPct - ideal.c,
+        f: fPct - ideal.f,
+      };
+      const biggestKey = (['p','c','f'] as const).sort((a,b) => Math.abs(delta[b]) - Math.abs(delta[a]))[0];
+      const biggestGap = Math.abs(delta[biggestKey]);
+      if (biggestGap >= 7) {
+        if (biggestKey === 'p' && delta.p < 0) {
+          recs.push({
+            icon: 'fitness',
+            color: '#ef4444',
+            title: 'โปรตีนอาจต่ำกว่าที่เหมาะสม',
+            message: 'เพิ่มโปรตีนไม่ติดมันในแต่ละมื้อ เช่น อกไก่ ปลา เต้าหู้ หรือไข่ เพื่ออิ่มนานและรักษามวลกล้ามเนื้อ'
+          });
+        } else if (biggestKey === 'c' && delta.c > 0) {
+          recs.push({
+            icon: 'nutrition',
+            color: '#f59e0b',
+            title: 'คาร์บค่อนข้างสูง',
+            message: 'ลดเครื่องดื่มหวาน/ของหวาน เปลี่ยนเป็นคาร์บเชิงซ้อน เช่น ข้าวกล้อง โฮลเกรน และเพิ่มผักใบเขียว'
+          });
+        } else if (biggestKey === 'f' && delta.f > 0) {
+          recs.push({
+            icon: 'water',
+            color: '#f59e0b',
+            title: 'ไขมันค่อนข้างสูง',
+            message: 'ลดของทอด/น้ำสลัดมัน เปลี่ยนเป็นการย่าง/นึ่ง และใช้น้ำมันแต่น้อย'
+          });
+        }
+      }
+    }
+
+    // 3) Consistency / logging frequency
+    if (daysLogged < 5) {
+      recs.push({
+        icon: 'calendar',
+        color: '#3b82f6',
+        title: 'เพิ่มความสม่ำเสมอในการบันทึก',
+        message: 'บันทึกอย่างน้อย 5 วัน/สัปดาห์ เพื่อให้คำแนะนำแม่นยำขึ้น ลองตั้งเตือนเวลาเดิมทุกวัน'
+      });
+    }
+
+    // 4) Variability of daily calories
+    const dayCals = (reportData.daily_details || []).map(d => d.total_calories || 0).filter(n => n > 0);
+    if (dayCals.length >= 3) {
+      const mean = dayCals.reduce((a,b)=>a+b,0) / dayCals.length;
+      const variance = dayCals.reduce((a,b)=>a + Math.pow(b - mean, 2), 0) / dayCals.length;
+      const sd = Math.sqrt(variance);
+      const cv = mean > 0 ? sd / mean : 0;
+      if (cv >= 0.20) {
+        recs.push({
+          icon: 'stats-chart',
+          color: '#10b981',
+          title: 'พลังงานรายวันเหวี่ยงค่อนข้างมาก',
+          message: 'พยายามให้พลังงานใกล้เคียงกันในแต่ละวัน โดยวางแผนมื้อเท่าๆ กัน หลีกเลี่ยงการกินหนักเฉพาะบางวัน'
+        });
+      }
+    }
+
+    // 5) Worst day highlight with tip
+    const withTarget = (reportData.daily_details || []).filter(d => typeof (d.recommended_cal || d.target_cal) === 'number');
+    if (withTarget.length > 0) {
+      const scored = withTarget.map(d => ({
+        d,
+        tgt: (typeof d.recommended_cal === 'number' ? d.recommended_cal : d.target_cal) || 0,
+        cal: d.total_calories || 0
+      }));
+      scored.sort((a,b) => Math.abs(b.cal - b.tgt) - Math.abs(a.cal - a.tgt));
+      const worst = scored[0];
+      if (worst && Math.abs(worst.cal - worst.tgt) >= 200) {
+        const over = worst.cal > worst.tgt;
+        recs.push({
+          icon: over ? 'warning' : 'checkmark-circle',
+          color: over ? '#ef4444' : '#22c55e',
+          title: over ? 'มีวันที่เกินเป้าชัดเจน' : 'มีวันที่ต่ำกว่าเป้าชัดเจน',
+          message: `${getShortThaiDayName(worst.d.date)} เกิน/ขาด ≈ ${Math.abs(worst.cal - worst.tgt)} kcal ลองเตรียมมื้อ/ของว่างไว้ล่วงหน้าในวันนั้น`
+        });
+      }
+    }
+
+    return recs;
+  }, [reportData, insightsData?.insights?.days_logged]);
+
   const renderChart = () => {
     if (!displayData.dailyChart.length) {
       return (
         <View className="bg-white rounded-2xl p-5 mb-6 shadow-lg shadow-slate-800">
-          <Text className="text-lg font-bold text-gray-800 mb-4">กราฟแคลอรี่ 7 วัน</Text>
+          <Text className="text-lg text-gray-800 mb-4 font-promptBold">กราฟแคลอรี่ 7 วัน</Text>
           <View className="h-40 items-center justify-center">
             <Icon name="bar-chart-outline" size={48} color="#9ca3af" />
-            <Text className="text-sm text-gray-500 mt-2">ไม่มีข้อมูล</Text>
+            <Text className="text-sm text-gray-500 mt-2 font-prompt">ไม่มีข้อมูล</Text>
           </View>
         </View>
       );
@@ -232,11 +364,12 @@ const WeeklyReportScreen = () => {
       // - No target: default blue (#3b82f6)
       let frontColor = '#3b82f6';
       if (hasTarget && typeof tgt === 'number') {
-        if (cal > tgt) {
-          frontColor = '#ef4444';
+        const thresh = Math.max(100, Math.round(tgt * 0.10)); // within ±10% or ±100 kcal → เหมาะสม
+        const diff = cal - tgt;
+        if (Math.abs(diff) <= thresh) {
+          frontColor = '#22c55e'; // ใกล้เป้า = เหมาะสม
         } else {
-          const thresh = Math.max(50, Math.round(tgt * 0.02));
-          frontColor = Math.abs(cal - tgt) <= thresh ? '#22c55e' : '#ffb800';
+          frontColor = diff > 0 ? '#ef4444' : '#ffb800'; // เกิน = แดง, ต่ำ = เหลือง
         }
       }
 
@@ -255,7 +388,7 @@ const WeeklyReportScreen = () => {
 
     return (
       <View className="bg-white rounded-2xl p-5 mb-6 shadow-lg shadow-slate-800">
-        <Text className="text-lg font-bold text-gray-800 mb-4">กราฟแคลอรี่ 7 วัน</Text>
+        <Text className="text-lg text-gray-800 mb-4 font-promptBold">กราฟแคลอรี่ 7 วัน</Text>
         <BarChart
           data={barData}
           height={chartHeight}
@@ -297,7 +430,7 @@ const WeeklyReportScreen = () => {
         
         <View className="flex-row items-center gap-2">
           <Icon name="calendar" size={32} color="white" />
-          <Text className="text-xl font-semibold text-white">รายงานสัปดาห์</Text>
+          <Text className="text-xl text-white font-promptSemiBold">รายงานสัปดาห์</Text>
         </View>
         
         <View className="w-10" />
@@ -313,10 +446,10 @@ const WeeklyReportScreen = () => {
         </TouchableOpacity>
         
         <View className="items-center">
-          <Text className="text-sm text-gray-500">
+          <Text className="text-sm text-gray-500 font-prompt">
             {displayData.weekRange}
           </Text>
-          <Text className="text-xs text-gray-400 mt-1">
+          <Text className="text-xs text-gray-400 mt-1 font-prompt">
             {weekOffset === 0 ? 'สัปดาห์นี้' : 
              weekOffset === -1 ? 'สัปดาห์ที่แล้ว' : 
              `${Math.abs(weekOffset)} สัปดาห์ก่อน`}
@@ -336,7 +469,7 @@ const WeeklyReportScreen = () => {
         {isLoading ? (
           <View className="flex-1 items-center justify-center pt-20">
             <Icon name="hourglass-outline" size={48} color="#9ca3af" />
-            <Text className="text-gray-500 mt-4">กำลังโหลดข้อมูล...</Text>
+            <Text className="text-gray-500 mt-4 font-prompt">กำลังโหลดข้อมูล...</Text>
           </View>
         ) : (
           <View className="flex-1 px-4 pt-6">
@@ -350,43 +483,45 @@ const WeeklyReportScreen = () => {
                     <Icon name="flame" size={24} color="#ef4444" />
                   </View>
                   <View>
-                    <Text className="text-base text-gray-600">แคลอรี่เฉลี่ยต่อวัน</Text>
-                    <Text className="text-3xl font-extrabold text-gray-800 mt-1">{displayData.weekAverage.calories} <Text className="text-base font-semibold text-gray-500">kcal/วัน</Text></Text>
+                    <Text className="text-base text-gray-600 font-prompt">แคลอรี่เฉลี่ยต่อวัน</Text>
+                    <Text className="text-3xl text-gray-800 mt-1 font-promptBold" style={{ lineHeight: 40 }}>{displayData.weekAverage.calories} <Text className="text-base text-gray-500 font-promptSemiBold">kcal/วัน</Text></Text>
                   </View>
                 </View>
               </View>
             </View>
+            
 
             {/* Macro Cards: 3 columns (carb, protein, fat) */}
             <View className="flex-row gap-3 mb-6">
-              {/* Carbs */}
-              <View className="flex-1 bg-white rounded-2xl p-4 items-center shadow-lg shadow-slate-800">
-                <View className="w-10 h-10 rounded-full items-center justify-center mb-2" style={{ backgroundColor: '#f59e0b20' }}>
-                  <Icon name="nutrition" size={20} color="#f59e0b" />
-                </View>
-                <Text className="text-xl font-bold text-gray-800">{Math.round(displayData.weekAverage.carbs)}</Text>
-                <Text className="text-xs text-gray-600">g/วัน</Text>
-                <Text className="text-xs text-gray-500 mt-1">คาร์บเฉลี่ย</Text>
-              </View>
 
               {/* Protein */}
               <View className="flex-1 bg-white rounded-2xl p-4 items-center shadow-lg shadow-slate-800">
-                <View className="w-10 h-10 rounded-full items-center justify-center mb-2 bg-green-100">
-                  <Icon name="fitness" size={20} color="#22c55e" />
+                <View className="w-10 h-10 rounded-full items-center justify-center mb-2 bg-red-100">
+                  <Icon name="fitness" size={20} color="#ef4444" />
                 </View>
-                <Text className="text-xl font-bold text-gray-800">{Math.round(displayData.weekAverage.protein)}</Text>
-                <Text className="text-xs text-gray-600">g/วัน</Text>
-                <Text className="text-xs text-gray-500 mt-1">โปรตีนเฉลี่ย</Text>
+                <Text className="text-xl text-gray-800 font-promptBold">{Math.round(displayData.weekAverage.protein)}</Text>
+                <Text className="text-xs text-gray-600 font-prompt">g/วัน</Text>
+                <Text className="text-xs text-gray-500 mt-1 font-prompt">โปรตีนเฉลี่ย</Text>
+              </View>
+
+              {/* Carbs */}
+              <View className="flex-1 bg-white rounded-2xl p-4 items-center shadow-lg shadow-slate-800">
+                <View className="w-10 h-10 rounded-full items-center justify-center mb-2 bg-green-100">
+                  <Icon name="leaf" size={20} color="#22c55e" />
+                </View>
+                <Text className="text-xl text-gray-800 font-promptBold">{Math.round(displayData.weekAverage.carbs)}</Text>
+                <Text className="text-xs text-gray-600 font-prompt">g/วัน</Text>
+                <Text className="text-xs text-gray-500 mt-1 font-prompt">คาร์บเฉลี่ย</Text>
               </View>
 
               {/* Fat */}
               <View className="flex-1 bg-white rounded-2xl p-4 items-center shadow-lg shadow-slate-800">
-                <View className="w-10 h-10 rounded-full items-center justify-center mb-2" style={{ backgroundColor: '#a855f720' }}>
-                  <Icon name="ice-cream" size={20} color="#a855f7" />
+                <View className="w-10 h-10 rounded-full items-center justify-center mb-2 bg-orange-100">
+                  <Icon name="water" size={20} color="#f59e0b" />
                 </View>
-                <Text className="text-xl font-bold text-gray-800">{Math.round(displayData.weekAverage.fat)}</Text>
-                <Text className="text-xs text-gray-600">g/วัน</Text>
-                <Text className="text-xs text-gray-500 mt-1">ไขมันเฉลี่ย</Text>
+                <Text className="text-xl text-gray-800 font-promptBold">{Math.round(displayData.weekAverage.fat)}</Text>
+                <Text className="text-xs text-gray-600 font-prompt">g/วัน</Text>
+                <Text className="text-xs text-gray-500 mt-1 font-prompt">ไขมันเฉลี่ย</Text>
               </View>
             </View>
 
@@ -396,36 +531,36 @@ const WeeklyReportScreen = () => {
             {/* Weight Progress */}
             {displayData.weightChange && (
               <View className="bg-white rounded-2xl p-5 mb-6 shadow-lg shadow-slate-800">
-                <Text className="text-lg font-bold text-gray-800 mb-4">ความคืบหน้าน้ำหนัก</Text>
+                <Text className="text-lg text-gray-800 mb-4 font-promptBold">ความคืบหน้าน้ำหนัก</Text>
                 
                 <View className="flex-row justify-between items-center mb-4">
                   <View className="items-center flex-1">
-                    <Text className="text-sm text-gray-500">น้ำหนักเริ่มต้น</Text>
-                    <Text className="text-2xl font-bold text-gray-800">{displayData.weightChange.start_weight}</Text>
-                    <Text className="text-xs text-gray-400">กิโลกรัม</Text>
+                    <Text className="text-sm text-gray-500 font-prompt">น้ำหนักเริ่มต้น</Text>
+                    <Text className="text-2xl text-gray-800 font-promptBold">{displayData.weightChange.start_weight}</Text>
+                    <Text className="text-xs text-gray-400 font-prompt">กิโลกรัม</Text>
                   </View>
                   
                   <View className="items-center flex-1">
-                    <Text className="text-sm text-gray-500">เปลี่ยนแปลง</Text>
+                    <Text className="text-sm text-gray-500 font-prompt">เปลี่ยนแปลง</Text>
                     <View className="flex-row items-center">
                       <Icon 
                         name={displayData.weightChange.change < 0 ? "trending-down" : "trending-up"} 
                         size={20} 
                         color={displayData.weightChange.change < 0 ? "#22c55e" : "#ef4444"} 
                       />
-                      <Text className={`text-2xl font-bold ml-1 ${
+                      <Text className={`text-2xl font-promptBold ml-1 ${
                         displayData.weightChange.change < 0 ? 'text-green-500' : 'text-red-500'
                       }`}>
                         {displayData.weightChange.change > 0 ? '+' : ''}{displayData.weightChange.change}
                       </Text>
                     </View>
-                    <Text className="text-xs text-gray-400">กิโลกรัม</Text>
+                    <Text className="text-xs text-gray-400 font-prompt">กิโลกรัม</Text>
                   </View>
                   
                   <View className="items-center flex-1">
-                    <Text className="text-sm text-gray-500">น้ำหนักปัจจุบัน</Text>
-                    <Text className="text-2xl font-bold text-blue-500">{displayData.weightChange.end_weight}</Text>
-                    <Text className="text-xs text-gray-400">กิโลกรัม</Text>
+                    <Text className="text-sm text-gray-500 font-prompt">น้ำหนักปัจจุบัน</Text>
+                    <Text className="text-2xl text-blue-500 font-promptBold">{displayData.weightChange.end_weight}</Text>
+                    <Text className="text-xs text-gray-400 font-prompt">กิโลกรัม</Text>
                   </View>
                 </View>
               </View>
@@ -434,9 +569,52 @@ const WeeklyReportScreen = () => {
             {/* Recommendations */}
             {insightsData && (
               <View className="bg-white rounded-2xl p-5 shadow-lg shadow-slate-800">
-                <Text className="text-lg font-bold text-gray-800 mb-4">คำแนะนำสำหรับสัปดาห์นี้</Text>
+                <View className="flex-row items-center justify-between mb-2">
+                  <Text className="text-lg text-gray-800 font-promptBold">คำแนะนำสำหรับสัปดาห์นี้</Text>
+                  <TouchableOpacity
+                    className="px-2 py-1"
+                    onPress={() => setShowPrinciples(prev => !prev)}
+                    accessibilityLabel="toggle-principles"
+                  >
+                    <View className="flex-row items-center">
+                      <Icon name="information-circle-outline" size={18} color="#6b7280" />
+                      <Text className="text-xs text-gray-500 ml-1 font-prompt">
+                        {showPrinciples ? 'ซ่อนหลักการ' : 'ดูหลักการ'}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                </View>
+                {showPrinciples && (
+                  <View className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+                    <Text className="text-xs text-amber-800 font-prompt">
+                      • พลังงานเฉลี่ยเทียบเป้า: แจ้งเตือนเมื่อเบี่ยงเบน ≥ 150 kcal/วัน หรือ ≥ 8%
+                    </Text>
+                    <Text className="text-xs text-amber-800 font-prompt mt-1">
+                      • สัดส่วนแมโครอ้างอิง: โปรตีน/คาร์บ/ไขมัน ≈ 25/50/25 หากเพี้ยน ≥ 7% จะแนะนำวิธีปรับ
+                    </Text>
+                    <Text className="text-xs text-amber-800 font-prompt mt-1">
+                      • ความสม่ำเสมอ: บันทึก {"<"} 5 วัน/สัปดาห์ → แนะนำเพิ่มความถี่ในการบันทึก
+                    </Text>
+                    <Text className="text-xs text-amber-800 font-prompt mt-1">
+                      • ความเหวี่ยงพลังงาน: SD/Mean ≥ 20% → แนะนำวางแผนมื้อให้สม่ำเสมอ
+                    </Text>
+                    <Text className="text-xs text-amber-800 font-prompt mt-1">
+                      • วันหลุดหนักสุด: ส่วนต่าง ≥ 200 kcal → แนะนำเตรียมมื้อ/ของว่างล่วงหน้าในวันนั้น
+                    </Text>
+                  </View>
+                )}
                 
-                {insightsData.recommendations.map((rec, index) => (
+                {(() => {
+                  // Merge backend + smart recommendations with simple de-dup by title
+                  const backendRecs = insightsData?.recommendations || [];
+                  const smartRecs = generateSmartRecommendations();
+                  const mergedMap = new Map<string, any>();
+                  [...backendRecs, ...smartRecs].forEach(r => {
+                    if (!mergedMap.has(r.title)) mergedMap.set(r.title, r);
+                  });
+                  const merged = Array.from(mergedMap.values());
+                  return merged;
+                })().map((rec, index) => (
                   <View key={index} className="flex-row items-start mb-4 last:mb-0">
                     <View 
                       className="w-10 h-10 rounded-full items-center justify-center mr-3"
@@ -445,10 +623,10 @@ const WeeklyReportScreen = () => {
                       <Icon name={rec.icon} size={20} color={rec.color} />
                     </View>
                     <View className="flex-1">
-                      <Text className="text-base font-semibold text-gray-800 mb-1">
+                      <Text className="text-base text-gray-800 mb-1 font-promptSemiBold">
                         {rec.title}
                       </Text>
-                      <Text className="text-sm text-gray-600 leading-5">
+                      <Text className="text-sm text-gray-600 leading-5 font-prompt">
                         {rec.message}
                       </Text>
                     </View>
@@ -458,10 +636,10 @@ const WeeklyReportScreen = () => {
                 {/* Insights Summary */}
                 {insightsData.insights && (
                   <View className="mt-4 pt-4 border-t border-gray-100">
-                    <Text className="text-sm font-semibold text-gray-700 mb-2">สรุปสัปดาห์นี้</Text>
+                    <Text className="text-sm text-gray-700 mb-2 font-promptSemiBold">สรุปสัปดาห์นี้</Text>
                     <View className="flex-row justify-between">
-                      <Text className="text-xs text-gray-500">บันทึก: {insightsData.insights.days_logged}/7 วัน</Text>
-                      <Text className="text-xs text-gray-500">ความสม่ำเสมอ: {insightsData.insights.consistency_rate}%</Text>
+                      <Text className="text-xs text-gray-500 font-prompt">บันทึก: {insightsData.insights.days_logged}/7 วัน</Text>
+                      <Text className="text-xs text-gray-500 font-prompt">ความสม่ำเสมอ: {insightsData.insights.consistency_rate}%</Text>
                     </View>
                   </View>
                 )}

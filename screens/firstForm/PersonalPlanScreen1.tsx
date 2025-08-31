@@ -112,7 +112,7 @@ const PersonalPlanScreen1 = () => {
 
 
       {/* Plan Duration Selection */}
-      <View className="w-5/6 mb-4">
+      <View className="w-5/6 mb-4 hidden">
         <Text className="text-myBlack mb-6 font-promptMedium text-center text-[20px]">
           ระยะเวลาของแพลนอาหาร
         </Text>

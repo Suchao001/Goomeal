@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert, Modal } from 'react-native';
-import { useTypedNavigation } from '../../hooks/Navigation';
-import { useFocusEffect, useRoute } from '@react-navigation/native';
+import { useTypedNavigation, useTypedRoute } from '../../hooks/Navigation';
+import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Menu from '../material/Menu';
 import { fetchTodayMeals, TodayMealData, TodayMealItem } from '../../utils/todayMealApi';
@@ -36,8 +36,20 @@ interface MealTime {
 
 const RecordFoodScreen = () => {
   const navigation = useTypedNavigation();
-  const route = useRoute();
+  const route = useTypedRoute<any>();
   const params = route.params as any;
+
+  // Date helpers: use full date string to support any past day
+  const formatDate = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+  const parseDate = (s: string) => {
+    const [y, m, d] = s.split('-').map(Number);
+    return new Date(y, (m || 1) - 1, d || 1);
+  };
 
   // Get current day for limiting navigation and initial state
   const getCurrentDay = () => getCurrentBangkokDay();
@@ -62,20 +74,22 @@ const RecordFoodScreen = () => {
     }
   ];
 
-  // Always start with today's date, but use params.selectedDay if coming from search
-  const [selectedDay, setSelectedDayRaw] = useState(() => {
-    if (params?.selectedDay) {
-      return params.selectedDay;
+  // Selected date (full ISO yyyy-mm-dd). Start from params.timestamp, params.selectedDay (legacy), else today
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    if (params?.timestamp) {
+      const d = new Date(params.timestamp);
+      d.setHours(0, 0, 0, 0);
+      return formatDate(d);
     }
-    const currentDay = getCurrentDay();
-    return currentDay;
+    if (params?.selectedDay) {
+      const today = new Date();
+      const d = new Date(today.getFullYear(), today.getMonth(), params.selectedDay);
+      return formatDate(d);
+    }
+    return getTodayBangkokDate();
   });
-
-  // Wrapper function to log state changes
-  const setSelectedDay = (newDay: number | ((prev: number) => number)) => {
-    const actualNewDay = typeof newDay === 'function' ? newDay(selectedDay) : newDay;
-    setSelectedDayRaw(actualNewDay);
-  };
+  // Helper day number from selectedDate for legacy needs (labels, uniqueId)
+  const selectedDay = parseDate(selectedDate).getDate();
   const [mealTimes, setMealTimes] = useState<MealTime[]>(() => getDefaultMeals());
   const [todayMealData, setTodayMealData] = useState<TodayMealData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -105,25 +119,31 @@ const RecordFoodScreen = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [tempSelectedDate, setTempSelectedDate] = useState(new Date());
 
-  // Handle selectedDay from navigation params
+  // Handle params from navigation (support timestamp or legacy selectedDay)
   useFocusEffect(
     useCallback(() => {
-      if (params?.fromSearch && params?.selectedDay !== undefined) {
-        if (selectedDay !== params.selectedDay) {
-          setSelectedDay(params.selectedDay);
-        } else {
+      if (params?.fromSearch) {
+        let next: string | null = null;
+        if (typeof params?.timestamp === 'number') {
+          const d = new Date(params.timestamp);
+          d.setHours(0, 0, 0, 0);
+          next = formatDate(d);
+        } else if (typeof params?.selectedDay === 'number') {
+          const base = new Date();
+          const d = new Date(base.getFullYear(), base.getMonth(), params.selectedDay);
+          next = formatDate(d);
         }
-     
+        if (next && next !== selectedDate) {
+          setSelectedDate(next);
+        }
         navigation.setParams({ fromSearch: false, selectedDay: undefined, timestamp: undefined } as any);
-      } else {
       }
-    }, [params?.fromSearch, params?.selectedDay, params?.timestamp, selectedDay, navigation]) 
+    }, [params?.fromSearch, params?.selectedDay, params?.timestamp, selectedDate, navigation]) 
   );
 
-  // Load appropriate data when selected day changes
+  // Load appropriate data when selected date changes
   useEffect(() => {
-    const currentDay = getCurrentDay();
-    const isTodaySelected = selectedDay === currentDay;
+    const isTodaySelected = selectedDate === getTodayBangkokDate();
 
     // Reset meal times and state
     setMealTimes(getDefaultMeals()); 
@@ -134,7 +154,7 @@ const RecordFoodScreen = () => {
     } else {
       loadHistoricalMenus();
     }
-  }, [selectedDay]);
+  }, [selectedDate]);
 
   // Load menus for today (using meal plan + saved status)
   const loadTodayMenus = useCallback(async () => {
@@ -160,7 +180,7 @@ const RecordFoodScreen = () => {
       await loadSavedRecords();
       
       // Load daily nutrition summary for historical days
-      const date = getIsoDateForDay(selectedDay);
+      const date = selectedDate;
       const res = await getDailyNutritionSummary(date);
       
       if (res.success && res.data) {
@@ -174,7 +194,7 @@ const RecordFoodScreen = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedDay]);
+  }, [selectedDate]);
 
   // Load today's meals from API
   // Helper functions for meal processing
@@ -298,7 +318,7 @@ const RecordFoodScreen = () => {
     }
   }, []); // ลบ selectedDay dependency เพื่อหลีกเลี่ยงการ re-call ซ้ำ
 
-  const getIsoDateForDay = (day: number) => getBangkokDateForDay(day);
+  const getIsoDateForDay = (_day: number) => selectedDate;
 
   // Check which plan items are already saved using unique_id
   const checkPlanItemsSavedStatus = async () => {
@@ -369,7 +389,7 @@ const RecordFoodScreen = () => {
 
   const loadSavedRecords = useCallback(async () => {
     try {
-      const date = getIsoDateForDay(selectedDay);
+      const date = getIsoDateForDay(0);
       
       const res = await getEatingRecordsByDate(date);
       
@@ -388,16 +408,15 @@ const RecordFoodScreen = () => {
       console.error('❌ [RecordFood] loadSavedRecords failed:', e);
       setSavedRecords([]);
     }
-  }, [selectedDay]);
+  }, [selectedDate]);
 
   const loadDailyNutritionSummary = useCallback(async () => {
     try {
-      const currentDay = getCurrentDay();
-      const isTodaySelected = selectedDay === currentDay;
+      const isTodaySelected = selectedDate === getTodayBangkokDate();
       
       // Only load daily nutrition summary for past days
       if (!isTodaySelected) {
-        const date = getIsoDateForDay(selectedDay);
+        const date = getIsoDateForDay(0);
         const res = await getDailyNutritionSummary(date);
         
         if (res.success && res.data) {
@@ -413,7 +432,7 @@ const RecordFoodScreen = () => {
       console.error('❌ [RecordFood] loadDailyNutritionSummary failed:', e);
       setDailyNutritionSummary(null);
     }
-  }, [selectedDay]);
+  }, [selectedDate]);
 
   // Refresh data when screen comes back into focus
   useFocusEffect(
@@ -430,8 +449,7 @@ const RecordFoodScreen = () => {
         return;
       }
       
-      const currentDay = getCurrentDay();
-      const isTodaySelected = selectedDay === currentDay;
+      const isTodaySelected = selectedDate === getTodayBangkokDate();
       
       if (isTodaySelected) {
         loadTodayMenus();
@@ -439,7 +457,7 @@ const RecordFoodScreen = () => {
         loadHistoricalMenus();
       }
 
-    }, [selectedDay, params?.fromSearch, loadTodayMenus, loadHistoricalMenus, loadSavedRecords])
+    }, [selectedDate, params?.fromSearch, loadTodayMenus, loadHistoricalMenus, loadSavedRecords])
 );
 
   // Debug: Log savedRecords changes
@@ -447,8 +465,7 @@ const RecordFoodScreen = () => {
   }, [savedRecords]);
 
   const { isToday } = (() => {
-    const currentDay = getCurrentDay();
-    const isTodaySelected = selectedDay === currentDay;
+    const isTodaySelected = selectedDate === getTodayBangkokDate();
    
     return { isToday: isTodaySelected };
   })();
@@ -460,8 +477,7 @@ const RecordFoodScreen = () => {
   
   // Get target calories based on whether it's today or a past day
   const getTargetCalories = () => {
-    const currentDay = getCurrentDay();
-    const isTodaySelected = selectedDay === currentDay;
+    const isTodaySelected = selectedDate === getTodayBangkokDate();
     
     if (isTodaySelected) {
       // For today, use todayMealData
@@ -491,71 +507,48 @@ const RecordFoodScreen = () => {
   const chipText = isUnderTarget ? 'text-blue-700' : isAtTarget ? 'text-green-700' : 'text-red-700';
   const iconColor = isUnderTarget ? '#3b82f6' : isAtTarget ? '#22c55e' : '#ef4444';
 
-  const getCurrentDate = () => {
-    const today = new Date();
-    const month = today.getMonth() + 1;
-    const year = today.getFullYear() + 543; // Convert to Buddhist Era
-    const currentDay = today.getDate();
-
-    return {
-      dayName: selectedDay === currentDay ? 'วันนี้' : `วันที่ ${selectedDay}`,
-      fullDate: `${selectedDay}/${month}/${year}`,
-      isToday: selectedDay === currentDay
-    };
+  const getHeaderLabel = () => {
+    const todayStr = getTodayBangkokDate();
+    if (selectedDate === todayStr) return 'วันนี้';
+    const d = parseDate(selectedDate);
+    const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear() + 543}`;
   };
-
-  const { dayName } = getCurrentDate();
+  const dayName = getHeaderLabel();
 
   // Date picker functions
-  const selectedDayToDate = (day: number): Date => {
-    const today = new Date();
-    const date = new Date(today.getFullYear(), today.getMonth(), day);
-    return date;
-  };
-
-  const dateToSelectedDay = (date: Date): number => {
-    return date.getDate();
-  };
-
   const openDatePicker = () => {
-    const currentDate = selectedDayToDate(selectedDay);
-    setTempSelectedDate(currentDate);
+    const current = parseDate(selectedDate);
+    setTempSelectedDate(current);
     setShowDatePicker(true);
   };
 
   const handleDateSelect = (newDate: Date) => {
-    const newDay = dateToSelectedDay(newDate);
-    const currentDay = getCurrentDay();
-    
-    // Only allow selecting dates from day 1 to current day
-    if (newDay >= 1 && newDay <= currentDay) {
-      setSelectedDay(newDay);
-      setShowDatePicker(false);
-    }
+    const today = new Date();
+    newDate.setHours(0,0,0,0);
+    today.setHours(0,0,0,0);
+    if (newDate.getTime() > today.getTime()) return;
+    setSelectedDate(formatDate(newDate));
+    setShowDatePicker(false);
   };
 
   // Function to go back to today
   const goToToday = () => {
-    setSelectedDay(getCurrentDay());
+    setSelectedDate(getTodayBangkokDate());
   };
 
   const navigateDay = (direction: 'prev' | 'next') => {
-    const currentDay = getCurrentDay();
-    
-    if (direction === 'prev' && selectedDay > 1) {
-      setSelectedDay(selectedDay - 1);
-    } else if (direction === 'next') {
-      if (selectedDay < currentDay) {
-        setSelectedDay(selectedDay + 1);
-      } else {
-        // Show alert when trying to go to future days
-        Alert.alert(
-          'ไม่สามารถดูข้อมูลได้', 
-          'ไม่สามารถดูหรือบันทึกข้อมูลของวันอนาคตได้',
-          [{ text: 'ตกลง', style: 'default' }]
-        );
-      }
+    const current = parseDate(selectedDate);
+    const next = new Date(current);
+    next.setDate(current.getDate() + (direction === 'prev' ? -1 : 1));
+    const today = new Date();
+    next.setHours(0,0,0,0);
+    today.setHours(0,0,0,0);
+    if (direction === 'next' && next > today) {
+      Alert.alert('ไม่สามารถดูข้อมูลได้', 'ไม่สามารถดูหรือบันทึกข้อมูลของวันอนาคตได้', [{ text: 'ตกลง', style: 'default' }]);
+      return;
     }
+    setSelectedDate(formatDate(next));
   };
 
   const handleAddFood = (timeIndex: number) => {
@@ -608,8 +601,7 @@ const RecordFoodScreen = () => {
     let entry: FoodEntry | undefined;
     
     // Get the current day info to determine which entries to search
-    const currentDay = getCurrentDay();
-    const isTodaySelected = selectedDay === currentDay;
+    const isTodaySelected = selectedDate === getTodayBangkokDate();
     const meal = mealTimes[timeIndex];
     
     if (!isTodaySelected) {
@@ -698,8 +690,7 @@ const RecordFoodScreen = () => {
       let recordId: number | undefined;
 
       // Get the current day info to determine search strategy
-      const currentDay = getCurrentDay();
-      const isTodaySelected = selectedDay === currentDay;
+      const isTodaySelected = selectedDate === getTodayBangkokDate();
       const meal = mealTimes[editingFood.mealIndex];
       
       if (!isTodaySelected) {
@@ -793,8 +784,7 @@ const RecordFoodScreen = () => {
     let recordId: number | undefined;
     
     // Get the current day info to determine search strategy
-    const currentDay = getCurrentDay();
-    const isTodaySelected = selectedDay === currentDay;
+    const isTodaySelected = selectedDate === getTodayBangkokDate();
     const meal = mealTimes[timeIndex];
     
     if (!isTodaySelected) {
@@ -1132,8 +1122,7 @@ const RecordFoodScreen = () => {
   const renderMealCard = (meal: MealTime, timeIndex: number) => {
     
     
-    const currentDay = getCurrentDay();
-    const isTodaySelected = selectedDay === currentDay;
+    const isTodaySelected = selectedDate === getTodayBangkokDate();
     
   
     // สำหรับวันก่อนหน้า: แสดงเฉพาะ savedRecords
@@ -1370,9 +1359,9 @@ const RecordFoodScreen = () => {
 
       <View className="bg-white px-4 py-3 flex-row items-center justify-between border-b border-gray-100">
         <TouchableOpacity
-          className={`w-8 h-8 items-center justify-center ${selectedDay <= 1 ? 'opacity-50' : ''}`}
+          className={`w-8 h-8 items-center justify-center`}
           onPress={() => navigateDay('prev')}
-          disabled={selectedDay <= 1}
+          disabled={false}
         >
           <Icon name="chevron-back" size={20} color="#374151" />
         </TouchableOpacity>
@@ -1388,9 +1377,9 @@ const RecordFoodScreen = () => {
           </TouchableOpacity>
         )}
         <TouchableOpacity
-          className={`w-8 h-8 items-center justify-center ${selectedDay >= getCurrentDay() ? 'opacity-50' : ''}`}
+          className={`w-8 h-8 items-center justify-center ${selectedDate === getTodayBangkokDate() ? 'opacity-50' : ''}`}
           onPress={() => navigateDay('next')}
-          disabled={selectedDay >= getCurrentDay()}
+          disabled={selectedDate === getTodayBangkokDate()}
         >
           <Icon name="chevron-forward" size={20} color="#374151" />
         </TouchableOpacity>
@@ -1403,7 +1392,7 @@ const RecordFoodScreen = () => {
               <Icon name="flame" size={18} color={iconColor} />
             </View>
             <Text className="font-promptMedium text-gray-700 ml-2">
-              {isToday ? 'แคลอรี่ที่บันทึก' : `แคลอรี่ที่บันทึกวันที่ ${selectedDay} แล้ว`}
+                {isToday ? 'แคลอรี่ที่บันทึก' : `แคลอรี่ที่บันทึกวันที่ ${parseDate(selectedDate).getDate()} แล้ว`}
             </Text>
           </View>
           {isLoading ? (
@@ -1458,30 +1447,30 @@ const RecordFoodScreen = () => {
         ) : !isToday ? (
           // For past days: Show saved records or default meals with saved data
           <>
-            
             {mealTimes.map((meal, timeIndex) => renderMealCard(meal, timeIndex))}
           </>
-        ) : !todayMealData || (!todayMealData.breakfast.length && !todayMealData.lunch.length && !todayMealData.dinner.length) ? (
-          <View className="flex-1 items-center justify-center py-20">
-            <Icon name="calendar-outline" size={48} color="#9ca3af" />
-            <Text className="text-gray-500 mt-4 text-lg">ไม่มีแผนการกินวันนี้</Text>
-            <Text className="text-gray-400 mt-2 text-center">
-              คุณสามารถเพิ่มอาหารด้วยตนเองได้
-            </Text>
-            <TouchableOpacity 
-              className="bg-primary rounded-lg px-6 py-3 mt-6"
-              onPress={() => navigation.navigate('SelectGlobalPlan')}
-            >
-              <View className="flex-row items-center">
-                <Icon name="add" size={20} color="white" />
-                <Text className="text-white font-promptMedium ml-2">เลือกแผนการกิน</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
         ) : (
-          // For today: Show plan data
+          // For today: always show meal cards. If no plan, show an info banner first
           <>
-            
+            {(!todayMealData || (!todayMealData.breakfast.length && !todayMealData.lunch.length && !todayMealData.dinner.length)) && (
+              <View className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4">
+                <View className="flex-row items-center">
+                  <Icon name="information-circle-outline" size={20} color="#eab308" />
+                  <Text className="ml-2 text-yellow-800 font-promptMedium">ไม่มีแผนการกินวันนี้</Text>
+                </View>
+                <Text className="text-yellow-700 mt-1 font-prompt">ระบบได้สร้างมื้อว่างสำหรับมื้อเช้า กลางวัน และเย็น ให้คุณเพิ่มอาหารได้ทันที</Text>
+                <TouchableOpacity 
+                  className="self-start bg-primary rounded-lg px-4 py-2 mt-3"
+                  onPress={() => navigation.navigate('SelectGlobalPlan')}
+                >
+                  <View className="flex-row items-center">
+                    <Icon name="add" size={18} color="white" />
+                    <Text className="text-white font-promptMedium ml-2">เลือกแผนการกิน</Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+            )}
+
             {mealTimes.map((meal, timeIndex) => renderMealCard(meal, timeIndex))}
           </>
         )}
@@ -1585,7 +1574,6 @@ const RecordFoodScreen = () => {
                   const year = tempSelectedDate.getFullYear();
                   const month = tempSelectedDate.getMonth();
                   const firstDay = new Date(year, month, 1);
-                  const lastDay = new Date(year, month + 1, 0);
                   const startDate = new Date(firstDay);
                   startDate.setDate(startDate.getDate() - firstDay.getDay());
                   
@@ -1608,28 +1596,29 @@ const RecordFoodScreen = () => {
                     weeks.push(currentWeek);
                   }
                   
-                  const currentDay = getCurrentDay();
-                  const selectedDate = selectedDayToDate(selectedDay);
+                  const today = new Date();
+                  today.setHours(0,0,0,0);
+                  const selectedVar = parseDate(selectedDate);
+                  selectedVar.setHours(0,0,0,0);
                   
                   return weeks.map((week, weekIndex) => (
                     <View key={weekIndex} className="flex-row">
                       {week.map((date, dayIndex) => {
                         const isCurrentMonth = date.getMonth() === month;
-                        const isSelected = date.toDateString() === selectedDate.toDateString();
-                        const isToday = date.toDateString() === new Date().toDateString();
                         const dayNumber = date.getDate();
-                        
-                        // Only allow selecting days from 1 to current day
-                        const isSelectable = isCurrentMonth && dayNumber >= 1 && dayNumber <= currentDay;
+                        const compare = new Date(date);
+                        compare.setHours(0,0,0,0);
+                        const isSelected = compare.getTime() === selectedVar.getTime();
+                        const isToday = compare.getTime() === today.getTime();
+                        const isSelectable = compare.getTime() <= today.getTime();
                         
                         return (
                           <TouchableOpacity
                             key={dayIndex}
                             className="flex-1 items-center py-3"
                             onPress={() => {
-                              if (isSelectable) {
-                                handleDateSelect(new Date(date));
-                              }
+                              if (!isSelectable) return;
+                              handleDateSelect(new Date(compare));
                             }}
                             disabled={!isSelectable}
                           >
@@ -1648,9 +1637,7 @@ const RecordFoodScreen = () => {
                                     ? 'text-white font-promptBold' 
                                     : isToday 
                                       ? 'text-blue-600 font-promptBold'
-                                      : isCurrentMonth && isSelectable
-                                        ? 'text-gray-800' 
-                                        : 'text-gray-300'
+                                      : isSelectable ? 'text-gray-800' : 'text-gray-300'
                                 }`}
                               >
                                 {dayNumber}
@@ -1680,10 +1667,7 @@ const RecordFoodScreen = () => {
                 onPress={() => {
                   const yesterday = new Date();
                   yesterday.setDate(yesterday.getDate() - 1);
-                  const yesterdayDay = dateToSelectedDay(yesterday);
-                  if (yesterdayDay >= 1) {
-                    handleDateSelect(yesterday);
-                  }
+                  handleDateSelect(yesterday);
                 }}
                 className="flex-1 bg-gray-100 rounded-lg py-3 ml-2"
               >

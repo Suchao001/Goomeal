@@ -8,7 +8,13 @@ import AppStack from 'AppStack';
 import { Platform, View, ActivityIndicator } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import './global.css';
-// import { initMealReminderRescheduler, scheduleMealRemindersFromServer } from './utils/autoNotifications';
+import { LogBox } from 'react-native';
+
+// Ignore specific log notifications
+
+// LogBox.ignoreLogs(['Setting a timer']);
+// console.error = () => {};
+// console.warn = () => {}; 
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -19,6 +25,7 @@ Notifications.setNotificationHandler({
 });
 
 export const ANDROID_CHANNEL_ID = 'general-noti';
+
 
 function RootNavigator() {
   const { user, loading } = useAuth();

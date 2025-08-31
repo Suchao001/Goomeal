@@ -296,16 +296,43 @@ export const getWeeklyInsights = async (req: AuthenticatedRequest, res: Response
     // Get insights based on patterns in the week
     const insightsQuery = `
       SELECT 
-        COUNT(DISTINCT summary_date) as days_logged,
-        AVG(total_calories) as avg_calories,
-        AVG(COALESCE(recommended_cal, target_cal)) as avg_target,
-        COUNT(CASE WHEN total_calories > COALESCE(recommended_cal, target_cal) THEN 1 END) as days_over_target,
-        COUNT(CASE WHEN total_calories < COALESCE(recommended_cal, target_cal) * 0.8 THEN 1 END) as days_under_target,
-        AVG(total_protein) as avg_protein,
-        AVG(COALESCE(recommended_protein, target_protein)) as avg_protein_target,
-        MIN(weight) as min_weight,
-        MAX(weight) as max_weight,
-        COUNT(CASE WHEN weight IS NOT NULL THEN 1 END) as weight_logs
+        COUNT(DISTINCT summary_date) AS days_logged,
+        AVG(total_calories) AS avg_calories,
+        AVG(COALESCE(recommended_cal, target_cal)) AS avg_target,
+        -- Define tolerance: max(100 kcal, 10% of target)
+        COUNT(CASE 
+          WHEN COALESCE(recommended_cal, target_cal) > 0 AND total_calories > 0 THEN
+            CASE 
+              WHEN ABS(total_calories - COALESCE(recommended_cal, target_cal)) <= 
+                   (CASE WHEN COALESCE(recommended_cal, target_cal) * 0.10 > 100 
+                         THEN COALESCE(recommended_cal, target_cal) * 0.10 
+                         ELSE 100 END)
+              THEN 1 END
+        END) AS days_in_range,
+        COUNT(CASE 
+          WHEN COALESCE(recommended_cal, target_cal) > 0 AND total_calories > 0 THEN
+            CASE 
+              WHEN (total_calories - COALESCE(recommended_cal, target_cal)) > 
+                   (CASE WHEN COALESCE(recommended_cal, target_cal) * 0.10 > 100 
+                         THEN COALESCE(recommended_cal, target_cal) * 0.10 
+                         ELSE 100 END)
+              THEN 1 END
+        END) AS days_over_range,
+        COUNT(CASE 
+          WHEN COALESCE(recommended_cal, target_cal) > 0 AND total_calories > 0 THEN
+            CASE 
+              WHEN (COALESCE(recommended_cal, target_cal) - total_calories) > 
+                   (CASE WHEN COALESCE(recommended_cal, target_cal) * 0.10 > 100 
+                         THEN COALESCE(recommended_cal, target_cal) * 0.10 
+                         ELSE 100 END)
+              THEN 1 END
+        END) AS days_under_range,
+        AVG(total_calories - COALESCE(recommended_cal, target_cal)) AS avg_calorie_diff,
+        AVG(total_protein) AS avg_protein,
+        AVG(COALESCE(recommended_protein, target_protein)) AS avg_protein_target,
+        MIN(weight) AS min_weight,
+        MAX(weight) AS max_weight,
+        COUNT(CASE WHEN weight IS NOT NULL THEN 1 END) AS weight_logs
       FROM daily_nutrition_summary 
       WHERE user_id = ? 
         AND summary_date >= ? 
@@ -352,27 +379,53 @@ export const getWeeklyInsights = async (req: AuthenticatedRequest, res: Response
       }
     }
 
-    // Calorie balance recommendation
-    if (insights.days_over_target > insights.days_under_target) {
+    // Calorie balance recommendation using tolerance window
+    const over = insights.days_over_range || 0;
+    const under = insights.days_under_range || 0;
+    const inRange = insights.days_in_range || 0;
+    const withTargetDays = over + under + inRange;
+
+    // Refine decision logic using average diff and proportion
+    const avgTarget = Math.round(insights.avg_target || 0);
+    const avgDiff = Math.round(insights.avg_calorie_diff || 0); // actual - target
+    const tol = Math.max(100, Math.round(avgTarget * 0.10));
+    const overThreshold = Math.max(2, Math.ceil(withTargetDays * 0.4));
+    const underThreshold = overThreshold; // same threshold for symmetry
+    const balancedThreshold = Math.max(2, Math.ceil(withTargetDays * 0.5));
+
+    if (
+      over >= overThreshold ||
+      avgDiff > Math.floor(tol / 2)
+    ) {
       recommendations.push({
         icon: 'trending-up',
         color: '#ef4444',
         title: 'แคลอรี่เกิน',
-        message: `เกินเป้าหมาย ${insights.days_over_target} วัน ควรลดปริมาณอาหารหรือเพิ่มการออกกำลังกาย`
+        message: `เกินเป้าหมายชัดเจน ${over}/${withTargetDays} วัน (เฉลี่ย +${avgDiff} kcal/วัน)`
       });
-    } else if (insights.days_under_target > 2) {
+    } else if (
+      under >= underThreshold ||
+      avgDiff < -Math.floor(tol / 2)
+    ) {
       recommendations.push({
         icon: 'trending-down',
         color: '#3b82f6',
         title: 'แคลอรี่น้อย',
-        message: 'กินน้อยกว่าเป้าหมายหลายวัน อาจส่งผลต่อการเผาผลาญ'
+        message: `ต่ำกว่าเป้าหมายหลายวัน ${under}/${withTargetDays} วัน (เฉลี่ย ${avgDiff} kcal/วัน) ลองเพิ่มของว่างที่โปรตีนสูง`
       });
-    } else {
+    } else if (withTargetDays > 0 && inRange >= balancedThreshold) {
       recommendations.push({
         icon: 'checkmark-circle',
         color: '#22c55e',
         title: 'สมดุลดี',
-        message: 'แคลอรี่ในระดับที่เหมาะสม ดำเนินต่อไปแบบนี้'
+        message: `แคลอรี่ในเกณฑ์ที่เหมาะสม ${inRange}/${withTargetDays} วัน`
+      });
+    } else {
+      recommendations.push({
+        icon: 'information-circle',
+        color: '#10b981',
+        title: 'ค่อนข้างดี',
+        message: `โดยรวมใกล้เคียงเป้า มีบางวันที่เกิน/ต่ำกว่าเล็กน้อย (${inRange}/${withTargetDays} วันในเกณฑ์)`
       });
     }
 
@@ -432,8 +485,8 @@ export const getWeeklyInsights = async (req: AuthenticatedRequest, res: Response
           consistency_rate: Math.round((insights.days_logged / 7) * 100),
           avg_calories: Math.round(insights.avg_calories || 0),
           avg_target: Math.round(insights.avg_target || 0),
-          balance_score: insights.days_over_target === insights.days_under_target ? 'ดีมาก' : 
-                        insights.days_over_target > insights.days_under_target ? 'เกินเป้า' : 'ต่ำกว่าเป้า'
+          balance_score: (inRange >= Math.max(1, Math.floor(withTargetDays * 0.5))) ? 'ดีมาก' :
+                         (over > under ? 'เกินเป้า' : (under > over ? 'ต่ำกว่าเป้า' : 'ค่อนข้างดี'))
         }
       }
     });
