@@ -121,16 +121,16 @@ export const useMealPlanStore = create<MealPlanStore>()(
             'อาหารมื้อเย็น': 'dinner',
           } as any;
 
-          // Normalize, keep only active rows with valid time
-          const normalized = serverMeals
-            .map((m: any, idx: number) => ({
-              id: Number(m?.id),
-              name: String(m?.meal_name ?? '').trim(),
-              time: String(m?.meal_time ?? ''),
-              sort: Number(m?.sort_order ?? idx + 1),
-              active: typeof m?.is_active === 'boolean' ? m.is_active : !!Number(m?.is_active ?? 1),
-            }))
-            .filter(m => m.active && /^([01]\d|2[0-3]):([0-5]\d)$/.test(m.time));
+          // Normalize all rows (capture active flag even if not valid time)
+          const records = serverMeals.map((m: any, idx: number) => ({
+            id: Number(m?.id),
+            name: String(m?.meal_name ?? '').trim(),
+            time: String(m?.meal_time ?? ''),
+            sort: Number(m?.sort_order ?? idx + 1),
+            active: typeof m?.is_active === 'boolean' ? m.is_active : !!Number(m?.is_active ?? 1),
+          }));
+          // For customs we require active + valid time
+          const normalized = records.filter(m => m.active && /^([01]\d|2[0-3]):([0-5]\d)$/.test(m.time));
 
           type DefaultId = 'breakfast' | 'lunch' | 'dinner';
           const defaultIcons: Record<DefaultId, string> = {
@@ -140,8 +140,15 @@ export const useMealPlanStore = create<MealPlanStore>()(
           };
 
           const defOverride: Partial<Record<DefaultId, { name: string; time: string; sort: number }>> = {};
+          const defActiveMap: Partial<Record<DefaultId, boolean>> = {};
           const customFromSettings: Meal[] = [];
           const sortMap: Record<string, number> = {};
+
+          // Track default activeness from all records (active or inactive)
+          for (const r of records) {
+            const defId = (nameToId as any)[r.name] as DefaultId | undefined;
+            if (defId) defActiveMap[defId] = !!r.active;
+          }
 
           for (const m of normalized) {
             const defId = (nameToId as any)[m.name] as DefaultId | undefined;
@@ -158,16 +165,23 @@ export const useMealPlanStore = create<MealPlanStore>()(
           set((state) => {
             // Update default meals from overrides, keep icons
             const defaults = ['breakfast','lunch','dinner'] as DefaultId[];
-            const updatedDefaults: Meal[] = defaults.map((d) => {
+            const updatedDefaults: Meal[] = [];
+            for (const d of defaults) {
+              const hasSetting = d in defActiveMap;
+              const isActive = defActiveMap[d] !== false; // if setting exists and false => inactive
+              if (hasSetting && !isActive) {
+                // hide this default meal
+                continue;
+              }
               const override = defOverride[d];
               const existing = state.meals.find(m => m.id === d);
-              return {
+              updatedDefaults.push({
                 id: d,
                 name: override?.name || existing?.name || defaultMealInfo[d].name,
                 icon: defaultIcons[d],
                 time: override?.time || existing?.time || defaultMealInfo[d].time,
-              };
-            });
+              });
+            }
 
             // Merge defaults with settings-driven custom meals
             const merged: Meal[] = [...updatedDefaults];

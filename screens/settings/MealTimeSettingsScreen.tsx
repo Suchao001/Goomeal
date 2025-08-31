@@ -4,6 +4,8 @@ import DateTimePicker, { AndroidNativeProps, IOSNativeProps } from '@react-nativ
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import { ApiClient } from 'utils/apiClient';
+import { useMealPlanStore } from '../../stores/mealPlanStore';
+import { useMealPlanStoreEdit } from '../../stores/mealPlanStoreEdit';
 
 type MealRow = {
   id?: number;
@@ -33,6 +35,8 @@ const dateToHHMM = (d: Date) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 const MealTimeSettingsScreen = () => {
   const navigation = useTypedNavigation<'MealTimeSettings'>();
   const apiClient = new ApiClient();
+  const { fetchAndApplyMealTimes: refreshMealTimes } = useMealPlanStore();
+  const { fetchAndApplyMealTimes: refreshMealTimesEdit } = useMealPlanStoreEdit();
 
   const [meals, setMeals] = useState<MealRow[]>(DEFAULT_MEALS);
   const [notifyOnTime, setNotifyOnTime] = useState<boolean>(true);
@@ -222,6 +226,15 @@ const MealTimeSettingsScreen = () => {
               };
               const resp = await apiClient.setMealTimes(payload);
               if (resp?.success) {
+                try {
+                  // Refresh meal times in both normal and edit stores
+                  await Promise.all([
+                    refreshMealTimes?.(),
+                    refreshMealTimesEdit?.(),
+                  ]);
+                } catch (e) {
+                  // Silent error; UI already saved
+                }
                 Alert.alert('สำเร็จ', 'บันทึกการตั้งค่าเวลาเรียบร้อยแล้ว');
               } else {
                 Alert.alert('ผิดพลาด', resp?.error || 'บันทึกล้มเหลว');

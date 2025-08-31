@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Alert } from 'react-native';
+import { apiClient } from '../utils/apiClient';
 
 export interface FoodItem {
   id: string;
@@ -58,6 +59,7 @@ interface MealPlanStoreEdit {
 
   
   // Actions
+  fetchAndApplyMealTimes: () => Promise<void>; // Fetch meal times from API and update defaults + customs
   addFoodToMeal: (food: FoodItem, mealId: string, day: number, mealInfo?: { name: string; time: string }) => void;
   removeFoodFromMeal: (foodId: string, mealId: string, day: number) => void;
   updateFoodInMeal: (updatedFood: FoodItem, mealId: string, day: number) => void; // New function to update food
@@ -104,6 +106,102 @@ export const useMealPlanStoreEdit = create<MealPlanStoreEdit>()((set, get) => ({
   isEditMode: false, // Initialize edit mode flag
   originalPlanData: null, // เก็บข้อมูลเดิมจาก API
   
+      // Fetch user's configured meal times from server and update meals list (defaults + custom from settings)
+      fetchAndApplyMealTimes: async () => {
+        try {
+          const res = await apiClient.getMealTimes();
+          const root = (res as any)?.data?.data ?? (res as any)?.data ?? {};
+          const serverMeals = Array.isArray(root?.meals) ? root.meals : [];
+
+          if (!serverMeals.length) return;
+
+          // Map Thai meal names to our default meal ids
+          const nameToId: Record<string, 'breakfast' | 'lunch' | 'dinner'> = {
+            'มื้อเช้า': 'breakfast',
+            'อาหารมื้อเช้า': 'breakfast',
+            'มื้อกลางวัน': 'lunch',
+            'อาหารมื้อกลางวัน': 'lunch',
+            'มื้อเย็น': 'dinner',
+            'อาหารมื้อเย็น': 'dinner',
+          } as any;
+
+          // Normalize all rows; keep active flag even if invalid time
+          const records = serverMeals.map((m: any, idx: number) => ({
+            id: Number(m?.id),
+            name: String(m?.meal_name ?? '').trim(),
+            time: String(m?.meal_time ?? ''),
+            sort: Number(m?.sort_order ?? idx + 1),
+            active: typeof m?.is_active === 'boolean' ? m.is_active : !!Number(m?.is_active ?? 1),
+          }));
+          const normalized = records.filter(m => m.active && /^([01]\d|2[0-3]):([0-5]\d)$/.test(m.time));
+
+          type DefaultId = 'breakfast' | 'lunch' | 'dinner';
+          const defaultIcons: Record<DefaultId, string> = {
+            breakfast: 'sunny',
+            lunch: 'partly-sunny',
+            dinner: 'moon',
+          };
+
+          const defOverride: Partial<Record<DefaultId, { name: string; time: string; sort: number }>> = {};
+          const defActiveMap: Partial<Record<DefaultId, boolean>> = {};
+          const customFromSettings: Meal[] = [];
+          const sortMap: Record<string, number> = {};
+
+          // track active flags for defaults
+          for (const r of records) {
+            const defId = (nameToId as any)[r.name] as DefaultId | undefined;
+            if (defId) defActiveMap[defId] = !!r.active;
+          }
+          for (const m of normalized) {
+            const defId = (nameToId as any)[m.name] as DefaultId | undefined;
+            if (defId) {
+              defOverride[defId] = { name: m.name, time: m.time, sort: m.sort };
+              sortMap[defId] = m.sort;
+            } else {
+              const cid = m.id ? `custom-${m.id}` : `custom-${m.name}-${m.time}`;
+              customFromSettings.push({ id: cid, name: m.name || 'มื้ออาหาร', icon: 'restaurant', time: m.time });
+              sortMap[cid] = m.sort;
+            }
+          }
+
+          set((state) => {
+            // Update defaults
+            const defaults = ['breakfast','lunch','dinner'] as DefaultId[];
+            const updatedDefaults: Meal[] = [];
+            for (const d of defaults) {
+              const hasSetting = d in defActiveMap;
+              const isActive = defActiveMap[d] !== false;
+              if (hasSetting && !isActive) continue; // hide inactive defaults
+              const override = defOverride[d];
+              const existing = state.meals.find(m => m.id === d);
+              updatedDefaults.push({
+                id: d,
+                name: override?.name || existing?.name || defaultMealInfo[d].name,
+                icon: defaultIcons[d],
+                time: override?.time || existing?.time || defaultMealInfo[d].time,
+              });
+            }
+
+            // Merge defaults + custom from settings
+            const merged: Meal[] = [...updatedDefaults];
+            const seen = new Set(merged.map(m => m.id));
+            for (const cm of customFromSettings) {
+              if (!seen.has(cm.id)) {
+                merged.push(cm);
+                seen.add(cm.id);
+              }
+            }
+
+            // Sort by server sort if present
+            merged.sort((a, b) => (sortMap[a.id] ?? 999) - (sortMap[b.id] ?? 999));
+
+            return { ...state, meals: merged } as typeof state;
+          });
+        } catch (_) {
+          // keep defaults on error
+        }
+      },
+
       setEditMode: (isEdit: boolean) => {
         set((state) => ({
           ...state,

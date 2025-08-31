@@ -36,6 +36,8 @@ const MealPlanEditScreen = () => {
   const {
     planId,
     mealPlanData,
+    meals, // subscribe base meals to reflect settings
+    customMeals, // subscribe per-day customs
     planName,
     planDescription,
     planImage,
@@ -51,6 +53,7 @@ const MealPlanEditScreen = () => {
     setPlanMetadata,
     loadMealPlanData,
     clearEditSession,
+    fetchAndApplyMealTimes,
   } = useMealPlanStoreEdit();
 
   // Local state for UI
@@ -64,6 +67,7 @@ const MealPlanEditScreen = () => {
   // Generate days and current date
   const days = useMemo(() => generateDays(), []);
   const currentDate = useMemo(() => getCurrentDate(selectedDay), [selectedDay]);
+  const allMealsForDay = useMemo(() => getAllMealsForDay(selectedDay), [getAllMealsForDay, selectedDay, meals, customMeals]);
 
   // Get recommended nutrition from user profile with caching
   const { nutrition: recommendedNutrition, isCalculated, isProfileComplete } = useRecommendedNutrition();
@@ -102,6 +106,11 @@ const MealPlanEditScreen = () => {
     
     // ไม่ต้องมี cleanup function ที่นี่ เพราะเราต้องการให้ state คงอยู่
   }, [foodPlanId, initializeEditMode, planId]);
+
+  // Sync meal times from settings when the screen mounts
+  useEffect(() => {
+    fetchAndApplyMealTimes();
+  }, [fetchAndApplyMealTimes]);
 
   // Handle food addition from SearchFoodForAdd navigation
   useFocusEffect(
@@ -268,6 +277,9 @@ const MealPlanEditScreen = () => {
     const hasFood = mealData && mealData.items.length > 0;
     const nutrition = hasFood ? getMealNutrition(selectedDay, meal.id) : { cal: 0, carb: 0, fat: 0, protein: 0 };
 
+    // Prefer time from plan data for this day; fallback to settings/base meal time
+    const displayTime = (mealData?.time && typeof mealData.time === 'string' && mealData.time) || meal.time;
+
     return (
       <View key={meal.id} className="bg-white rounded-xl p-4 mb-4 shadow-sm">
         <View className="flex-row items-center justify-between mb-3">
@@ -277,7 +289,7 @@ const MealPlanEditScreen = () => {
             </View>
             <View>
               <Text className="text-lg font-semibold text-gray-800 font-prompt">{meal.name}</Text>
-              <Text className="text-sm text-gray-500 font-prompt">{meal.time}</Text>
+              <Text className="text-sm text-gray-500 font-prompt">{displayTime}</Text>
             </View>
           </View>
           
@@ -563,7 +575,7 @@ const MealPlanEditScreen = () => {
       {/* Main Content */}
       <ScrollView className="flex-1 px-4 py-6" showsVerticalScrollIndicator={false}>
         {/* Meal Cards */}
-        {getAllMealsForDay(selectedDay).map((meal: any) => renderMealCard(meal))}
+        {allMealsForDay.map((meal: any) => renderMealCard(meal))}
 
         {/* Add More Meals Button */}
         <TouchableOpacity
