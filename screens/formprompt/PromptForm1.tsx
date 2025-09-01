@@ -53,7 +53,7 @@ const PromptForm1 = () => {
     { key: 'low', label: 'ประหยัด', desc: '50-150 บาท/มื้อ', icon: '💰' },
     { key: 'medium', label: 'ปานกลาง', desc: '150-300 บาท/มื้อ', icon: '💰💰' },
     { key: 'high', label: 'หรูหรา', desc: '300+ บาท/มื้อ', icon: '💰💰💰' },
-    { key: 'flexible', label: 'งบยืดหยุ่น', desc: 'ปรับตามสถานการณ์', icon: '🎯' }
+    { key: 'flexible', label: 'งบยืดหยุ่น', desc: 'ราคาใดก็ได้', icon: '' }
   ];
 
   const handlePlanDuration = (duration: string) => {
@@ -113,7 +113,7 @@ const PromptForm1 = () => {
         {/* Plan Duration Selection */}
         <View className="mb-8">
           <Text className="text-gray-800 mb-4 font-promptSemiBold text-lg">
-            📅 ระยะเวลาของแผน
+            ระยะเวลาของแผน
           </Text>
           <View className="flex-row gap-2 mb-4">
             {['7', '14', '30'].map((duration) => (
@@ -188,7 +188,7 @@ const PromptForm1 = () => {
         {/* Food Category Selection */}
         <View className="mb-8">
           <Text className="text-gray-800 mb-4 font-promptSemiBold text-lg">
-            🍽️ ประเภทอาหารที่ชอบ (เลือกได้หลายรายการ)
+            ประเภทอาหารที่ชอบ (เลือกได้หลายรายการ)
           </Text>
           <View className="flex-row flex-wrap gap-2">
             {foodCategories.map((category) => (
@@ -220,7 +220,7 @@ const PromptForm1 = () => {
         {/* Budget Selection */}
         <View className="mb-8">
           <Text className="text-gray-800 mb-4 font-promptSemiBold text-lg">
-            💰 งบต่อมื้อ
+            งบต่อมื้อ
           </Text>
           <View className="flex flex-col gap-1">
             {budgetOptions.map((budget) => (

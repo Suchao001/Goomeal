@@ -23,17 +23,17 @@ const RegisterScreen = () => {
 
     const validateForm = () => {
         if (!user.username || !user.email || !user.password || !user.confirmPassword) {
-            Alert.alert('Error', 'Please fill in all fields');
+            Alert.alert('ข้อมูลไม่ครบถ้วน', 'กรุณากรอกข้อมูลให้ครบทุกช่อง');
             return false;
         }
 
         if (user.password !== user.confirmPassword) {
-            Alert.alert('Error', 'Passwords do not match');
-            return;
+            Alert.alert('รหัsผ่านไม่ตรงกัน', 'รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน');
+            return false;
         }
 
         if (user.password.length < 6) {
-            Alert.alert('Error', 'Password must be at least 6 characters');
+            Alert.alert('รหัสผ่านสั้นเกินไป', 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร');
             return false;
         }
         return true;
@@ -51,28 +51,29 @@ const RegisterScreen = () => {
                 password: user.password,
             };
             
-            console.log('Sending registration data:', userData); // Add this line
+            console.log('Sending registration data:', userData);
             const response = await axios.post(`${base_url}/user/register`, userData);
             console.log('Registration successful:', response.data);
-            Alert.alert('Success', 'ลงทะเบียนเสร็จเรียบร้อยแล้ว');
+            Alert.alert('สำเร็จ', 'ลงทะเบียนเสร็จเรียบร้อยแล้ว');
           
             navigation.navigate('Login');
         } catch (error: any) {
             console.error('Registration error:', error);
-            
-            // Better error handling
             if (error.response) {
                 // Server responded with error status
                 console.log('Error response:', error.response.data);
-                Alert.alert('Registration Failed', error.response.data.message || 'Registration failed');
+                const errorMessage = error.response.data.message || 'การลงทะเบียนล้มเหลว';
+                
+                // Show the error message from backend directly (already in Thai)
+                Alert.alert('ไม่สามารถลงทะเบียนได้', errorMessage);
             } else if (error.request) {
                 // Request was made but no response received
                 console.log('No response received:', error.request);
-                Alert.alert('Network Error', 'Unable to connect to server');
+                Alert.alert('ปัญหาเครือข่าย', 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
             } else {
                 // Something else happened
                 console.log('Error:', error.message);
-                Alert.alert('Error', 'Something went wrong');
+                Alert.alert('เกิดข้อผิดพลาด', 'มีปัญหาบางอย่างเกิดขึ้น');
             }
         }
     };

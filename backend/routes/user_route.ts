@@ -20,21 +20,27 @@ router.post("/register", async (req: Request, res: Response) => {
         // Validate required fields
         if (!username || !email || !password) {
             return res.status(400).json({
-                message: "Missing required fields",
+                message: "กรุณากรอกข้อมูลให้ครบถ้วน",
                 error: "Username, email, and password are required"
             });
         }
         
-        const user = await register({ username, email, password });
+        const result = await register({ username, email, password });
+        
+        if (!result.success) {
+            return res.status(400).json({
+                message: result.message
+            });
+        }
         
         res.status(201).json({
-            message: "User registered successfully",
-            user,
+            message: "ลงทะเบียนสำเร็จ",
+            user: result.data,
         });
     } catch (error: any) {
         console.error("Registration error:", error); // Add this line
         res.status(500).json({
-            message: "Error registering user",
+            message: "เกิดข้อผิดพลาดในการลงทะเบียน",
             error: error.message,
         });
     }
@@ -44,17 +50,23 @@ router.post("/login", async (req: Request, res: Response) => {
     try {
         const { username, password } = req.body;
         const loginResult = await login(username, password);
+        
+        if (!loginResult.success) {
+            return res.status(400).json({
+                message: loginResult.message
+            });
+        }
 
         res.status(200).json({
-            message: "User logged in successfully",
-            user: loginResult.user,
-            accessToken: loginResult.accessToken, 
-            refreshToken: loginResult.refreshToken,
+            message: "เข้าสู่ระบบสำเร็จ",
+            user: loginResult.data!.user,
+            accessToken: loginResult.data!.accessToken, 
+            refreshToken: loginResult.data!.refreshToken,
         });
     } catch (error: any) {
         console.error("Login error:", error); // Add this line
         res.status(500).json({
-            message: "Error logging in user",
+            message: "เกิดข้อผิดพลาดในการเข้าสู่ระบบ",
             error: error.message,
         });
     }

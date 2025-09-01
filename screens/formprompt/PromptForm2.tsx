@@ -55,20 +55,20 @@ const PromptForm2 = () => {
     {
       key: 'low',
       title: 'หลากหลายน้อย',
-      description: 'อาหารคุ้นเคย ทำง่าย ใช้วัตถุดิบพื้นฐาน',
-      icon: '📋'
+      description: 'อาหารเดิมๆ กินบ่อยๆ',
+      icon: ''
     },
     {
       key: 'medium',
       title: 'หลากหลายปานกลาง',
       description: 'ผสมผสานอาหารใหม่ๆ กับของเดิม',
-      icon: '🎯'
+      icon: ''
     },
     {
       key: 'high',
       title: 'หลากหลายมาก',
       description: 'ลองของใหม่ทุกมื้อ ท้าทายรสชาติ',
-      icon: '🌟'
+      icon: ''
     }
   ];
 
@@ -135,7 +135,7 @@ const PromptForm2 = () => {
         {/* Variety Level Selection */}
         <View className="mb-8">
           <Text className="text-gray-800 mb-4 font-promptSemiBold text-lg">
-            🎯 ระดับความหลากหลาย
+            ระดับความหลากหลาย
           </Text>
           <View className="space-y-3 gap-1">
             {varietyOptions.map((option) => (
@@ -171,7 +171,7 @@ const PromptForm2 = () => {
         {/* Popular Ingredients */}
         <View className="mb-6">
           <Text className="text-gray-800 mb-4 font-promptSemiBold text-lg">
-            🥘 วัตถุดิบที่นิยม
+            วัตถุดิบที่นิยม
           </Text>
           <View className="flex-row flex-wrap gap-2">
             {popularIngredients.map((ingredient) => (

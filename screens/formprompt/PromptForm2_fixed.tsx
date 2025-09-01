@@ -142,7 +142,7 @@ const PromptForm2 = () => {
         {/* Variety Level Selection */}
         <View className="mb-8">
           <Text className="text-gray-800 mb-4 font-promptSemiBold text-lg">
-            🎯 ระดับความหลากหลาย
+            ระดับความหลากหลาย
           </Text>
           <View className="space-y-3">
             {varietyOptions.map((option) => (

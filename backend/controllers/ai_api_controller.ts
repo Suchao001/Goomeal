@@ -89,7 +89,8 @@ const getDefaultMealTimes = async (userId: number) => {
         dinner = hhmm;
         mealDefs.push({ key: 'dinner', name, time: hhmm, isDefault: true, sort: r.sort_order || 0 });
       } else {
-        const key = r.id ? `custom-${r.id}` : `custom-${(r.sort_order || '')}`;
+        // ใช้ชื่อจริงแทน key สำหรับ custom meals
+        const key = name.replace(/\s+/g, '_').toLowerCase(); // ใช้ชื่อเป็น key แต่ปรับรูปแบบ
         mealDefs.push({ key, name, time: hhmm, isDefault: false, sort: r.sort_order || 0 });
       }
     }
@@ -244,7 +245,7 @@ export async function getFoodPlanSuggestions(userId: number, payload?: any) {
     const perMealKcal: Record<string, number> = {};
     for (const m of mealDefs) perMealKcal[m.key] = Math.round(recommendedNutrition.cal * (shares[m.key] || 0.3));
     const mealsDistributionBlock = mealDefs.map(m => `- ${m.name}: ${perMealKcal[m.key]} kcal at ${m.time}`).join('\n');
-    const mealsExampleBlock = mealDefs.map(m => `      "${m.key}": {\n        "name": "${m.name}",\n        "time": "${m.time}",\n        "totalCal": ${perMealKcal[m.key]},\n        "items": [{\n          "name": "${m.name}",\n          "cal": ${perMealKcal[m.key]},\n          "carb": 45,\n          "fat": 12,\n          "protein": 25,\n          "img": "",\n          "ingredient": "",\n          "source": "ai",\n          "isUserFood": false\n        }]\n      }`).join(',\n');
+    const mealsExampleBlock = mealDefs.map(m => `      "${m.key}": {\n        "name": "${m.name}",\n        "time": "${m.time}",\n        "totalCal": ${perMealKcal[m.key]},\n        "items": [{\n          "name": "ตัวอย่างอาหาร${m.name}",\n          "cal": ${perMealKcal[m.key]},\n          "carb": 45,\n          "fat": 12,\n          "protein": 25,\n          "img": "",\n          "ingredient": "",\n          "source": "ai",\n          "isUserFood": false\n        }]\n      }`).join(',\n');
 
     const foodPlanPrompt = `You are a nutritionist creating a ${totalPlanDay}-day default for thai food plan. Return ONLY a valid JSON object.
 
@@ -469,7 +470,7 @@ export async function getFoodPlanSuggestionsByPrompt(userId: number, payload?: a
     const perMealKcal2: Record<string, number> = {};
     for (const m of mealDefs2) perMealKcal2[m.key] = Math.round(recommendedNutrition.cal * (shares2[m.key] || 0.3));
     const mealsDistributionBlock2 = mealDefs2.map(m => `- ${m.name}: ${perMealKcal2[m.key]} kcal at ${m.time}`).join('\\n');
-    const mealsExampleBlock2 = mealDefs2.map(m => `      \"${m.key}\": {\\n        \"name\": \"${m.name}\",\\n        \"time\": \"${m.time}\",\\n        \"totalCal\": ${perMealKcal2[m.key]},\\n        \"items\": [{\\n          \"name\": \"${m.name}\",\\n          \"cal\": ${perMealKcal2[m.key]},\\n          \"carb\": 45,\\n          \"fat\": 12,\\n          \"protein\": 25,\\n          \"img\": \"\",\\n          \"ingredient\": \"\",\\n          \"source\": \"ai\",\\n          \"isUserFood\": false\\n        }]\\n      }`).join(',\\n');
+    const mealsExampleBlock2 = mealDefs2.map(m => `      \"${m.key}\": {\\n        \"name\": \"${m.name}\",\\n        \"time\": \"${m.time}\",\\n        \"totalCal\": ${perMealKcal2[m.key]},\\n        \"items\": [{\\n          \"name\": \"ตัวอย่างอาหาร${m.name}\",\\n          \"cal\": ${perMealKcal2[m.key]},\\n          \"carb\": 45,\\n          \"fat\": 12,\\n          \"protein\": 25,\\n          \"img\": \"\",\\n          \"ingredient\": \"\",\\n          \"source\": \"ai\",\\n          \"isUserFood\": false\\n        }]\\n      }`).join(',\\n');
 
     const foodPlanPrompt = `You are a nutritionist creating a ${totalPlanDay}-day default for Thai food plan based on user's detailed preferences. Return ONLY a valid JSON object.
 

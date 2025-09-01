@@ -119,7 +119,7 @@ const PromptForm3 = () => {
         {/* Dietary Restrictions */}
         <View className="mb-8">
           <Text className="text-gray-800 mb-4 font-promptSemiBold text-lg">
-            🚫 ข้อจำกัดในการรับประทาน
+            ข้อจำกัดในการรับประทาน
           </Text>
           <View className="flex-row flex-wrap gap-2">
             {dietaryRestrictions.map((restriction) => (
@@ -151,7 +151,7 @@ const PromptForm3 = () => {
         {/* Health Goals */}
         <View className="mb-8">
           <Text className="text-gray-800 mb-4 font-promptSemiBold text-lg">
-            🎯 เป้าหมายสุขภาพ
+            เป้าหมายสุขภาพ
           </Text>
           <View className="flex-row flex-wrap gap-2">
             {healthGoals.map((goal) => (

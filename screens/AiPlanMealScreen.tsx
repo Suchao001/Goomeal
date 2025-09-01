@@ -48,15 +48,18 @@ const AiPlanMealScreen = () => {
           if (item.carb) totalCarbs += item.carb;
           if (item.fat) totalFat += item.fat;
           
-          const mealTypeDisplay: { [key: string]: { type: string; icon: string } } = {
-            breakfast: { type: 'breakfast', icon: 'sunny-outline' },
-            lunch: { type: 'lunch', icon: 'restaurant-outline' },
-            dinner: { type: 'dinner', icon: 'moon-outline' }
+          // รองรับ custom meals โดยใช้ชื่อจริงจากข้อมูล
+          const mealName = mealData.name || mealType;
+          const mealTypeDisplay: { [key: string]: { type: string; icon: string; displayName: string } } = {
+            breakfast: { type: 'breakfast', icon: 'sunny-outline', displayName: 'อาหารเช้า' },
+            lunch: { type: 'lunch', icon: 'restaurant-outline', displayName: 'อาหารกลางวัน' },
+            dinner: { type: 'dinner', icon: 'moon-outline', displayName: 'อาหารเย็น' }
           };
           
           meals.push({
             type: mealType,
             icon: mealTypeDisplay[mealType]?.icon || 'restaurant-outline',
+            displayName: mealTypeDisplay[mealType]?.displayName || mealName, // ใช้ชื่อจริงสำหรับ custom
             name: item.name || 'ไม่ระบุชื่อ'
           });
         });
@@ -236,8 +239,7 @@ const AiPlanMealScreen = () => {
             </View>
             <View className="flex-1">
               <Text className="text-sm font-promptMedium text-[#4A4A4A] capitalize">
-                {meal.type === 'breakfast' ? 'อาหารเช้า' : 
-                 meal.type === 'lunch' ? 'อาหารกลางวัน' : 'อาหารเย็น'}: 
+                {meal.displayName}: 
                 <Text className="font-promptLight"> {meal.name}</Text>
               </Text>
             </View>

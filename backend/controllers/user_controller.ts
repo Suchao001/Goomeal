@@ -6,22 +6,16 @@ import {ageToYearOfBirth, yearOfBirthToAge, isValidYearOfBirth} from '../utils/a
 
 const register = async ({username, email, password}: Pick<User, 'username' | 'email' | 'password'>) => {
     try {
-        // Check if user already exists
-        const existingUser = await db('users').where({ email }).first();
-        if (existingUser) {
-            throw new Error('Email already exists');
+        // Check if email already exists
+        const existingEmail = await db('users').where({ email }).first();
+        if (existingEmail) {
+            return { success: false, message: 'อีเมลนี้ถูกใช้งานแล้ว' };
         }
 
         // Check if username already exists
         const existingUsername = await db('users').where({ username }).first();
         if (existingUsername) {
-            throw new Error('Username already exists');
-        }
-
-        //check if email is already registered
-        const existingEmail = await db('users').where({ email }).first();
-        if (existingEmail) {
-            throw new Error('Email already exists');
+            return { success: false, message: 'ชื่อผู้ใช้นี้ถูกใช้งานแล้ว' };
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -42,14 +36,17 @@ const register = async ({username, email, password}: Pick<User, 'username' | 'em
         const createdUser = await db('users').where({ id: insertId }).first();
         
         return {
-            id: createdUser.id,
-            username: createdUser.username,
-            email: createdUser.email,
-            created_date: createdUser.created_date
+            success: true,
+            data: {
+                id: createdUser.id,
+                username: createdUser.username,
+                email: createdUser.email,
+                created_date: createdUser.created_date
+            }
         };
     } catch (error: any) {
         console.error('Registration error details:', error); // Add detailed logging
-        throw new Error(error.message || 'Error registering user');
+        return { success: false, message: 'เกิดข้อผิดพลาดในการลงทะเบียน' };
     }
 }
 
@@ -57,20 +54,24 @@ const login = async (username: string, password: string) => {
     try {
         const userData = await db('users').where({ username }).first();
         if (!userData) {
-            throw new Error('User not found');
+            return { success: false, message: 'ไม่พบผู้ใช้งาน' };
         }
         const isPasswordValid = await bcrypt.compare(password, userData.password);
         if (!isPasswordValid) {
-            throw new Error('Invalid password');
+            return { success: false, message: 'รหัสผ่านไม่ถูกต้อง' };
         }
         const accessToken = jwt.sign({ id: userData.id }, process.env.JWT_SECRET || '', { expiresIn: '1h' });
         const refreshToken = jwt.sign({ id: userData.id }, process.env.JWT_SECRET || '', { expiresIn: '7d' });
         const user = {username: userData.username, email: userData.email, id: userData.id};
-        return { accessToken, refreshToken, user };
+        
+        return { 
+            success: true, 
+            data: { accessToken, refreshToken, user }
+        };
 
     } catch (error: any) {
         console.error('Login error details:', error); // Add detailed logging
-        throw new Error(error.message || 'Error logging in user');
+        return { success: false, message: 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ' };
     }
 }
 

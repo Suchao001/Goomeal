@@ -22,7 +22,7 @@ const LoginScreen = () => {
 
   const handleLogin = async () => {
     if (!user.username || !user.password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert('ข้อมูลไม่ครบถ้วน', 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน');
       return;
     }
 
@@ -38,14 +38,20 @@ const LoginScreen = () => {
       await SecureStore.setItemAsync('user', JSON.stringify(user));
       await reloadUser();
       console.log('Login successful:', response.data);
-    }catch(error) {
+    }catch(error: any) {
       console.error('Login error:', error);
-    showAlert({
-       message: 'Error',
-       description: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
-       type: 'danger',
-    });
-
+      
+      if (error.response) {
+        // Server responded with error status
+        const errorMessage = error.response.data.message || 'เข้าสู่ระบบไม่สำเร็จ';
+        Alert.alert('ไม่สามารถเข้าสู่ระบบได้', errorMessage);
+      } else if (error.request) {
+        // Request was made but no response received
+        Alert.alert('ปัญหาเครือข่าย', 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
+      } else {
+        // Something else happened
+        Alert.alert('เกิดข้อผิดพลาด', 'อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+      }
     }
   }
 
