@@ -7,6 +7,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { EditPlanModal } from '../../components/EditPlanModal';
 import { useImagePicker } from '../../hooks/useImagePicker';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const PlanSelectionScreen = () => {
   const navigation = useTypedNavigation();
@@ -14,6 +15,7 @@ const PlanSelectionScreen = () => {
 
   const [plans, setPlans] = useState<any[]>([]);
   const [currentPlanId, setCurrentPlanId] = useState<number | null>(null);
+  const [currentPlanSettings, setCurrentPlanSettings] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
@@ -27,7 +29,6 @@ const PlanSelectionScreen = () => {
   
   // Settings modal states
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedStartDate, setSelectedStartDate] = useState<Date>(new Date());
   const [isAutoLoop, setIsAutoLoop] = useState(false);
   const [isLoadingSettings, setIsLoadingSettings] = useState(false);
@@ -41,7 +42,7 @@ const PlanSelectionScreen = () => {
     loadUserFoodPlans();
     loadCurrentPlan();
     setIsInitialLoad(false);
-    
+    console.log('screen: PlanSelectionScreen');
   }, []);
 
   // Refresh data when screen comes into focus (but not on initial load)
@@ -56,7 +57,6 @@ const PlanSelectionScreen = () => {
   const loadUserFoodPlans = async () => {
     try {
       const result = await apiClient.getUserFoodPlansList();
-      
       if (result.success) {
         setPlans(result.data);
       } else {
@@ -73,13 +73,13 @@ const PlanSelectionScreen = () => {
   const loadCurrentPlan = async () => {
     try {
       const result = await apiClient.knowCurrentFoodPlan();
-      
       if (result.success) {
         setCurrentPlanId(result.data.food_plan_id);
+        setCurrentPlanSettings(result.data);
       }
     } catch (error) {
       console.error('Error loading current plan:', error);
-      // Don't show error for this as user might not have current plan set
+      // user อาจยังไม่มี current plan ก็ไม่ต้อง alert
     }
   };
 
@@ -89,21 +89,17 @@ const PlanSelectionScreen = () => {
 
   const handlePlanOptions = (plan: any, event: any) => {
     setSelectedPlan(plan);
-    
-    // Get the position of the button that was pressed
     const { pageX, pageY } = event.nativeEvent;
     setDropdownPosition({
-      x: Math.max(10, pageX - 170), // Keep dropdown within screen, 180 is dropdown width
-      y: pageY -15 // Position slightly below the touch point
+      x: Math.max(10, pageX - 170),
+      y: pageY - 15
     });
-    
     setShowActionSheet(true);
   };
 
   const handleEditPlan = () => {
     if (selectedPlan) {
       setShowActionSheet(false);
-      // Set edit modal data
       setEditName(selectedPlan.name);
       setEditDescription(selectedPlan.description || '');
       setEditImage(selectedPlan.img);
@@ -114,7 +110,6 @@ const PlanSelectionScreen = () => {
   const handleEditMealPlan = () => {
     if (selectedPlan) {
       setShowActionSheet(false);
-      // Navigate to MealPlan screen in edit mode with the selected plan ID
       navigation.navigate('MealPlanEdit', {
         mode: 'edit',
         foodPlanId: selectedPlan.id,
@@ -131,19 +126,14 @@ const PlanSelectionScreen = () => {
 
     setIsUpdating(true);
     try {
-     
-
       const result = await apiClient.updateUserFoodPlan(selectedPlan.id, {
         name: editName.trim(),
         description: editDescription.trim(),
-        plan: selectedPlan, // Add the required plan property
+        plan: selectedPlan, // backend ต้องการ field นี้
         image: editImage || undefined
       });
 
-    
-
       if (result.success) {
-        // Update local state
         setPlans(plans.map(p => 
           p.id === selectedPlan.id 
             ? { ...p, name: editName.trim(), description: editDescription.trim(), img: editImage }
@@ -161,7 +151,6 @@ const PlanSelectionScreen = () => {
       }
     } catch (error) {
       console.error('Error updating plan:', error);
-      
       Alert.alert('ข้อผิดพลาด', 'เกิดข้อผิดพลาดในการอัพเดทแผนอาหาร');
     } finally {
       setIsUpdating(false);
@@ -188,13 +177,7 @@ const PlanSelectionScreen = () => {
   };
 
   const handleCreateNewPlan = () => {
-    // Navigate to MealPlan screen in add mode
-    navigation.navigate('OptionPlan')
-  };
-
-  const handleDateSelect = (date: Date) => {
-    setSelectedStartDate(date);
-    setShowDatePicker(false);
+    navigation.navigate('OptionPlan', {});
   };
 
   const onDateChange = (event: any, date?: Date) => {
@@ -210,35 +193,25 @@ const PlanSelectionScreen = () => {
       const result = await apiClient.getPlanSettings();
       if (result.success && result.data) {
         if (result.data.start_date) {
-          console.log(result.data.start_date);
           const dateStr = result.data.start_date;
           let loadedDate: Date;
-          
-          // Handle different date formats
+
           if (typeof dateStr === 'string') {
             if (dateStr.includes('-')) {
-              // Format: YYYY-MM-DD
               const [year, month, day] = dateStr.split('-').map(Number);
-              loadedDate = new Date(year, month - 1, day); // month is 0-indexed
+              loadedDate = new Date(year, month - 1, day);
             } else if (dateStr.includes('/')) {
-              
               loadedDate = new Date(dateStr);
             } else {
-              // Try parsing as is
               loadedDate = new Date(dateStr);
             }
           } else {
-            // If it's already a Date object or timestamp
             loadedDate = new Date(dateStr);
           }
-          
-          // Validate the parsed date
           if (isNaN(loadedDate.getTime())) {
             console.warn('⚠️ Invalid date parsed, using current date');
             loadedDate = new Date();
           }
-          
-         
           setSelectedStartDate(loadedDate);
         }
         setIsAutoLoop(result.data.auto_loop || false);
@@ -258,20 +231,15 @@ const PlanSelectionScreen = () => {
   const handleSaveSettings = async () => {
     try {
       setShowSettingsModal(false);
-      
-      // Check if user has selected a current plan
       if (!currentPlanId) {
         Alert.alert('ข้อผิดพลาด', 'กรุณาเลือกแผนอาหารที่ต้องการใช้งานก่อน');
         return;
       }
-      
-      // Format date for API (avoid timezone issues)
       const year = selectedStartDate.getFullYear();
       const month = String(selectedStartDate.getMonth() + 1).padStart(2, '0');
       const day = String(selectedStartDate.getDate()).padStart(2, '0');
-      const formattedDate = `${year}-${month}-${day}`; // YYYY-MM-DD format
-      
-      // Call API to save plan settings
+      const formattedDate = `${year}-${month}-${day}`;
+
       const result = await apiClient.setPlanSettings({
         food_plan_id: currentPlanId,
         start_date: formattedDate,
@@ -287,10 +255,6 @@ const PlanSelectionScreen = () => {
       console.error('Error saving settings:', error);
       Alert.alert('ข้อผิดพลาด', 'เกิดข้อผิดพลาดในการบันทึกการตั้งค่า');
     }
-  };
-
-  const getMinDate = () => {
-    return new Date(); // Today as minimum date
   };
 
   const getMaxDate = () => {
@@ -339,9 +303,7 @@ const PlanSelectionScreen = () => {
               try {
                 const result = await apiClient.deleteUserFoodPlan(selectedPlan.id);
                 if (result.success) {
-                  // Remove from local state
                   setPlans(plans.filter(p => p.id !== selectedPlan.id));
-                  // If deleted plan was current plan, clear current plan ID
                   if (currentPlanId === selectedPlan.id) {
                     setCurrentPlanId(null);
                   }
@@ -393,7 +355,6 @@ const PlanSelectionScreen = () => {
 
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }}>
         <View className="flex-1 px-6 pt-6">
-          
           {isLoading ? (
             <View className="flex-1 items-center justify-center py-20">
               <View className="bg-white rounded-3xl p-8 shadow-lg">
@@ -405,170 +366,241 @@ const PlanSelectionScreen = () => {
             <>
               {plans && plans.length > 0 ? (
                 <>
-                  {/* Header Section */}
-                  
-
-                  {/* Plans Container - Single Card */}
-                  <View 
-                    className="bg-white rounded-3xl p-4 shadow-md shadow-slate-500"
-                    style={{
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: 0.1,
-                      shadowRadius: 8,
-                      elevation: 2,
-                    }}
-                  >
-                    {plans.map((plan, index) => {
-                      const isCurrentPlan = currentPlanId === plan.id;
-                      const isLastItem = index === plans.length - 1;
-                      
-                      return (
-                        <View key={plan.id}>
-                          <View 
-                            className={`flex-row items-center justify-between py-4 ${isCurrentPlan ? 'bg-orange-50' : ''}`}
-                            style={{
-                              paddingVertical: 16,
-                              paddingHorizontal: 8,
-                              borderRadius: isCurrentPlan ? 12 : 0,
-                              backgroundColor: isCurrentPlan ? '#fff7ed' : 'transparent'
-                            }}
-                          >
-                            <View className="flex-row items-center flex-1">
-                              {/* Plan Image */}
-                              <View 
-                                className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-100 to-yellow-100 items-center justify-center mr-4 overflow-hidden"
-                                style={{ 
-                                  width: 56, 
-                                  height: 56, 
-                                  borderRadius: 14,
-                                  marginRight: 16, 
-                                  overflow: 'hidden',
-                                  backgroundColor: isCurrentPlan ? '#fed7aa' : '#fef3c7'
-                                }}
-                              >
-                                {plan.img ? (
-                                  <Image 
-                                    source={{ uri: plan.img }} 
-                                    className="w-full h-full"
-                                    style={{ width: '100%', height: '100%' }}
-                                    resizeMode="cover"
-                                  />
-                                ) : (
-                                  <Text style={{ fontSize: 24 }}>
-                                    {isCurrentPlan ? '⭐' : '🍽️'}
-                                  </Text>
-                                )}
-                              </View>
-
-                              {/* Plan Info */}
-                              <View className="flex-1">
-                                <View className="flex-row items-center mb-1">
-                                  <Text 
-                                    className={`text-lg font-promptBold ${isCurrentPlan ? 'text-primary' : 'text-gray-800'}`}
-                                    style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 2 }}
-                                  >
-                                    {plan.name}
-                                  </Text>
-                                  
-                                </View>
-                                <Text 
-                                  className="text-sm text-gray-600 leading-5"
-                                  style={{ fontSize: 13, color: '#6b7280', lineHeight: 18 }}
-                                  numberOfLines={2}
-                                >
-                                  {plan.description || 'แผนอาหารสำหรับสุขภาพที่ดี'}
-                                </Text>
-                              </View>
+                  {/* Current Plan Card */}
+                  {currentPlanId && (() => {
+                    const currentPlan = plans.find(plan => plan.id === currentPlanId);
+                    if (!currentPlan) return null;
+                    return (
+                      <View className="mx-4 mb-4">
+                        <Text className="text-lg font-promptBold text-gray-800 mb-3">แผนที่ใช้อยู่</Text>
+                        <View 
+                          className="bg-white rounded-3xl p-5 border-2 border-orange-200"
+                          style={{
+                            shadowColor: '#fff',
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: 0.15,
+                            shadowRadius: 12,
+                            elevation: 4,
+                            backgroundColor: '#fff7ed'
+                          }}
+                        >
+                          <View className="flex-row items-center mb-4">
+                            <View 
+                              className="w-16 h-16 rounded-2xl  items-center justify-center mr-4 overflow-hidden"
+                              style={{ width: 64, height: 64, borderRadius: 16, marginRight: 16, overflow: 'hidden' }}
+                            >
+                              {currentPlan.img ? (
+                                <Image 
+                                  source={{ uri: currentPlan.img }} 
+                                  className="w-full h-full"
+                                  style={{ width: '100%', height: '100%' }}
+                                  resizeMode="cover"
+                                />
+                              ) : (
+                                <Text style={{ fontSize: 28 }}>⭐</Text>
+                              )}
                             </View>
 
-                            {/* Options Button */}
+                            <View className="flex-1">
+                              <View className="flex-row items-center mb-2">
+                                <Text className="text-xl font-promptBold text-primary mr-2">
+                                  {currentPlan.name}
+                                </Text>
+                               
+                              </View>
+                              <Text className="text-sm text-gray-600 leading-5" numberOfLines={2}>
+                                {currentPlan.description || 'แผนอาหารสำหรับสุขภาพที่ดี'}
+                              </Text>
+                            </View>
+
                             <TouchableOpacity 
                               className="p-2 rounded-full ml-3"
-                              style={{ 
-                                padding: 10,
-                                borderRadius: 50,
-                              }}
-                              onPress={(event) => handlePlanOptions(plan, event)}
+                              onPress={(event) => handlePlanOptions(currentPlan, event)}
                             >
-                              <Icon 
-                                name="ellipsis-vertical" 
-                                size={18} 
-                                color={isCurrentPlan ? '#ffb800' : '#6b7280'} 
-                              />
+                              <Icon name="ellipsis-vertical" size={18} color="#ffb800" />
                             </TouchableOpacity>
                           </View>
-                          
-                          {/* Divider Line */}
-                          {!isLastItem && (
-                            <View 
-                              className="border-b border-gray-100 mx-4"
-                              style={{ 
-                                borderBottomWidth: 1, 
-                                borderBottomColor: '#f3f4f6',
-                                marginHorizontal: 16
-                              }}
-                            />
+
+                          {/* Additional Settings Info */}
+                          {currentPlanSettings && (
+                            <View className="border-t border-primary/20 pt-3 mt-2">
+                              <View className="flex-row justify-between items-center mb-2">
+                                <View className="flex-row items-center">
+                                  <Icon name="calendar-outline" size={16} color="#6b7280" />
+                                  <Text className="text-sm text-gray-600 ml-2 font-prompt">
+                                    เริ่มต้น: {currentPlanSettings.start_date ? 
+                                      new Date(currentPlanSettings.start_date).toLocaleDateString('th-TH', {
+                                        year: 'numeric',
+                                        month: 'short', 
+                                        day: 'numeric'
+                                      }) : 'ไม่ระบุ'}
+                                  </Text>
+                                </View>
+                                <View className="flex-row items-center">
+                                  <Icon 
+                                    name={currentPlanSettings.auto_loop ? "repeat" : "pause"} 
+                                    size={16} 
+                                    color={currentPlanSettings.auto_loop ? "#22c55e" : "#6b7280"} 
+                                  />
+                                  <Text className={`text-sm ml-2 font-prompt ${currentPlanSettings.auto_loop ? 'text-green-600' : 'text-gray-600'}`}>
+                                    {currentPlanSettings.auto_loop ? 'วนซ้ำ' : 'ไม่วนซ้ำ'}
+                                  </Text>
+                                </View>
+                              </View>
+                            </View>
                           )}
                         </View>
-                      );
-                    })}
-                  </View>
+                      </View>
+                    );
+                  })()}
 
-                  {/* Create New Plan Button */}
-                  <TouchableOpacity 
-                    className="bg-gradient-to-r from-orange-400 to-yellow-400 rounded-3xl p-6 flex-row items-center justify-center mt-6 shadow-lg"
-                    style={{
-                      marginTop: 24,
-                      shadowColor: '#f59e0b',
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: 0.3,
-                      shadowRadius: 8,
-                      elevation: 8,
-                      backgroundColor: '#f59e0b'
-                    }}
-                    onPress={handleCreateNewPlan}
-                  >
-                    <View className="w-8 h-8 rounded-full bg-opacity-20 items-center justify-center mr-3">
-                      <Icon name="add" size={20} color="white" />
-                    </View>
-                    <Text className="text-lg font-promptBold text-white">สร้างแผนใหม่</Text>
-                  </TouchableOpacity>
+                  {/* Other Plans Section + Create Button wrapped in Fragment */}
+                  {plans.filter(plan => plan.id !== currentPlanId).length > 0 && (
+                    <>
+                      <View className="mx-4">
+                        <Text className="text-lg font-promptBold text-gray-800 mb-3">แผนอาหารทั้งหมด</Text>
+                        <View 
+                          className="bg-white rounded-3xl p-4 shadow-md shadow-slate-500"
+                          style={{
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: 0.1,
+                            shadowRadius: 8,
+                            elevation: 2,
+                          }}
+                        >
+                          {plans.filter(plan => plan.id !== currentPlanId).map((plan, index, filteredPlans) => {
+                            const isLastItem = index === filteredPlans.length - 1;
+                            return (
+                              <View key={plan.id}>
+                                <View 
+                                  className="flex-row items-center justify-between py-4"
+                                  style={{ paddingVertical: 16, paddingHorizontal: 8 }}
+                                >
+                                  <View className="flex-row items-center flex-1">
+                                    <View 
+                                      className="w-16 h-16 rounded-2xl bg-gradient-to-br  items-center justify-center mr-4 overflow-hidden"
+                                      style={{ width: 56, height: 56, borderRadius: 14, marginRight: 16, overflow: 'hidden', backgroundColor: '#fff' }}
+                                    >
+                                      {plan.img ? (
+                                        <Image 
+                                          source={{ uri: plan.img }} 
+                                          className="w-full h-full"
+                                          style={{ width: '100%', height: '100%' }}
+                                          resizeMode="cover"
+                                        />
+                                      ) : (
+                                        <Text style={{ fontSize: 24 }}>🍽️</Text>
+                                      )}
+                                    </View>
+
+                                    <View className="flex-1">
+                                      <View className="flex-row items-center mb-1">
+                                        <Text 
+                                          className="text-lg font-promptBold text-gray-800"
+                                          style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 2 }}
+                                        >
+                                          {plan.name}
+                                        </Text>
+                                      </View>
+                                      <Text 
+                                        className="text-sm text-gray-600 leading-5"
+                                        style={{ fontSize: 13, color: '#fff', lineHeight: 18 }}
+                                        numberOfLines={2}
+                                      >
+                                        {plan.description || 'แผนอาหารสำหรับสุขภาพที่ดี'}
+                                      </Text>
+                                    </View>
+                                  </View>
+
+                                  <TouchableOpacity 
+                                    className="p-2 rounded-full ml-3"
+                                    style={{ padding: 10, borderRadius: 50 }}
+                                    onPress={(event) => handlePlanOptions(plan, event)}
+                                  >
+                                    <Icon name="ellipsis-vertical" size={18} color="#6b7280" />
+                                  </TouchableOpacity>
+                                </View>
+                                
+                                {!isLastItem && (
+                                  <View 
+                                    className="border-b border-gray-100 mx-4"
+                                    style={{ borderBottomWidth: 1, borderBottomColor: '#f3f4f6', marginHorizontal: 16 }}
+                                  />
+                                )}
+                              </View>
+                            );
+                          })}
+                        </View>
+                      </View>
+
+                      {/* Create New Plan Button */}
+                      <TouchableOpacity onPress={handleCreateNewPlan} style={{ marginTop: 24, marginHorizontal: 16 }}>
+                        <LinearGradient
+                          colors={['#f97316', '#facc15']}
+                          start={[0, 0]}
+                          end={[1, 0]}
+                          style={{
+                            borderRadius: 24,
+                            padding: 16,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            shadowColor: '#f59e0b',
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: 0.3,
+                            shadowRadius: 8,
+                            elevation: 8,
+                          }}
+                        >
+                          <View className="w-8 h-8 rounded-full items-center justify-center mr-3" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}>
+                            <Icon name="add" size={20} color="white" />
+                          </View>
+                          <Text className="text-lg font-promptBold text-white">สร้างแผนใหม่</Text>
+                        </LinearGradient>
+                      </TouchableOpacity>
+                    </>
+                  )}
                 </>
               ) : (
                 /* Empty State */
                 <View className="flex-1 items-center justify-center py-12">
                   <View className="bg-white rounded-3xl p-8 shadow-lg items-center max-w-sm mx-auto">
-                    {/* Illustration */}
-                    <View className="w-24 h-24 rounded-full bg-gradient-to-br from-orange-100 to-yellow-100 items-center justify-center mb-6">
+                    <LinearGradient
+                      colors={["#fed7aa", "#fff"]}
+                      start={[0,0]}
+                      end={[1,1]}
+                      style={{ width: 96, height: 96, borderRadius: 48, marginBottom: 24, alignItems: 'center', justifyContent: 'center' }}
+                    >
                       <Text style={{ fontSize: 48 }}>🍽️</Text>
-                    </View>
-                    
-                    {/* Empty State Text */}
+                    </LinearGradient>
                     <Text className="text-xl font-promptBold text-gray-800 mb-2 text-center">
                       ยังไม่มีแผนอาหาร
                     </Text>
                     <Text className="text-sm text-gray-500 text-center mb-8 leading-6">
                       เริ่มต้นการใช้งานด้วยการสร้าง{'\n'}แผนอาหารแรกของคุณ
                     </Text>
-                    
-                    {/* Create Plan Button */}
-                    <TouchableOpacity 
-                      className="bg-gradient-to-r from-orange-400 to-yellow-400 rounded-2xl px-8 py-4 shadow-lg"
-                      style={{
-                        shadowColor: '#ffff',
-                        shadowOffset: { width: 0, height: 4 },
-                        shadowOpacity: 0.3,
-                        shadowRadius: 8,
-                        elevation: 1,
-                        
-                      }}
-                      onPress={handleCreateNewPlan}
-                    >
-                      <View className="flex-row items-center">
-                        <Icon name="add-circle" size={24} color="white" />
-                        <Text className="text-base font-promptBold text-white ml-2">สร้างแผนใหม่</Text>
-                      </View>
+                    <TouchableOpacity onPress={handleCreateNewPlan} style={{ marginTop: 16 }}>
+                      <LinearGradient
+                        colors={['#f97316', '#facc15']}
+                        start={[0, 0]}
+                        end={[1, 0]}
+                        style={{
+                          borderRadius: 16,
+                          paddingHorizontal: 32,
+                          paddingVertical: 16,
+                          shadowColor: '#000',
+                          shadowOffset: { width: 0, height: 4 },
+                          shadowOpacity: 0.3,
+                          shadowRadius: 8,
+                          elevation: 1,
+                        }}
+                      >
+                        <View className="flex-row items-center">
+                          <Icon name="add-circle" size={24} color="white" />
+                          <Text className="text-base font-promptBold text-white ml-2">สร้างแผนใหม่</Text>
+                        </View>
+                      </LinearGradient>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -695,7 +727,6 @@ const PlanSelectionScreen = () => {
                   borderRadius: 24
                 }}
               >
-                {/* Header */}
                 <View className="flex-row items-center justify-between mb-6">
                   <Text className="text-xl font-promptBold text-gray-800">ตั้งค่าแผนการกิน</Text>
                   <TouchableOpacity 
@@ -706,7 +737,6 @@ const PlanSelectionScreen = () => {
                   </TouchableOpacity>
                 </View>
 
-                {/* Start Date Setting */}
                 <View className="mb-6">
                   <Text className="text-lg font-promptSemiBold text-gray-800 mb-2">ตั้งค่าวันเริ่มต้นแผน</Text>
                   <Text className="text-sm text-gray-500 mb-4 leading-5">
@@ -746,7 +776,6 @@ const PlanSelectionScreen = () => {
                   </TouchableOpacity>
                 </View>
 
-                {/* Auto Loop Setting */}
                 <View className="mb-8">
                   <View className="flex-row items-center justify-between mb-4">
                     <View className="flex-1 mr-4">
@@ -765,7 +794,6 @@ const PlanSelectionScreen = () => {
                   </View>
                 </View>
 
-                {/* Action Buttons */}
                 <View className="flex-row gap-3">
                   <TouchableOpacity 
                     className="flex-1 bg-gray-100 rounded-2xl py-4 items-center"
