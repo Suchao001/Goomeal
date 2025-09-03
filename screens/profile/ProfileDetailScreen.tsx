@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert, ActivityIndicator, RefreshControl, Modal, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert, ActivityIndicator, RefreshControl, Modal, TextInput, Image } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/navigation';
@@ -8,6 +9,16 @@ import { useAuth } from '../../AuthContext';
 import Menu from '../material/Menu';
 import { calculateBMIResult, getBMICategories, isChildForBMI } from '../../utils/bmiCalculator';
 import { apiClient } from '../../utils/apiClient';
+
+// Avatar images mapping
+const avatarImages = {
+  1: require('../../assets/images/avatar/0.png'),
+  2: require('../../assets/images/avatar/1.png'),
+  3: require('../../assets/images/avatar/2.png'),
+  4: require('../../assets/images/avatar/3.png'),
+  5: require('../../assets/images/avatar/4.png'),
+  6: require('../../assets/images/avatar/5.png'),
+};
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -22,6 +33,36 @@ const ProfileDetailScreen = () => {
   // Weight update modal states
   const [showWeightModal, setShowWeightModal] = useState(false);
   const [newWeight, setNewWeight] = useState('');
+
+  // Avatar states
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [selectedAvatar, setSelectedAvatar] = useState(1); // Default to avatar 1
+
+  // Load avatar from AsyncStorage on component mount
+  useEffect(() => {
+    const loadAvatar = async () => {
+      try {
+        const storedAvatar = await AsyncStorage.getItem('selectedAvatar');
+        if (storedAvatar) {
+          setSelectedAvatar(parseInt(storedAvatar, 10));
+        }
+      } catch (error) {
+        console.error('Error loading avatar from AsyncStorage:', error);
+      }
+    };
+
+    loadAvatar();
+  }, []);
+
+  // Save avatar to AsyncStorage
+  const saveAvatarToStorage = async (avatarId: number) => {
+    try {
+      await AsyncStorage.setItem('selectedAvatar', avatarId.toString());
+      console.log('Avatar saved to AsyncStorage:', avatarId);
+    } catch (error) {
+      console.error('Error saving avatar to AsyncStorage:', error);
+    }
+  };
 
   const loadProfile = useCallback(async () => {
     try {
@@ -109,6 +150,17 @@ const ProfileDetailScreen = () => {
     setShowWeightModal(false);
     setNewWeight('');
   };
+
+  // Avatar functions
+  const handleAvatarPress = useCallback(() => {
+    setShowAvatarModal(true);
+  }, []);
+
+  const handleSelectAvatar = useCallback(async (avatarId: number) => {
+    setSelectedAvatar(avatarId);
+    await saveAvatarToStorage(avatarId);
+    setShowAvatarModal(false);
+  }, []);
 
   // Helper functions for weight adjustment
   const increaseWeight = () => {
@@ -271,10 +323,25 @@ const ProfileDetailScreen = () => {
           
           {/* Profile Header */}
           <View className="flex-row items-center mb-5">
-            <View className="mr-4">
-              <View className="w-20 h-20 bg-gray-200 rounded-full items-center justify-center">
-                <Icon name="person" size={48} color="#9ca3af" />
-              </View>
+            <View className="mr-4 relative">
+              <TouchableOpacity onPress={handleAvatarPress}>
+                <View className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full items-center justify-center shadow-lg">
+                  <Image 
+                    source={avatarImages[selectedAvatar as keyof typeof avatarImages]}
+                    className="w-18 h-18 rounded-full"
+                    style={{ width: 72, height: 72 }}
+                    resizeMode="cover"
+                  />
+                </View>
+              </TouchableOpacity>
+              
+              {/* Edit icon */}
+              <TouchableOpacity 
+                className="absolute -bottom-1 -right-1 w-7 h-7 bg-white rounded-full items-center justify-center shadow-sm border border-gray-200"
+                onPress={handleAvatarPress}
+              >
+                <Icon name="pencil" size={14} color="#6b7280" />
+              </TouchableOpacity>
             </View>
             <View className="flex-1">
               <Text className="text-2xl text-gray-800 mb-3 font-promptBold">{username}</Text>
@@ -568,6 +635,51 @@ const ProfileDetailScreen = () => {
                   บันทึก
                 </Text>
               </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Avatar Selection Modal */}
+      <Modal
+        visible={showAvatarModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowAvatarModal(false)}
+      >
+        <View className="flex-1 justify-end bg-black/50">
+          <View className="bg-white rounded-t-3xl px-6 py-8">
+            <View className="flex-row justify-between items-center mb-6">
+              <Text className="text-xl font-promptSemiBold text-gray-800">เลือก Avatar</Text>
+              <TouchableOpacity 
+                onPress={() => setShowAvatarModal(false)}
+                className="w-8 h-8 items-center justify-center"
+              >
+                <Icon name="close" size={24} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+            
+            <View className="flex-row justify-between flex-wrap">
+              {[1, 2, 3, 4, 5, 6].map((avatarId) => (
+                <TouchableOpacity
+                  key={avatarId}
+                  onPress={() => handleSelectAvatar(avatarId)}
+                  className={`mb-4 ${selectedAvatar === avatarId ? 'opacity-100' : 'opacity-70'}`}
+                >
+                  <View className={`w-16 h-16 rounded-full ${selectedAvatar === avatarId ? 'border-3 border-primary' : 'border-2 border-gray-200'} items-center justify-center`}>
+                    <Image 
+                      source={avatarImages[avatarId as keyof typeof avatarImages]}
+                      className="w-14 h-14 rounded-full"
+                      resizeMode="cover"
+                    />
+                  </View>
+                  {selectedAvatar === avatarId && (
+                    <View className="absolute -top-1 -right-1 w-6 h-6 bg-primary rounded-full items-center justify-center">
+                      <Icon name="checkmark" size={14} color="white" />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
         </View>

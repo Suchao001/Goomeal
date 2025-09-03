@@ -1,9 +1,20 @@
-import React, { useCallback } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert, SafeAreaView } from 'react-native';
+import React, { useCallback, useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Alert, SafeAreaView, Modal, Image } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTypedNavigation } from '../hooks/Navigation';
 import { useAuth } from '../AuthContext';
 import Menu from './material/Menu';
+
+// Avatar images mapping
+const avatarImages = {
+  1: require('./../assets/images/avatar/0.png'),
+  2: require('./../assets/images/avatar/1.png'),
+  3: require('./../assets/images/avatar/2.png'),
+  4: require('./../assets/images/avatar/3.png'),
+  5: require('./../assets/images/avatar/4.png'),
+  6: require('./../assets/images/avatar/5.png'),
+};
 
 
 /**
@@ -13,10 +24,49 @@ import Menu from './material/Menu';
 const MenuScreen = () => {
   const navigation = useTypedNavigation<'Menu'>(); 
   const { logout, user } = useAuth();
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [selectedAvatar, setSelectedAvatar] = useState(1); // Default to avatar 1
+
+  // Load avatar from AsyncStorage on component mount
+  useEffect(() => {
+    const loadAvatar = async () => {
+      try {
+        const storedAvatar = await AsyncStorage.getItem('selectedAvatar');
+        if (storedAvatar) {
+          setSelectedAvatar(parseInt(storedAvatar, 10));
+        }
+      } catch (error) {
+        console.error('Error loading avatar from AsyncStorage:', error);
+      }
+    };
+
+    loadAvatar();
+  }, []);
+
+  // Save avatar to AsyncStorage
+  const saveAvatarToStorage = async (avatarId: number) => {
+    try {
+      await AsyncStorage.setItem('selectedAvatar', avatarId.toString());
+      console.log('Avatar saved to AsyncStorage:', avatarId);
+    } catch (error) {
+      console.error('Error saving avatar to AsyncStorage:', error);
+    }
+  };
 
   const handleProfilePress = useCallback(() => {
     navigation.navigate('ProfileDetail');
   }, [navigation]);
+
+  // Avatar functions
+  const handleAvatarPress = useCallback(() => {
+    setShowAvatarModal(true);
+  }, []);
+
+  const handleSelectAvatar = useCallback(async (avatarId: number) => {
+    setSelectedAvatar(avatarId);
+    await saveAvatarToStorage(avatarId);
+    setShowAvatarModal(false);
+  }, []);
 
   const handleAccountSettingsPress = useCallback(() => {
     navigation.navigate('EditAccountSettings');
@@ -79,15 +129,23 @@ const MenuScreen = () => {
           <View className="flex-row items-center">
         {/* Avatar with gradient background */}
         <View className="relative">
-          <View className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full items-center justify-center shadow-lg">
-            <View className="w-14 h-14 bg-white/20 rounded-full items-center justify-center backdrop-blur-sm">
-              <Icon name="person" size={24} color="black" />
+          <TouchableOpacity onPress={handleAvatarPress}>
+            <View className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full items-center justify-center shadow-lg">
+              <Image 
+                source={avatarImages[selectedAvatar as keyof typeof avatarImages]}
+                className="w-14 h-14 rounded-full"
+                resizeMode="cover"
+              />
             </View>
-          </View>
+          </TouchableOpacity>
           
-          <View className="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full items-center justify-center shadow-sm">
-            <View className="w-3 h-3 bg-green-500 rounded-full"></View>
-          </View>
+          {/* Edit icon */}
+          <TouchableOpacity 
+            className="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full items-center justify-center shadow-sm border border-gray-200"
+            onPress={handleAvatarPress}
+          >
+            <Icon name="pencil" size={12} color="#6b7280" />
+          </TouchableOpacity>
         </View>
 
   <View className="ml-4 flex-1">
@@ -295,6 +353,51 @@ const MenuScreen = () => {
           </Text>
         </View>
       </ScrollView>
+
+      {/* Avatar Selection Modal */}
+      <Modal
+        visible={showAvatarModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowAvatarModal(false)}
+      >
+        <View className="flex-1 justify-end bg-black/50">
+          <View className="bg-white rounded-t-3xl px-6 py-8">
+            <View className="flex-row justify-between items-center mb-6">
+              <Text className="text-xl font-promptSemiBold text-gray-800">เลือก Avatar</Text>
+              <TouchableOpacity 
+                onPress={() => setShowAvatarModal(false)}
+                className="w-8 h-8 items-center justify-center"
+              >
+                <Icon name="close" size={24} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+            
+            <View className="flex-row justify-between flex-wrap">
+              {[1, 2, 3, 4, 5, 6].map((avatarId) => (
+                <TouchableOpacity
+                  key={avatarId}
+                  onPress={() => handleSelectAvatar(avatarId)}
+                  className={`mb-4 ${selectedAvatar === avatarId ? 'opacity-100' : 'opacity-70'}`}
+                >
+                  <View className={`w-16 h-16 rounded-full ${selectedAvatar === avatarId ? 'border-3 border-primary' : 'border-2 border-gray-200'} items-center justify-center`}>
+                    <Image 
+                      source={avatarImages[avatarId as keyof typeof avatarImages]}
+                      className="w-14 h-14 rounded-full"
+                      resizeMode="cover"
+                    />
+                  </View>
+                  {selectedAvatar === avatarId && (
+                    <View className="absolute -top-1 -right-1 w-6 h-6 bg-primary rounded-full items-center justify-center">
+                      <Icon name="checkmark" size={14} color="white" />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Bottom Navigation */}
       <Menu />
