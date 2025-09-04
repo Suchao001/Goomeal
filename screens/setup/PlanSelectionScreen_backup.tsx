@@ -30,7 +30,7 @@ const PlanSelectionScreen = () => {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedStartDate, setSelectedStartDate] = useState<Date>(new Date());
-  const [isAutoLoop, setIsAutoLoop] = useState(false);
+  const [isRepeat, setIsRepeat] = useState(false);
   const [isLoadingSettings, setIsLoadingSettings] = useState(false);
   const [showNativeDatePicker, setShowNativeDatePicker] = useState(false);
 
@@ -244,7 +244,7 @@ const PlanSelectionScreen = () => {
 
       const response = await apiClient.put(`/food-plan-users/${selectedPlan.user_plan_id}/settings`, {
         start_date: selectedStartDate.toISOString(),
-        is_auto_loop: isAutoLoop
+        is_repeat: isRepeat
       });
 
       if (response.success) {
@@ -393,7 +393,7 @@ const PlanSelectionScreen = () => {
                                     className="text-sm text-gray-600"
                                     style={{ fontSize: 13, color: '#6b7280' }}
                                   >
-                                    วนลูป: {currentPlanSettings.is_auto_loop ? 'เปิด' : 'ปิด'}
+                                    วนลูป: {currentPlanSettings.is_repeat ? 'เปิด' : 'ปิด'}
                                   </Text>
                                 </View>
                               )}
@@ -753,10 +753,10 @@ const PlanSelectionScreen = () => {
                   </Text>
                 </View>
                 <Switch
-                  value={isAutoLoop}
-                  onValueChange={setIsAutoLoop}
+                  value={isRepeat}
+                  onValueChange={setIsRepeat}
                   trackColor={{ false: '#e5e7eb', true: '#fed7aa' }}
-                  thumbColor={isAutoLoop ? '#f59e0b' : '#f3f4f6'}
+                  thumbColor={isRepeat ? '#f59e0b' : '#f3f4f6'}
                 />
               </View>
             </View>

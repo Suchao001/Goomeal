@@ -447,9 +447,9 @@ export const knowCurrentFoodPlan = async (req: Request, res: Response): Promise<
 // Set plan settings (start date and auto loop)
 export const setPlanSettings = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { food_plan_id, start_date, auto_loop } = req.body;
+    const { food_plan_id, start_date, is_repeat } = req.body;
     const userId = (req as any).user?.id;
-    
+   
     if (!userId) {
       res.status(401).json({ 
         success: false, 
@@ -492,7 +492,7 @@ export const setPlanSettings = async (req: Request, res: Response): Promise<void
       .where({ id: food_plan_id, user_id: userId })
       .update({
         plan_start_date: start_date,
-        is_repeat: auto_loop || false
+        is_repeat: is_repeat || false
       });
 
     // Also update current plan in user_food_plan_using for backward compatibility
@@ -507,7 +507,7 @@ export const setPlanSettings = async (req: Request, res: Response): Promise<void
         .update({
           food_plan_id: food_plan_id,
           start_date: start_date,
-          is_repeat: auto_loop || false
+          is_repeat: is_repeat || false
         });
     } else {
       // Create new recordป
@@ -515,7 +515,7 @@ export const setPlanSettings = async (req: Request, res: Response): Promise<void
         food_plan_id: food_plan_id,
         user_id: userId,
         start_date: start_date,
-        is_repeat: auto_loop || false
+        is_repeat: is_repeat || false
       });
     }
 
@@ -525,7 +525,7 @@ export const setPlanSettings = async (req: Request, res: Response): Promise<void
       data: {
         food_plan_id: food_plan_id,
         start_date: start_date,
-        auto_loop: auto_loop || false
+        is_repeat: is_repeat || false
       }
     });
 
@@ -603,7 +603,7 @@ export const getPlanSettings = async (req: Request, res: Response): Promise<void
         data: {
           food_plan_id: null,
           start_date: new Date().toISOString().split('T')[0],
-          auto_loop: false
+          is_repeat: false
         }
       });
       return;
@@ -623,7 +623,7 @@ export const getPlanSettings = async (req: Request, res: Response): Promise<void
         data: {
           food_plan_id: currentPlan.food_plan_id,
           start_date: toBangkokDate(currentPlan.start_date) || new Date().toISOString().split('T')[0],
-          auto_loop: currentPlan.is_repeat || false
+          is_repeat: currentPlan.is_repeat || false
         }
       });
       return;
@@ -638,7 +638,7 @@ export const getPlanSettings = async (req: Request, res: Response): Promise<void
       data: {
         food_plan_id: planSettings.id,
         start_date: bangkokStartDate,
-        auto_loop: planSettings.is_repeat || false
+        is_repeat: planSettings.is_repeat || false
       }
     });
 

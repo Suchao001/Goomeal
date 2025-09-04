@@ -277,13 +277,13 @@ export class FoodPlanApiClient extends BaseApiClient {
   async setPlanSettings(data: {
     food_plan_id: number;
     start_date: string;
-    auto_loop: boolean;
+    is_repeat: boolean;
   }) {
     try {
       const response = await this.axiosInstance.post('/user-food-plans/set-plan-settings', {
         food_plan_id: data.food_plan_id,
         start_date: data.start_date,
-        auto_loop: data.auto_loop
+        is_repeat: data.is_repeat
       });
 
       return {

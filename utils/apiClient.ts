@@ -111,7 +111,7 @@ export class ApiClient extends BaseApiClient {
   async setPlanSettings(data: {
     food_plan_id: number;
     start_date: string;
-    auto_loop: boolean;
+    is_repeat: boolean;
   }) {
     return this.foodPlanClient.setPlanSettings(data);
   }

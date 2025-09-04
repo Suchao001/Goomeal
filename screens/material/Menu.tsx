@@ -2,6 +2,7 @@ import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { useTypedNavigation, useTypedRoute } from '../../hooks/Navigation';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const Menu = () => {
   const navigation = useTypedNavigation();
@@ -16,8 +17,12 @@ const Menu = () => {
   };
   
   return (
-  
-    <View style={styles.container}>
+    <LinearGradient
+      colors={['#ffb800', '#ff9a33']}
+      start={{ x: 0, y: 0 }}   
+      end={{ x: 0, y: 1.5 }}     
+      style={styles.container}
+    >
       {/* Home Icon */}
       <TouchableOpacity 
         onPress={() => navigation.navigate('Home')}
@@ -57,7 +62,7 @@ const Menu = () => {
       >
         <Icon name="person" size={24} color={getIconColor('Menu')} />
       </TouchableOpacity>
-    </View>
+    </LinearGradient>
   );
 };
 
@@ -67,7 +72,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#ffb800', // primary color
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingVertical: 16,

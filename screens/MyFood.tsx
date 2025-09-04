@@ -171,9 +171,7 @@ const MyFood = () => {
           <View className="flex-1">
             {/* Badges ข้างบนชื่อ */}
             <View className="flex-row justify-end mb-1 space-x-1 gap-1">
-              <View className="bg-blue-100 rounded-full px-2 py-1">
-                <Text className="text-xs text-blue-600 font-prompt">เมนูของฉัน</Text>
-              </View>
+              
               {food.src && (
                 <View className={`rounded-full px-2 py-1 ${
                   food.src === 'ai' ? 'bg-purple-100' : 'bg-green-100'
@@ -181,7 +179,7 @@ const MyFood = () => {
                   <Text className={`text-xs font-prompt ${
                     food.src === 'ai' ? 'text-purple-600' : 'text-green-600'
                   }`}>
-                    {food.src === 'ai' ? '🤖 AI' : '👤 เพิ่มเอง'}
+                    {food.src === 'ai' ? '🤖 AI' : ' เพิ่มเอง'}
                   </Text>
                 </View>
               )}
@@ -226,7 +224,7 @@ const MyFood = () => {
           <Icon name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         
-        <Text className="text-xl font-bold text-white font-prompt">จัดการเมนูอาหารของฉัน</Text>
+        <Text className="text-xl  text-white font-promptBold">จัดการเมนูอาหารของฉัน</Text>
         
         <TouchableOpacity 
           className="w-10 h-10 rounded-lg items-center justify-center"

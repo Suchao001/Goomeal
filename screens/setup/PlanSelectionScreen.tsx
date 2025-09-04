@@ -30,7 +30,7 @@ const PlanSelectionScreen = () => {
   // Settings modal states
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [selectedStartDate, setSelectedStartDate] = useState<Date>(new Date());
-  const [isAutoLoop, setIsAutoLoop] = useState(false);
+  const [isRepeat, setIsRepeat] = useState(false);
   const [isLoadingSettings, setIsLoadingSettings] = useState(false);
   const [showNativeDatePicker, setShowNativeDatePicker] = useState(false);
 
@@ -72,13 +72,25 @@ const PlanSelectionScreen = () => {
 
   const loadCurrentPlan = async () => {
     try {
+      console.log('🔄 Loading current plan...');
       const result = await apiClient.knowCurrentFoodPlan();
+      console.log('📥 Current plan result:', result);
+      
       if (result.success) {
+        console.log('📊 Current plan data:', {
+          food_plan_id: result.data.food_plan_id,
+          is_repeat: result.data?.is_repeat,
+          start_date: result.data?.start_date
+        });
+        
         setCurrentPlanId(result.data.food_plan_id);
         setCurrentPlanSettings(result.data);
+        
+        // Don't set isRepeat here - let loadPlanSettings handle it
+        console.log('✅ Current plan loaded successfully');
       }
     } catch (error) {
-      console.error('Error loading current plan:', error);
+      console.error('❌ Error loading current plan:', error);
       // user อาจยังไม่มี current plan ก็ไม่ต้อง alert
     }
   };
@@ -187,19 +199,29 @@ const PlanSelectionScreen = () => {
     }
   };
 
-  const loadPlanSettings = async () => {
+    const loadPlanSettings = async () => {
     setIsLoadingSettings(true);
     try {
+      console.log('🔄 Loading plan settings...');
       const result = await apiClient.getPlanSettings();
+      console.log('📥 Plan settings result:', result);
+      
       if (result.success && result.data) {
+        console.log('📊 Plan settings data:', {
+          start_date: result.data.start_date,
+          is_repeat: result.data.is_repeat,
+          food_plan_id: result.data.food_plan_id
+        });
+        
         if (result.data.start_date) {
           const dateStr = result.data.start_date;
           let loadedDate: Date;
 
           if (typeof dateStr === 'string') {
             if (dateStr.includes('-')) {
+              // Handle YYYY-MM-DD format
               const [year, month, day] = dateStr.split('-').map(Number);
-              loadedDate = new Date(year, month - 1, day);
+              loadedDate = new Date(year, month - 1, day); // month is 0-indexed
             } else if (dateStr.includes('/')) {
               loadedDate = new Date(dateStr);
             } else {
@@ -212,12 +234,18 @@ const PlanSelectionScreen = () => {
             console.warn('⚠️ Invalid date parsed, using current date');
             loadedDate = new Date();
           }
+          console.log('📅 Setting date to:', loadedDate);
           setSelectedStartDate(loadedDate);
         }
-        setIsAutoLoop(result.data.auto_loop || false);
+        
+        const repeatValue = Boolean(result.data.is_repeat);
+        console.log('🔄 Setting is_repeat to:', repeatValue, 'from:', result.data.is_repeat, 'type:', typeof result.data.is_repeat);
+        setIsRepeat(repeatValue);
+      } else {
+        console.log('❌ Failed to load plan settings:', result.error);
       }
     } catch (error) {
-      console.error('Error loading plan settings:', error);
+      console.error('❌ Error loading plan settings:', error);
     } finally {
       setIsLoadingSettings(false);
     }
@@ -243,10 +271,17 @@ const PlanSelectionScreen = () => {
       const result = await apiClient.setPlanSettings({
         food_plan_id: currentPlanId,
         start_date: formattedDate,
-        auto_loop: isAutoLoop
+        is_repeat: isRepeat
       });
 
       if (result.success) {
+        // อัพเดท currentPlanSettings state ด้วย
+        setCurrentPlanSettings((prevSettings: any) => ({
+          ...prevSettings,
+          start_date: formattedDate,
+          is_repeat: isRepeat
+        }));
+        
         Alert.alert('สำเร็จ', 'บันทึกการตั้งค่าเรียบร้อยแล้ว');
       } else {
         Alert.alert('ข้อผิดพลาด', result.error || 'เกิดข้อผิดพลาดในการบันทึก');
@@ -344,16 +379,10 @@ const PlanSelectionScreen = () => {
           >
             <Icon name='add' size={24} color="#ffb800" />
           </TouchableOpacity>
-          <TouchableOpacity 
-            className="p-2 rounded-full"
-            onPress={handleOpenSettingsModal}
-          >
-            <Icon name='settings-outline' size={24} color="#9ca3af" />
-          </TouchableOpacity>
         </View>
       </View>
 
-      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }}>
+                  <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100 }}>
         <View className="flex-1 px-6 pt-6">
           {isLoading ? (
             <View className="flex-1 items-center justify-center py-20">
@@ -372,7 +401,16 @@ const PlanSelectionScreen = () => {
                     if (!currentPlan) return null;
                     return (
                       <View className="mx-4 mb-4">
-                        <Text className="text-lg font-promptBold text-gray-800 mb-3">แผนที่ใช้อยู่</Text>
+                        <View className="flex-row items-center justify-between mb-3">
+                          <Text className="text-lg font-promptBold text-gray-800">แผนที่ใช้อยู่</Text>
+                          <TouchableOpacity 
+                            className="flex-row items-center bg-gray-50 px-3 py-2 rounded-full border border-gray-200"
+                            onPress={handleOpenSettingsModal}
+                          >
+                            <Icon name='settings-outline' size={16} color="#9ca3af" />
+                            <Text className="text-sm font-promptMedium text-gray-600 ml-2">ตั้งค่า</Text>
+                          </TouchableOpacity>
+                        </View>
                         <View 
                           className="bg-white rounded-3xl p-5 border-2 border-orange-200"
                           style={{
@@ -381,7 +419,7 @@ const PlanSelectionScreen = () => {
                             shadowOpacity: 0.15,
                             shadowRadius: 12,
                             elevation: 4,
-                            backgroundColor: '#fff7ed'
+                            backgroundColor: '#fff'
                           }}
                         >
                           <View className="flex-row items-center mb-4">
@@ -438,12 +476,13 @@ const PlanSelectionScreen = () => {
                                 </View>
                                 <View className="flex-row items-center">
                                   <Icon 
-                                    name={currentPlanSettings.auto_loop ? "repeat" : "pause"} 
+                                    name={Boolean(currentPlanSettings.is_repeat) ? "repeat" : ""} 
                                     size={16} 
-                                    color={currentPlanSettings.auto_loop ? "#22c55e" : "#6b7280"} 
+                                    color={Boolean(currentPlanSettings.is_repeat) ? "#22c55e" : "#6b7280"} 
                                   />
-                                  <Text className={`text-sm ml-2 font-prompt ${currentPlanSettings.auto_loop ? 'text-green-600' : 'text-gray-600'}`}>
-                                    {currentPlanSettings.auto_loop ? 'วนซ้ำ' : 'ไม่วนซ้ำ'}
+                                  <Text className={`text-sm ml-2 font-prompt ${Boolean(currentPlanSettings.is_repeat) ? 'text-green-600' : 'text-gray-600'}`}>
+                                    {Boolean(currentPlanSettings.is_repeat) ? 'วนซ้ำ' : 'ไม่วนซ้ำ'} 
+                                  
                                   </Text>
                                 </View>
                               </View>
@@ -537,16 +576,16 @@ const PlanSelectionScreen = () => {
                       {/* Create New Plan Button */}
                       <TouchableOpacity onPress={handleCreateNewPlan} style={{ marginTop: 24, marginHorizontal: 16 }}>
                         <LinearGradient
-                          colors={['#f97316', '#facc15']}
+                          colors={['#ffb800', '#ff9a33']}
                           start={[0, 0]}
-                          end={[1, 0]}
+                          end={[1.5, 0]}
                           style={{
                             borderRadius: 24,
                             padding: 16,
                             flexDirection: 'row',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            shadowColor: '#f59e0b',
+                            shadowColor: '#ffb800',
                             shadowOffset: { width: 0, height: 4 },
                             shadowOpacity: 0.3,
                             shadowRadius: 8,
@@ -582,14 +621,14 @@ const PlanSelectionScreen = () => {
                     </Text>
                     <TouchableOpacity onPress={handleCreateNewPlan} style={{ marginTop: 16 }}>
                       <LinearGradient
-                        colors={['#f97316', '#facc15']}
+                        colors={['#ffb800', '#e6a600']}
                         start={[0, 0]}
                         end={[1, 0]}
                         style={{
                           borderRadius: 16,
                           paddingHorizontal: 32,
                           paddingVertical: 16,
-                          shadowColor: '#000',
+                          shadowColor: '#ffb800',
                           shadowOffset: { width: 0, height: 4 },
                           shadowOpacity: 0.3,
                           shadowRadius: 8,
@@ -737,78 +776,89 @@ const PlanSelectionScreen = () => {
                   </TouchableOpacity>
                 </View>
 
-                <View className="mb-6">
-                  <Text className="text-lg font-promptSemiBold text-gray-800 mb-2">ตั้งค่าวันเริ่มต้นแผน</Text>
-                  <Text className="text-sm text-gray-500 mb-4 leading-5">
-                    ระบบปกติจะเลือกวันที่เริ่มต้นแผนการกินเป็นวันที่เซ็ทอาหารวันนั้น ๆ
-                  </Text>
-                  
-                  <TouchableOpacity 
-                    className="bg-gray-50 rounded-2xl p-4 flex-row items-center justify-between border border-gray-200"
-                    onPress={() => setShowNativeDatePicker(true)}
-                  >
-                    <View className="flex-row items-center">
-                      <View className="w-10 h-10 rounded-full bg-orange-100 items-center justify-center mr-3">
-                        <Icon name="calendar" size={20} color="#ffb800" />
-                      </View>
-                      <View>
-                        <Text className="text-sm font-promptMedium text-gray-700">วันเริ่มต้นแผน</Text>
-                        <Text className="text-lg font-promptSemiBold text-gray-800">
-                          {(() => {
-                            try {
-                              if (isNaN(selectedStartDate.getTime())) {
-                                return 'ยังไม่ได้ตั้งค่า';
-                              }
-                              return selectedStartDate.toLocaleDateString('th-TH', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                              });
-                            } catch (error) {
-                              console.error('Date formatting error:', error);
-                              return 'รูปแบบวันที่ไม่ถูกต้อง';
-                            }
-                          })()}
-                        </Text>
-                      </View>
-                    </View>
-                    <Icon name="chevron-forward" size={20} color="#9ca3af" />
-                  </TouchableOpacity>
-                </View>
+              
 
-                <View className="mb-8">
-                  <View className="flex-row items-center justify-between mb-4">
-                    <View className="flex-1 mr-4">
-                      <Text className="text-lg font-promptSemiBold text-gray-800 mb-1">วนซ้ำแผนการกิน</Text>
-                      <Text className="text-sm text-gray-500 leading-5">
-                        เมื่อสิ้นสุดแผนการกินของคุณระบบจะวนรอบ และเริ่มต้นแผนการกินของวันแรกให้อัตโนมัติ
-                      </Text>
-                    </View>
-                    <Switch
-                      value={isAutoLoop}
-                      onValueChange={setIsAutoLoop}
-                      trackColor={{ false: '#f3f4f6', true: '#ffd966' }}
-                      thumbColor={isAutoLoop ? '#ffb800' : '#9ca3af'}
-                      ios_backgroundColor="#f3f4f6"
-                    />
+                {isLoadingSettings ? (
+                  <View className="items-center justify-center py-8">
+                    <ActivityIndicator size="large" color="#f59e0b" />
+                    <Text className="text-gray-600 mt-4 text-center font-promptMedium">กำลังโหลดการตั้งค่า...</Text>
                   </View>
-                </View>
+                ) : (
+                  <>
+                    <View className="mb-6">
+                      <Text className="text-lg font-promptSemiBold text-gray-800 mb-2">ตั้งค่าวันเริ่มต้นแผน</Text>
+                      <Text className="text-sm text-gray-500 mb-4 leading-5">
+                        ระบบปกติจะเลือกวันที่เริ่มต้นแผนการกินเป็นวันที่เซ็ทอาหารวันนั้น ๆ
+                      </Text>
+                  
+                      <TouchableOpacity 
+                        className="bg-gray-50 rounded-2xl p-4 flex-row items-center justify-between border border-gray-200"
+                        onPress={() => setShowNativeDatePicker(true)}
+                      >
+                        <View className="flex-row items-center">
+                          <View className="w-10 h-10 rounded-full bg-orange-100 items-center justify-center mr-3">
+                            <Icon name="calendar" size={20} color="#ffb800" />
+                          </View>
+                          <View>
+                            <Text className="text-sm font-promptMedium text-gray-700">วันเริ่มต้นแผน</Text>
+                            <Text className="text-lg font-promptSemiBold text-gray-800">
+                              {(() => {
+                                try {
+                                  if (isNaN(selectedStartDate.getTime())) {
+                                    return 'ยังไม่ได้ตั้งค่า';
+                                  }
+                                  return selectedStartDate.toLocaleDateString('th-TH', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                  });
+                                } catch (error) {
+                                  console.error('Date formatting error:', error);
+                                  return 'รูปแบบวันที่ไม่ถูกต้อง';
+                                }
+                              })()}
+                            </Text>
+                          </View>
+                        </View>
+                        <Icon name="chevron-forward" size={20} color="#9ca3af" />
+                      </TouchableOpacity>
+                    </View>
 
-                <View className="flex-row gap-3">
-                  <TouchableOpacity 
-                    className="flex-1 bg-gray-100 rounded-2xl py-4 items-center"
-                    onPress={() => setShowSettingsModal(false)}
-                  >
-                    <Text className="text-base font-promptSemiBold text-gray-600">ยกเลิก</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    className="flex-1 rounded-2xl py-4 items-center"
-                    style={{ backgroundColor: '#ffb800' }}
-                    onPress={handleSaveSettings}
-                  >
-                    <Text className="text-base font-promptBold text-white">บันทึก</Text>
-                  </TouchableOpacity>
-                </View>
+                    <View className="mb-8">
+                      <View className="flex-row items-center justify-between mb-4">
+                        <View className="flex-1 mr-4">
+                          <Text className="text-lg font-promptSemiBold text-gray-800 mb-1">วนซ้ำแผนการกิน</Text>
+                          <Text className="text-sm text-gray-500 leading-5">
+                            เมื่อสิ้นสุดแผนการกินของคุณระบบจะวนรอบ และเริ่มต้นแผนการกินของวันแรกให้อัตโนมัติ
+                          </Text>
+                        </View>
+                        <Switch
+                          value={isRepeat}
+                          onValueChange={setIsRepeat}
+                          trackColor={{ false: '#f3f4f6', true: '#ffd966' }}
+                          thumbColor={isRepeat ? '#ffb800' : '#9ca3af'}
+                          ios_backgroundColor="#f3f4f6"
+                        />
+                      </View>
+                    </View>
+
+                    <View className="flex-row gap-3">
+                      <TouchableOpacity 
+                        className="flex-1 bg-gray-100 rounded-2xl py-4 items-center"
+                        onPress={() => setShowSettingsModal(false)}
+                      >
+                        <Text className="text-base font-promptSemiBold text-gray-600">ยกเลิก</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        className="flex-1 rounded-2xl py-4 items-center"
+                        style={{ backgroundColor: '#ffb800' }}
+                        onPress={handleSaveSettings}
+                      >
+                        <Text className="text-base font-promptBold text-white">บันทึก</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                )}
               </View>
             </TouchableOpacity>
           </View>

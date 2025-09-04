@@ -8,7 +8,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 interface PlanSettingsModalProps {
   visible: boolean;
   onClose: () => void;
-  onSave: (settings: { start_date: Date; auto_loop: boolean }) => void;
+  onSave: (settings: { start_date: Date; is_repeat: boolean }) => void;
   apiClient: any;
   currentPlanId: number | null;
 }
@@ -22,27 +22,29 @@ const PlanSettingsModal: React.FC<PlanSettingsModalProps> = ({
 }) => {
   const { user } = useAuth();
   const [selectedStartDate, setSelectedStartDate] = useState<Date>(new Date());
-  const [isAutoLoop, setIsAutoLoop] = useState(false);
+  const [isRepeat, setIsRepeat] = useState(false);
   const [isLoadingSettings, setIsLoadingSettings] = useState(false);
   const [showNativeDatePicker, setShowNativeDatePicker] = useState(false);
 
-  // useEffect(() => {
-  //   if (visible) {
-  //     loadPlanSettings();
-  //   }
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [visible]);
+  useEffect(() => {
+  
+      loadPlanSettings();
+     
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Use real API: call apiClient.getPlanSettings()
   const loadPlanSettings = async () => {
     setIsLoadingSettings(true);
     try {
-      const result = await apiClient.getPlanSettingsTest();
+      const result = await apiClient.getPlanSettings();
       if (result.success && result.data) {
         if (result.data.start_date) {
           setSelectedStartDate(new Date(result.data.start_date));
+          
         }
-        setIsAutoLoop(result.data.auto_loop || false);
+        console.log(result.data.is_repeat);
+        setIsRepeat(result.data.is_repeat || false);
       }
       console.log('Plan settings loaded:', result);
     } catch (error) {
@@ -166,10 +168,10 @@ const PlanSettingsModal: React.FC<PlanSettingsModalProps> = ({
                         </Text>
                       </View>
                       <Switch
-                        value={isAutoLoop}
-                        onValueChange={setIsAutoLoop}
+                        value={isRepeat}
+                        onValueChange={setIsRepeat}
                         trackColor={{ false: '#f3f4f6', true: '#ffd966' }}
-                        thumbColor={isAutoLoop ? '#ffb800' : '#9ca3af'}
+                        thumbColor={isRepeat ? '#ffb800' : '#9ca3af'}
                         ios_backgroundColor="#f3f4f6"
                       />
                     </View>
@@ -186,7 +188,7 @@ const PlanSettingsModal: React.FC<PlanSettingsModalProps> = ({
                     <TouchableOpacity 
                       className="flex-1 rounded-2xl py-4 items-center"
                       style={{ backgroundColor: '#ffb800' }}
-                      onPress={() => onSave({ start_date: selectedStartDate, auto_loop: isAutoLoop })}
+                      onPress={() => onSave({ start_date: selectedStartDate, is_repeat: isRepeat })}
                     >
                       <Text className="text-base font-bold text-white">บันทึก</Text>
                     </TouchableOpacity>
