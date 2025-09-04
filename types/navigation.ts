@@ -42,7 +42,16 @@ export type RootStackParamList = {
     EditAccountSettings: undefined;
     EditProfile: undefined;
     ProfileDetail: undefined;
-    FoodSuggestion: { suggestion: string };
+    FoodSuggestion: { 
+      suggestion: {
+        name: string;
+        cal: number;
+        carbs: number;
+        protein: number;
+        fat: number;
+        ingredients: string[];
+      };
+    };
     Home: undefined;
     MealPlan: {
         selectedFood?: any;
@@ -105,5 +114,7 @@ export type RootStackParamList = {
       maxDays: number;
       aiPlanData: any;
     };
+
+    EmailVerification: undefined;
 
   };

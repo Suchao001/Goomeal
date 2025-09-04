@@ -155,7 +155,7 @@ const MenuScreen = () => {
     <View className="flex-row items-center mt-1">
       <Text className="text-sm text-green-600 font-promptMedium">ออนไลน์</Text>
       <View className="w-1 h-1 bg-gray-300 rounded-full mx-2"></View>
-      <Text className="text-xs text-gray-500 font-prompt">พร้อมใช้งาน</Text>
+     {!user?.is_verified && (<View className="bg-red-100 px-2 py-0.5 rounded-full mr-2"><Text className="text-xs text-red-600 font-promptMedium">ยังไม่ยืนยันบัญชี</Text></View>)}
     </View>
   </View>
   
@@ -199,6 +199,25 @@ const MenuScreen = () => {
             </View>
             <Icon name="chevron-forward" size={20} color="#3b82f6" />
           </TouchableOpacity>
+        </View>
+        )}
+
+        {user?.is_verified == false && (
+        <View className="mx-4 mt-6">
+          <Text className="text-lg font-promptBold text-myBlack mb-3">ยืนยันบัญชี</Text>
+          <TouchableOpacity 
+            className="bg-red-50 border border-red-200 rounded-xl p-4 flex-row items-center"
+            onPress={() => {navigation.navigate('EmailVerification')}}
+        >
+          <View className="w-12 h-12 bg-red-100 rounded-full items-center justify-center mr-4">
+            <Icon name="mail" size={24} color="#ef4444" />
+          </View>
+          <View className="flex-1">
+            <Text className="text-base font-promptSemiBold text-red-800">ยืนยันอีเมลของคุณ</Text>
+            <Text className="text-sm text-red-600 mt-1 font-prompt">กรุณายืนยันอีเมลเ</Text>
+          </View>
+          <Icon name="chevron-forward" size={20} color="#ef4444" />
+        </TouchableOpacity>
         </View>
         )}
 

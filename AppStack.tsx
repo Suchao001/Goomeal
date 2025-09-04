@@ -26,6 +26,7 @@ import GlobalPlanDayDetail from './screens/GlobalPlanDayDetail';
 import  AiPlanMealScreen  from './screens/AiPlanMealScreen';
 import  AiPlanDayDetail  from './screens/AiPlanDayDetail';
 import MyFood from 'screens/MyFood';
+import EmailVerificationScreen from './screens/EmailVerificationScreen';
 
 const Stack = createNativeStackNavigator();
 export default function AppStack() {
@@ -86,6 +87,9 @@ export default function AppStack() {
       {/* AI Plan Meal Screen */}
       <Stack.Screen name="AiPlanMealScreen" component={AiPlanMealScreen} />
       <Stack.Screen name="AiPlanDayDetail" component={AiPlanDayDetail} />
+      
+      {/* Email Verification Screen */}
+      <Stack.Screen name="EmailVerification" component={EmailVerificationScreen} />
     </Stack.Navigator>
   );
 }

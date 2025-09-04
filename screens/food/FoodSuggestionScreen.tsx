@@ -2,7 +2,9 @@ import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTypedNavigation } from '../../hooks/Navigation';
+import { RouteProp, useRoute } from '@react-navigation/native';
 import { apiClient } from '../../utils/apiClient';
+import { RootStackParamList } from '../../types/navigation';
 
 const PRIMARY = '#ffb800';
 const SECONDARY = '#77dd77';
@@ -16,16 +18,11 @@ interface FoodSuggestion {
   ingredients: string[];
 }
 
-interface Props {
-  route: {
-    params: {
-      suggestion: FoodSuggestion;
-    };
-  };
-}
+type FoodSuggestionScreenRouteProp = RouteProp<RootStackParamList, 'FoodSuggestion'>;
 
-const FoodSuggestionScreen: React.FC<Props> = ({ route }) => {
+const FoodSuggestionScreen: React.FC = () => {
   const navigation = useTypedNavigation();
+  const route = useRoute<FoodSuggestionScreenRouteProp>();
   const { suggestion } = route.params;
 
   const handleSaveToMyFood = async () => {

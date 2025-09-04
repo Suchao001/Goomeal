@@ -62,7 +62,7 @@ const login = async (username: string, password: string) => {
         }
 
         const isPasswordValid = await bcrypt.compare(password, userData.password);
-        
+
         if (!isPasswordValid) {
             return { success: false, message: 'รหัสผ่านไม่ถูกต้อง' };
         }
@@ -110,7 +110,8 @@ const getUserProfile = async (userId: number) => {
             account_status: user.account_status,
             suspend_reason: user.suspend_reason,
             created_date: user.created_date,
-            first_time_setting: user.first_time_setting
+            first_time_setting: user.first_time_setting,
+            is_verified: user.is_verified
         };
     } catch (error: any) {
         console.error('Get profile error details:', error);

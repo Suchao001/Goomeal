@@ -29,6 +29,7 @@ interface User {
   suspend_reason?: string;
   created_date?: string;
   first_time_setting?: boolean;
+  is_verified?: boolean; 
 }
 
 
