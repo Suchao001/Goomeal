@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useRoute } from '@react-navigation/native';
 import { View, Text, TouchableOpacity, ScrollView, Alert, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTypedNavigation } from '../hooks/Navigation';
+import { useAuth } from '../AuthContext';
 import e from 'cors';
 
 const { width } = Dimensions.get('window');
@@ -10,8 +11,12 @@ const { width } = Dimensions.get('window');
 const OptionPlanScreen = () => {
   const navigation = useTypedNavigation();
   const route = useRoute();
+  const { user } = useAuth();
   const params = route.params as any;
   const from = params?.from;
+
+  // ตรวจสอบว่าผู้ใช้กรอกข้อมูลส่วนตัวแล้วหรือไม่
+  const isFirstTimeUser = user?.first_time_setting != true;
 
   const planOptions = [
     {
@@ -21,11 +26,13 @@ const OptionPlanScreen = () => {
       to: 'MealPlan'
     },
     {
-     
       title: 'สร้างแผนการกินจากระบบ',
-      subtitle: 'กรอกข้อมูลเบื้องต้นระบบจะสร้างแผนการกินตามที่ท่านต้องการ',
+      subtitle: isFirstTimeUser 
+        ? 'กรุณากรอกข้อมูลส่วนตัวก่อนใช้งานฟีเจอร์นี้'
+        : 'กรอกข้อมูลเบื้องต้นระบบจะสร้างแผนการกินตามที่ท่านต้องการ',
       icon: 'sparkles-outline',
-      to: 'PromptForm1'
+      to: isFirstTimeUser ? 'PersonalSetup' : 'PromptForm1',
+      disabled: isFirstTimeUser
     },
     {
       id: '3',
@@ -100,6 +107,8 @@ const OptionPlanScreen = () => {
                   onPress={() => {
                     if (option.to === 'PromptForm1') {
                       navigation.navigate('PromptForm1', { isForAi: true });
+                    } else if (option.to === 'PersonalSetup') {
+                      navigation.navigate('PersonalSetup');
                     } else if (option.to === 'SelectGlobalPlan') {
                       navigation.navigate('SelectGlobalPlan');
                     } else if (option.to === 'MealPlan') {
@@ -112,27 +121,43 @@ const OptionPlanScreen = () => {
                   }}
                   activeOpacity={0.7}
                 >
-                <View className="bg-[#EFEFEF] rounded-2xl p-4 py-10 flex-row items-center">
+                <View className={`rounded-2xl p-4 py-10 flex-row items-center ${
+                  option.disabled ? 'bg-gray-200' : 'bg-[#EFEFEF]'
+                }`}>
                   {/* Icon at the beginning */}
                   <View className="mr-4">
                     <Icon 
                       name={option.icon} 
                       size={36} 
-                      color="#4A4A4A" 
+                      color={option.disabled ? "#9CA3AF" : "#4A4A4A"} 
                     />
                   </View>
                   
                   {/* Content Column */}
                   <View className="flex-1">
                     {/* Title */}
-                    <Text className="text-sm font-promptSemiBold text-black mb-1 leading-5">
+                    <Text className={`text-sm font-promptSemiBold mb-1 leading-5 ${
+                      option.disabled ? 'text-gray-500' : 'text-black'
+                    }`}>
                       {option.title}
                     </Text>
                     
                     {/* Subtitle */}
-                    <Text className="text-xs font-promptLight text-black leading-4">
+                    <Text className={`text-xs font-promptLight leading-4 ${
+                      option.disabled ? 'text-gray-400' : 'text-black'
+                    }`}>
                       {option.subtitle}
                     </Text>
+
+                    {/* Warning for disabled option */}
+                    {option.disabled && (
+                      <View className="flex-row items-center mt-2">
+                        <Icon name="information-circle" size={14} color="#F59E0B" />
+                        <Text className="text-xs font-promptLight text-orange-500 ml-1">
+                          กดเพื่อกรอกข้อมูลส่วนตัว
+                        </Text>
+                      </View>
+                    )}
                   </View>
                 </View>
               </TouchableOpacity>
