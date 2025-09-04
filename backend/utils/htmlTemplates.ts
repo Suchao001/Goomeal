@@ -12,6 +12,36 @@ export const readTemplate = (templateName: string): string => {
     }
 };
 
+// Generate HTML for successful password reset
+export const generatePasswordResetSuccessPage = (): string => {
+    let template = readTemplate('reset-password-success.html');
+    if (!template) {
+        return `
+            <html>
+                <head>
+                    <title>GoodMeal - รีเซ็ตรหัสผ่านสำเร็จ</title>
+                    <meta charset="utf-8">
+                    <style>
+                        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+                        .success { color: #2e7d32; background: #e8f5e8; padding: 20px; border-radius: 8px; text-align: center; }
+                        .button { background: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; margin-top: 20px; }
+                    </style>
+                </head>
+                <body>
+                    <h1>🍽️ GoodMeal</h1>
+                    <div class="success">
+                        <h2>✅ รีเซ็ตรหัสผ่านสำเร็จ!</h2>
+                        <p>รหัสผ่านของคุณได้รับการเปลี่ยนแปลงเรียบร้อยแล้ว</p>
+                        <p>คุณสามารถใช้รหัสผ่านใหม่เพื่อเข้าสู่ระบบได้ทันที</p>
+                        <a href="#" class="button" onclick="window.close()">ปิดหน้าต่าง</a>
+                    </div>
+                </body>
+            </html>
+        `;
+    }
+    return template;
+};
+
 // สร้าง HTML สำหรับฟอร์มรีเซ็ตรหัสผ่าน
 export const generateResetPasswordForm = (token: string): string => {
     let template = readTemplate('reset-password.html');
@@ -34,6 +64,52 @@ export const generateErrorPage = (errorMessage: string): string => {
     
     // แทนที่ error message placeholder
     return template.replace('{{ERROR_MESSAGE}}', errorMessage);
+};
+
+// Generate HTML for missing token error
+export const generateTokenMissingPage = (): string => {
+    return `
+        <html>
+            <head>
+                <title>GoodMeal - Reset Password Error</title>
+                <meta charset="utf-8">
+                <style>
+                    body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+                    .error { color: #d32f2f; background: #ffebee; padding: 20px; border-radius: 8px; }
+                </style>
+            </head>
+            <body>
+                <h1>🍽️ GoodMeal</h1>
+                <div class="error">
+                    <h2>ข้อผิดพลาด</h2>
+                    <p>ไม่พบ token สำหรับรีเซ็ตรหัสผ่าน</p>
+                </div>
+            </body>
+        </html>
+    `;
+};
+
+// Generate HTML for server error
+export const generateServerErrorPage = (): string => {
+    return `
+        <html>
+            <head>
+                <title>GoodMeal - Server Error</title>
+                <meta charset="utf-8">
+                <style>
+                    body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+                    .error { color: #d32f2f; background: #ffebee; padding: 20px; border-radius: 8px; }
+                </style>
+            </head>
+            <body>
+                <h1>🍽️ GoodMeal</h1>
+                <div class="error">
+                    <h2>เกิดข้อผิดพลาดของเซิร์ฟเวอร์</h2>
+                    <p>กรุณาลองใหม่อีกครั้งในภายหลัง</p>
+                </div>
+            </body>
+        </html>
+    `;
 };
 
 // Fallback HTML ในกรณีที่อ่านไฟล์ไม่ได้
