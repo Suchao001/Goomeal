@@ -73,7 +73,12 @@ const EmailVerificationScreen = () => {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor={PRIMARY} />
-        <LinearGradient colors={[PRIMARY, '#e6a600']} style={styles.header}>
+        <LinearGradient 
+          colors={['#ffb800', '#ff9a33']} 
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.header}
+        >
           <TouchableOpacity style={styles.backButton} onPress={goBack}>
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
@@ -98,7 +103,12 @@ const EmailVerificationScreen = () => {
             </View>
 
             <TouchableOpacity style={styles.backToMenuButton} onPress={goBack}>
-              <LinearGradient colors={[PRIMARY, '#e6a600']} style={styles.buttonGradient}>
+              <LinearGradient 
+                colors={['#ffb800', '#ff9a33']} 
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.buttonGradient}
+              >
                 <Text style={styles.buttonText}>กลับสู่เมนูหลัก</Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -111,7 +121,12 @@ const EmailVerificationScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={PRIMARY} />
-      <LinearGradient colors={[PRIMARY, '#e6a600']} style={styles.header}>
+      <LinearGradient 
+        colors={['#ffb800', '#ff9a33']} 
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}
+      >
         <TouchableOpacity style={styles.backButton} onPress={goBack}>
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
@@ -150,7 +165,12 @@ const EmailVerificationScreen = () => {
             onPress={resendVerificationEmail}
             disabled={loading}
           >
-            <LinearGradient colors={[PRIMARY, '#e6a600']} style={styles.buttonGradient}>
+            <LinearGradient 
+              colors={['#ffb800', '#ff9a33']} 
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.buttonGradient}
+            >
               {loading ? (
                 <ActivityIndicator color="white" size="small" />
               ) : (

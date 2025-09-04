@@ -4,6 +4,59 @@ import jwt from 'jsonwebtoken';
 import { User } from '../models/user_model';
 import {ageToYearOfBirth, yearOfBirthToAge, isValidYearOfBirth} from '../utils/ageCal';
 
+
+type MealRow = {
+  id: number;
+  user_id: number;
+  meal_name: string;
+  meal_time: string;    // 'HH:mm'
+  sort_order: number | null;
+  is_active: number | boolean | null;
+  created_at?: any;
+  updated_at?: any;
+};
+
+const initMealTimeSetting = async (userId: number) => {
+  try {
+    const defaultMeals = [
+      {
+        user_id: userId,
+        meal_name: 'มื้อเช้า',
+        meal_time: '08:00',
+        sort_order: 1,
+        is_active: 1,
+        created_at: new Date(),
+        updated_at: new Date()
+      },
+      {
+        user_id: userId,
+        meal_name: 'มื้อกลางวัน',
+        meal_time: '12:00',
+        sort_order: 2,
+        is_active: 1,
+        created_at: new Date(),
+        updated_at: new Date()
+      },
+      {
+        user_id: userId,
+        meal_name: 'มื้อเย็น',
+        meal_time: '18:00',
+        sort_order: 3,
+        is_active: 1,
+        created_at: new Date(),
+        updated_at: new Date()
+      }
+    ];
+
+    await db('user_meal_time').insert(defaultMeals);
+    console.log(`✅ Initialized default meal times for user ${userId}`);
+  } catch (error) {
+    console.error('❌ Error initializing meal times:', error);
+    throw error;
+  }
+};
+
+
 const register = async ({username, email, password}: Pick<User, 'username' | 'email' | 'password'>) => {
     try {
         // Check if email already exists
@@ -34,6 +87,14 @@ const register = async ({username, email, password}: Pick<User, 'username' | 'em
         
         // Get the created user
         const createdUser = await db('users').where({ id: insertId }).first();
+        
+        // Initialize default meal times for new user
+        try {
+            await initMealTimeSetting(insertId);
+        } catch (mealTimeError) {
+            console.error('❌ Failed to initialize meal times for user:', insertId, mealTimeError);
+            // Don't fail registration if meal time initialization fails
+        }
         
         return {
             success: true,

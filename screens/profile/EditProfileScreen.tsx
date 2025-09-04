@@ -24,9 +24,9 @@ const EditProfileScreen = () => {
 
   // New fields
   const [targetGoal, setTargetGoal] = useState<'decrease' | 'increase' | 'healthy'>('healthy');
-  const [targetWeight, setTargetWeight] = useState('');
+  const [targetWeight, setTargetWeight] = useState('1');
   const [bodyFat, setBodyFat] = useState<'low' | 'normal' | 'high' | 'don\'t know'>('normal');
-  const [activityLevel, setActivityLevel] = useState('');
+  const [activityLevel, setActivityLevel] = useState('sedentary');
   
   // Dropdown states
   const [openTargetWeight, setOpenTargetWeight] = useState(false);
@@ -50,16 +50,38 @@ const EditProfileScreen = () => {
   ], []);
 
   const activityLevelItems = useMemo(() => [
-    { label: 'น้อย (ไม่ออกกำลังกาย)', value: 'sedentary' },
-    { label: 'เบา (ออกกำลังกาย 1-3 วัน/สัปดาห์)', value: 'light' },
+    { label: 'น้อย (ไม่ออกกำลังกาย)', value: 'low' },
     { label: 'ปานกลาง (ออกกำลังกาย 3-5 วัน/สัปดาห์)', value: 'moderate' },
-    { label: 'หนัก (ออกกำลังกาย 6-7 วัน/สัปดาห์)', value: 'active' },
-    { label: 'หนักมาก (ออกกำลังกาย 2 ครั้ง/วัน)', value: 'very_active' }
+    { label: 'หนัก (ออกกำลังกาย 6-7 วัน/สัปดาห์)', value: 'high' },
+    { label: 'หนักมาก (ออกกำลังกาย 2 ครั้ง/วัน)', value: 'very_high' }
   ], []);
+
+  // Map legacy activity levels to current options
+  const mapActivityLevel = (activityLevel: string) => {
+    const mapping: { [key: string]: string } = {
+      'sedentary': 'low',
+      'light': 'low', 
+      'active': 'high',
+      'very_active': 'very_high'
+    };
+    const mapped = mapping[activityLevel] || activityLevel;
+    
+    // Validate that the mapped value exists in our options
+    const validValues = ['low', 'moderate', 'high', 'very_high'];
+    return validValues.includes(mapped) ? mapped : 'low';
+  };
 
   // Initialize form with user data
   useEffect(() => {
-    console.log('EditProfileScreen');
+    console.log('🔄 [EditProfile] Initializing form with user data...');
+    console.log('📊 [EditProfile] User object:', {
+      target_goal: user?.target_goal,
+      target_weight: user?.target_weight,
+      body_fat: user?.body_fat,
+      activity_level: user?.activity_level,
+      weight: user?.weight
+    });
+    
     if (user) {
       const userHeight = typeof user.height === 'string' ? parseFloat(user.height) : user.height;
       const userWeight = typeof user.weight === 'string' ? parseFloat(user.weight) : user.weight;
@@ -71,30 +93,88 @@ const EditProfileScreen = () => {
       setAge(userAge ? userAge.toString() : '');
       setGender(convertGenderToThai(user.gender || 'other'));
 
-      // Set new fields if available
+      // Set target goal (เป้าหมายของฉัน)
       if (user.target_goal) {
+        console.log('🎯 [EditProfile] Setting target goal:', user.target_goal);
         setTargetGoal(user.target_goal as 'decrease' | 'increase' | 'healthy');
+      } else {
+        console.log('⚠️ [EditProfile] No target_goal found, using default: healthy');
+        setTargetGoal('healthy');
       }
+
+      // Set target weight (น้ำหนักที่ต้องการเพิ่ม/ลด)
       if (user.target_weight && user.target_goal && user.target_goal !== 'healthy') {
         const currentWeight = userWeight;
-        if (currentWeight) {
-          const displayWeight = Math.abs(user.target_weight - currentWeight);
-          setTargetWeight(displayWeight > 0 ? displayWeight.toString() : '1');
+        const targetWeight = typeof user.target_weight === 'string' ? parseFloat(user.target_weight) : user.target_weight;
+        
+        if (currentWeight && targetWeight) {
+          let displayWeight = 0;
+          
+          if (user.target_goal === 'increase') {
+            // เพิ่มน้ำหนัก: target - current
+            displayWeight = targetWeight - currentWeight;
+          } else if (user.target_goal === 'decrease') {
+            // ลดน้ำหนัก: current - target
+            displayWeight = currentWeight - targetWeight;
+          }
+          
+          const targetWeightStr = displayWeight > 0 ? Math.round(Math.abs(displayWeight)).toString() : '1';
+          console.log('⚖️ [EditProfile] Goal:', user.target_goal, 'Current:', currentWeight, 'Target:', targetWeight, 'Display:', displayWeight, 'Setting:', targetWeightStr);
+          setTargetWeight(targetWeightStr);
+        } else {
+          console.log('⚠️ [EditProfile] Missing weight data, using default: 1');
+          setTargetWeight('1');
         }
+      } else {
+        console.log('⚠️ [EditProfile] No target_weight or goal is healthy, setting default: 1');
+        setTargetWeight('1');
       }
+
+      // Set body fat (ระดับไขมัน)
       if (user.body_fat) {
+        console.log('💪 [EditProfile] Setting body fat:', user.body_fat);
         setBodyFat(user.body_fat as 'low' | 'normal' | 'high' | 'don\'t know');
+      } else {
+        console.log('⚠️ [EditProfile] No body_fat found, using default: normal');
+        setBodyFat('normal');
       }
+
+      // Set activity level (ระดับกิจกรรม)
       if (user.activity_level) {
-        setActivityLevel(user.activity_level);
+        const mappedActivityLevel = mapActivityLevel(user.activity_level);
+        console.log('🏃 [EditProfile] Original activity level:', user.activity_level, '→ Mapped to:', mappedActivityLevel);
+        setActivityLevel(mappedActivityLevel);
+      } else {
+        console.log('⚠️ [EditProfile] No activity_level found, using default: low');
+        setActivityLevel('low');
       }
           
-     console.log('weightChangeItems length:', weightChangeItems.length, 'first 5 items:', weightChangeItems.slice(0, 5), 'last 5 items:', weightChangeItems.slice(-5));
-     console.log('bodyFatItems:', bodyFatItems, 'activityLevelItems:', activityLevelItems);
+     console.log('📋 [EditProfile] weightChangeItems length:', weightChangeItems.length, 'first 5 items:', weightChangeItems.slice(0, 5), 'last 5 items:', weightChangeItems.slice(-5));
+     console.log('📋 [EditProfile] bodyFatItems:', bodyFatItems, 'activityLevelItems:', activityLevelItems);
+     
+     // Use a setTimeout to get the final state values after all setState calls
+     setTimeout(() => {
+       console.log('✅ [EditProfile] Final state values after initialization:', {
+         targetGoal,
+         targetWeight,
+         bodyFat,
+         activityLevel
+       });
+     }, 100);
     } else {
       console.log('⚠️ [EditProfile] No user data available in AuthContext');
     }
   }, [user]);
+
+  // Debug state changes
+  useEffect(() => {
+    console.log('🔄 [EditProfile] State changed:', {
+      targetGoal,
+      targetWeight,
+      bodyFat,
+      activityLevel
+    });
+  }, [targetGoal, targetWeight, bodyFat, activityLevel]);
 
   // Handle API errors
   const handleApiError = (error: any) => {
@@ -496,7 +576,10 @@ const EditProfileScreen = () => {
                 className={`w-[31%] rounded-xl p-3 items-center mb-2 ${
                   targetGoal === target.key ? 'border border-primary bg-white' : 'bg-gray-100'
                 }`}
-                onPress={() => setTargetGoal(target.key as 'decrease' | 'increase' | 'healthy')}
+                onPress={() => {
+                  console.log('🎯 [EditProfile] Target goal button pressed:', target.key);
+                  setTargetGoal(target.key as 'decrease' | 'increase' | 'healthy');
+                }}
               >
                 <Text className="font-prompt text-black text-sm">
                   {target.label}
@@ -528,7 +611,11 @@ const EditProfileScreen = () => {
                   setOpenActivityLevel(false);
                 }
               }}
-              setValue={setTargetWeight}
+              setValue={(callback) => {
+                const newValue = typeof callback === 'function' ? callback(targetWeight) : callback;
+                console.log('⚖️ [EditProfile] Target weight changed:', newValue);
+                setTargetWeight(newValue);
+              }}
               placeholder={`เลือกจำนวนกิโลกรัมที่จะ${targetGoal === 'increase' ? 'เพิ่ม' : 'ลด'}`}
               containerStyle={{ height: 50, marginBottom: openTargetWeight ? 200 : 10 }}
               style={{
@@ -598,7 +685,11 @@ const EditProfileScreen = () => {
                 setOpenTargetWeight(false);
               }
             }}
-            setValue={setActivityLevel}
+            setValue={(callback) => {
+              const newValue = typeof callback === 'function' ? callback(activityLevel) : callback;
+              console.log('🏃 [EditProfile] Activity level changed:', newValue);
+              setActivityLevel(newValue);
+            }}
             placeholder="เลือกระดับกิจกรรม"
             containerStyle={{ height: 50, marginBottom:  10 }}
             style={{

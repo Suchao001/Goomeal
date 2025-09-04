@@ -542,7 +542,7 @@ const Home = () => {
       color: '#f59e0b',
       onPress: () => {
         setShowFloatMenu(false);
-        navigation.navigate('SuggestionMenu');
+        navigation.navigate('OptionPlan', { from: 'Home' });
       }
     },
     {
