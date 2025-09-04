@@ -214,7 +214,7 @@ const MenuScreen = () => {
           </View>
           <View className="flex-1">
             <Text className="text-base font-promptSemiBold text-red-800">ยืนยันอีเมลของคุณ</Text>
-            <Text className="text-sm text-red-600 mt-1 font-prompt">กรุณายืนยันอีเมลเ</Text>
+            <Text className="text-sm text-red-600 mt-1 font-prompt">กรุณายืนยันอีเมลเพื่อใช้ตอนลืมรหัสผ่าน</Text>
           </View>
           <Icon name="chevron-forward" size={20} color="#ef4444" />
         </TouchableOpacity>
