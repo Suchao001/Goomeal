@@ -1,13 +1,14 @@
 import db from '../db_config';
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Initialize Resend with API key
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Get email config from env
+const sender = process.env.EMAIL_SENDER;
+const app_password = process.env.APP_PASSWORD;
 
 // Generate password reset token
 const generateResetToken = (userId: number): string => {
@@ -27,7 +28,7 @@ const generateResetToken = (userId: number): string => {
     }, jwtSecret, { expiresIn: '1h' });
 };
 
-// Send password reset email using Resend
+// Send password reset email using nodemailer
 export const sendPasswordResetEmail = async (email: string) => {
     try {
         // Check if user exists
@@ -41,8 +42,17 @@ export const sendPasswordResetEmail = async (email: string) => {
         // For React Native app - use deep link
         const resetUrl = `${process.env.BASE_URL}/reset-password?token=${resetToken}`;
         
-        const { data, error } = await resend.emails.send({
-            from: 'GoodMeal <onboarding@resend.dev>',
+        // Create nodemailer transporter
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: sender,
+                pass: app_password,
+            },
+        });
+
+        const mailOptions = {
+            from: `"GoodMeal" <${sender}>`,
             to: email,
             subject: 'GoodMeal - Password Reset Request',
             html: `
@@ -89,22 +99,19 @@ export const sendPasswordResetEmail = async (email: string) => {
                     </div>
                 </div>
             `
-        });
+        };
 
-        if (error) {
-            console.error('❌ Resend error:', error);
-            throw new Error(error.message || 'Failed to send email via Resend');
-        }
+        const info = await transporter.sendMail(mailOptions);
 
         console.log('✅ ส่งอีเมลรีเซ็ตรหัสผ่านสำเร็จ');
         console.log('📧 อีเมลที่ส่งถึง:', email);
-        console.log('🆔 Resend email ID:', data?.id);
+        console.log('🆔 Message ID:', info.messageId);
         
         return {
             success: true,
             message: 'ส่งอีเมลรีเซ็ตรหัสผ่านเรียบร้อยแล้ว',
             email: email,
-            emailId: data?.id
+            messageId: info.messageId
         };
         
     } catch (error: any) {

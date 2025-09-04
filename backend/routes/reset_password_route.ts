@@ -11,8 +11,6 @@ import {
 // Using any to bypass TS overload issues for cleaner routing setup
 const router: any = express.Router();
 
-// Render reset password form or error if token is invalid
-// Render reset password form or error if token is invalid
 router.get('/', async (req: any, res: any) => {
   try {
     const { token } = req.query;

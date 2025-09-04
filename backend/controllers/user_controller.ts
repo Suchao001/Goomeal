@@ -56,10 +56,17 @@ const login = async (username: string, password: string) => {
         if (!userData) {
             return { success: false, message: 'ไม่พบผู้ใช้งาน' };
         }
+        const {account_status,suspend_reason} = userData;
+        if(account_status === 'suspended'){
+            return { success: false, message: 'บัญชีผู้ใช้งานถูกระงับการใช้งาน หมายเหตุ: ' + suspend_reason };
+        }
+
         const isPasswordValid = await bcrypt.compare(password, userData.password);
+        
         if (!isPasswordValid) {
             return { success: false, message: 'รหัสผ่านไม่ถูกต้อง' };
         }
+        
         const accessToken = jwt.sign({ id: userData.id }, process.env.JWT_SECRET || '', { expiresIn: '1h' });
         const refreshToken = jwt.sign({ id: userData.id }, process.env.JWT_SECRET || '', { expiresIn: '7d' });
         const user = {username: userData.username, email: userData.email, id: userData.id};

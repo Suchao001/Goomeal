@@ -15,6 +15,7 @@ import dailyNutritionSummaryRoute from './routes/dailyNutritionSummary_routes';
 import weeklyReportRoute from './routes/weeklyReport_routes';
 import { verifyResetToken, resetPassword } from './controllers/forgotpassword';
 import resetPasswordRoute from './routes/reset_password_route';
+import nodemailer from 'nodemailer';
 import mealTimeRoute from './routes/meal_time';
 
 // Load environment variables
@@ -81,5 +82,3 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
 });
-
-
