@@ -17,6 +17,9 @@ import { verifyResetToken, resetPassword } from './controllers/forgotpassword';
 import resetPasswordRoute from './routes/reset_password_route';
 import nodemailer from 'nodemailer';
 import mealTimeRoute from './routes/meal_time';
+import { verifyEmailToken, sendWelcomeEmail } from './controllers/emailVerification';
+import db from './db_config';
+import { generateEmailVerificationSuccessPage, generateEmailVerificationErrorPage } from './utils/emailVerificationPages';
 
 // Load environment variables
 dotenv.config();
@@ -74,6 +77,42 @@ app.use('/api/meal-time', mealTimeRoute);
 
 // Mount reset-password router for clean code
 app.use('/reset-password', resetPasswordRoute);
+
+// Email verification endpoint
+app.get('/verify-email', async (req: any, res: any) => {
+  try {
+    const { token } = req.query;
+    
+    if (!token || typeof token !== 'string') {
+      return res.status(400).send(generateEmailVerificationErrorPage('Token is required'));
+    }
+    
+    const result = await verifyEmailToken(token);
+    
+    // Send welcome email after successful verification
+    try {
+      const user = await db('users').where({ id: result.userId }).first();
+      if (user) {
+        await sendWelcomeEmail(result.email, user.username);
+        
+        // Return beautiful success page instead of JSON
+        res.send(generateEmailVerificationSuccessPage(user.username));
+      } else {
+        res.send(generateEmailVerificationSuccessPage('ผู้ใช้'));
+      }
+    } catch (emailError: any) {
+      console.error('Welcome email sending failed:', emailError.message);
+      // Still show success page even if welcome email fails
+      const user = await db('users').where({ id: result.userId }).first();
+      res.send(generateEmailVerificationSuccessPage(user?.username || 'ผู้ใช้'));
+    }
+    
+  } catch (error: any) {
+    console.error("Email verification error:", error);
+    // Return beautiful error page instead of JSON
+    res.status(400).send(generateEmailVerificationErrorPage(error.message));
+  }
+});
 
 app.get('/', (req, res) => {
     res.json({ message: 'Welcome to the backend API!' });

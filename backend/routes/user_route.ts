@@ -3,6 +3,8 @@ import jwt from "jsonwebtoken";
 import { register, login, getUserProfile, updatePersonalData, updateUserProfile, updatePersonalWeight } from "../controllers/user_controller";
 import authenticateToken from "../middlewares/authenticateToken";
 import { sendPasswordResetEmail, resetPassword, verifyResetToken } from "../controllers/forgotpassword";
+import { sendEmailVerification, verifyEmailToken, sendWelcomeEmail } from "../controllers/emailVerification";
+import db from "../db_config";
 
 
 
@@ -29,13 +31,24 @@ router.post("/register", async (req: Request, res: Response) => {
         
         if (!result.success) {
             return res.status(400).json({
-                message: result.message
+                message: result.message 
             });
+        }
+
+        // Send email verification after successful registration
+        try {
+            if (result.data) {
+                await sendEmailVerification(email, result.data.id, username);
+            }
+        } catch (emailError: any) {
+            console.error('Email verification sending failed:', emailError.message);
+            // Don't fail registration if email fails, just log it
         }
         
         res.status(201).json({
-            message: "ลงทะเบียนสำเร็จ",
+            message: "ลงทะเบียนสำเร็จ กรุณาตรวจสอบอีเมลเพื่อยืนยันบัญชี",
             user: result.data,
+            emailSent: true
         });
     } catch (error: any) {
         console.error("Registration error:", error); // Add this line
@@ -343,6 +356,90 @@ router.get("/verify-reset-token", async (req: Request, res: Response) => {
         console.error("Verify token error:", error);
         res.status(400).json({
             message: error.message,
+            success: false
+        });
+    }
+});
+
+// Email verification endpoint
+router.get("/verify-email", async (req: any, res: any) => {
+    try {
+        const { token } = req.query;
+        
+        if (!token) {
+            return res.status(400).json({
+                message: "Token is required",
+                success: false
+            });
+        }
+        
+        const result = await verifyEmailToken(token);
+        
+        // Send welcome email after successful verification
+        try {
+            const user = await db('users').where({ id: result.userId }).first();
+            if (user) {
+                await sendWelcomeEmail(result.email, user.username);
+            }
+        } catch (emailError: any) {
+            console.error('Welcome email sending failed:', emailError.message);
+        }
+        
+        res.status(200).json({
+            message: "อีเมลได้รับการยืนยันเรียบร้อยแล้ว",
+            success: true,
+            userId: result.userId,
+            email: result.email
+        });
+        
+    } catch (error: any) {
+        console.error("Email verification error:", error);
+        res.status(400).json({
+            message: error.message,
+            success: false
+        });
+    }
+});
+
+// Resend email verification
+router.post("/resend-verification", async (req: any, res: any) => {
+    try {
+        const { email } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({
+                message: "Email is required",
+                success: false
+            });
+        }
+        
+        // Check if user exists and is not already verified
+        const user = await db('users').where({ email }).first();
+        if (!user) {
+            return res.status(404).json({
+                message: "ไม่พบผู้ใช้งานที่มีอีเมลนี้",
+                success: false
+            });
+        }
+        
+        if (user.is_verified) {
+            return res.status(400).json({
+                message: "อีเมลได้รับการยืนยันแล้ว",
+                success: false
+            });
+        }
+        
+        await sendEmailVerification(email, user.id, user.username);
+        
+        res.status(200).json({
+            message: "ส่งอีเมลยืนยันใหม่เรียบร้อยแล้ว",
+            success: true
+        });
+        
+    } catch (error: any) {
+        console.error("Resend verification error:", error);
+        res.status(500).json({
+            message: "เกิดข้อผิดพลาดในการส่งอีเมลยืนยัน",
             success: false
         });
     }

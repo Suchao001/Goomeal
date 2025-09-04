@@ -54,7 +54,7 @@ const RegisterScreen = () => {
             console.log('Sending registration data:', userData);
             const response = await axios.post(`${base_url}/user/register`, userData);
             console.log('Registration successful:', response.data);
-            Alert.alert('สำเร็จ', 'ลงทะเบียนเสร็จเรียบร้อยแล้ว');
+            Alert.alert('สำเร็จ', response.data.message || 'ลงทะเบียนเสร็จเรียบร้อยแล้ว');
           
             navigation.navigate('Login');
         } catch (error: any) {
