@@ -192,7 +192,9 @@ export const PersonalSetupProvider: React.FC<{ children: ReactNode }> = ({ child
         gender: setupData.gender,
         body_fat: setupData.body_fat,
         target_goal: setupData.target_goal,
-        target_weight: setupData.target_weight  ? parseFloat(setupData.target_weight) : undefined,
+        target_weight: target_weight_ ? parseFloat(target_weight_.toFixed(2)) : undefined,
+         // Calculate target weight based on goal
+        plan_duration: setupData.plan_duration ? parseInt(setupData.plan_duration) : undefined,
         activity_level: setupData.activity_level,
         eating_type: setupData.eating_type,
         dietary_restrictions: setupData.dietary_restrictions ? setupData.dietary_restrictions.join(', ') : undefined,

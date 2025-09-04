@@ -148,6 +148,36 @@ export function calculateMacronutrients(targetCalories: number, goal: string, ta
 export function calculateRecommendedNutrition(userProfile: UserProfileData): RecommendedNutrition {
   const { age, weight, height, gender, target_goal, target_weight, activity_level } = userProfile;
   
+  // Debug input values
+  console.log('🔍 [nutritionCalculator] Input validation:', {
+    age,
+    weight,
+    height,
+    gender,
+    target_goal,
+    target_weight,
+    activity_level,
+    weightIsNumber: typeof weight === 'number',
+    heightIsNumber: typeof height === 'number',
+    targetWeightIsNumber: typeof target_weight === 'number'
+  });
+  
+  // Validate essential inputs
+  if (typeof weight !== 'number' || !isFinite(weight) || weight <= 0) {
+    console.error('❌ Invalid weight:', weight);
+    throw new Error('Invalid weight value');
+  }
+  
+  if (typeof height !== 'number' || !isFinite(height) || height <= 0) {
+    console.error('❌ Invalid height:', height);
+    throw new Error('Invalid height value');
+  }
+  
+  if (typeof target_weight !== 'number' || !isFinite(target_weight) || target_weight <= 0) {
+    console.error('❌ Invalid target_weight:', target_weight);
+    throw new Error('Invalid target_weight value');
+  }
+  
   // คำนวณ BMR
   const effectiveAge = typeof age === 'number' && isFinite(age) ? age : 25; // ค่าเริ่มต้นแบบปลอดภัย
   const bmr = calculateBMR(weight, height, effectiveAge, gender);
@@ -161,7 +191,7 @@ export function calculateRecommendedNutrition(userProfile: UserProfileData): Rec
   // คำนวณสัดส่วนสารอาหาร
   const macros = calculateMacronutrients(targetCalories, target_goal, target_weight);
   
-  return {
+  const result = {
     cal: targetCalories,
     carb: macros.carb,
     protein: macros.protein,
@@ -169,6 +199,11 @@ export function calculateRecommendedNutrition(userProfile: UserProfileData): Rec
     bmr,
     tdee
   };
+  
+  // Debug output
+  console.log('🔍 [nutritionCalculator] Calculation result:', result);
+  
+  return result;
 }
 
 /**

@@ -415,21 +415,44 @@ export async function getFoodPlanSuggestionsByPrompt(userId: number, payload?: a
       eating_type
     } = userInfo;
 
+    // Convert string values to numbers
+    const weightNum = typeof weight === 'string' ? parseFloat(weight) : weight;
+    const heightNum = typeof height === 'string' ? parseFloat(height) : height;
+    const targetWeightNum = typeof target_weight === 'string' ? parseFloat(target_weight) : target_weight;
+    const ageNum = typeof age === 'string' ? parseInt(age) : age;
+
     // สร้าง user profile สำหรับการคำนวณ
     const userProfile: UserProfileData = {
-      age,
-      weight,
-      height,
+      age: ageNum,
+      weight: weightNum,
+      height: heightNum,
       gender,
       body_fat,
       target_goal,
-      target_weight: target_goal === 'increase' ? weight + target_weight : 
-                    target_goal === 'decrease' ? weight - target_weight : weight,
+      target_weight: targetWeightNum, // ใช้ target_weight จาก database โดยตรง
       activity_level
     };
 
+    // Debug user profile data
+    console.log('🔍 [DEBUG] User Profile Data:', {
+      age: ageNum,
+      weight: weightNum,
+      height: heightNum,
+      gender,
+      body_fat,
+      target_goal,
+      target_weight: targetWeightNum,
+      activity_level,
+      original_target_weight: target_weight,
+      final_target_weight: userProfile.target_weight
+    });
+
     // คำนวณโภชนาการที่แนะนำ
     recommendedNutrition = calculateRecommendedNutrition(userProfile);
+    
+    // Debug nutrition calculation result
+    console.log('🔍 [DEBUG] Recommended Nutrition Result:', recommendedNutrition);
+    
     const calculationSummary = getCalculationSummary(userProfile);
 
     // แปลงข้อมูลจาก prompt
@@ -481,7 +504,7 @@ NUTRITIONAL TARGETS (per day):
 - Fat: ${recommendedNutrition.fat}g
 
 USER PROFILE:
-- Age: ${age}, Weight: ${weight}kg → ${userProfile.target_weight}kg
+- Age: ${age}, Weight: ${weight}kg 
 - Goal: ${target_goal}, Activity: ${activity_level}
 - Gender: ${gender}
 

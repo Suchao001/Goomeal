@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../types/navigation';
 
+
 const PromptForm1 = () => {
   const navigation = useTypedNavigation();
   const route = useRoute();

@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, TextInput, Image } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, Image, Alert } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker'; 
 import { useTypedNavigation } from '../../hooks/Navigation';
 import { ArrowLeft } from '../../components/GeneralMaterial';
@@ -31,6 +31,38 @@ const PersonalSetupScreen = () => {
     };
 
     const handleContinue = () => {
+        // Validation: ตรวจสอบความครบถ้วนของข้อมูล
+        if (!height || !weight) {
+            Alert.alert(
+                'ข้อมูลไม่ครบถ้วน',
+                'กรุณากรอกส่วนสูงและน้ำหนักให้ครบถ้วน',
+                [{ text: 'ตกลง' }]
+            );
+            return;
+        }
+
+        // Validation: ตรวจสอบค่าที่เป็นตัวเลข
+        const heightNum = parseFloat(height);
+        const weightNum = parseFloat(weight);
+        
+        if (isNaN(heightNum) || heightNum <= 0 || heightNum > 300) {
+            Alert.alert(
+                'ข้อมูลไม่ถูกต้อง',
+                'กรุณากรอกส่วนสูงที่ถูกต้อง (1-300 ซม.)',
+                [{ text: 'ตกลง' }]
+            );
+            return;
+        }
+
+        if (isNaN(weightNum) || weightNum <= 0 || weightNum > 500) {
+            Alert.alert(
+                'ข้อมูลไม่ถูกต้อง',
+                'กรุณากรอกน้ำหนักที่ถูกต้อง (1-500 กก.)',
+                [{ text: 'ตกลง' }]
+            );
+            return;
+        }
+
         // บันทึกข้อมูลลง Context
         updateSetupData({
             height,
@@ -49,7 +81,7 @@ const PersonalSetupScreen = () => {
             <ArrowLeft />
 
             {/* Logo (Assuming a placeholder for the logo) */}
-            <View className="w-32 h-32 rounded-full items-center justify-center mt-16 border border-gray-200 border-2">
+            <View className="w-32 h-32 rounded-full items-center justify-center mt-16  border-gray-50 border-2">
                 <Image
                     className="w-22 h-22 "
                     source={require('../../assets/images/forknife.png')}
@@ -77,9 +109,13 @@ const PersonalSetupScreen = () => {
             {/* Height and Weight Inputs */}
             <View className="w-full flex-row justify-between mb-4">
                 <View className="w-[48%]">
-                    <Text className="text-base text-gray-800 font-prompt mb-2">ส่วนสูง</Text>
+                    <Text className="text-base text-gray-800 font-prompt mb-2">
+                        ส่วนสูง <Text className="text-red-500">*</Text>
+                    </Text>
                     <TextInput
-                        className="w-full bg-gray-100 rounded-lg p-3 font-prompt"
+                        className={`w-full rounded-lg p-3 font-prompt border ${
+                            !height ? 'bg-red-50 border-red-200' : 'bg-gray-100 border-transparent'
+                        }`}
                         placeholder="ส่วนสูง cm"
                         keyboardType="numeric"
                         value={height}
@@ -87,9 +123,13 @@ const PersonalSetupScreen = () => {
                     />
                 </View>
                 <View className="w-[48%]">
-                    <Text className="text-base text-gray-800 font-prompt mb-2">น้ำหนัก</Text>
+                    <Text className="text-base text-gray-800 font-prompt mb-2">
+                        น้ำหนัก <Text className="text-red-500">*</Text>
+                    </Text>
                     <TextInput
-                        className="w-full bg-gray-100 rounded-lg p-3 font-prompt"
+                        className={`w-full rounded-lg p-3 font-prompt border ${
+                            !weight ? 'bg-red-50 border-red-200' : 'bg-gray-100 border-transparent'
+                        }`}
                         placeholder="น้ำหนัก kg"
                         keyboardType="numeric"
                         value={weight}
