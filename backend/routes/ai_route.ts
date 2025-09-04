@@ -8,7 +8,17 @@ router.use(authenticateToken);
 router.post('/suggest-food', async (req, res) => {
   try {
     const payload = req.body || {};
-    const answer = await suggestFood(payload);
+    const userId = (req as any).user?.id;
+    console.log('Request body keys:', Object.keys(req.body || {}));
+    
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'User ID not found'
+      });
+    }
+    
+    const answer = await suggestFood(userId, payload);
     console.log('AI response:', answer);
     res.json({
       success: true,
@@ -16,7 +26,7 @@ router.post('/suggest-food', async (req, res) => {
       input: req.body || null
     });
   } catch (error) {
-    console.error('Error in /ask route:', error);
+    console.error('Error in /suggest-food route:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
