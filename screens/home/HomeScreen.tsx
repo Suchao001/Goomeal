@@ -1,5 +1,5 @@
-import React, { useState, useEffect,useCallback,useMemo } from 'react';
-import { View, Text, TouchableOpacity, Image, ScrollView, FlatList, Linking } from 'react-native';
+import React, { useState, useEffect,useCallback,useMemo, useRef } from 'react';
+import { View, Text, TouchableOpacity, Image, ScrollView, FlatList, Linking, Animated, TouchableWithoutFeedback } from 'react-native';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -69,6 +69,11 @@ const Home = () => {
   const [browserVisible, setBrowserVisible] = useState(false);
   const [browserUrl, setBrowserUrl] = useState('');
   const [browserTitle, setBrowserTitle] = useState('');
+
+  // Float button state
+  const [showFloatMenu, setShowFloatMenu] = useState(false);
+  const scaleAnim = useRef(new Animated.Value(0)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
 
   // Default image fallback
   const defaultImage = require('../../assets/images/Foodtype_1.png');
@@ -518,14 +523,92 @@ const Home = () => {
     }
   };
 
+  // Float button menu items
+  const floatMenuItems = [
+    {
+      id: 1,
+      title: 'จัดการเมนูอาหาร',
+      icon: 'fast-food',
+    color: '#3b82f6',
+      onPress: () => {
+        setShowFloatMenu(false);
+        navigation.navigate('MyFood');
+      }
+    },
+    {
+      id: 2,
+      title: 'เพิ่มแพลนของฉัน',
+      icon: 'sparkles',
+      color: '#f59e0b',
+      onPress: () => {
+        setShowFloatMenu(false);
+        navigation.navigate('SuggestionMenu');
+      }
+    },
+    {
+      id: 3,
+      title: 'แพลนการกินของฉัน',
+      icon: 'restaurant',
+      color: '#22c55e',
+      onPress: () => {
+        setShowFloatMenu(false);
+        navigation.navigate('PlanSelection');
+      }
+    }
+  ];
+
+  // Handle float button press
+  const handleFloatButtonPress = () => {
+    if (showFloatMenu) {
+      // Hide menu with animation
+      Animated.parallel([
+        Animated.timing(scaleAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotateAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setShowFloatMenu(false);
+      });
+    } else {
+      // Show menu with animation
+      setShowFloatMenu(true);
+      Animated.parallel([
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotateAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  };
+
+  // Close float menu
+  const closeFloatMenu = () => {
+    if (showFloatMenu) {
+      handleFloatButtonPress();
+    }
+  };
+
  
 
   return (
-    <View className="flex-1 bg-gray-100 ">
-        <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>     
-        <View style={{ paddingTop: 0 }}>
-          <Header />
-        </View>
+    <TouchableWithoutFeedback onPress={closeFloatMenu}>
+      <View className="flex-1 bg-gray-100 ">
+          <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>     
+          <View style={{ paddingTop: 0 }}>
+            <Header />
+          </View>
 
         {/* Calories Summary */}
         {loadingTodayMeals || loadingSummary ? (
@@ -670,6 +753,106 @@ const Home = () => {
       {/* Bottom Navigation */}
       <Menu />
 
+      {/* Float Button with Quick Menu */}
+      <View className="absolute bottom-24 right-4 z-50 items-end">
+        {/* Float Menu Items */}
+        {showFloatMenu && (
+          <Animated.View 
+            className="mb-4"
+            style={{
+              transform: [{ scale: scaleAnim }],
+              opacity: scaleAnim,
+            }}
+          >
+            {floatMenuItems.map((item, index) => (
+              <Animated.View
+                key={item.id}
+                style={{
+                  transform: [
+                    {
+                      translateY: scaleAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [30 + index * 10, 0],
+                      }),
+                    },
+                  ],
+                  opacity: scaleAnim.interpolate({
+                    inputRange: [0, 0.5, 1],
+                    outputRange: [0, index === 0 ? 1 : 0, 1],
+                  }),
+                  marginBottom: 12,
+                }}
+              >
+                <TouchableOpacity
+                  className="bg-white rounded-full shadow-lg shadow-slate-600 flex-row items-center"
+                  style={{
+                    paddingVertical: 10,
+                    paddingLeft: 12,
+                    paddingRight: 16,
+                    shadowColor: '#000',
+                    shadowOffset: {
+                      width: 0,
+                      height: 2,
+                    },
+                    shadowOpacity: 0.25,
+                    shadowRadius: 3.84,
+                    elevation: 5,
+                    maxWidth: 140, // จำกัดความกว้างสูงสุด
+                  }}
+                  onPress={item.onPress}
+                >
+                  <View 
+                    className="w-7 h-7 rounded-full items-center justify-center mr-2"
+                    style={{ backgroundColor: item.color }}
+                  >
+                    <Icon name={item.icon} size={14} color="white" />
+                  </View>
+                  <Text className="font-promptMedium text-gray-700 text-sm flex-shrink">
+                    {item.title}
+                  </Text>
+                </TouchableOpacity>
+              </Animated.View>
+            ))}
+          </Animated.View>
+        )}
+
+        {/* Main Float Button */}
+        <TouchableOpacity
+          className="w-14 h-14 rounded-full items-center justify-center shadow-lg shadow-slate-600"
+          style={{
+            backgroundColor: '#77dd77',
+            shadowColor: '#000',
+            shadowOffset: {
+              width: 0,
+              height: 2,
+            },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
+            elevation: 5,
+          }}
+          onPress={handleFloatButtonPress}
+        >
+          <Animated.View
+            style={{
+              transform: [
+                {
+                  rotate: rotateAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['0deg', '45deg'],
+                  }),
+                },
+              ],
+            }}
+          >
+            <Icon 
+              name={showFloatMenu ? 'close' : 'add'} 
+              size={24} 
+              color="white"
+            />
+          </Animated.View>
+        </TouchableOpacity>
+      </View>
+
       {/* InApp Browser Modal */}
       <InAppBrowser
         isVisible={browserVisible}
@@ -677,7 +860,8 @@ const Home = () => {
         title={browserTitle}
         onClose={() => setBrowserVisible(false)}
       />
-    </View>
+      </View>
+    </TouchableWithoutFeedback>
   );
 };
 
