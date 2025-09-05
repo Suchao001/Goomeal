@@ -826,80 +826,97 @@ const EatingReportScreen = () => {
 
           {/* Food Details Section */}
           {eatingRecords.length > 0 && !isLoading ? (
-            <View className="bg-white rounded-2xl p-5 shadow-lg shadow-slate-800">
-              <View className="flex-row items-center justify-between mb-4">
+            <View className="bg-white rounded-2xl p-6 shadow-lg">
+              <View className="flex-row items-center justify-between mb-5">
                 <View className="flex-row items-center">
-                  <Icon name="restaurant" size={18} color="#374151" />
-                  <Text className="ml-2 text-lg text-gray-800 font-promptBold">รายการอาหารทั้งหมด</Text>
+                  <View className="bg-orange-500 w-8 h-8 rounded-lg items-center justify-center mr-3">
+                    <Icon name="restaurant" size={16} color="white" />
+                  </View>
+                  <Text className="text-lg text-gray-800 font-promptBold">รายการอาหารวันนี้</Text>
                 </View>
-                <View className="bg-gray-100 px-3 py-1 rounded-full">
-                  <Text className="text-xs text-gray-600 font-promptMedium">
+                <View className="bg-orange-50 px-3 py-1 rounded-full border border-orange-200">
+                  <Text className="text-sm text-orange-600 font-promptMedium">
                     {eatingRecords.length} รายการ
                   </Text>
                 </View>
               </View>
               
-              {eatingRecords.map((record, index) => (
-                <View 
-                  key={`food-${index}`}
-                  className={`flex-row justify-between items-start py-3 ${
-                    index < eatingRecords.length - 1 ? 'border-b border-gray-100' : ''
-                  }`}
-                >
-                  <View className="flex-1 mr-3">
-                    <Text className="text-base text-gray-800 font-promptMedium" numberOfLines={2}>
-                      {record.food_name}
-                    </Text>
-                    <View className="flex-row items-center mt-1">
-                      <View className="bg-blue-100 px-2 py-0.5 rounded-full mr-2">
-                        <Text className="text-blue-700 text-xs font-promptMedium">
-                          {record.meal_type || 'อื่นๆ'}
+              <View className="space-y-3">
+                {eatingRecords.map((record, index) => (
+                  <View 
+                    key={`food-${index}`}
+                    className="bg-gray-50 rounded-xl p-4"
+                  >
+                    <View className="flex-row justify-between items-start">
+                      <View className="flex-1 mr-3">
+                        <Text className="text-base text-gray-800 font-promptMedium mb-2" numberOfLines={2}>
+                          {record.food_name}
                         </Text>
+                        
+                        <View className="flex-row items-center space-x-2 mb-3">
+                          <View className="bg-blue-500 px-3 py-1 rounded-full">
+                            <Text className="text-white text-xs font-promptMedium">
+                              {record.meal_type || 'อื่นๆ'}
+                            </Text>
+                          </View>
+                          {record.meal_time && (
+                            <View className="bg-gray-200 px-3 py-1 rounded-full">
+                              <Text className="text-gray-600 text-xs font-promptMedium">
+                                {record.meal_time.slice(0, 5)}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                        
+                        {/* Nutritional Info Grid */}
+                        <View className="flex-row space-x-4">
+                          <View className="items-center">
+                            <Text className="text-xs text-gray-500 mb-1">โปรตีน</Text>
+                            <Text className="text-sm text-green-600 font-promptSemiBold">
+                              {Math.round(record.protein || 0)}g
+                            </Text>
+                          </View>
+                          <View className="items-center">
+                            <Text className="text-xs text-gray-500 mb-1">คาร์บ</Text>
+                            <Text className="text-sm text-blue-600 font-promptSemiBold">
+                              {Math.round(record.carbs || 0)}g
+                            </Text>
+                          </View>
+                          <View className="items-center">
+                            <Text className="text-xs text-gray-500 mb-1">ไขมัน</Text>
+                            <Text className="text-sm text-orange-600 font-promptSemiBold">
+                              {Math.round(record.fat || 0)}g
+                            </Text>
+                          </View>
+                        </View>
                       </View>
-                      {record.meal_time && (
-                        <Text className="text-xs text-gray-500">
-                          {record.meal_time.slice(0, 5)}
+                      
+                      {/* Calories Display */}
+                      <View className="items-center bg-white rounded-lg px-3 py-2 shadow-sm">
+                        <Text className="text-lg text-red-500 font-promptBold">
+                          {(record.calories || 0).toLocaleString()}
                         </Text>
-                      )}
-                    </View>
-                    
-                    {/* Nutritional Info */}
-                    <View className="flex-row items-center mt-2">
-                      <Text className="text-xs text-green-600 mr-3">
-                        โปรตีน {Math.round(record.protein || 0)}g
-                      </Text>
-                      <Text className="text-xs text-blue-600 mr-3">
-                        คาร์บ {Math.round(record.carbs || 0)}g
-                      </Text>
-                      <Text className="text-xs text-orange-600">
-                        ไขมัน {Math.round(record.fat || 0)}g
-                      </Text>
+                        <Text className="text-xs text-gray-500 font-promptMedium">kcal</Text>
+                      </View>
                     </View>
                   </View>
-                  
-                  <View className="items-end">
-                    <Text className="text-lg text-red-500 font-promptBold">
-                      {(record.calories || 0).toLocaleString()}
-                    </Text>
-                    <Text className="text-xs text-gray-500">kcal</Text>
-                  </View>
-                </View>
-              ))}
+                ))}
+              </View>
             </View>
           ) : !isLoading && (
-            <View className="bg-white rounded-2xl p-6 shadow-lg shadow-slate-800">
+            <View className="bg-white rounded-2xl p-6 shadow-lg">
               <View className="items-center">
                 <View className="bg-gray-100 w-16 h-16 rounded-full items-center justify-center mb-4">
-                  <Text className="text-3xl">🍽️</Text>
+                  <Icon name="restaurant-outline" size={32} color="#9ca3af" />
                 </View>
                 <Text className="text-lg text-gray-700 text-center mb-2 font-promptSemiBold">
                   ยังไม่มีรายการอาหารในวันนี้
                 </Text>
-                <Text className="text-sm text-gray-500 text-center mb-4">
+                <Text className="text-sm text-gray-500 text-center mb-6 leading-relaxed">
                   เริ่มต้นบันทึกอาหารที่คุณกินเพื่อดูสถิติและคำแนะนำ
                 </Text>
                 <TouchableOpacity
-                  className="bg-primary px-4 py-2 rounded-full"
+                  className="bg-orange-500 px-6 py-3 rounded-xl flex-row items-center shadow-sm"
                   onPress={() => {
                     try {
                       if (navContext) {
@@ -912,7 +929,8 @@ const EatingReportScreen = () => {
                     }
                   }}
                 >
-                  <Text className="text-white text-sm font-promptMedium">เพิ่มอาหาร</Text>
+                  <Icon name="add" size={16} color="white" />
+                  <Text className="text-white text-sm font-promptMedium ml-2">เพิ่มอาหาร</Text>
                 </TouchableOpacity>
               </View>
             </View>
