@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import db from '../db_config';
 import axios from 'axios';
 import { yearOfBirthToAge } from '../utils/ageCal';
+import { get } from 'http';
 
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 const AI_API_KEY = process.env.AI_API_KEY;
@@ -39,13 +40,31 @@ interface UserInfo {
 /**
  * Create system message based on chat style
  */
-function createStyleSystemMessage(style: string, userInfo: UserInfo) {
+function createStyleSystemMessage(style: string, userInfo: UserInfo, eatingData: any) {
   const {
     age, weight, height, gender, body_fat, target_weight,
     eating_type, dietary_restrictions, additional_requirements, 
     activity_level, summary
   } = userInfo;
 
+  // เพิ่มข้อมูลการกิน 7 วันล่าสุด
+  let nutritionContext = '';
+  if (eatingData && eatingData.recentDays) {
+    nutritionContext = `
+    
+**ข้อมูลการกิน 7 วันล่าสุด:**
+${eatingData.recentDays.map((day: any) => 
+  `- ${day.date}: ${day.calories.actual} แคล (เป้าหมาย ${day.calories.target}) - ${day.calories.percentage}%`
+).join('\n')}
+
+**สรุปสัปดาห์:**
+- แคลอรี่เฉลี่ย: ${eatingData.weekSummary.averageCalories} แคล/วัน
+- โปรตีนเฉลี่ย: ${eatingData.weekSummary.averageProtein} กรัม/วัน
+- วันที่มีข้อมูล: ${eatingData.weekSummary.daysWithData}/7 วัน
+- วันที่บรรลุเป้าหมายแคลอรี่: ${eatingData.weekSummary.calorieGoalAchievement}/7 วัน`;
+  }
+
+  console.table(eatingData);
   // Base prompt ที่ใช้ร่วมกัน
   const basePrompt = `คุณเป็น AI ผู้เชี่ยวชาญด้านโภชนาการและสุขภาพ ชื่อ "GoodMeal AI" 
   ให้คำแนะนำเกี่ยวกับ:
@@ -55,7 +74,7 @@ function createStyleSystemMessage(style: string, userInfo: UserInfo) {
   - การลดน้ำหนัก
   - การเพิ่มกล้ามเนื้อ
   - วิธีทำอาหารเพื่อสุขภาพ
-  
+
   โดยมีข้อมูลผู้ใช้ดังนี้:
   - อายุ: ${age} ปี
   - น้ำหนัก: ${weight} กิโลกรัม
@@ -69,7 +88,11 @@ function createStyleSystemMessage(style: string, userInfo: UserInfo) {
   - ระดับกิจกรรม: ${activity_level}
 
   โดยมีข้อมูลสรุปการสนทนาที่ผ่านมาดังนี้:
-  - สรุป: ${summary || 'ไม่มีข้อมูลสรุป'}`;
+  - สรุป: ${summary || 'ไม่มีข้อมูลสรุป'}
+  ${nutritionContext}
+
+  **สำคัญมาก:** ทุกคำตอบของคุณต้องอยู่ในรูปแบบ Markdown (รองรับหัวข้อ, รายการ, ตาราง, โค้ด, ลิงก์, ตัวหนา, ตัวเอียง ฯลฯ) เพื่อให้สามารถแสดงผลในแอปพลิเคชันได้อย่างถูกต้อง
+  `;
 
   // Style-specific prompts
   const stylePrompts = {
@@ -134,6 +157,56 @@ const getUserInfo = async (userId: number) => {
     throw error;
   }
 };
+
+const getUserEatingInfo = async (userId: number) => {
+  try {
+    // Query 7 most recent days (ordered by summary_date desc)
+    const rows = await db('daily_nutrition_summary')
+      .where({ user_id: userId })
+      .orderBy('summary_date', 'desc')
+      .limit(7);
+
+    // สรุปข้อมูลเฉพาะที่สำคัญ
+    const summaryData = rows.map(row => ({
+      date: new Date(row.summary_date).toLocaleDateString('th-TH'),
+      calories: {
+        actual: row.total_calories || 0,
+        target: row.target_cal || row.recommended_cal || 0,
+        percentage: row.target_cal ? Math.round((row.total_calories / row.target_cal) * 100) : 0
+      },
+      macros: {
+        protein: row.total_protein || 0,
+        fat: row.total_fat || 0,
+        carbs: row.total_carbs || 0
+      },
+      targets: {
+        protein: row.target_protein || row.recommended_protein || 0,
+        fat: row.target_fat || row.recommended_fat || 0,
+        carbs: row.target_carb || row.recommended_carb || 0
+      }
+    }));
+
+    // คำนวณค่าเฉลี่ย 7 วัน
+    const avgCalories = summaryData.length > 0 ? Math.round(summaryData.reduce((sum, day) => sum + day.calories.actual, 0) / summaryData.length) : 0;
+    const avgProtein = summaryData.length > 0 ? Math.round(summaryData.reduce((sum, day) => sum + day.macros.protein, 0) / summaryData.length) : 0;
+    
+    // สรุปแนวโน้ม
+    const trend = {
+      averageCalories: avgCalories,
+      averageProtein: avgProtein,
+      daysWithData: summaryData.filter(day => day.calories.actual > 0).length,
+      calorieGoalAchievement: summaryData.filter(day => day.calories.percentage >= 80 && day.calories.percentage <= 120).length
+    };
+
+    return {
+      recentDays: summaryData.slice(0, 3), // เฉพาะ 3 วันล่าสุด
+      weekSummary: trend
+    };
+  } catch (error) {
+    console.error('Error getting 7-day nutrition summary:', error);
+    return null;
+  }
+}
 
 export const getChatSession = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -433,17 +506,16 @@ export const clearChatHistory = async (req: Request, res: Response): Promise<voi
 };
 
 
-/**
- * Get AI response from OpenAI API
- */
+
 async function getAiResponse(userMessage: string, userId: number): Promise<string> {
   try {
 
     if (!AI_API_KEY) {
       throw new Error('OpenAI API key not configured');
     }
+    const eatingData = await getUserEatingInfo(userId);
 
-    const recentMessages = await db('chat_message')
+    const recentMessages = await  db('chat_message')
       .where({ user_id: userId })
       .orderBy('created_at', 'desc')
       .limit(8) 
@@ -477,7 +549,9 @@ async function getAiResponse(userMessage: string, userId: number): Promise<strin
       additional_requirements, 
       activity_level, 
       summary
-    });
+    },
+    eatingData
+  );
 
     const messages = [
       systemMessage,
@@ -569,7 +643,7 @@ ${newMessages.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
     const response = await axios.post(OPENAI_API_URL, {
       model: 'gpt-3.5-turbo',
       messages: [systemMessage, userMessage],
-      max_tokens: 250, // ปรับ max_tokens พอเหมาะ
+      max_tokens: 1000, // ปรับ max_tokens พอเหมาะ
       temperature: 0, // temperature: 0 เพื่อให้สรุปตรงและไม่สุ่ม
       top_p: 1
     }, {
@@ -619,6 +693,9 @@ function generateFallbackResponse() {
 
   return 'ขอโทษครับ เกิดข้อผิดพลาดในการประมวลผล กรุณาลองใหม่อีกครั้ง';
 }
+
+
+
 
 /**
  * Get current conversation summary

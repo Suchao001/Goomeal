@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, Alert } from 'react-native';
+import Markdown from 'react-native-markdown-display';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import Menu from '../material/Menu';
@@ -18,13 +19,13 @@ const ChatScreen = () => {
   const [selectedStyle, setSelectedStyle] = useState<'style1' | 'style2' | 'style3'>('style1');
   const scrollViewRef = useRef<ScrollView>(null);
 
-  // Load chat history when component mounts
+  
   useEffect(() => {
     loadChatHistory();
     loadChatStyle();
   }, []);
 
-  // Auto-scroll to bottom when messages change
+  
   useEffect(() => {
     if (scrollViewRef.current && chatMessages.length > 0) {
       setTimeout(() => {
@@ -57,10 +58,10 @@ const ChatScreen = () => {
   const loadChatHistory = async () => {
     try {
       setIsLoading(true);
-      // Get or create session first
+      
       await apiClient.getChatSession();
       
-      // Then get chat messages (limit to last 30 messages for performance)
+      
       const messages = await apiClient.getChatMessages(30, 0);
       
       if (Array.isArray(messages)) {
@@ -70,7 +71,7 @@ const ChatScreen = () => {
       }
     } catch (error) {
       console.error('Error loading chat history:', error);
-      // Set default message if no history
+      
       setChatMessages([{
         id: 1,
         text: 'สวัสดีครับ! ผมเป็น AI ที่จะช่วยแนะนำการกินเพื่อสุขภาพและเมนูอาหารให้คุณ มีอะไรให้ช่วยไหมครับ?',
@@ -87,43 +88,43 @@ const ChatScreen = () => {
       try {
         setIsSending(true);
         
-        // สร้าง user message และแสดงทันทีในหน้าจอ
+        
         const userMessage = {
-          id: Date.now(), // temporary ID
+          id: Date.now(), 
           text: message.trim(),
           isBot: false,
           role: 'user' as const,
           timestamp: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
         };
         
-        // แสดง user message ทันทีก่อนส่งไป API
+        
         setChatMessages(prev => {
           const newMessages = [...prev, userMessage];
-          // จำกัดข้อความในหน่วยความจำไว้ที่ 50 ข้อความ
+          
           return newMessages.length > 50 ? newMessages.slice(-50) : newMessages;
         });
-        setMessage(''); // ล้าง input ทันที
+        setMessage(''); 
         
-        // ส่งข้อความไป API
+        
         const result = await apiClient.sendChatMessage(userMessage.text);
         
         
-        // เพิ่มเฉพาะ bot message เมื่อได้รับการตอบกลับ
+        
         if (result && result.botMessage) {
           setChatMessages(prev => {
             const newMessages = [...prev, result.botMessage];
-            // จำกัดข้อความในหน่วยความจำไว้ที่ 50 ข้อความ
+            
             return newMessages.length > 50 ? newMessages.slice(-50) : newMessages;
           });
         } else if (result && result.userMessage && result.botMessage) {
-          // กรณีที่ API ส่ง user message กลับมาด้วย ให้ใช้ bot message อย่างเดียว
+          
           setChatMessages(prev => {
             const newMessages = [...prev, result.botMessage];
-            // จำกัดข้อความในหน่วยความจำไว้ที่ 50 ข้อความ
+            
             return newMessages.length > 50 ? newMessages.slice(-50) : newMessages;
           });
         } else {
-          // เพิ่ม fallback message หาก API ไม่ตอบกลับ
+          
           const errorMessage = {
             id: Date.now() + 1,
             text: 'ขออภัยครับ เกิดข้อผิดพลาดในการประมวลผล กรุณาลองใหม่อีกครั้ง',
@@ -133,14 +134,14 @@ const ChatScreen = () => {
           };
           setChatMessages(prev => {
             const newMessages = [...prev, errorMessage];
-            // จำกัดข้อความในหน่วยความจำไว้ที่ 50 ข้อความ
+            
             return newMessages.length > 50 ? newMessages.slice(-50) : newMessages;
           });
         }
       } catch (error) {
         console.error('Error sending message:', error);
         
-        // เพิ่ม error message ใน chat แทน Alert
+        
         const errorMessage = {
           id: Date.now() + 2,
           text: 'เกิดข้อผิดพลาดในการส่งข้อความ กรุณาลองใหม่อีกครั้ง',
@@ -150,7 +151,7 @@ const ChatScreen = () => {
         };
         setChatMessages(prev => {
           const newMessages = [...prev, errorMessage];
-          // จำกัดข้อความในหน่วยความจำไว้ที่ 50 ข้อความ
+          
           return newMessages.length > 50 ? newMessages.slice(-50) : newMessages;
         });
       } finally {
@@ -171,7 +172,7 @@ const ChatScreen = () => {
           onPress: async () => {
             try {
               await apiClient.clearChatHistory();
-              await loadChatHistory(); // Reload to get fresh session
+              await loadChatHistory(); 
             } catch (error) {
               console.error('Error clearing chat history:', error);
               Alert.alert('เกิดข้อผิดพลาด', 'ไม่สามารถล้างประวัติได้');
@@ -230,12 +231,40 @@ const ChatScreen = () => {
                     <Text className="text-[#77DD77] text-sm font-promptSemiBold ml-2">GoodMeal AI</Text>
                   </View>
                 )}
-                <Text 
-                  className={`text-base leading-6 ${msg.isBot ? 'text-gray-700' : 'text-white'}`}
-                  style={{ fontFamily: 'Prompt-Regular' }}
-                >
-                  {msg.text || ''}
-                </Text>
+                {msg.isBot ? (
+                  <Markdown
+                    style={{
+                      body: {
+                        color: '#374151',
+                        fontFamily: 'Prompt-Regular',
+                        fontSize: 16,
+                        lineHeight: 24,
+                      },
+                      paragraph: {
+                        marginTop: 0,
+                        marginBottom: 0,
+                      },
+                      link: {
+                        color: '#2563eb',
+                      },
+                      code_inline: {
+                        backgroundColor: '#f3f4f6',
+                        borderRadius: 4,
+                        paddingHorizontal: 4,
+                        fontFamily: 'Prompt-Regular',
+                      },
+                    }}
+                  >
+                    {msg.text || ''}
+                  </Markdown>
+                ) : (
+                  <Text
+                    className="text-base leading-6 text-white"
+                    style={{ fontFamily: 'Prompt-Regular' }}
+                  >
+                    {msg.text || ''}
+                  </Text>
+                )}
                 {msg.isBot &&(
                   <Text 
                   className={`text-xs mt-2 ${msg.isBot ? 'text-gray-400 text-center' : 'text-gray-400'}`}

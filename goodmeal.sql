@@ -451,7 +451,7 @@ CREATE TABLE `global_food_plan` (
   `plan_name` varchar(100) NOT NULL,
   `duration` int(11) DEFAULT NULL,
   `description` text DEFAULT NULL,
-  `created_at` date DEFAULT curdate(),
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `image` varchar(255) DEFAULT NULL,
   `is_delete` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
