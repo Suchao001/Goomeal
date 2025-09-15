@@ -565,7 +565,7 @@ Generate the complete JSON now:`;
 
     // ส่ง prompt ไป OpenAI
     console.log('🚀 Sending prompt to OpenAI...');
-    const modelToUse = 'gpt-3.5-turbo';
+    const modelToUse = 'gpt-4o-mini';
     const response = await openai.chat.completions.create({
       model: modelToUse,
       messages: [
@@ -578,7 +578,6 @@ Generate the complete JSON now:`;
           content: foodPlanPrompt
         }
       ],
-      max_tokens: 4000,
       temperature: 0.7
     });
 
