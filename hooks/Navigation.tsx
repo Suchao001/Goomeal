@@ -4,6 +4,9 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 
 // Hook สำหรับ Navigation (ปลอดภัยเมื่อไม่มี NavigationContainer)
+// Lightweight debug deduper to avoid log spam
+const loggedStacks = new Set<string>();
+
 export function useTypedNavigation<T extends keyof RootStackParamList>() {
     // Try to read Navigation context directly so it doesn't throw when absent
     const ctx = React.useContext(NavigationContext) as any;
@@ -27,7 +30,15 @@ export function useTypedNavigation<T extends keyof RootStackParamList>() {
             dispatch: noop,
           } as unknown as NativeStackNavigationProp<RootStackParamList, T>;
     }, []);
-    // console.debug('[useTypedNavigation] Using mock navigation (no NavigationContainer)');
+    // Debug: log once per callsite if NavigationContainer is missing
+    try {
+        const stack = new Error('[NAV_DEBUG] useTypedNavigation without NavigationContainer').stack || '';
+        const key = stack.split('\n').slice(2, 5).join(' | ');
+        if (key && !loggedStacks.has(key)) {
+            loggedStacks.add(key);
+            console.warn('[NAV_DEBUG] Missing navigation context; returning mock.\nStack:', stack);
+        }
+    } catch {}
     return mock;
 }
 export function useTypedRoute<T extends keyof RootStackParamList>() {
@@ -43,7 +54,15 @@ export function useTypedRoute<T extends keyof RootStackParamList>() {
             name: '' as T,
             params: undefined,
         } as unknown as RouteProp<RootStackParamList, T>;
-        // console.debug('[useTypedRoute] Using mock route');
+        // Debug: log once to help locate callsites
+        try {
+            const stack = new Error('[NAV_DEBUG] useTypedRoute without NavigationContainer').stack || '';
+            const key = stack.split('\n').slice(2, 5).join(' | ');
+            if (key && !loggedStacks.has(key)) {
+                loggedStacks.add(key);
+                console.warn('[NAV_DEBUG] Missing route context; returning mock.\nStack:', stack);
+            }
+        } catch {}
         return mock;
     }
 }

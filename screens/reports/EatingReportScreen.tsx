@@ -40,7 +40,7 @@ const getScoreGradient = (score: number) => {
 
 const EatingReportScreen = () => {
   const { user } = useAuth();
-  const typedNavigation = useTypedNavigation();
+  const typedNavigation = useTypedNavigation<'EatingReport'>();
 
   const [selectedDate, setSelectedDate] = useState<string>(() => getTodayBangkokDate());
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -58,7 +58,7 @@ const EatingReportScreen = () => {
 
   const handleBackPress = () => {
     try {
-      (typedNavigation as any).goBack?.();
+      typedNavigation.goBack();
     } catch (error) {
       console.log('Navigation error:', error);
     }
@@ -116,6 +116,9 @@ const EatingReportScreen = () => {
     const today = new Date();
     next.setHours(0, 0, 0, 0);
     today.setHours(0, 0, 0, 0);
+    try {
+      console.log(`[EatingReport] navigateDay: ${direction} from ${formatDate(current)} -> ${formatDate(next)}`);
+    } catch {}
     if (direction === 'next' && next > today) {
       Alert.alert('ไม่สามารถดูข้อมูลได้', 'ไม่สามารถดูข้อมูลของวันอนาคตได้', [{ text: 'ตกลง', style: 'default' }]);
       return;
@@ -331,7 +334,7 @@ const EatingReportScreen = () => {
               className="bg-primary px-3 py-1 rounded-full"
               onPress={() => {
                 try {
-                  (typedNavigation as any).navigate('WeeklyReport');
+                  typedNavigation.navigate('WeeklyReport');
                 } catch (error) {
                   console.log('Navigation error:', error);
                   Alert.alert('ขณะนี้ไม่สามารถเข้าหน้ารายสัปดาห์ได้', 'กรุณาลองใหม่อีกครั้ง');
@@ -409,7 +412,7 @@ const EatingReportScreen = () => {
                 <Text className="text-sm text-gray-600 text-center mb-6 leading-relaxed">{!hasUserProfile ? 'กรุณากรอกข้อมูลส่วนตัวให้ครบถ้วนและลองกินอาหารบางอย่างก่อน' : 'ไม่มีข้อมูลการกินในวันนี้ กรุณาบันทึกอาหารที่กินแล้วลองอีกครั้ง'}</Text>
                 {!hasUserProfile && (
                   <TouchableOpacity className="rounded-2xl active:scale-95 shadow-lg overflow-hidden" onPress={() => {
-                    try { (typedNavigation as any).navigate('EditProfile'); }
+                    try { typedNavigation.navigate('EditProfile'); }
                     catch { Alert.alert('แจ้งเตือน', 'กรุณาไปที่หน้าโปรไฟล์เพื่อกรอกข้อมูลให้ครบถ้วน'); }
                   }}>
                     <LinearGradient colors={["#06b6d4", "#2563eb"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ paddingHorizontal: 32, paddingVertical: 16, borderRadius: 16 }}>
@@ -449,7 +452,7 @@ const EatingReportScreen = () => {
                       <Text className="text-amber-800 text-base font-promptSemiBold mb-1">ข้อมูลส่วนตัวยังไม่ครบถ้วน</Text>
                       <Text className="text-amber-700 text-sm mb-3 leading-relaxed">คำแนะนำอาจไม่ถูกต้องตามความต้องการเฉพาะของคุณ</Text>
                       <TouchableOpacity className="bg-amber-500 px-4 py-2 rounded-xl active:scale-95" onPress={() => {
-                        try { (typedNavigation as any).navigate('EditProfile'); }
+                        try { typedNavigation.navigate('EditProfile'); }
                         catch { Alert.alert('แจ้งเตือน', 'กรุณาไปที่หน้าโปรไฟล์เพื่อกรอกข้อมูลให้ครบถ้วน'); }
                       }}>
                         <Text className="text-white text-sm font-promptMedium">กรอกข้อมูลเพื่อความแม่นยำ →</Text>
@@ -602,7 +605,7 @@ const EatingReportScreen = () => {
                 <Text className="text-lg text-gray-700 text-center mb-2 font-promptSemiBold">ยังไม่มีรายการอาหารในวันนี้</Text>
                 <Text className="text-sm text-gray-500 text-center mb-6 leading-relaxed">เริ่มต้นบันทึกอาหารที่คุณกินเพื่อดูสถิติและคำแนะนำ</Text>
                 <TouchableOpacity className="bg-orange-500 px-6 py-3 rounded-xl flex-row items-center shadow-sm" onPress={() => {
-                  try { (typedNavigation as any).navigate('RecordFood'); }
+                  try { typedNavigation.navigate('RecordFood'); }
                   catch { Alert.alert('แจ้งเตือน', 'กรุณาไปที่หน้าค้นหาอาหารเพื่อเพิ่มรายการอาหาร'); }
                 }}>
                   <Icon name="add" size={16} color="white" />
