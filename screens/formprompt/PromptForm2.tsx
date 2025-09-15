@@ -218,34 +218,32 @@ const PromptForm2 = () => {
           </View>
         </View>
 
-        {/* Selected Ingredients Display */}
-        {selectedIngredients.length > 0 && (
+        {/* Selected Ingredients Display (custom-added only) */}
+        {(() => {
+          const customSelected = selectedIngredients.filter(ing => !popularIngredients.some(p => p.key === ing));
+          return customSelected.length > 0 ? (
           <View className="mb-8">
             <Text className="text-gray-800 mb-3 font-promptSemiBold text-base">
-              ✅ วัตถุดิบที่เลือก ({selectedIngredients.length})
+              ✅ วัตถุดิบที่เพิ่มเอง ({customSelected.length})
             </Text>
             <View className="flex-row flex-wrap gap-2">
-              {selectedIngredients.map((ingredient, index) => {
-                // Check if it's a popular ingredient or custom
-                const popularItem = popularIngredients.find(item => item.key === ingredient);
-                return (
-                  <View
-                    key={index}
-                    className="bg-[#77dd77] rounded-full px-3 py-2 mr-1 mb-2 flex-row items-center"
-                  >
-                    {popularItem && <Text className="mr-1 text-sm">{popularItem.icon}</Text>}
-                    <Text className="text-white font-promptMedium text-sm mr-2">
-                      {popularItem ? popularItem.label : ingredient}
-                    </Text>
-                    <TouchableOpacity onPress={() => handleRemoveIngredient(ingredient)}>
-                      <Text className="text-white font-promptBold text-sm">×</Text>
-                    </TouchableOpacity>
-                  </View>
-                );
-              })}
+              {customSelected.map((ingredient, index) => (
+                <View
+                  key={`custom-${index}`}
+                  className="bg-[#77dd77] rounded-full px-3 py-2 mr-1 mb-2 flex-row items-center"
+                >
+                  <Text className="text-white font-promptMedium text-sm mr-2">
+                    {ingredient}
+                  </Text>
+                  <TouchableOpacity onPress={() => handleRemoveIngredient(ingredient)}>
+                    <Text className="text-white font-promptBold text-sm">×</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
             </View>
           </View>
-        )}
+          ) : null;
+        })()}
       </View>
 
       {/* Navigation Buttons */}

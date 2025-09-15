@@ -51,14 +51,15 @@ const PromptForm3 = () => {
   ];
 
   // Health goals
-  const healthGoals = [
-    { key: 'weight-loss', label: 'ลดน้ำหนัก', icon: '⚖️' },
-    { key: 'muscle-gain', label: 'เพิ่มกล้ามเนื้อ', icon: '💪' },
-    { key: 'maintain', label: 'คงน้ำหนัก', icon: '🎯' },
-    { key: 'energy', label: 'เพิ่มพลังงาน', icon: '⚡' },
-    { key: 'health', label: 'สุขภาพดี', icon: '❤️' },
-    { key: 'digestion', label: 'ระบบย่อยดี', icon: '🌱' }
-  ];
+ const healthGoals = [
+  { key: 'muscle-strength', label: 'เพิ่มความแข็งแรง', icon: '🏋️' },
+  { key: 'endurance', label: 'เพิ่มความทนทาน', icon: '🏃' },
+  { key: 'focus', label: 'สมาธิและโฟกัสดีขึ้น', icon: '🧘' },
+  { key: 'better-sleep', label: 'นอนหลับดีขึ้น', icon: '😴' },
+  { key: 'immunity', label: 'เสริมภูมิคุ้มกัน', icon: '🛡️' },
+  { key: 'digestion', label: 'ระบบย่อยดี', icon: '🌱' }
+];
+
 
   const handleRestrictionToggle = (restrictionKey: string) => {
     setSelectedRestrictions(prev => 
@@ -119,7 +120,7 @@ const PromptForm3 = () => {
         {/* Dietary Restrictions */}
         <View className="mb-8">
           <Text className="text-gray-800 mb-4 font-promptSemiBold text-lg">
-            ข้อจำกัดในการรับประทาน
+            การเลือกทานอาหาร
           </Text>
           <View className="flex-row flex-wrap gap-2">
             {dietaryRestrictions.map((restriction) => (
@@ -143,7 +144,7 @@ const PromptForm3 = () => {
           </View>
           {selectedRestrictions.length > 0 && (
             <Text className="text-red-600 font-promptLight text-sm mt-2">
-              ✓ เลือกข้อจำกัด {selectedRestrictions.length} รายการ
+              ✓ เลือก {selectedRestrictions.length} รายการ
             </Text>
           )}
         </View>

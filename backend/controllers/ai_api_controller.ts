@@ -514,7 +514,7 @@ USER PREFERENCES FROM PROMPT:
 - ความหลากหลาย: ${varietyText}
 - ประเภทอาหารที่ชอบ: ${categoriesText}
 - วัตถุดิบที่ชอบ: ${ingredientsText}
-- ข้อจำกัดการกิน: ${restrictionsText}
+- การเลือกทานอาหาร: ${restrictionsText}
 - เป้าหมายสุขภาพ: ${goalsText}
 - ความต้องการเพิ่มเติม: ${additionalRequirements || 'ไม่มี'}
 

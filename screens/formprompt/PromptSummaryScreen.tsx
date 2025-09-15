@@ -186,7 +186,7 @@ const PromptSummaryScreen = () => {
 
   const requirements = [];
   if (data.selectedRestrictions.length > 0) {
-    requirements.push({ label: 'ข้อจำกัดการกิน', value: getRestrictionsDisplayText(data.selectedRestrictions) });
+    requirements.push({ label: 'การเลือกทานอาหาร', value: getRestrictionsDisplayText(data.selectedRestrictions) });
   }
   if (data.selectedGoals.length > 0) {
     requirements.push({ label: 'เป้าหมายสุขภาพ', value: getGoalsDisplayText(data.selectedGoals) });
@@ -216,7 +216,7 @@ const PromptSummaryScreen = () => {
         <SummarySection title="แผนการกิน" data={planSummary}  />
         <SummarySection title="ความชอบด้านอาหาร" data={foodPreferences}  />
         {requirements.length > 0 && (
-          <SummarySection title="ข้อจำกัดและความต้องการ" data={requirements}  />
+          <SummarySection title="การเลือกทานอาหารและความต้องการ" data={requirements}  />
         )}
 
         {/* AI Generation Notice */}
