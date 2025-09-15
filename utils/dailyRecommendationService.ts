@@ -46,6 +46,17 @@ export interface UserProfile {
   activity_level: string;
 }
 
+// Activity advice types and API
+export type UserGoal = 'decrease' | 'increase' | 'maintain' | string;
+
+export interface ActivityAdviceParams {
+  userGoal: UserGoal;
+  caloriePercent: number;     // แคลวันนี้เทียบเป้าหมายเป็น %
+  timeOfDay?: 'morning' | 'afternoon' | 'evening';
+  minutesAvailable?: 10 | 20 | 30;  // ถ้าไม่ส่ง จะเลือกช่วงเวลามาตรฐานให้
+  seed?: string;              // แนะนำส่ง YYYY-MM-DD เพื่อให้สุ่มแบบคงที่ต่อวัน
+}
+
 export function assessNutrient(actual: number, target: number, type: 'calories' | 'protein' | 'carbs' | 'fat'): NutrientAssessment {
   if (target === 0) {
     return { status: 'needs_adjustment', score: 0, percentage: 0 };
@@ -260,7 +271,7 @@ export function generateNutritionAdvice(
   pushIf(assessments.protein.status === 'excellent', `โปรตีน ${pct.pro.toFixed(0)}% เพียงพอ`);
   pushIf(assessments.protein.status === 'need_more', `โปรตีนยังไม่พอ เพิ่มโปรตีนไม่ติดมันเล็กน้อย`);
   pushIf(assessments.protein.status === 'insufficient', `โปรตีนต่ำ เพิ่มโปรตีนคุณภาพดีในมื้อถัดไป`);
-  pushIf(assessments.protein.status === 'excessive', `โปรตีนเกิน ลดปริมาณในมื้อถัดไป`);
+  pushIf(assessments.protein.status === 'excessive', `โปรตีนเกิน ลดปริมาณในมื้อถัดไป หรือออกำลังกายเพิ่ม`);
 
   // คาร์บ
   pushIf(assessments.carbs.status === 'excellent', `คาร์บ ${pct.carb.toFixed(0)}% พอดี`);
@@ -278,30 +289,188 @@ export function generateNutritionAdvice(
 /**
  * สร้างคำแนะนำด้านกิจกรรม
  */
-export function generateActivityAdvice(caloriePercent: number, userGoal: string): string[] {
-  const advice: string[] = [];
-  
-  if (userGoal === 'decrease') {
-    if (caloriePercent > 110) {
-      advice.push("🏃‍♂️ แคลอรี่เกินเป้าหมาย แนะนำเดิน 30 นาที หรือขึ้นลงบันได");
-    } else if (caloriePercent < 80) {
-      advice.push("⚠️ แคลอรี่น้อยเกินไป ควรทานเพิ่มและออกกำลังกายเบาๆ");
-    } else {
-      advice.push("✅ ออกกำลังกายเบาๆ 20-30 นาที จะช่วยเผาผลาญดีขึ้น");
+export function getActivityAdvice({
+  userGoal,
+  caloriePercent,
+  timeOfDay,
+  minutesAvailable,
+  seed = new Date().toISOString().slice(0,10), // YYYY-MM-DD
+}: ActivityAdviceParams): string[] {
+  const goal: 'decrease'|'increase'|'maintain' =
+    userGoal === 'decrease' ? 'decrease'
+    : userGoal === 'increase' ? 'increase'
+    : 'maintain';
+
+  // จัด bucket ตาม "ความรุนแรง"
+  const sev =
+    caloriePercent > 130 ? 'over_heavy' :
+    caloriePercent > 120 ? 'over_mid'   :
+    caloriePercent > 110 ? 'over_light' :
+    caloriePercent < 70  ? 'under_heavy':
+    caloriePercent < 80  ? 'under_mid'  :
+    caloriePercent < 90  ? 'under_light': 'ok';
+
+  // helper เลือกข้อความแบบสุ่มคงที่ด้วย seed
+  const rng = seeded(seed + goal + sev + (timeOfDay ?? '') + (minutesAvailable ?? ''));
+  const pick = <T,>(arr: T[], n = 1): T[] => {
+    const chosen: T[] = [];
+    const pool = [...arr];
+    for (let i = 0; i < Math.min(n, pool.length); i++) {
+      const idx = Math.floor(rng() * pool.length);
+      chosen.push(pool[idx]);
+      pool.splice(idx, 1);
     }
-  } else if (userGoal === 'increase') {
-    if (caloriePercent < 90) {
-      advice.push("💪 ควรทานเพิ่มและออกกำลังกายแบบต้านทาน เช่น ยกน้ำหนัก");
-    } else if (caloriePercent > 120) {
-      advice.push("🚶‍♂️ แคลอรี่เกินไป ควรเดินหรือออกกำลังกายเบาๆ");
-    } else {
-      advice.push("💪 ออกกำลังกายแบบต้านทานจะช่วยสร้างกล้ามเนื้อ");
-    }
-  } else {
-    advice.push("🏃‍♂️ ออกกำลังกาย 30 นาที จะช่วยเผาผลาญและสุขภาพดี");
+    return chosen;
+  };
+
+  const M = (def: number) => minutesAvailable ?? def; // นาที default ต่อสถานการณ์
+
+  // ตัวเลือกคำแนะนำ (ไทย + อีโมจิ) — แยกตามเป้าหมาย × ความรุนแรง
+  const pools: Record<typeof goal, Record<string, string[]>> = {
+    decrease: {
+      over_heavy: [
+        `🏃‍♂️ เดินเร็ว ${M(40)}–${M(45)} นาที หลังมื้อเย็น`,
+        `🔥 HIIT ${M(12)}–${M(15)} นาที แล้วเดินคูลดาวน์ 10 นาที`,
+        `🚴‍♂️ ปั่นจักรยาน ${M(35)} นาที หรือว่ายน้ำ ${M(25)} นาที`,
+        `🏋️‍♀️ Circuit เวทน้ำหนักตัว ${M(20)} นาที + เดินหลังอาหาร 15 นาที`,
+        `🧹 ทำงานบ้านเร็ว ๆ ${M(30)} นาที (NEAT) แทนการนั่งนิ่ง`,
+      ],
+      over_mid: [
+        `🚶‍♂️ เดินเร็ว ${M(30)} นาที โดยเฉพาะหลังมื้อใหญ่`,
+        `🔥 Tabata/HIIT สั้น ๆ ${M(10)}–${M(12)} นาที ถ้าเวลาน้อย`,
+        `🚴 ปั่นชิล ${M(25)}–${M(30)} นาที`,
+        `🤸‍♂️ ยืดเหยียด 10 นาที + เดิน ${M(20)} นาที`,
+      ],
+      over_light: [
+        `🚶 เดินหลังมื้ออาหาร ${M(15)}–${M(20)} นาที ช่วยจัดการกลูโคส`,
+        `🏃‍♂️ เดินเร็ว/จ็อก ${M(20)}–${M(25)} นาที`,
+        `🪜 ขึ้นลงบันไดต่อเนื่อง ${M(10)}–${M(12)} นาที`,
+      ],
+      under_heavy: [
+        `⚠️ แคลขาดมาก: เติมพลังงานก่อน แล้วออกกำลังกายเบา ๆ ${M(10)}–${M(15)} นาที`,
+        `🍌+🥛 snack 150–250 kcal จากนั้นเดินเบา ${M(10)}–${M(15)} นาที`,
+        `🛌 เน้นพักผ่อนคุณภาพคืนนี้ แล้วค่อยเวทพรุ่งนี้`,
+      ],
+      under_mid: [
+        `🥪 เติมคาร์บเชิงซ้อนเล็กน้อยก่อน แล้วเดินเบา ${M(15)} นาที`,
+        `🏋️ เวทเบา ๆ แบบ full-body ${M(15)} นาที + เดินคูลดาวน์ 10 นาที`,
+      ],
+      under_light: [
+        `🤸‍♀️ ยืดเหยียด 10 นาที + เดิน ${M(15)} นาที`,
+        `🚶 เดินชิล ${M(20)} นาที รักษาการเผาผลาญ`,
+      ],
+      ok: [
+        `✅ เดินเร็ว ${M(20)}–${M(30)} นาที รักษาจังหวะการเผาผลาญ`,
+        `🏋️‍♂️ เวทวงจร ${M(20)} นาที หรือปั่น ${M(25)} นาที`,
+        `🧘 โยคะ/Flow ${M(20)} นาที + เดินหลังมื้อเย็น 10 นาที`,
+      ],
+    },
+    increase: {
+      under_heavy: [
+        `💪 เวทเน้น compound ${M(40)}–${M(45)} นาที แล้วคาร์ดิโอเบา 10 นาที`,
+        `🥤 เติมพลังงาน 300–500 kcal ก่อนซ้อม แล้วฝึกต้านทานคุณภาพ`,
+        `🏋️‍♀️ Progressive overload ${M(35)} นาที + โปรตีนหลังซ้อม`,
+      ],
+      under_mid: [
+        `💪 เวท ${M(30)} นาที + เดินคูลดาวน์ 10 นาที`,
+        `🏋️ Superset เบา ๆ ${M(20)}–${M(25)} นาที`,
+        `🍚 เติมคาร์บก่อนซ้อมเล็กน้อย แล้วฝึกต้านทาน`,
+      ],
+      under_light: [
+        `💪 เวทน้ำหนักตัว/ยางยืด ${M(20)} นาที`,
+        `🚶‍♂️ เดินอุ่นเครื่อง 10 นาที + เวท ${M(20)} นาที`,
+      ],
+      over_heavy: [
+        `🚶 แคลเกินมาก: เดินเร็ว ${M(30)}–${M(40)} นาที เพื่อบาลานซ์พลังงาน`,
+        `🚴 ปั่นเบา ${M(30)} นาที หรือว่ายน้ำ ${M(20)} นาที`,
+      ],
+      over_mid: [
+        `🚶 แคลเกิน: เดินเร็ว ${M(20)}–${M(30)} นาที`,
+        `🤸‍♂️ Mobility/ยืดเหยียด 10 นาที + เดิน ${M(15)} นาที`,
+      ],
+      over_light: [
+        `🚶 เดินหลังอาหาร ${M(15)}–${M(20)} นาที รักษาฟอร์ม`,
+        `🏃‍♂️ จ็อกช้า ${M(20)} นาที`,
+      ],
+      ok: [
+        `💪 เวทแบบ progressive overload ${M(30)} นาที`,
+        `🏋️ Compound (สควอต/ดัน/ดึง) ${M(25)} นาที + เดิน 10 นาที`,
+        `🚶 คาร์ดิโอเบา ${M(20)}–${M(25)} นาที เพื่อระบบหัวใจ`,
+      ],
+    },
+    maintain: {
+      over_heavy: [
+        `🏃‍♂️ เดินเร็ว ${M(35)}–${M(45)} นาที`,
+        `🔥 HIIT ${M(12)} นาที + เดิน 10 นาที`,
+      ],
+      over_mid: [
+        `🚶 เดินหลังมื้อใหญ่ ${M(20)}–${M(30)} นาที`,
+        `🚴 ปั่นชิล ${M(25)} นาที`,
+      ],
+      over_light: [
+        `🚶 เดิน ${M(20)}–${M(25)} นาที`,
+        `🪜 ขึ้นลงบันได ${M(10)}–${M(12)} นาที`,
+      ],
+      under_heavy: [
+        `⚠️ เติมพลังงานก่อน แล้วทำคาร์ดิโอเบา ${M(10)}–${M(15)} นาที`,
+        `🍽️ วางมื้อถัดไปให้ครบหมวด + เดินเบา 10 นาที`,
+      ],
+      under_mid: [
+        `🤸‍♂️ ยืดเหยียด 10 นาที + เดิน ${M(15)} นาที`,
+        `🚶 เดินชิล ${M(20)} นาที`,
+      ],
+      under_light: [
+        `🚶 เดินหลังอาหาร ${M(15)} นาที`,
+        `🧘 โยคะ/หายใจลึก ${M(15)} นาที`,
+      ],
+      ok: [
+        `✅ เดินเร็ว ${M(20)}–${M(30)} นาที`,
+        `🏋️ เวทน้ำหนักตัว ${M(20)} นาที`,
+        `🚴 ปั่นสบาย ๆ ${M(25)} นาที`,
+      ],
+    },
+  };
+
+  // บางข้อความเฉพาะช่วงเวลา (เพิ่มรสชาติเล็กน้อย)
+  const timeHints: Record<NonNullable<typeof timeOfDay>, string[]> = {
+    morning: [
+      '🌤️ รับแดดอ่อน ๆ 5–10 นาที แล้วเดินสั้น ๆ ก่อนเริ่มวัน',
+      '🥤 ดื่มน้ำ 1–2 แก้วก่อนออกกำลัง',
+    ],
+    afternoon: [
+      '☀️ หลังมื้อกลางวัน เดิน 10–15 นาที ช่วยลดง่วงบ่าย',
+    ],
+    evening: [
+      '🌙 หลังมื้อเย็น เดิน 15–20 นาที ช่วยย่อยและนอนดีขึ้น',
+      '🛌 เว้นระยะออกกำลังกายหนักก่อนนอน 3 ชม.',
+    ],
+  };
+
+  const base = pools[goal][sev] ?? pools.maintain.ok;
+  const picks = pick(base, sev.includes('heavy') ? 2 : 1); // เบี่ยงเบนหนัก → ให้ 2 ข้อ
+  if (timeOfDay) {
+    picks.push(...pick(timeHints[timeOfDay], 1));
   }
-  
-  return advice;
+  return picks;
+}
+
+// Backward-compatible wrapper with old API
+export function generateActivityAdvice(caloriePercent: number, userGoal: string): string[] {
+  return getActivityAdvice({ userGoal, caloriePercent });
+}
+
+// PRNG แบบง่ายสำหรับการสุ่มคงที่ตาม seed
+function seeded(s: string) {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return function rand() {
+    // LCG
+    h = (Math.imul(h, 1664525) + 1013904223) >>> 0;
+    return (h >>> 0) / 0xFFFFFFFF;
+  };
 }
 
 /**

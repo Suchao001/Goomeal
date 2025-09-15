@@ -497,9 +497,12 @@ const RecordFoodScreen = () => {
   const progressPercent = targetCalories > 0
     ? Math.min(Math.round((totalCaloriesSaved / targetCalories) * 100), 100)
     : 0;
-  const isUnderTarget = totalCaloriesSaved < targetCalories;
-  const isAtTarget = totalCaloriesSaved === targetCalories;
-  const isOverTarget = totalCaloriesSaved > targetCalories;
+  // Apply ±20 kcal tolerance: within tolerance is treated as at-target (not red)
+  const tolerance = 20;
+  const diff = totalCaloriesSaved - targetCalories;
+  const isAtTarget = Math.abs(diff) <= tolerance;
+  const isUnderTarget = diff < -tolerance;
+  const isOverTarget = diff > tolerance;
   const remainingCalories = Math.max(targetCalories - totalCaloriesSaved, 0);
   const overCalories = Math.max(totalCaloriesSaved - targetCalories, 0);
   const barColor = isUnderTarget ? 'bg-blue-500' : isAtTarget ? 'bg-green-500' : 'bg-red-500';

@@ -159,7 +159,7 @@ const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
                 className="h-2 rounded-full shadow-sm"
                 style={{
                   backgroundColor:
-                    caloriesPercentage > 100 ? '#f59e0b' :
+                    caloriesPercentage > 110 ? '#f59e0b' :
                     caloriesPercentage > 80 ? '#10b981' : '#10b981',
                   width: `${Math.min(caloriesPercentage, 100)}%`,
                 }}
@@ -174,7 +174,7 @@ const CaloriesSummary: React.FC<CaloriesSummaryProps> = ({
                 เหลืออีก <Text className="font-promptBold text-green-600">{remainingCalories}</Text> แคลอรี่
               </Text>
             </View>
-          ) : rawRemaining < 0 ? (
+          ) : rawRemaining < -20 ? (
             <View className="bg-red-50 rounded-full px-3 py-1 border border-red-100">
               <Text className="text-xs font-promptMedium text-red-600">
                 เกินเป้าหมาย <Text className="font-promptBold">{Math.abs(rawRemaining)}</Text> แคลอรี่

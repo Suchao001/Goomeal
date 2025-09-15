@@ -566,12 +566,12 @@ const EatingReportScreen = () => {
                   </View>
                   <Text className="text-lg text-gray-800 font-promptBold">รายการอาหารวันนี้</Text>
                 </View>
-                <View className="bg-orange-50 px-3 py-1 rounded-full border border-orange-200">
+                <View className=" px-3 py-1  ">
                   <Text className="text-sm text-orange-600 font-promptMedium">{eatingRecords.length} รายการ</Text>
                 </View>
               </View>
 
-              <View className="space-y-3">
+              <View className="space-y-3 gap-1">
                 {eatingRecords.map((record, index) => (
                   <View key={`food-${index}`} className="bg-gray-50 rounded-xl p-4">
                     <View className="flex-row justify-between items-start">
@@ -580,17 +580,17 @@ const EatingReportScreen = () => {
                         <View className="flex-row items-center space-x-2 mb-3">
                           <View className="bg-blue-500 px-3 py-1 rounded-full"><Text className="text-white text-xs font-promptMedium">{record.meal_type || 'อื่นๆ'}</Text></View>
                           {record.meal_time && (
-                            <View className="bg-gray-200 px-3 py-1 rounded-full"><Text className="text-gray-600 text-xs font-promptMedium">{record.meal_time.slice(0, 5)}</Text></View>
+                            <View className=" px-3 py-1 "><Text className="text-gray-600 text-xs font-promptMedium">{record.meal_time.slice(0, 5)}</Text></View>
                           )}
                         </View>
-                        <View className="flex-row space-x-4">
+                        <View className="flex-row space-x-4 gap-1">
                           <View className="items-center"><Text className="text-xs text-gray-500 mb-1">โปรตีน</Text><Text className="text-sm text-green-600 font-promptSemiBold">{Math.round(record.protein || 0)}g</Text></View>
                           <View className="items-center"><Text className="text-xs text-gray-500 mb-1">คาร์บ</Text><Text className="text-sm text-blue-600 font-promptSemiBold">{Math.round(record.carbs || 0)}g</Text></View>
                           <View className="items-center"><Text className="text-xs text-gray-500 mb-1">ไขมัน</Text><Text className="text-sm text-orange-600 font-promptSemiBold">{Math.round(record.fat || 0)}g</Text></View>
                         </View>
                       </View>
                       <View className="items-center bg-white rounded-lg px-3 py-2 shadow-sm">
-                        <Text className="text-lg text-red-500 font-promptBold">{(record.calories || 0).toLocaleString()}</Text>
+                        <Text className="text-lg text-green-500 font-promptBold">{(record.calories || 0).toLocaleString()}</Text>
                         <Text className="text-xs text-gray-500 font-promptMedium">kcal</Text>
                       </View>
                     </View>
