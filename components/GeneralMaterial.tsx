@@ -1,6 +1,6 @@
 import { View, TouchableOpacity } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { useTypedNavigation } from '../hooks/Navigation';
 import { RootStackParamList } from '../types/navigation'; 
 
 type Props = {
@@ -8,12 +8,12 @@ type Props = {
 };
 
 export const ArrowLeft = ({ goto }: Props) => {
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const navigation = useTypedNavigation<keyof RootStackParamList>();
 
   return (
     <View className="flex-row items-start w-full relative">
       <TouchableOpacity
-        onPress={() => (goto ? navigation.navigate(goto as any) : navigation.goBack())}
+        onPress={() => (goto ? (navigation as any).navigate(goto as any) : (navigation as any).goBack())}
         className="absolute top-3 left-1 z-10 w-12 h-12 items-center justify-center"
       >
         <FontAwesome

@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback, useMemo, useContext } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert, Modal, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { NavigationContext } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import { useAuth } from '../../AuthContext';
 import Menu from '../material/Menu';
@@ -41,7 +41,6 @@ const getScoreGradient = (score: number) => {
 const EatingReportScreen = () => {
   const { user } = useAuth();
   const typedNavigation = useTypedNavigation();
-  const navContext = useContext(NavigationContext);
 
   const [selectedDate, setSelectedDate] = useState<string>(() => getTodayBangkokDate());
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -59,8 +58,7 @@ const EatingReportScreen = () => {
 
   const handleBackPress = () => {
     try {
-      if (navContext) (typedNavigation as any).goBack?.();
-      else console.log('Navigation not available for goBack');
+      (typedNavigation as any).goBack?.();
     } catch (error) {
       console.log('Navigation error:', error);
     }
@@ -105,13 +103,11 @@ const EatingReportScreen = () => {
   useEffect(() => { loadDailyData(); }, [loadDailyData]);
 
   
-  useEffect(() => {
-    if (!navContext || !(navContext as any).addListener) return;
-    const unsubscribe = (navContext as any).addListener('focus', () => {
+  useFocusEffect(
+    useCallback(() => {
       loadDailyData();
-    });
-    return unsubscribe;
-  }, [navContext, loadDailyData]);
+    }, [loadDailyData])
+  );
 
   const navigateDay = (direction: 'prev' | 'next') => {
     const current = parseDate(selectedDate);
@@ -335,8 +331,7 @@ const EatingReportScreen = () => {
               className="bg-primary px-3 py-1 rounded-full"
               onPress={() => {
                 try {
-                  if (navContext) (typedNavigation as any).navigate('WeeklyReport');
-                  else Alert.alert('ขณะนี้ไม่สามารถเข้าหน้ารายสัปดาห์ได้', 'Navigation ไม่พร้อมใช้งาน');
+                  (typedNavigation as any).navigate('WeeklyReport');
                 } catch (error) {
                   console.log('Navigation error:', error);
                   Alert.alert('ขณะนี้ไม่สามารถเข้าหน้ารายสัปดาห์ได้', 'กรุณาลองใหม่อีกครั้ง');
@@ -414,7 +409,7 @@ const EatingReportScreen = () => {
                 <Text className="text-sm text-gray-600 text-center mb-6 leading-relaxed">{!hasUserProfile ? 'กรุณากรอกข้อมูลส่วนตัวให้ครบถ้วนและลองกินอาหารบางอย่างก่อน' : 'ไม่มีข้อมูลการกินในวันนี้ กรุณาบันทึกอาหารที่กินแล้วลองอีกครั้ง'}</Text>
                 {!hasUserProfile && (
                   <TouchableOpacity className="rounded-2xl active:scale-95 shadow-lg overflow-hidden" onPress={() => {
-                    try { if (navContext) (typedNavigation as any).navigate('EditProfile'); else Alert.alert('แจ้งเตือน', 'กรุณาไปที่หน้าโปรไฟล์เพื่อกรอกข้อมูลให้ครบถ้วน'); }
+                    try { (typedNavigation as any).navigate('EditProfile'); }
                     catch { Alert.alert('แจ้งเตือน', 'กรุณาไปที่หน้าโปรไฟล์เพื่อกรอกข้อมูลให้ครบถ้วน'); }
                   }}>
                     <LinearGradient colors={["#06b6d4", "#2563eb"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ paddingHorizontal: 32, paddingVertical: 16, borderRadius: 16 }}>
@@ -454,7 +449,7 @@ const EatingReportScreen = () => {
                       <Text className="text-amber-800 text-base font-promptSemiBold mb-1">ข้อมูลส่วนตัวยังไม่ครบถ้วน</Text>
                       <Text className="text-amber-700 text-sm mb-3 leading-relaxed">คำแนะนำอาจไม่ถูกต้องตามความต้องการเฉพาะของคุณ</Text>
                       <TouchableOpacity className="bg-amber-500 px-4 py-2 rounded-xl active:scale-95" onPress={() => {
-                        try { if (navContext) (typedNavigation as any).navigate('EditProfile'); else Alert.alert('แจ้งเตือน', 'กรุณาไปที่หน้าโปรไฟล์เพื่อกรอกข้อมูลให้ครบถ้วน'); }
+                        try { (typedNavigation as any).navigate('EditProfile'); }
                         catch { Alert.alert('แจ้งเตือน', 'กรุณาไปที่หน้าโปรไฟล์เพื่อกรอกข้อมูลให้ครบถ้วน'); }
                       }}>
                         <Text className="text-white text-sm font-promptMedium">กรอกข้อมูลเพื่อความแม่นยำ →</Text>
@@ -607,7 +602,7 @@ const EatingReportScreen = () => {
                 <Text className="text-lg text-gray-700 text-center mb-2 font-promptSemiBold">ยังไม่มีรายการอาหารในวันนี้</Text>
                 <Text className="text-sm text-gray-500 text-center mb-6 leading-relaxed">เริ่มต้นบันทึกอาหารที่คุณกินเพื่อดูสถิติและคำแนะนำ</Text>
                 <TouchableOpacity className="bg-orange-500 px-6 py-3 rounded-xl flex-row items-center shadow-sm" onPress={() => {
-                  try { if (navContext) (typedNavigation as any).navigate('RecordFood'); else Alert.alert('แจ้งเตือน', 'กรุณาไปที่หน้าค้นหาอาหารเพื่อเพิ่มรายการอาหาร'); }
+                  try { (typedNavigation as any).navigate('RecordFood'); }
                   catch { Alert.alert('แจ้งเตือน', 'กรุณาไปที่หน้าค้นหาอาหารเพื่อเพิ่มรายการอาหาร'); }
                 }}>
                   <Icon name="add" size={16} color="white" />
