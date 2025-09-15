@@ -1,7 +1,4 @@
-// Daily Recommendation Service
-// ระบบแนะนำการกินอาหารรายวัน
 
-// Types
 export interface DailyNutritionData {
   calories: number;
   protein: number;
@@ -49,9 +46,6 @@ export interface UserProfile {
   activity_level: string;
 }
 
-/**
- * ประเมินสารอาหารแต่ละชนิด
- */
 export function assessNutrient(actual: number, target: number, type: 'calories' | 'protein' | 'carbs' | 'fat'): NutrientAssessment {
   if (target === 0) {
     return { status: 'needs_adjustment', score: 0, percentage: 0 };
@@ -250,9 +244,7 @@ export function calculateDailyScore(assessments: DailyAssessment): { totalScore:
   return { totalScore, grade };
 }
 
-/**
- * สร้างเคล็ดลับสำหรับพรุ่งนี้
- */
+
 export function generateTomorrowTips(assessments: DailyAssessment, userProfile: UserProfile): string[] {
   const tips: string[] = [];
   

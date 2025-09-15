@@ -25,9 +25,9 @@ const { width } = Dimensions.get('window');
 
 const WeeklyReportScreen = () => {
   const navigation = useTypedNavigation();
-  const [weekOffset, setWeekOffset] = useState(0); // 0 = current week, -1 = last week, 1 = next week
+  const [weekOffset, setWeekOffset] = useState(0); 
   
-  // Data states
+  
   const [reportData, setReportData] = useState<WeeklyReportData | null>(null);
   const [insightsData, setInsightsData] = useState<WeeklyInsightsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,7 +37,7 @@ const WeeklyReportScreen = () => {
     navigation.goBack();
   };
 
-  // Load data functions
+  
   const loadWeeklyData = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -45,7 +45,7 @@ const WeeklyReportScreen = () => {
         getWeeklyNutritionSummary(weekOffset),
         getWeeklyInsights(weekOffset)
       ]);
-      // Debug: log raw API responses (summary + insights)
+      
       try {
         console.log('🛰️ [WeeklyReport] Raw summaryRes:', summaryRes);
         console.log('🛰️ [WeeklyReport] Raw insightsRes:', insightsRes);
@@ -77,19 +77,19 @@ const WeeklyReportScreen = () => {
     }
   }, [weekOffset]);
 
-  // Load data when weekOffset changes
+  
   useEffect(() => {
     loadWeeklyData();
   }, [loadWeeklyData]);
 
-  // Load data when screen comes into focus
+  
   useFocusEffect(
     useCallback(() => {
       loadWeeklyData();
     }, [loadWeeklyData])
   );
 
-  // Debug: log report and calories per day when data loads
+  
   useEffect(() => {
     try {
       console.log('🧾 [WeeklyReport] reportData:', reportData);
@@ -108,11 +108,11 @@ const WeeklyReportScreen = () => {
     } catch (e) {}
   }, [insightsData]);
 
-  // Debug: recompute chart scaling against current data to verify UI math
+  
   useEffect(() => {
     try {
       if (!reportData?.daily_details?.length) return;
-      // Map into chart series like render uses
+      
       const chart = reportData.daily_details.map((day) => ({
         date: day.date,
         calories: day.total_calories || 0,
@@ -147,14 +147,14 @@ const WeeklyReportScreen = () => {
     if (direction === 'prev') {
       setWeekOffset(weekOffset - 1);
     } else if (direction === 'next') {
-      // Prevent going to future weeks beyond current week
+      
       if (weekOffset < 0) {
         setWeekOffset(weekOffset + 1);
       }
     }
   };
 
-  // Get calculated values from API data
+  
   const getDisplayData = () => {
     if (!reportData) {
       return {
@@ -179,7 +179,7 @@ const WeeklyReportScreen = () => {
         day: getShortThaiDayName(day.date),
         date: new Date(day.date).getDate().toString(),
         calories: day.total_calories,
-        // ไม่ตั้งค่า default 1500 เพื่อไม่ให้ปั่นสเกล หากไม่มีให้เป็น undefined
+        
         target: (typeof day.recommended_cal === 'number' && !Number.isNaN(day.recommended_cal))
           ? day.recommended_cal
           : ((typeof day.target_cal === 'number' && !Number.isNaN(day.target_cal)) ? day.target_cal : undefined),
@@ -193,14 +193,14 @@ const WeeklyReportScreen = () => {
 
   const displayData = getDisplayData();
 
-  // Principles for weekly recommendations
-  // - Calorie adherence: compare average calories vs target; flag if |diff| >= 150 kcal/day or >= 8%
-  // - Macro balance: compute % of energy from protein/carbs/fat vs baseline 25/50/25; flag if deviation >= 7%
-  // - Consistency: flag if days logged < 5 per week
-  // - Variability: flag if coefficient of variation (sd/mean) of daily calories >= 0.20
-  // - Worst day: highlight the day with the largest absolute deviation (>= 200 kcal) and suggest pre-planning
-  // Note: Baselines can be adjusted later per user goal
-  // Generate more actionable weekly recommendations from summary data
+  
+  
+  
+  
+  
+  
+  
+  
   const generateSmartRecommendations = useCallback((): Recommendation[] => {
     if (!reportData) return [];
 
@@ -208,7 +208,7 @@ const WeeklyReportScreen = () => {
     const sum = reportData.summary;
     const daysLogged = (reportData as any)?.summary?.total_days_with_data ?? (insightsData?.insights?.days_logged ?? 0);
 
-    // 1) Calorie adherence vs target
+    
     const targetCal = sum.avg_recommended_cal || sum.avg_target_cal || 0;
     const actualCal = sum.avg_total_calories || 0;
     if (targetCal > 0 && actualCal > 0) {
@@ -227,7 +227,7 @@ const WeeklyReportScreen = () => {
       }
     }
 
-    // 2) Macro balance analysis (as % of calories)
+    
     const p = sum.avg_total_protein || 0;
     const c = sum.avg_total_carbs || 0;
     const f = sum.avg_total_fat || 0;
@@ -237,7 +237,7 @@ const WeeklyReportScreen = () => {
       const cPct = Math.round(((c * 4) / kcalFromMacros) * 100);
       const fPct = Math.round(((f * 9) / kcalFromMacros) * 100);
 
-      // Baseline ranges (can be refined per user goal)
+      
       const ideal = { p: 25, c: 50, f: 25 };
       const delta = {
         p: pPct - ideal.p,
@@ -272,7 +272,7 @@ const WeeklyReportScreen = () => {
       }
     }
 
-    // 3) Consistency / logging frequency
+    
     if (daysLogged < 5) {
       recs.push({
         icon: 'calendar',
@@ -282,7 +282,7 @@ const WeeklyReportScreen = () => {
       });
     }
 
-    // 4) Variability of daily calories
+    
     const dayCals = (reportData.daily_details || []).map(d => d.total_calories || 0).filter(n => n > 0);
     if (dayCals.length >= 3) {
       const mean = dayCals.reduce((a,b)=>a+b,0) / dayCals.length;
@@ -299,7 +299,7 @@ const WeeklyReportScreen = () => {
       }
     }
 
-    // 5) Worst day highlight with tip
+    
     const withTarget = (reportData.daily_details || []).filter(d => typeof (d.recommended_cal || d.target_cal) === 'number');
     if (withTarget.length > 0) {
       const scored = withTarget.map(d => ({
@@ -336,8 +336,8 @@ const WeeklyReportScreen = () => {
       );
     }
 
-    // Scale by the max of calories or target; use a "nice" rounded ceiling for consistency
-    // คิดจากค่าที่มีจริงเท่านั้น ไม่เอา default 1500 มาปน
+    
+    
     const valuesForScale = displayData.dailyChart.flatMap(d => {
       const arr: number[] = [];
       if (typeof d.calories === 'number') arr.push(d.calories as number);
@@ -345,31 +345,31 @@ const WeeklyReportScreen = () => {
       return arr;
     });
     const rawMax = Math.max(1, ...(valuesForScale.length ? valuesForScale : [1]));
-    // Round up to nearest 50 to create small headroom and nicer tick labels
+    
     const axisMax = Math.max(1, Math.ceil(rawMax / 50) * 50);
-    // Dynamic height based on axisMax (approx. 1px per 10 kcal), clamped
+    
     const chartHeight = Math.max(200, Math.min(380, Math.round(axisMax / 10)));
-    const yTicks = [1, 0.75, 0.5, 0.25]; // 100%, 75%, 50%, 25%
+    const yTicks = [1, 0.75, 0.5, 0.25]; 
 
-    // เตรียมข้อมูลสำหรับ BarChart + เส้นเป้าหมาย
+    
     const barData = displayData.dailyChart.map((d) => {
       const cal = typeof d.calories === 'number' ? (d.calories as number) : 0;
       const hasTarget = typeof d.target === 'number' && !Number.isNaN(d.target as number);
       const tgt = hasTarget ? (d.target as number) : undefined;
 
-      // Color rules
-      // - Over target: red (#ef4444)
-      // - Close/equal to target: green (#22c55e) within ±max(50 kcal, 2% of target)
-      // - Below target but not close: amber (#ffb800)
-      // - No target: default blue (#3b82f6)
+      
+      
+      
+      
+      
       let frontColor = '#3b82f6';
       if (hasTarget && typeof tgt === 'number') {
-        const thresh = Math.max(100, Math.round(tgt * 0.10)); // within ±10% or ±100 kcal → เหมาะสม
+        const thresh = Math.max(100, Math.round(tgt * 0.10)); 
         const diff = cal - tgt;
         if (Math.abs(diff) <= thresh) {
-          frontColor = '#22c55e'; // ใกล้เป้า = เหมาะสม
+          frontColor = '#22c55e'; 
         } else {
-          frontColor = diff > 0 ? '#ef4444' : '#ffb800'; // เกิน = แดง, ต่ำ = เหลือง
+          frontColor = diff > 0 ? '#ef4444' : '#ffb800'; 
         }
       }
 
@@ -605,7 +605,7 @@ const WeeklyReportScreen = () => {
                 )}
                 
                 {(() => {
-                  // Merge backend + smart recommendations with simple de-dup by title
+                  
                   const backendRecs = insightsData?.recommendations || [];
                   const smartRecs = generateSmartRecommendations();
                   const mergedMap = new Map<string, any>();
