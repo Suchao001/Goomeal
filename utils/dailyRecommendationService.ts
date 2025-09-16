@@ -49,6 +49,91 @@ export interface UserProfile {
 
 export type UserGoal = 'decrease' | 'increase' | 'maintain' | string;
 
+type NormalizedGoal = 'decrease' | 'increase' | 'maintain';
+
+interface NutrientScoreContext {
+  caloriePct?: number;
+  weightKg?: number;
+  goal?: UserGoal | UserProfile['target_goal'];
+}
+
+interface DailyPerformanceContext {
+  goal?: UserGoal | UserProfile['target_goal'];
+  weightKg?: number;
+}
+
+interface HuberScoreParams {
+  delta: number;     // soft zone width (percent points)
+  slope: number;     // penalty multiplier
+  minScore: number;  // lower bound of returned score
+  asymOver: number;  // penalty weight when actual > target
+  asymUnder: number; // penalty weight when actual < target
+  maxScore?: number; // optional upper bound (default 25)
+}
+
+function normalizeGoal(goal?: UserGoal | UserProfile['target_goal']): NormalizedGoal {
+  if (goal === 'decrease') return 'decrease';
+  if (goal === 'increase') return 'increase';
+  return 'maintain';
+}
+
+function huberScoreFromPct(pct: number, {
+  delta,
+  slope,
+  minScore,
+  asymOver,
+  asymUnder,
+  maxScore = 25,
+}: HuberScoreParams): number {
+  if (!isFinite(pct)) return minScore;
+
+  const diff = pct - 100;
+  const absDiff = Math.abs(diff);
+  const safeDelta = Math.max(1, delta);
+  const weight = diff >= 0 ? asymOver : asymUnder;
+
+  const huber = absDiff <= safeDelta
+    ? (absDiff * absDiff) / (2 * safeDelta)
+    : absDiff - safeDelta / 2;
+
+  const penalty = slope * weight * huber;
+  const raw = maxScore - penalty;
+
+  return Math.max(minScore, Math.min(maxScore, parseFloat(raw.toFixed(2))));
+}
+
+function proteinScore(
+  actual: number,
+  target: number,
+  weightKg: number | undefined,
+  caloriePct: number,
+  goal: NormalizedGoal
+): number {
+  if (!isFinite(target) || target <= 0) {
+    return 0;
+  }
+
+  const safeWeight = weightKg && weightKg > 0 ? weightKg : undefined;
+  const cap = safeWeight ? ((goal === 'increase' ? 2.2 : 2.0) * safeWeight) : Number.POSITIVE_INFINITY;
+  const pct = (actual / Math.max(target, 1)) * 100;
+
+  let score = huberScoreFromPct(pct, {
+    delta: 10,
+    slope: 0.4,
+    minScore: 12,
+    asymOver: 0.5,
+    asymUnder: goal === 'increase' ? 1.2 : 1.0,
+  });
+
+  const mildOver = pct <= 115 && actual <= cap;
+  const calOk = caloriePct >= 95 && caloriePct <= 105;
+  if (mildOver && calOk) {
+    score = Math.min(25, score + 2);
+  }
+
+  return parseFloat(score.toFixed(2));
+}
+
 export interface ActivityAdviceParams {
   userGoal: UserGoal;
   caloriePercent: number;     
@@ -57,7 +142,12 @@ export interface ActivityAdviceParams {
   seed?: string;              
 }
 
-export function assessNutrient(actual: number, target: number, type: 'calories' | 'protein' | 'carbs' | 'fat'): NutrientAssessment {
+export function assessNutrient(
+  actual: number,
+  target: number,
+  type: 'calories' | 'protein' | 'carbs' | 'fat',
+  context: NutrientScoreContext = {}
+): NutrientAssessment {
   if (target === 0) {
     return { status: 'needs_adjustment', score: 0, percentage: 0 };
   }
@@ -65,20 +155,35 @@ export function assessNutrient(actual: number, target: number, type: 'calories' 
   const percentage = (actual / target) * 100;
   const off = Math.abs(percentage - 100);
 
-  
-  const scoreRaw = (() => {
-    if (off <= 10) return 25 - 0.3 * off; 
-    if (off <= 20) return 22 - 0.4 * (off - 10); 
-    return Math.max(10, 18 - 0.5 * (off - 20)); 
-  })();
-  const score = parseFloat(scoreRaw.toFixed(2));
+  let score: number;
+  if (type === 'protein') {
+    const goal = normalizeGoal(context.goal);
+    const caloriePct = context.caloriePct ?? 100;
+    score = proteinScore(actual, target, context.weightKg, caloriePct, goal);
+  } else {
+    const scoreRaw = (() => {
+      if (off <= 10) return 25 - 0.3 * off; 
+      if (off <= 20) return 22 - 0.4 * (off - 10); 
+      return Math.max(10, 18 - 0.5 * (off - 20)); 
+    })();
+    score = parseFloat(scoreRaw.toFixed(2));
+  }
 
-  
   switch (type) {
     case 'protein': {
+      const goal = normalizeGoal(context.goal);
+      const weightKg = context.weightKg;
+      const caloriePct = context.caloriePct ?? 100;
+      const cap = weightKg && weightKg > 0
+        ? (goal === 'increase' ? 2.2 : 2.0) * weightKg
+        : Number.POSITIVE_INFINITY;
+      const mildOver = percentage <= 115 && actual <= cap;
+      const calOk = caloriePct >= 95 && caloriePct <= 105;
+
       if (percentage >= 90 && percentage <= 110) return { status: 'excellent', score, percentage };
       if (percentage >= 70 && percentage < 90) return { status: 'need_more', score, percentage };
       if (percentage < 70) return { status: 'insufficient', score, percentage };
+      if (mildOver && calOk) return { status: 'excellent', score, percentage };
       return { status: 'excessive', score, percentage };
     }
     case 'calories': {
@@ -106,10 +211,23 @@ export function assessNutrient(actual: number, target: number, type: 'calories' 
 /**
  * ประเมินผลการบริโภคอาหารรายวัน
  */
-export function assessDailyPerformance(actualIntake: DailyNutritionData, recommended: RecommendedNutrition): DailyAssessment {
+export function assessDailyPerformance(
+  actualIntake: DailyNutritionData,
+  recommended: RecommendedNutrition,
+  context: DailyPerformanceContext = {}
+): DailyAssessment {
+  const caloriePct = recommended.calories > 0
+    ? (actualIntake.calories / Math.max(recommended.calories, 1)) * 100
+    : 100;
+  const goal = normalizeGoal(context.goal);
+
   return {
     calories: assessNutrient(actualIntake.calories, recommended.calories, 'calories'),
-    protein: assessNutrient(actualIntake.protein, recommended.protein, 'protein'),
+    protein: assessNutrient(actualIntake.protein, recommended.protein, 'protein', {
+      caloriePct,
+      weightKg: context.weightKg,
+      goal,
+    }),
     carbs: assessNutrient(actualIntake.carbs, recommended.carbs, 'carbs'),
     fat: assessNutrient(actualIntake.fat, recommended.fat, 'fat')
   };
@@ -600,7 +718,10 @@ export function generateDailyRecommendation(
   recommended: RecommendedNutrition, 
   userProfile: UserProfile
 ): DailyRecommendation {
-  const assessments = assessDailyPerformance(actualIntake, recommended);
+  const assessments = assessDailyPerformance(actualIntake, recommended, {
+    goal: userProfile.target_goal,
+    weightKg: userProfile.weight,
+  });
   const { totalScore, grade } = calculateDailyScore(assessments, userProfile.target_goal);
   const nutritionAdvice = generateNutritionAdvice(assessments, actualIntake, recommended, userProfile);
   const activityAdvice = generateActivityAdvice(assessments.calories.percentage, userProfile.target_goal);

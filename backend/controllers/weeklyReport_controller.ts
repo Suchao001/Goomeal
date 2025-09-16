@@ -24,6 +24,16 @@ const normalizeDbDate = (val: any): string => {
   }
 };
 
+const shortThaiDayNames = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+const getShortThaiDayName = (date: string): string => {
+  try {
+    const idx = new Date(date).getDay();
+    return shortThaiDayNames[idx] ?? '';
+  } catch (_) {
+    return '';
+  }
+};
+
 interface AuthenticatedRequest extends Request {
   user?: {
     id: number;
@@ -342,6 +352,85 @@ export const getWeeklyInsights = async (req: AuthenticatedRequest, res: Response
     const [insightResults] = await db.raw(insightsQuery, [user_id, startDateStr, endDateStr]);
     const insights = insightResults[0];
 
+    const dailyDetailsQuery = `
+      SELECT 
+        summary_date as date,
+        COALESCE(total_calories, 0) as total_calories,
+        target_cal,
+        recommended_cal
+      FROM daily_nutrition_summary 
+      WHERE user_id = ? 
+        AND summary_date >= ? 
+        AND summary_date <= ?
+      ORDER BY summary_date ASC
+    `;
+
+    const [dailyDetailsResults] = await db.raw(dailyDetailsQuery, [user_id, startDateStr, endDateStr]);
+    const dailyDetails = (dailyDetailsResults || []).map((row: any) => ({
+      ...row,
+      date: normalizeDbDate(row.date),
+    }));
+
+    type DayRow = {
+      date: string;
+      tgt: number;
+      cal: number;
+      diff: number;
+      absDiff: number;
+      diffPct: number;
+      dow: number;
+    };
+
+    const dayRows: DayRow[] = (dailyDetails || [])
+      .map((d: any) => {
+        const rec = typeof d.recommended_cal === 'number' && Number.isFinite(d.recommended_cal) ? d.recommended_cal : null;
+        const tgt = rec ?? (typeof d.target_cal === 'number' && Number.isFinite(d.target_cal) ? d.target_cal : null);
+        if (tgt === null) return null;
+        const cal = typeof d.total_calories === 'number' && Number.isFinite(d.total_calories) ? d.total_calories : 0;
+        const diff = cal - tgt;
+        const absDiff = Math.abs(diff);
+        const diffPct = tgt > 0 ? Math.abs((diff / tgt) * 100) : 0;
+        const dow = new Date(d.date).getDay();
+        return { date: d.date, tgt, cal, diff, absDiff, diffPct, dow };
+      })
+      .filter((row): row is DayRow => row !== null);
+
+    const withTargetDays = dayRows.length;
+    const inRangeDays = dayRows.filter((r) => r.absDiff <= Math.max(100, Math.round(r.tgt * 0.10))).length;
+
+    let worst: DayRow | null = null;
+    if (dayRows.length) {
+      worst = [...dayRows].sort((a, b) => b.absDiff - a.absDiff)[0];
+    }
+
+    const avgDiff = dayRows.length ? Math.round(dayRows.reduce((s, r) => s + r.diff, 0) / dayRows.length) : 0;
+    const bias: 'neutral' | 'over' | 'under' = avgDiff === 0 ? 'neutral' : (avgDiff > 0 ? 'over' : 'under');
+
+    const weekend = dayRows.filter((r) => r.dow === 0 || r.dow === 6);
+    const weekday = dayRows.filter((r) => r.dow >= 1 && r.dow <= 5);
+    const wkOver = weekend.length ? Math.round(weekend.reduce((s, r) => s + r.diff, 0) / weekend.length) : 0;
+    const wdOver = weekday.length ? Math.round(weekday.reduce((s, r) => s + r.diff, 0) / weekday.length) : 0;
+
+    const ratio = withTargetDays ? inRangeDays / withTargetDays : 0;
+    const biasLabel = bias === 'over' ? 'เกินเล็กน้อย' : bias === 'under' ? 'ต่ำเล็กน้อย' : 'สมดุล';
+    const worstLine = worst ? `${getShortThaiDayName(worst.date)} ±${worst.absDiff} kcal` : 'ไม่มีวันหลุดชัดเจน';
+    const weekendSwing = Math.abs(wkOver - wdOver);
+    const weekendHasBoth = weekend.length > 0 && weekday.length > 0;
+    const weekendSummary = weekendHasBoth
+      ? (weekendSwing >= 120
+          ? (wkOver > wdOver
+              ? 'สุดสัปดาห์กินมากกว่า ทำเมนูเบากว่านี้วันเสาร์-อาทิตย์'
+              : 'วันธรรมดาตึงไปนิด ลองเพิ่มของว่างโปรตีนสูง')
+          : 'คงเส้นคงวาดีแล้ว')
+      : 'ยังไม่มีข้อมูลเพียงพอสำหรับเปรียบเทียบวันธรรมดา/สุดสัปดาห์';
+    const weekendExtra = weekendHasBoth && weekendSwing >= 120
+      ? (wkOver > wdOver
+          ? ' • สุดสัปดาห์มักเกิน: วางแผนเมนู/งดเครื่องดื่มหวานวันนั้น'
+          : ' • วันธรรมดามักต่ำ: เติมของว่างช่วงบ่าย')
+      : '';
+
+    let balanceLabel = 'ข้อมูลไม่พอ';
+
     // Generate dynamic recommendations based on the data
     const recommendations = [];
 
@@ -379,54 +468,46 @@ export const getWeeklyInsights = async (req: AuthenticatedRequest, res: Response
       }
     }
 
-    // Calorie balance recommendation using tolerance window
-    const over = insights.days_over_range || 0;
-    const under = insights.days_under_range || 0;
-    const inRange = insights.days_in_range || 0;
-    const withTargetDays = over + under + inRange;
-
-    // Refine decision logic using average diff and proportion
-    const avgTarget = Math.round(insights.avg_target || 0);
-    const avgDiff = Math.round(insights.avg_calorie_diff || 0); // actual - target
-    const tol = Math.max(100, Math.round(avgTarget * 0.10));
-    const overThreshold = Math.max(2, Math.ceil(withTargetDays * 0.4));
-    const underThreshold = overThreshold; // same threshold for symmetry
-    const balancedThreshold = Math.max(2, Math.ceil(withTargetDays * 0.5));
-
-    if (
-      over >= overThreshold ||
-      avgDiff > Math.floor(tol / 2)
-    ) {
-      recommendations.push({
-        icon: 'trending-up',
-        color: '#ef4444',
-        title: 'แคลอรี่เกิน',
-        message: `เกินเป้าหมายชัดเจน ${over}/${withTargetDays} วัน (เฉลี่ย +${avgDiff} kcal/วัน)`
-      });
-    } else if (
-      under >= underThreshold ||
-      avgDiff < -Math.floor(tol / 2)
-    ) {
-      recommendations.push({
-        icon: 'trending-down',
-        color: '#3b82f6',
-        title: 'แคลอรี่น้อย',
-        message: `ต่ำกว่าเป้าหมายหลายวัน ${under}/${withTargetDays} วัน (เฉลี่ย ${avgDiff} kcal/วัน) ลองเพิ่มของว่างที่โปรตีนสูง`
-      });
-    } else if (withTargetDays > 0 && inRange >= balancedThreshold) {
-      recommendations.push({
-        icon: 'checkmark-circle',
-        color: '#22c55e',
-        title: 'สมดุลดี',
-        message: `แคลอรี่ในเกณฑ์ที่เหมาะสม ${inRange}/${withTargetDays} วัน`
-      });
-    } else {
-      recommendations.push({
-        icon: 'information-circle',
-        color: '#10b981',
-        title: 'ค่อนข้างดี',
-        message: `โดยรวมใกล้เคียงเป้า มีบางวันที่เกิน/ต่ำกว่าเล็กน้อย (${inRange}/${withTargetDays} วันในเกณฑ์)`
-      });
+    if (insights.days_logged > 0) {
+      if (withTargetDays === 0) {
+        balanceLabel = 'ต้องระวัง';
+        recommendations.push({
+          icon: 'information-circle',
+          color: '#0ea5e9',
+          title: 'ข้อมูลยังไม่พอประเมินความแม่น',
+          message: 'เพิ่มเป้าหมายแคลอรี่หรือบันทึกให้ครบมื้อ เพื่อให้ระบบวิเคราะห์คุณภาพสัปดาห์ได้ชัดขึ้น'
+        });
+      } else if (ratio >= 0.8 && (worst?.absDiff ?? 0) <= 200) {
+        balanceLabel = 'ยอดเยี่ยม';
+        recommendations.push({
+          icon: 'checkmark-circle',
+          color: '#22c55e',
+          title: 'สัปดาห์นี้แม่นมาก',
+          message: `อยู่ในเกณฑ์ ${inRangeDays}/${withTargetDays} วัน • วันหลุดสุด: ${worstLine} • แนวโน้ม ${biasLabel}. ${weekendSummary}`
+        });
+      } else if (ratio >= 0.6) {
+        balanceLabel = 'ค่อนข้างดีแต่มีจุดหลุด';
+        const biasAdvice = bias === 'over'
+          ? 'โดยรวมมีแนวโน้มเกิน ลองลดของหวาน/น้ำมันในมื้อเย็น และเตรียมของว่างโปรตีนแทนขนม'
+          : bias === 'under'
+            ? 'โดยรวมต่ำจากเป้า เพิ่มคาร์บเชิงซ้อน/นม/ผลไม้หลังออกกำลังให้ถึงเป้า'
+            : 'รักษาระดับวันนี้ แล้วโฟกัสแก้วันหลุดเฉพาะจุด';
+        recommendations.push({
+          icon: 'alert-circle',
+          color: '#f59e0b',
+          title: 'ค่อนข้างดี แต่มีจุดให้ปรับ',
+          message: `ในเกณฑ์ ${inRangeDays}/${withTargetDays} วัน • วันที่หลุด: ${worstLine}. ${biasAdvice}${weekendExtra}`
+        });
+      } else {
+        balanceLabel = 'ต้องระวัง';
+        const biasTail = bias === 'over' ? ' (มักเกิน)' : bias === 'under' ? ' (มักต่ำ)' : '';
+        recommendations.push({
+          icon: 'warning',
+          color: '#ef4444',
+          title: 'ต้องระวัง ความแม่นยังต่ำ',
+          message: `เข้าเกณฑ์เพียง ${inRangeDays}/${withTargetDays} วัน • วันหลุดสุด: ${worstLine}. แนะนำ: ตั้งเป้าช่วงเวลา/แจ้งเตือนบันทึกให้ครบ 5-6 วัน/สัปดาห์, วางแผนเมนูพื้นฐาน 2-3 เมนูหมุนเวียน, และเตรียมตัวเลือกแคลต่ำ/สูงตามทิศทางที่มักพลาด${biasTail}.`
+        });
+      }
     }
 
     // Weight trend recommendation
@@ -485,8 +566,16 @@ export const getWeeklyInsights = async (req: AuthenticatedRequest, res: Response
           consistency_rate: Math.round((insights.days_logged / 7) * 100),
           avg_calories: Math.round(insights.avg_calories || 0),
           avg_target: Math.round(insights.avg_target || 0),
-          balance_score: (inRange >= Math.max(1, Math.floor(withTargetDays * 0.5))) ? 'ดีมาก' :
-                         (over > under ? 'เกินเป้า' : (under > over ? 'ต่ำกว่าเป้า' : 'ค่อนข้างดี'))
+          balance_score: balanceLabel,
+          calories_quality: {
+            days_in_range: inRangeDays,
+            total_days: withTargetDays,
+            ratio_pct: Math.round(ratio * 100),
+            worst_day: worst ? { date: worst.date, diff: worst.diff, abs_diff: worst.absDiff } : null,
+            bias,
+            weekend_avg_diff: wkOver,
+            weekday_avg_diff: wdOver,
+          }
         }
       }
     });

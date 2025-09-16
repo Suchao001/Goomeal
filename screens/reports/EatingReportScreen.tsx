@@ -53,6 +53,7 @@ const EatingReportScreen = () => {
   const [dailyRecommendation, setDailyRecommendation] = useState<DailyRecommendation | null>(null);
   const [hasUserProfile, setHasUserProfile] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [showPrinciples, setShowPrinciples] = useState(false);
 
   const { nutrition: recommendedByHook } = useRecommendedNutrition();
 
@@ -350,21 +351,48 @@ const EatingReportScreen = () => {
             <View className="flex-row items-center">
               <Text className="ml-2 text-lg text-gray-800 font-promptBold">สรุปโภชนาการ</Text>
             </View>
-            {(reportData.hasRecommended && reportData.hasTarget) && (
-              <View className="flex-row bg-gray-100 rounded-lg p-1">
-                <TouchableOpacity className={`px-4 py-2 rounded-md ${!useRecommended ? 'bg-blue-500' : ''}`} onPress={() => setUseRecommended(false)}>
-                  <Text className={`text-sm ${!useRecommended ? 'text-white font-promptSemiBold' : 'text-gray-600 font-prompt'}`}>เป้าหมาย</Text>
-                </TouchableOpacity>
-                <TouchableOpacity className={`px-4 py-2 rounded-md ${useRecommended ? 'bg-green-500' : ''}`} onPress={() => setUseRecommended(true)}>
-                  <Text className={`text-sm ${useRecommended ? 'text-white font-promptSemiBold' : 'text-gray-600 font-prompt'}`}>แนะนำ</Text>
-                </TouchableOpacity>
-              </View>
-            )}
+            <View className="flex-row items-center space-x-2">
+              {(reportData.hasRecommended && reportData.hasTarget) && (
+                <View className="flex-row bg-gray-100 rounded-lg p-1">
+                  <TouchableOpacity className={`px-4 py-2 rounded-md ${!useRecommended ? 'bg-blue-500' : ''}`} onPress={() => setUseRecommended(false)}>
+                    <Text className={`text-sm ${!useRecommended ? 'text-white font-promptSemiBold' : 'text-gray-600 font-prompt'}`}>เป้าหมาย</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity className={`px-4 py-2 rounded-md ${useRecommended ? 'bg-green-500' : ''}`} onPress={() => setUseRecommended(true)}>
+                    <Text className={`text-sm ${useRecommended ? 'text-white font-promptSemiBold' : 'text-gray-600 font-prompt'}`}>แนะนำ</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              <TouchableOpacity
+                className="px-2 py-1"
+                onPress={() => setShowPrinciples((prev) => !prev)}
+                accessibilityLabel="toggle-nutrition-principles"
+              >
+                <View className="flex-row items-center">
+                  <Icon name="information-circle-outline" size={18} color="#6b7280" />
+                  <Text className="text-xs text-gray-500 ml-1 font-prompt">
+                    {showPrinciples ? 'ซ่อนหลักการ' : 'ดูหลักการ'}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </View>
           </View>
           {(reportData.hasRecommended && reportData.hasTarget) && (
             <Text className="text-xs text-gray-500 mb-4">
               {useRecommended ? 'แนะนำ: จากระบบโดยคำนวณจากข้อมูลของคุณ' : 'เป้าหมาย: ตามแผนการกินที่คุณตั้งค่าไว้'}
             </Text>
+          )}
+          {showPrinciples && (
+            <View className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+              <Text className="text-xs text-amber-800 font-prompt">
+                • ระบบแนะนำดึงพลังงาน/มาโครจากโปรไฟล์และกิจกรรมล่าสุดของคุณ
+              </Text>
+              <Text className="text-xs text-amber-800 font-prompt mt-1">
+                • โปรตีนเน้นช่วง 1.4–2.0 g/kg (โหมดเพิ่มกล้ามสูงสุด ~2.2 g/kg) เพื่อรักษากล้ามเนื้อ
+              </Text>
+              <Text className="text-xs text-amber-800 font-prompt mt-1">
+                • หากเลือก "เป้าหมาย" ระบบจะใช้ตัวเลขที่คุณตั้งค่าไว้ทันที
+              </Text>
+            </View>
           )}
 
           {/* Summary Card */}
