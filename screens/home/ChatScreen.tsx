@@ -320,7 +320,7 @@ const ChatScreen = () => {
           >
             <Text className={`text-sm font-promptMedium ${
               selectedStyle === 'style1' ? 'text-white' : 'text-gray-700'
-            }`}>😊 เป็นมิตร</Text>
+            }`}>พูดคุยปกติ</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             className={`rounded-full px-4 py-2 mr-2 border ${
@@ -332,7 +332,7 @@ const ChatScreen = () => {
           >
             <Text className={`text-sm font-promptMedium ${
               selectedStyle === 'style2' ? 'text-white' : 'text-gray-700'
-            }`}>👔 เป็นทางการ</Text>
+            }`}>รู้เรื่องการกิน</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             className={`rounded-full px-4 py-2 mr-2 border ${
@@ -342,9 +342,7 @@ const ChatScreen = () => {
             }`}
             onPress={() => toggleChatStyle('style3')}
           >
-            <Text className={`text-sm font-promptMedium ${
-              selectedStyle === 'style3' ? 'text-white' : 'text-gray-700'
-            }`}>😎 สบายๆ</Text>
+           
           </TouchableOpacity>
         </ScrollView>
       </View>
