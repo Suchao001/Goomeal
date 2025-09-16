@@ -356,10 +356,26 @@ export const addUserFood = async (req: Request & { user?: any; file?: Express.Mu
       });
       return;
     }
-     
+
+    const trimmedName = name.trim();
+
+    // Prevent duplicate menu names for the same user
+    const existingFood = await db('user_food')
+      .where('user_id', user_id)
+      .whereRaw('LOWER(name) = ?', trimmedName.toLowerCase())
+      .first();
+
+    if (existingFood) {
+      res.status(409).json({
+        success: false,
+        message: 'มีเมนูอาหารนี้อยู่ในระบบแล้ว'
+      });
+      return;
+    }
+
     // Prepare food data
     const foodData: UserFoodData = {
-      name: name.trim(),
+      name: trimmedName,
       cal: parseFloat(calories) || 0,
       carb: parseFloat(carbs) || 0,
       fat: parseFloat(fat) || 0,
@@ -454,7 +470,33 @@ export const updateUserFood = async (req: Request, res: Response): Promise<void>
     const updateData: Partial<UserFoodData> = {};
 
     // Update text fields if provided
-    if (req.body.name) updateData.name = req.body.name;
+    if (req.body.name) {
+      const trimmedName = req.body.name.trim();
+
+      if (!trimmedName) {
+        res.status(400).json({
+          success: false,
+          message: 'กรุณาระบุชื่ออาหาร'
+        });
+        return;
+      }
+
+      const duplicateFood = await db('user_food')
+        .where('user_id', userId)
+        .whereRaw('LOWER(name) = ?', trimmedName.toLowerCase())
+        .whereNot('id', existingFood.id)
+        .first();
+
+      if (duplicateFood) {
+        res.status(409).json({
+          success: false,
+          message: 'มีเมนูอาหารนี้อยู่ในระบบแล้ว'
+        });
+        return;
+      }
+
+      updateData.name = trimmedName;
+    }
     if (req.body.calories) updateData.cal = parseFloat(req.body.calories);
     if (req.body.carbs) updateData.carb = parseFloat(req.body.carbs);
     if (req.body.fat) updateData.fat = parseFloat(req.body.fat);

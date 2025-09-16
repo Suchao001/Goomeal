@@ -46,15 +46,15 @@ export interface UserProfile {
   activity_level: string;
 }
 
-// Activity advice types and API
+
 export type UserGoal = 'decrease' | 'increase' | 'maintain' | string;
 
 export interface ActivityAdviceParams {
   userGoal: UserGoal;
-  caloriePercent: number;     // แคลวันนี้เทียบเป้าหมายเป็น %
+  caloriePercent: number;     
   timeOfDay?: 'morning' | 'afternoon' | 'evening';
-  minutesAvailable?: 10 | 20 | 30;  // ถ้าไม่ส่ง จะเลือกช่วงเวลามาตรฐานให้
-  seed?: string;              // แนะนำส่ง YYYY-MM-DD เพื่อให้สุ่มแบบคงที่ต่อวัน
+  minutesAvailable?: 10 | 20 | 30;  
+  seed?: string;              
 }
 
 export function assessNutrient(actual: number, target: number, type: 'calories' | 'protein' | 'carbs' | 'fat'): NutrientAssessment {
@@ -65,15 +65,15 @@ export function assessNutrient(actual: number, target: number, type: 'calories' 
   const percentage = (actual / target) * 100;
   const off = Math.abs(percentage - 100);
 
-  // Piecewise-linear scoring by deviation from 100%
+  
   const scoreRaw = (() => {
-    if (off <= 10) return 25 - 0.3 * off; // 0–10% off: 25 → 22
-    if (off <= 20) return 22 - 0.4 * (off - 10); // 10–20%: 22 → 18
-    return Math.max(10, 18 - 0.5 * (off - 20)); // >20%: decrease to min 10
+    if (off <= 10) return 25 - 0.3 * off; 
+    if (off <= 20) return 22 - 0.4 * (off - 10); 
+    return Math.max(10, 18 - 0.5 * (off - 20)); 
   })();
   const score = parseFloat(scoreRaw.toFixed(2));
 
-  // Keep status classification per nutrient, but use the continuous score above
+  
   switch (type) {
     case 'protein': {
       if (percentage >= 90 && percentage <= 110) return { status: 'excellent', score, percentage };
@@ -133,9 +133,9 @@ export function generateNutritionAdvice(
     fat: assessments.fat.percentage || 0,
   };
 
-  // ประมาณความคืบหน้าของวันจากเวลา + แคลอรี่ที่กิน
+  
   const hour = new Date().getHours();
-  const dayProgByTime = Math.max(0, Math.min(1, (hour - 6) / (21 - 6))); // 06:00–21:00
+  const dayProgByTime = Math.max(0, Math.min(1, (hour - 6) / (21 - 6))); 
   const dayProgByIntake = Math.max(0, Math.min(1, pct.cal / 100));
   const dayProgress = Math.max(dayProgByTime * 0.6, dayProgByIntake * 0.9);
 
@@ -154,34 +154,34 @@ export function generateNutritionAdvice(
     return m;
   };
 
-  // Helper: map grams to simple portions
+  
   const toProteinPortions = (g: number) => {
-    const eggs = Math.max(1, Math.round(g / 6)); // egg ~6g protein
-    const chickenG = Math.max(50, Math.round((g / 30) * 100)); // 100g chicken ~30g protein
-    const tofuG = Math.max(100, Math.round((g / 18) * 150)); // 150g firm tofu ~18g
+    const eggs = Math.max(1, Math.round(g / 6)); 
+    const chickenG = Math.max(50, Math.round((g / 30) * 100)); 
+    const tofuG = Math.max(100, Math.round((g / 18) * 150)); 
     return `เช่น ไข่ ${eggs} ฟอง หรือ อกไก่ ${chickenG}g หรือ เต้าหู้แข็ง ${tofuG}g`;
   };
   const toCarbPortions = (g: number) => {
-    const halfSpoons = Math.max(1, Math.round(g / 20)); // 1/2 ทัพพี ~20g carb
+    const halfSpoons = Math.max(1, Math.round(g / 20)); 
     const spoons = (halfSpoons / 2).toFixed(1).replace(/\.0$/, '');
     const bananas = Math.max(1, Math.round(g / 23));
     return `ลดข้าว ~${spoons} ทัพพี หรือ เลี่ยงกล้วย ${bananas} ผล`; 
   };
   const toFatPortions = (g: number) => {
-    const almondsG = Math.max(10, Math.round((g / 10) * 15)); // 15g almonds ~10g fat
+    const almondsG = Math.max(10, Math.round((g / 10) * 15)); 
     return `ลดถั่ว ~${almondsG}g หรือเลี่ยงกะทิ/ของทอดในมื้อถัดไป`;
   };
 
-  // 1) Protein deficit with/without kcal headroom → concrete grams/portions
+  
   if (advice.length < maxItems && pct.pro < 95) {
     const deficitProG = Math.max(0, Math.round((recommended.protein || 0) - (actual.protein || 0)));
     if (deficitProG > 0) {
       if (pct.cal <= 105) {
-        // Can add some protein directly
+        
         const addG = Math.max(10, Math.min(30, Math.round(deficitProG * (tone === 'mild' ? 0.4 : tone === 'strong' ? 0.7 : 0.5))));
         advice.push(say(`โปรตีนขาด ~${deficitProG}g → เพิ่มโปรตีน ~${addG}g (${toProteinPortions(addG)})`));
       } else {
-        // kcal high → swap within kcal budget
+        
         const addG = Math.max(10, Math.min(25, Math.round(deficitProG * 0.5)));
         const reduceKcal = addG * 4;
         const preferCarb = pct.carb > 105 || pct.fat <= 105;
@@ -196,15 +196,15 @@ export function generateNutritionAdvice(
     }
   }
 
-  // 1.5) Swap rule: kcal เกิน + โปรตีนต่ำ → สลับภายใน kcal เดิม (คงไว้สำหรับกรณี deficitPro เล็กมาก)
+  
   if (pct.cal > 110 && pct.pro < 90) {
     const proDeficitG = Math.max(0, Math.round(recommended.protein * Math.max(0, (100 - pct.pro)) / 100));
-    const addProG = Math.max(10, Math.min(30, Math.round(proDeficitG * 0.5))); // เติมครึ่งช่องว่างแต่พอทำได้จริง
+    const addProG = Math.max(10, Math.min(30, Math.round(proDeficitG * 0.5))); 
     const overCarb = Math.max(0, Math.round(recommended.carbs * Math.max(0, (pct.carb - 100)) / 100));
     const overFat = Math.max(0, Math.round(recommended.fat * Math.max(0, (pct.fat - 100)) / 100));
     const preferCarb = overCarb >= Math.ceil((4 * addProG) / 9) || overFat === 0;
     if (preferCarb) {
-      const reduceCarbG = addProG; // 4 kcal/g ↔ 4 kcal/g
+      const reduceCarbG = addProG; 
       advice.push(say(`สลับในแคลอรี่เดิม: ลดคาร์บ ~${reduceCarbG}g แล้วเพิ่มโปรตีน ~${addProG}g`));
     } else {
       const reduceFatG = Math.max(1, Math.round((4 * addProG) / 9));
@@ -212,25 +212,25 @@ export function generateNutritionAdvice(
     }
   }
 
-  // 2) kcal ต่ำ + โปรตีนต่ำ → snack โปรตีน 150–250 kcal
+  
   if (advice.length < maxItems && pct.cal < 85 && pct.pro < 90) {
     const snackKcal = tone === 'mild' ? 150 : tone === 'strong' ? 250 : 200;
-    const proG = Math.round(snackKcal / 10) * 2; // ~30g @ 250kcal, ~20g @ 200kcal
+    const proG = Math.round(snackKcal / 10) * 2; 
     advice.push(say(`เพิ่มของว่างโปรตีน ${snackKcal} kcal (~${proG}g โปรตีน) เช่น โยเกิร์ตโปรตีน, นมถั่วเหลือง + ไข่ต้ม`));
   }
 
-  // 2.5) Protein upper bound by bodyweight (g/kg) + goal flexibility
+  
   if (advice.length < maxItems) {
     const pctCal = pct.cal;
     const pctPro = pct.pro;
     const weightKg = Math.max(1, user.weight || 1);
     const capPerKg = user.target_goal === 'increase' ? 2.2 : 2.0;
-    const proCap = capPerKg * weightKg; // g
+    const proCap = capPerKg * weightKg; 
     const upperPro = Math.max(1.1 * (recommended.protein || 0), proCap);
     const isExcess = (actual.protein || 0) > upperPro || pctPro > 120;
 
     if (!isExcess) {
-      // benign tip about distributing protein across meals
+      
       const tip = 'โปรตีนอยู่ในช่วงปลอดภัย — กระจายโปรตีน ≥25–30g ให้ได้ 2–3 มื้อ';
       if (advice.length < maxItems) advice.push(say(tip));
     } else {
@@ -244,7 +244,7 @@ export function generateNutritionAdvice(
     }
   }
 
-  // 3) Excess carbs/fat → concrete reductions
+  
   if (advice.length < maxItems && pct.carb > 110) {
     const overCarbG = Math.max(0, Math.round((actual.carbs || 0) - (recommended.carbs || 0)));
     if (overCarbG > 0) {
@@ -258,27 +258,27 @@ export function generateNutritionAdvice(
     }
   }
 
-  // 3.5) เสริมด้วยข้อความสถานะ (ย่อ) ตามความจำเป็น
+  
   const pushIf = (cond: boolean, msg: string) => { if (cond && advice.length < maxItems) advice.push(say(msg)); };
 
-  // แคลอรี่
+  
   pushIf(assessments.calories.status === 'excellent', `แคลอรี่ ${pct.cal.toFixed(0)}% เหมาะสม`);
   pushIf(assessments.calories.status === 'good', `แคลอรี่ ${pct.cal.toFixed(0)}% ใกล้เคียงเป้า`);
   pushIf(assessments.calories.status === 'needs_adjustment' && pct.cal > 115, `แคลอรี่สูง ลดขนมหวาน/ของทอดในมื้อถัดไป`);
   pushIf(assessments.calories.status === 'needs_adjustment' && pct.cal < 85, `แคลอรี่ต่ำ เติมคาร์บเชิงซ้อนเล็กน้อย`);
 
-  // โปรตีน
+  
   pushIf(assessments.protein.status === 'excellent', `โปรตีน ${pct.pro.toFixed(0)}% เพียงพอ`);
   pushIf(assessments.protein.status === 'need_more', `โปรตีนยังไม่พอ เพิ่มโปรตีนไม่ติดมันเล็กน้อย`);
   pushIf(assessments.protein.status === 'insufficient', `โปรตีนต่ำ เพิ่มโปรตีนคุณภาพดีในมื้อถัดไป`);
   pushIf(assessments.protein.status === 'excessive', `โปรตีนเกิน ลดปริมาณในมื้อถัดไป หรือออกำลังกายเพิ่ม`);
 
-  // คาร์บ
+  
   pushIf(assessments.carbs.status === 'excellent', `คาร์บ ${pct.carb.toFixed(0)}% พอดี`);
   pushIf(assessments.carbs.status === 'need_more' || assessments.carbs.status === 'insufficient', `เพิ่มคาร์บเชิงซ้อนเล็กน้อย (ข้าวกล้อง/มันหวาน)`);
   pushIf(assessments.carbs.status === 'excessive', `คาร์บสูง ลดน้ำตาล/ของหวาน`);
 
-  // ไขมัน
+  
   pushIf(assessments.fat.status === 'excellent', `ไขมัน ${pct.fat.toFixed(0)}% พอดี`);
   pushIf(assessments.fat.status === 'need_more' || assessments.fat.status === 'insufficient', `เพิ่มไขมันดีเล็กน้อย (อะโวคาโด/ถั่ว/น้ำมันมะกอก)`);
   pushIf(assessments.fat.status === 'excessive', `ไขมันสูง ลดของทอด/อาหารมัน`);
@@ -294,14 +294,14 @@ export function getActivityAdvice({
   caloriePercent,
   timeOfDay,
   minutesAvailable,
-  seed = new Date().toISOString().slice(0,10), // YYYY-MM-DD
+  seed = new Date().toISOString().slice(0,10), 
 }: ActivityAdviceParams): string[] {
   const goal: 'decrease'|'increase'|'maintain' =
     userGoal === 'decrease' ? 'decrease'
     : userGoal === 'increase' ? 'increase'
     : 'maintain';
 
-  // จัด bucket ตาม "ความรุนแรง"
+  
   const sev =
     caloriePercent > 130 ? 'over_heavy' :
     caloriePercent > 120 ? 'over_mid'   :
@@ -310,7 +310,7 @@ export function getActivityAdvice({
     caloriePercent < 80  ? 'under_mid'  :
     caloriePercent < 90  ? 'under_light': 'ok';
 
-  // helper เลือกข้อความแบบสุ่มคงที่ด้วย seed
+  
   const rng = seeded(seed + goal + sev + (timeOfDay ?? '') + (minutesAvailable ?? ''));
   const pick = <T,>(arr: T[], n = 1): T[] => {
     const chosen: T[] = [];
@@ -323,9 +323,9 @@ export function getActivityAdvice({
     return chosen;
   };
 
-  const M = (def: number) => minutesAvailable ?? def; // นาที default ต่อสถานการณ์
+  const M = (def: number) => minutesAvailable ?? def; 
 
-  // ตัวเลือกคำแนะนำ (ไทย + อีโมจิ) — แยกตามเป้าหมาย × ความรุนแรง
+  
   const pools: Record<typeof goal, Record<string, string[]>> = {
     decrease: {
       over_heavy: [
@@ -431,7 +431,7 @@ export function getActivityAdvice({
     },
   };
 
-  // บางข้อความเฉพาะช่วงเวลา (เพิ่มรสชาติเล็กน้อย)
+  
   const timeHints: Record<NonNullable<typeof timeOfDay>, string[]> = {
     morning: [
       '🌤️ รับแดดอ่อน ๆ 5–10 นาที แล้วเดินสั้น ๆ ก่อนเริ่มวัน',
@@ -447,19 +447,19 @@ export function getActivityAdvice({
   };
 
   const base = pools[goal][sev] ?? pools.maintain.ok;
-  const picks = pick(base, sev.includes('heavy') ? 2 : 1); // เบี่ยงเบนหนัก → ให้ 2 ข้อ
+  const picks = pick(base, sev.includes('heavy') ? 2 : 1); 
   if (timeOfDay) {
     picks.push(...pick(timeHints[timeOfDay], 1));
   }
   return picks;
 }
 
-// Backward-compatible wrapper with old API
+
 export function generateActivityAdvice(caloriePercent: number, userGoal: string): string[] {
   return getActivityAdvice({ userGoal, caloriePercent });
 }
 
-// PRNG แบบง่ายสำหรับการสุ่มคงที่ตาม seed
+
 function seeded(s: string) {
   let h = 2166136261 >>> 0;
   for (let i = 0; i < s.length; i++) {
@@ -467,7 +467,7 @@ function seeded(s: string) {
     h = Math.imul(h, 16777619);
   }
   return function rand() {
-    // LCG
+    
     h = (Math.imul(h, 1664525) + 1013904223) >>> 0;
     return (h >>> 0) / 0xFFFFFFFF;
   };
@@ -478,7 +478,7 @@ function seeded(s: string) {
  */
 export function generateHydrationAdvice(weight: number): string[] {
   const minWaterMl = Math.round(weight * 35);
-  const recommendedGlasses = Math.ceil(minWaterMl / 250); // 1 แก้ว = 250ml
+  const recommendedGlasses = Math.ceil(minWaterMl / 250); 
   
   return [
     `💧 ดื่มน้ำอย่างน้อย ${recommendedGlasses} แก้ว/วัน (${minWaterMl}ml)`,
@@ -518,20 +518,20 @@ export function calculateDailyScore(
   assessments: DailyAssessment,
   goal: UserProfile['target_goal']
 ): { totalScore: number; grade: string } {
-  // น้ำหนักคะแนนตามเป้าหมายผู้ใช้
+  
   const weights = goal === 'decrease'
     ? { cal: 0.35, pro: 0.30, carb: 0.20, fat: 0.15 }
     : goal === 'increase'
       ? { cal: 0.30, pro: 0.35, carb: 0.20, fat: 0.15 }
       : { cal: 0.30, pro: 0.30, carb: 0.20, fat: 0.20 };
 
-  // แปลงคะแนนแต่ละส่วนเป็นสัดส่วนของ 25
+  
   const calR = Math.max(0, Math.min(1, assessments.calories.score / 25));
   const proR = Math.max(0, Math.min(1, assessments.protein.score / 25));
   const carbR = Math.max(0, Math.min(1, assessments.carbs.score / 25));
   const fatR = Math.max(0, Math.min(1, assessments.fat.score / 25));
 
-  // รวมแบบถ่วงน้ำหนัก แล้วสเกลกลับเป็นเต็ม 100
+  
   const totalWeighted = weights.cal * calR + weights.pro * proR + weights.carb * carbR + weights.fat * fatR;
   const totalScore = parseFloat((totalWeighted * 100).toFixed(2));
 
@@ -554,7 +554,7 @@ export function generateTomorrowTips(assessments: DailyAssessment, userProfile: 
     carb: assessments.carbs.percentage || 100,
     fat: assessments.fat.percentage || 100,
   };
-  // หาปัญหาใหญ่สุดจากระยะเบี่ยงเบน
+  
   const deviations = [
     { key: 'cal', off: Math.abs(pct.cal - 100) },
     { key: 'pro', off: Math.abs(pct.pro - 100) },
@@ -579,14 +579,14 @@ export function generateTomorrowTips(assessments: DailyAssessment, userProfile: 
     tips.push('🍽️ เติมของว่างโปรตีน ~200 kcal ในครึ่งแรกของวัน');
   }
 
-  // เป้าหมายเฉพาะ
+  
   if (userProfile.target_goal === 'increase') {
     tips.push('💪 ออกกำลังกายต้านทาน 2–3 ครั้ง/สัปดาห์ เพื่อเสริมกล้ามเนื้อ');
   } else if (userProfile.target_goal === 'decrease') {
     tips.push('🚶‍♀️ เดิน 7–10k ก้าว/วัน ร่วมกับควบคุมขนมหวาน');
   }
 
-  // ทั่วไป
+  
   tips.push('💧 ดื่มน้ำสม่ำเสมอ และจบมื้อเย็น ≥ 3 ชม.ก่อนนอน');
 
   return tips.slice(0, 4);
@@ -608,7 +608,7 @@ export function generateDailyRecommendation(
   const timingAdvice = generateTimingAdvice();
   const tomorrowTips = generateTomorrowTips(assessments, userProfile);
   
-  // สร้างสรุป
+  
   const summary = `📊 คะแนนรวม: ${totalScore}/100 (${grade})`;
   
   return {
