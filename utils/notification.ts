@@ -1,4 +1,4 @@
-// utils/notification.ts
+
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { getBangkokTime } from './bangkokTime';
@@ -25,7 +25,7 @@ export async function ensurePermissionsAndChannel({
 }
 
 function parseHHmmOrHHmmss(t: string) {
-  // รองรับ "07:30" หรือ "07:30:00"
+  
   const [h, m] = t.split(':').map((x) => parseInt(x, 10));
   return { hour: isNaN(h) ? 0 : h, minute: isNaN(m) ? 0 : m };
 }
@@ -41,7 +41,7 @@ export async function scheduleDailyAt({
   body: string;
   hour: number;
   minute: number;
-  idTag: string; // ไว้ trace/ลบทีหลัง
+  idTag: string; 
 }) {
   const notifId = await Notifications.scheduleNotificationAsync({
     content: {
@@ -76,7 +76,7 @@ export async function scheduleOneTimeAtLocal({
   const target = new Date(now);
   target.setHours(hour, minute, 0, 0);
   if (target.getTime() <= now.getTime()) {
-    // ถ้าเวลาที่ตั้งผ่านไปแล้ว ให้เลื่อนไปวันพรุ่งนี้
+    
     target.setDate(target.getDate() + 1);
   }
 
@@ -87,7 +87,7 @@ export async function scheduleOneTimeAtLocal({
       sound: 'default',
       data: { idTag },
     },
-    // ใช้รูปแบบใหม่: discriminator-based trigger
+    
     trigger: {
       type: 'date',
       timestamp: target.getTime(),
@@ -109,7 +109,7 @@ export function computeNextLocalFireDate(hour: number, minute: number): Date {
 export function getTimeDiagnostics(target?: { hour: number; minute: number }) {
   const now = new Date();
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const offsetMinutesFromUTC = -now.getTimezoneOffset(); // +420 for UTC+7
+  const offsetMinutesFromUTC = -now.getTimezoneOffset(); 
   const localDisplay = now.toLocaleString('th-TH', { hour12: false, timeZoneName: 'short' });
   const bkkNow = getBangkokTime();
   const bkkDisplay = bkkNow.toLocaleString('th-TH', { hour12: false, timeZoneName: 'short' });

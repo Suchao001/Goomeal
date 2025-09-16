@@ -14,7 +14,6 @@ export interface DailyNutritionSummary {
   target_protein?: number;
   recommendation?: string;
   weight?: number;
-  // New recommended fields from backend
   recommended_cal?: number | null;
   recommended_carb?: number | null;
   recommended_protein?: number | null;

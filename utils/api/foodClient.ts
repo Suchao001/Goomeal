@@ -1,7 +1,7 @@
 import { BaseApiClient } from './baseClient';
 
 export class FoodApiClient extends BaseApiClient {
-  // Add User Food API Method
+  
   async addUserFood(foodData: {
     name: string;
     calories: string | number;
@@ -13,7 +13,7 @@ export class FoodApiClient extends BaseApiClient {
     src?: string; 
   }) {
     try {
-      // Create FormData for multipart/form-data submission
+      
       const formData = new FormData();
       formData.append('name', foodData.name);
       formData.append('calories', foodData.calories.toString());
@@ -25,9 +25,9 @@ export class FoodApiClient extends BaseApiClient {
         formData.append('ingredient', foodData.ingredient);
       }
       
-      // Handle image upload
+      
       if (foodData.img) {
-        // Extract filename from URI
+        
         const filename = foodData.img.split('/').pop() || 'image.jpg';
         const match = /\.(\w+)$/.exec(filename);
         const type = match ? `image/${match[1]}` : 'image/jpeg';
@@ -39,7 +39,7 @@ export class FoodApiClient extends BaseApiClient {
         } as any);
       }
 
-      // Always append src if provided
+      
       if (foodData.src) {
         formData.append('src', foodData.src);
       }
@@ -65,7 +65,7 @@ export class FoodApiClient extends BaseApiClient {
     }
   }
 
-  // Search Foods API Method
+  
   async searchFoods(query?: string, limit?: number) {
     try {
       const params = new URLSearchParams();
@@ -88,7 +88,7 @@ export class FoodApiClient extends BaseApiClient {
     }
   }
 
-  // Get User Foods API Method (only user's own foods)
+  
   async getUserFoods(query?: string, limit?: number, src?: 'user' | 'ai') {
     try {
       const params = new URLSearchParams();
@@ -112,10 +112,10 @@ export class FoodApiClient extends BaseApiClient {
     }
   }
 
-  // Delete User Food API Method
+  
   async deleteUserFood(foodId: string) {
     try {
-      // Extract numeric ID from user_123 format
+      
       const numericId = foodId.replace('user_', '');
       
       const response = await this.axiosInstance.delete(`/food/user/${numericId}`);
@@ -135,7 +135,7 @@ export class FoodApiClient extends BaseApiClient {
     }
   }
 
-  // Update User Food API Method
+  
   async updateUserFood(foodId: string, foodData: {
     name?: string;
     calories?: string;
@@ -147,10 +147,10 @@ export class FoodApiClient extends BaseApiClient {
     deleteImage?: boolean;
   }) {
     try {
-      // Remove 'user_' prefix if present
+      
       const numericId = foodId.replace('user_', '');
       
-      // Create FormData for multipart/form-data submission
+      
       const formData = new FormData();
       
       if (foodData.name !== undefined) {
@@ -172,12 +172,12 @@ export class FoodApiClient extends BaseApiClient {
         formData.append('ingredient', foodData.ingredient);
       }
 
-      // Handle image deletion
+      
       if (foodData.deleteImage) {
         formData.append('deleteImage', 'true');
       }
 
-      // Handle image upload if provided
+      
       if (foodData.img && !foodData.img.startsWith('http')) {
         formData.append('img', {
           uri: foodData.img,

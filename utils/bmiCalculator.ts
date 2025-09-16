@@ -18,7 +18,7 @@ export interface BMICategory {
   range: string;
 }
 
-// Adult BMI categories
+
 export const ADULT_BMI_CATEGORIES: BMICategory[] = [
   { label: 'น้ำหนักต่ำ', color: '#3b82f6', range: '< 18.5' },
   { label: 'ปกติ', color: '#22c55e', range: '18.5-24.9' },
@@ -27,7 +27,7 @@ export const ADULT_BMI_CATEGORIES: BMICategory[] = [
   { label: 'อ้วนอันตราย', color: '#ef4444', range: '≥ 35' },
 ];
 
-// Child BMI categories (based on CDC percentiles)
+
 export const CHILD_BMI_CATEGORIES: BMICategory[] = [
   { label: 'น้ำหนักต่ำ', color: '#3b82f6', range: '< 5th percentile' },
   { label: 'ปกติ', color: '#22c55e', range: '5th-85th percentile' },
@@ -61,20 +61,17 @@ const getAdultBMICategory = (bmi: number): number => {
  * detailed percentile tables by age and gender from CDC/WHO
  */
 const getChildBMICategory = (bmi: number, age: number, gender?: string): number => {
-  // Simplified estimation based on typical BMI ranges for children
-  // This should be replaced with actual percentile tables in production
-  
   const baseThresholds = {
-    underweight: 16 + (age - 10) * 0.2, // Rough estimation
+    underweight: 16 + (age - 10) * 0.2, 
     normal: 18 + (age - 10) * 0.3,
     overweight: 22 + (age - 10) * 0.4,
     obese: 25 + (age - 10) * 0.5
   };
 
-  if (bmi < baseThresholds.underweight) return 0; // < 5th percentile
-  if (bmi < baseThresholds.overweight) return 1;  // 5th-85th percentile
-  if (bmi < baseThresholds.obese) return 2;       // 85th-95th percentile
-  return 3;                                       // ≥ 95th percentile
+  if (bmi < baseThresholds.underweight) return 0; 
+  if (bmi < baseThresholds.overweight) return 1;  
+  if (bmi < baseThresholds.obese) return 2;       
+  return 3;                                       
 };
 
 /**

@@ -22,7 +22,7 @@ export class GoodChatApiClient extends BaseApiClient {
    */
   async getChatSession(): Promise<ChatSession> {
     const response = await this.get('/api/goodchat/session');
-    return response.data.data; // API returns { data: session, success: true }
+    return response.data.data; 
   }
 
   /**
@@ -30,7 +30,7 @@ export class GoodChatApiClient extends BaseApiClient {
    */
   async getChatMessages(limit = 30, offset = 0): Promise<ChatMessage[]> {
     const response = await this.get(`/api/goodchat/messages?limit=${limit}&offset=${offset}`);
-    return response.data.data; // API returns { data: messages[], success: true }
+    return response.data.data; 
   }
 
   /**
@@ -41,7 +41,7 @@ export class GoodChatApiClient extends BaseApiClient {
     botMessage: ChatMessage;
   }> {
     const response = await this.post('/api/goodchat/message', { message });
-    return response.data.data; // API returns { data: { userMessage, botMessage }, success: true }
+    return response.data.data; 
   }
 
   /**
@@ -49,7 +49,7 @@ export class GoodChatApiClient extends BaseApiClient {
    */
   async clearChatHistory(): Promise<{ message: string }> {
     const response = await this.delete('/api/goodchat/history');
-    return response.data; // API might return { message: string, success: true }
+    return response.data; 
   }
 
   /**
@@ -57,6 +57,6 @@ export class GoodChatApiClient extends BaseApiClient {
    */
   async updateChatStyle(style: string): Promise<{ message: string; style: string }> {
     const response = await this.post('/api/goodchat/style', { style });
-    return response.data; // API returns { message: string, style: string, success: true }
+    return response.data; 
   }
 }

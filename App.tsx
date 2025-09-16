@@ -10,7 +10,6 @@ import * as Notifications from 'expo-notifications';
 import './global.css';
 import { LogBox } from 'react-native';
 
-// Ignore specific log notifications
 
 // LogBox.ignoreLogs(['Setting a timer']);
 // console.error = () => {};
@@ -51,10 +50,7 @@ export default function App() {
   useEffect(() => {
     const setupNoti = async () => {
       if (Platform.OS === 'android') {
-        // Android 13+ จะมี prompt ขอสิทธิ์ (ตัวนี้โอเคสำหรับ Android ด้วย)
         await Notifications.requestPermissionsAsync();
-
-        // สร้าง/อัปเดต Notification Channel (ต้องมีสำหรับ Android)
         await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
           name: 'General',
           importance: Notifications.AndroidImportance.HIGH,
@@ -67,7 +63,6 @@ export default function App() {
     };
     setupNoti();
     
-    // Notification scheduling disabled temporarily for testing
     // let sub: Notifications.Subscription | undefined;
     // const boot = async () => {
     //   sub = initMealReminderRescheduler();

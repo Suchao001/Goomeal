@@ -5,7 +5,7 @@ export type NotificationPrefs = {
   sound: boolean;
   vibration: boolean;
   popup: boolean;
-  mealTimes: string[]; // e.g. ['07:30:00','12:00:00','18:30:00']
+  mealTimes: string[]; 
 };
 
 const KEY = 'notif:prefs:v1';
@@ -26,7 +26,7 @@ export async function saveNotificationPrefs(prefs: NotificationPrefs) {
   try {
     await AsyncStorage.setItem(KEY, JSON.stringify(prefs));
   } catch (e) {
-    // swallow; persistence best-effort
+    
   }
 }
 

@@ -3,10 +3,8 @@ export type RootStackParamList = {
     Slides: undefined;
     Login: undefined;
     Register: undefined;
-
     ForgotPassword: undefined;
     ForgotPassword_after: undefined;
-
     PersonalSetup: undefined;
     PersonalPlan1: {isForAi?: boolean};
     PersonalPlan2: undefined;

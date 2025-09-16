@@ -12,7 +12,7 @@ export interface EatingRecord {
   protein?: number;
   meal_time?: string;
   image?: string;
-  unique_id?: string; // เพิ่ม unique_id สำหรับอาหารตามแผน
+  unique_id?: string; 
   created_at?: string;
   updated_at?: string;
 }

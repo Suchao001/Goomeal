@@ -8,7 +8,7 @@ interface JwtPayload {
   [key: string]: any;
 }
 
-// Global logout callback that can be set by AuthContext
+
 let globalLogoutCallback: (() => void) | null = null;
 
 export const setGlobalLogoutCallback = (callback: () => void) => {
@@ -28,7 +28,7 @@ export class BaseApiClient {
       baseURL: base_url,
     });
 
-    // Add request interceptor to include token
+    
     this.axiosInstance.interceptors.request.use(
       async (config) => {
         const token = await this.getValidToken();
@@ -43,7 +43,7 @@ export class BaseApiClient {
       }
     );
 
-    // Add response interceptor to handle 401 errors and retry
+    
     this.axiosInstance.interceptors.response.use(
       (response) => {
         return response;
@@ -53,7 +53,7 @@ export class BaseApiClient {
 
         if (error.response?.status === 401 && !originalRequest._retry) {
           if (this.isRefreshing) {
-            // If already refreshing, queue the request
+            
             return new Promise((resolve, reject) => {
               this.failedQueue.push({ resolve, reject });
             }).then(() => {
@@ -80,7 +80,7 @@ export class BaseApiClient {
               
               this.processQueue(null);
               
-              // Retry original request with new token
+              
               originalRequest.headers.Authorization = `Bearer ${newToken}`;
               return this.axiosInstance(originalRequest);
             } else {
@@ -88,10 +88,10 @@ export class BaseApiClient {
             }
           } catch (refreshError) {
             console.error('❌ [BaseApiClient] Token refresh failed:', refreshError);
-            // Process queued requests with error
+            
             this.processQueue(refreshError);
             
-            // Clear all tokens and trigger logout
+            
             await this.clearTokens();
             await this.triggerLogout();
             
@@ -136,7 +136,7 @@ export class BaseApiClient {
         return null;
       }
 
-      // Check if token is expired
+      
       const decodedToken = jwtDecode<JwtPayload>(accessToken);
       const currentTime = Date.now() / 1000;
       const timeToExpiry = decodedToken.exp - currentTime;
@@ -166,14 +166,14 @@ export class BaseApiClient {
       console.log('🔄 [BaseApiClient] Calling refresh endpoint...');
       console.log('📝 [BaseApiClient] Refresh token length:', refreshToken.length);
 
-      // Use direct axios call to avoid interceptors
+      
       const response = await axios.post(`${base_url}/user/refresh`, {
         refreshToken: refreshToken
       }, {
         headers: {
           'Content-Type': 'application/json'
         },
-        timeout: 10000 // 10 second timeout
+        timeout: 10000 
       });
 
       console.log('📝 [BaseApiClient] Refresh response status:', response.status);
@@ -184,7 +184,7 @@ export class BaseApiClient {
         await SecureStore.setItemAsync('accessToken', newAccessToken);
         console.log('✅ [BaseApiClient] New access token stored, length:', newAccessToken.length);
         
-        // Also update refresh token if provided
+        
         if (response.data.refreshToken) {
           await SecureStore.setItemAsync('refreshToken', response.data.refreshToken);
           console.log('✅ [BaseApiClient] New refresh token stored');
@@ -203,7 +203,7 @@ export class BaseApiClient {
           headers: error.response.headers
         });
         
-        // If refresh token is invalid/expired, trigger immediate logout
+        
         if (error.response.status === 401 || error.response.status === 403) {
           console.log('🚨 [BaseApiClient] Refresh token is invalid/expired');
           await this.clearTokens();
@@ -228,7 +228,7 @@ export class BaseApiClient {
     }
   }
 
-  // Check if token is expired and trigger logout if needed
+  
   private async checkTokenExpiration(): Promise<void> {
     try {
       const accessToken = await SecureStore.getItemAsync('accessToken');
@@ -254,7 +254,7 @@ export class BaseApiClient {
     }
   }
 
-  // Public methods for API calls
+  
   async get(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse> {
     await this.checkTokenExpiration();
     return this.axiosInstance.get(url, config);
@@ -280,20 +280,20 @@ export class BaseApiClient {
     return this.axiosInstance.patch(url, data, config);
   }
 
-  // Check if user is authenticated
+  
   async isAuthenticated(): Promise<boolean> {
     const token = await SecureStore.getItemAsync('accessToken');
     const refreshToken = await SecureStore.getItemAsync('refreshToken');
     return !!(token && refreshToken);
   }
 
-  // Manually clear authentication
+  
   async logout(): Promise<void> {
     console.log('🚪 [BaseApiClient] Manual logout called');
     await this.clearTokens();
   }
 
-  // Error handling utility
+  
   protected getErrorInfo(error: any) {
     console.error('API Error:', error);
     

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-// อ่านไฟล์ HTML template
+
 export const readTemplate = (templateName: string): string => {
     try {
         const templatePath = path.join(__dirname, '../templates', templateName);
@@ -12,7 +12,7 @@ export const readTemplate = (templateName: string): string => {
     }
 };
 
-// Generate HTML for successful password reset
+
 export const generatePasswordResetSuccessPage = (): string => {
     let template = readTemplate('reset-password-success.html');
     if (!template) {
@@ -42,31 +42,25 @@ export const generatePasswordResetSuccessPage = (): string => {
     return template;
 };
 
-// สร้าง HTML สำหรับฟอร์มรีเซ็ตรหัสผ่าน
+
 export const generateResetPasswordForm = (token: string): string => {
     let template = readTemplate('reset-password.html');
-    
     if (!template) {
         return getDefaultResetPasswordForm(token);
     }
-    
-    // แทนที่ token placeholder
     return template.replace('{{TOKEN}}', token);
 };
 
-// สร้าง HTML สำหรับหน้า error
+
 export const generateErrorPage = (errorMessage: string): string => {
     let template = readTemplate('reset-password-error.html');
-    
     if (!template) {
         return getDefaultErrorPage(errorMessage);
     }
-    
-    // แทนที่ error message placeholder
     return template.replace('{{ERROR_MESSAGE}}', errorMessage);
 };
 
-// Generate HTML for missing token error
+
 export const generateTokenMissingPage = (): string => {
     return `
         <html>
@@ -89,7 +83,7 @@ export const generateTokenMissingPage = (): string => {
     `;
 };
 
-// Generate HTML for server error
+
 export const generateServerErrorPage = (): string => {
     return `
         <html>
@@ -112,7 +106,7 @@ export const generateServerErrorPage = (): string => {
     `;
 };
 
-// Fallback HTML ในกรณีที่อ่านไฟล์ไม่ได้
+
 const getDefaultResetPasswordForm = (token: string): string => {
     return `
         <html>

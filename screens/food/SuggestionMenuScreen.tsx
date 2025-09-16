@@ -12,7 +12,7 @@ const SuggestionMenuScreen = () => {
   const navigation = useTypedNavigation();
   const apiClient = new ApiClient();
 
-  // State for meal type selection
+  
   const [selectedMealType, setSelectedMealType] = useState('');
   const mealTypes = [
     { id: 'breakfast', label: 'มื้อเช้า', icon: 'sunny' },
@@ -21,22 +21,16 @@ const SuggestionMenuScreen = () => {
     { id: 'snack', label: 'ของว่าง', icon: 'cafe' }
   ];
 
-  // State for hunger level
   const [hungerLevel, setHungerLevel] = useState(1);
   const hungerLevels = ['น้อย', 'กลาง', 'มาก'];
-
-  // State for ingredients
   const [ingredients, setIngredients] = useState<string[]>([]);
   const [currentIngredient, setCurrentIngredient] = useState('');
-
-  // State for food type
   const [selectedFoodType, setSelectedFoodType] = useState('');
   const foodTypes = [
     'อาหารไทย', 'อาหารจีน', 'อาหารญี่ปุ่น', 'อาหารเกาหลี',
     'อาหารอิตาเลียน', 'อาหารอเมริกัน', 'อาหารอินเดีย', 'อาหารเม็กซิกัน'
   ];
 
-  // State for budget
   const [budget, setBudget] = useState('');
   const budgetOptions = [
     { id: 'cheap', label: 'ประหยัด', range: '50-100' },
@@ -45,7 +39,6 @@ const SuggestionMenuScreen = () => {
     { id: 'flexible', label: 'ยืดหยุ่น', range: '' },
   ];
 
-  // State for complexity level
   const [complexityLevel, setComplexityLevel] = useState('');
   const complexityLevels = [
     { id: 'easy', label: 'ง่าย', icon: 'happy' },
@@ -53,10 +46,7 @@ const SuggestionMenuScreen = () => {
     { id: 'hard', label: 'ยาก', icon: 'flame' }
   ];
 
-
   const [showMoreRestrictions, setShowMoreRestrictions] = useState(false);
-
-  // State for loading indicator
   const [loading, setLoading] = useState(false);
 
   const addIngredient = () => {
@@ -70,12 +60,12 @@ const SuggestionMenuScreen = () => {
     setIngredients(ingredients.filter(item => item !== ingredient));
   };
 
-  // No dietary restriction logic needed
+  
 
   const handleGetSuggestion = async () => {
     try {
       setLoading(true);
-      // Prepare data from form state
+      
       const payload = {
         mealType: selectedMealType,
         hungerLevel: hungerLevel + 1,
@@ -87,7 +77,7 @@ const SuggestionMenuScreen = () => {
       const response = await apiClient.suggestFood(payload);
       setLoading(false);
       if (response.success && response.data?.answer) {
-        // Navigate to FoodSuggestionScreen with suggestion data
+        
         navigation.navigate('FoodSuggestion', { suggestion: response.data.answer });
       } else {
         Alert.alert('เกิดข้อผิดพลาด', response.error || 'ไม่สามารถขอคำแนะนำจาก AI ได้');
@@ -271,7 +261,7 @@ const SuggestionMenuScreen = () => {
     {option.range && (
       <Text
         className={`${budget === option.id ? 'text-white/80' : 'text-gray-500'} ml-1 text-xs`}
-        style={{ lineHeight: 14 }} // <<< ให้เล็กลงหน่อยสำหรับตัวเล็ก
+        style={{ lineHeight: 14 }} 
         
         numberOfLines={1}
       >

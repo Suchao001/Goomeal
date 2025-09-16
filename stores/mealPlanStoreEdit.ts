@@ -37,7 +37,7 @@ export interface Meal {
   time: string;
 }
 
-// Custom meals per day
+
 export interface CustomMealsPerDay {
   [day: number]: Meal[];
 }
@@ -50,44 +50,44 @@ interface MealPlanStoreEdit {
   setAsCurrentPlan: boolean;
 
   mealPlanData: MealPlanData;
-  meals: Meal[]; // Default meals
-  customMeals: CustomMealsPerDay; // Custom meals per day
+  meals: Meal[]; 
+  customMeals: CustomMealsPerDay; 
   isEditMode: boolean; 
   
-  // เพิ่ม state สำหรับเก็บข้อมูลเดิมจาก API
-  originalPlanData: any | null; // ข้อมูลเดิมจาก API
+  
+  originalPlanData: any | null; 
 
   
-  // Actions
-  fetchAndApplyMealTimes: () => Promise<void>; // Fetch meal times from API and update defaults + customs
+  
+  fetchAndApplyMealTimes: () => Promise<void>; 
   addFoodToMeal: (food: FoodItem, mealId: string, day: number, mealInfo?: { name: string; time: string }) => void;
   removeFoodFromMeal: (foodId: string, mealId: string, day: number) => void;
-  updateFoodInMeal: (updatedFood: FoodItem, mealId: string, day: number) => void; // New function to update food
+  updateFoodInMeal: (updatedFood: FoodItem, mealId: string, day: number) => void; 
   clearMealPlan: () => void;
-  clearEditSession: () => void; // ล้างข้อมูล edit session
+  clearEditSession: () => void; 
   clearDay: (day: number) => void;
-  addMeal: (meal: Meal, day: number) => void; // Updated to include day
-  getAllMealsForDay: (day: number) => Meal[]; // New function to get all meals for a specific day
+  addMeal: (meal: Meal, day: number) => void; 
+  getAllMealsForDay: (day: number) => Meal[]; 
   getMealData: (day: number, mealId: string) => MealData | undefined;
   getDayMeals: (day: number) => DayMeals;
-  loadMealPlanData: (planData: any) => void; // New function to load meal plan data from API
-  setEditMode: (isEdit: boolean) => void; // New function to set edit mode
-  setPlanId: (id: number | null) => void; // เซ็ต plan ID
-  setPlanMetadata: (data: any) => void; // Action ใหม่สำหรับอัปเดตข้อมูลเมตาของแผน
+  loadMealPlanData: (planData: any) => void; 
+  setEditMode: (isEdit: boolean) => void; 
+  setPlanId: (id: number | null) => void; 
+  setPlanMetadata: (data: any) => void; 
   
-  // Nutrition calculations
+  
   getMealNutrition: (day: number, mealId: string) => { cal: number; carb: number; fat: number; protein: number };
   getDayNutrition: (day: number) => { cal: number; carb: number; fat: number; protein: number };
 }
 
-// Default meal information
+
 const defaultMealInfo = {
   'breakfast': { name: 'อาหารมื้อเช้า', time: '07:00' },
   'lunch': { name: 'อาหารมื้อกลางวัน', time: '12:00' },
   'dinner': { name: 'อาหารมื้อเย็น', time: '18:00' }
 };
 
-// Rename store hook for edit mode
+
 export const useMealPlanStoreEdit = create<MealPlanStoreEdit>()((set, get) => ({
 
   planId: null,
@@ -102,11 +102,11 @@ export const useMealPlanStoreEdit = create<MealPlanStoreEdit>()((set, get) => ({
     { id: 'lunch', name: 'อาหารมื้อกลางวัน', icon: 'partly-sunny', time: '12:00' },
     { id: 'dinner', name: 'อาหารมื้อเย็น', icon: 'moon', time: '18:00' },
   ],
-  customMeals: {}, // Initialize custom meals
-  isEditMode: false, // Initialize edit mode flag
-  originalPlanData: null, // เก็บข้อมูลเดิมจาก API
+  customMeals: {}, 
+  isEditMode: false, 
+  originalPlanData: null, 
   
-      // Fetch user's configured meal times from server and update meals list (defaults + custom from settings)
+      
       fetchAndApplyMealTimes: async () => {
         try {
           const res = await apiClient.getMealTimes();
@@ -115,7 +115,7 @@ export const useMealPlanStoreEdit = create<MealPlanStoreEdit>()((set, get) => ({
 
           if (!serverMeals.length) return;
 
-          // Map Thai meal names to our default meal ids
+          
           const nameToId: Record<string, 'breakfast' | 'lunch' | 'dinner'> = {
             'มื้อเช้า': 'breakfast',
             'อาหารมื้อเช้า': 'breakfast',
@@ -125,7 +125,7 @@ export const useMealPlanStoreEdit = create<MealPlanStoreEdit>()((set, get) => ({
             'อาหารมื้อเย็น': 'dinner',
           } as any;
 
-          // Normalize all rows; keep active flag even if invalid time
+          
           const records = serverMeals.map((m: any, idx: number) => ({
             id: Number(m?.id),
             name: String(m?.meal_name ?? '').trim(),
@@ -147,7 +147,7 @@ export const useMealPlanStoreEdit = create<MealPlanStoreEdit>()((set, get) => ({
           const customFromSettings: Meal[] = [];
           const sortMap: Record<string, number> = {};
 
-          // track active flags for defaults
+          
           for (const r of records) {
             const defId = (nameToId as any)[r.name] as DefaultId | undefined;
             if (defId) defActiveMap[defId] = !!r.active;
@@ -165,13 +165,13 @@ export const useMealPlanStoreEdit = create<MealPlanStoreEdit>()((set, get) => ({
           }
 
           set((state) => {
-            // Update defaults
+            
             const defaults = ['breakfast','lunch','dinner'] as DefaultId[];
             const updatedDefaults: Meal[] = [];
             for (const d of defaults) {
               const hasSetting = d in defActiveMap;
               const isActive = defActiveMap[d] !== false;
-              if (hasSetting && !isActive) continue; // hide inactive defaults
+              if (hasSetting && !isActive) continue; 
               const override = defOverride[d];
               const existing = state.meals.find(m => m.id === d);
               updatedDefaults.push({
@@ -182,7 +182,7 @@ export const useMealPlanStoreEdit = create<MealPlanStoreEdit>()((set, get) => ({
               });
             }
 
-            // Merge defaults + custom from settings
+            
             const merged: Meal[] = [...updatedDefaults];
             const seen = new Set(merged.map(m => m.id));
             for (const cm of customFromSettings) {
@@ -192,13 +192,13 @@ export const useMealPlanStoreEdit = create<MealPlanStoreEdit>()((set, get) => ({
               }
             }
 
-            // Sort by server sort if present
+            
             merged.sort((a, b) => (sortMap[a.id] ?? 999) - (sortMap[b.id] ?? 999));
 
             return { ...state, meals: merged } as typeof state;
           });
         } catch (_) {
-          // keep defaults on error
+          
         }
       },
 
@@ -245,11 +245,11 @@ export const useMealPlanStoreEdit = create<MealPlanStoreEdit>()((set, get) => ({
             targetMeal: state.mealPlanData[day]?.[mealId]
           });
           
-          // Get existing items for this meal and day
+          
           const existingItems = state.mealPlanData[day]?.[mealId]?.items || [];
           console.log('🔍 [mealPlanStoreEdit] Existing items:', existingItems);
           
-          // สร้าง unique ID ใหม่สำหรับอาหารที่เพิ่มเข้ามา เพื่อป้องกัน duplicate
+          
           const foodToAdd = {
             ...food,
             id: `${food.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
@@ -257,16 +257,16 @@ export const useMealPlanStoreEdit = create<MealPlanStoreEdit>()((set, get) => ({
           
           console.log('🆔 [mealPlanStoreEdit] Generated new unique ID for food:', foodToAdd.id);
 
-          // Get meal info - first try passed mealInfo, then existing data, then from all meals for this day, then default
+          
           let finalMealInfo = mealInfo;
           if (!finalMealInfo) {
-            // Try to get existing meal data
+            
             finalMealInfo = {
               name: state.mealPlanData[day]?.[mealId]?.name,
               time: state.mealPlanData[day]?.[mealId]?.time
             };
             
-            // If no existing data, try to find in all meals for this day (default + custom)
+            
             if (!finalMealInfo.name || !finalMealInfo.time) {
               const allMealsForDay = get().getAllMealsForDay(day);
               const mealFromArray = allMealsForDay.find(m => m.id === mealId);
@@ -276,7 +276,7 @@ export const useMealPlanStoreEdit = create<MealPlanStoreEdit>()((set, get) => ({
                   time: mealFromArray.time
                 };
               } else {
-                // Fallback to default
+                
                 const defaultInfo = defaultMealInfo[mealId as keyof typeof defaultMealInfo] || { name: 'มื้ออาหาร', time: '00:00' };
                 finalMealInfo = {
                   name: finalMealInfo.name || defaultInfo.name,
@@ -286,7 +286,7 @@ export const useMealPlanStoreEdit = create<MealPlanStoreEdit>()((set, get) => ({
             }
           }
 
-          // Create new state with immutable pattern
+          
           const newMealPlanData = {
             ...state.mealPlanData,
             [day]: {
@@ -319,11 +319,11 @@ export const useMealPlanStoreEdit = create<MealPlanStoreEdit>()((set, get) => ({
           const existingItems = state.mealPlanData[day]?.[mealId]?.items || [];
           const updatedItems = existingItems.filter(item => item.id !== foodId);
 
-          // If no items left, remove the meal entirely
+          
           if (updatedItems.length === 0) {
             const { [mealId]: removedMeal, ...restMeals } = state.mealPlanData[day] || {};
             
-            // If no meals left for the day, remove the day entirely
+            
             if (Object.keys(restMeals).length === 0) {
               const { [day]: removedDay, ...restDays } = state.mealPlanData;
               return {
@@ -341,7 +341,7 @@ export const useMealPlanStoreEdit = create<MealPlanStoreEdit>()((set, get) => ({
             };
           }
 
-          // Update meal with new items list
+          
           return {
             ...state,
             mealPlanData: {
@@ -484,7 +484,7 @@ export const useMealPlanStoreEdit = create<MealPlanStoreEdit>()((set, get) => ({
       },
     }));
 
-// Helper function for parsing plan contents
+
 function parsePlanContents(parsedPlanData: any) {
   const convertedMealPlanData: MealPlanData = {};
   const convertedCustomMeals: CustomMealsPerDay = {};
@@ -505,7 +505,7 @@ function parsePlanContents(parsedPlanData: any) {
         console.log(`🍽️ [mealPlanStoreEdit] Processing meal ${mealId}:`, mealData);
         
         if (mealData && mealData.items && Array.isArray(mealData.items)) {
-          // Add to meal plan data
+          
           convertedMealPlanData[dayNumber][mealId] = {
             name: mealData.name || 'มื้ออาหาร',
             time: mealData.time || '00:00',
@@ -529,7 +529,7 @@ function parsePlanContents(parsedPlanData: any) {
           
           console.log(`✅ [mealPlanStoreEdit] Added meal ${mealId} to day ${dayNumber} with ${mealData.items.length} items`);
           
-          // Add to custom meals if not a default meal
+          
           if (!['breakfast', 'lunch', 'dinner', 'snack'].includes(mealId)) {
             convertedCustomMeals[dayNumber].push({
               id: mealId,
