@@ -28,11 +28,24 @@ function normalizeHHmm(hhmm: string): string | null {
   return `${hour}:${minute}`;
 }
 
-export async function scheduleMealItemRecurring(tag: string, hhmm: string, title: string, body: string) {
+export async function scheduleMealItemRecurring(
+  tag: string,
+  hhmm: string,
+  title: string,
+  body: string,
+  opts?: { soundEnabled?: boolean }
+) {
   const parsed = parseHHmm(hhmm);
   if (!parsed) return;
   console.log('📆 scheduling daily meal reminder', { tag, hhmm, hour: parsed.hour, minute: parsed.minute });
-  await scheduleDailyAt({ idTag: tag, title, body, hour: parsed.hour, minute: parsed.minute });
+  await scheduleDailyAt({
+    idTag: tag,
+    title,
+    body,
+    hour: parsed.hour,
+    minute: parsed.minute,
+    soundEnabled: opts?.soundEnabled ?? true,
+  });
 }
 
 async function cancelObsoleteMealReminders(keepTags: Set<string>) {
@@ -48,9 +61,15 @@ async function cancelObsoleteMealReminders(keepTags: Set<string>) {
   }
 }
 
-export async function applyMealReminderSchedule(configs: MealReminderConfig[]) {
+export async function applyMealReminderSchedule(
+  configs: MealReminderConfig[],
+  opts?: { soundEnabled?: boolean; vibrationEnabled?: boolean }
+) {
   try {
-    await ensurePermissionsAndChannel();
+    await ensurePermissionsAndChannel({
+      sound: opts?.soundEnabled ?? true,
+      vibration: opts?.vibrationEnabled ?? true,
+    });
   } catch (err) {
     console.warn('⚠️ cannot ensure permissions/channel for meal reminders', err);
     throw err;
@@ -78,17 +97,37 @@ export async function applyMealReminderSchedule(configs: MealReminderConfig[]) {
   await cancelObsoleteMealReminders(keepTags);
 
   for (const cfg of sanitized) {
-    await scheduleMealItemRecurring(cfg.tag, cfg.hhmm, cfg.title, cfg.body || DEFAULT_BODY);
+    await scheduleMealItemRecurring(cfg.tag, cfg.hhmm, cfg.title, cfg.body || DEFAULT_BODY, {
+      soundEnabled: opts?.soundEnabled,
+    });
   }
 }
 
 export async function scheduleMealRemindersForTimes(
   times: string[],
-  opts?: { names?: string[]; baseTag?: string; body?: string }
+  opts?: {
+    names?: string[];
+    baseTag?: string;
+    body?: string;
+    soundEnabled?: boolean;
+    vibrationEnabled?: boolean;
+  }
 ) {
   const sanitizedBase = opts?.baseTag ? opts.baseTag.replace(/[^a-zA-Z0-9_-]/g, '') : 'custom';
   const base = sanitizedBase || 'custom';
   console.log('⏱️ scheduleMealRemindersForTimes called', { times, base, names: opts?.names });
+  let soundEnabled = opts?.soundEnabled;
+  let vibrationEnabled = opts?.vibrationEnabled;
+  if (soundEnabled === undefined || vibrationEnabled === undefined) {
+    try {
+      const prefs = await loadNotificationPrefs();
+      if (soundEnabled === undefined) soundEnabled = prefs?.sound !== false;
+      if (vibrationEnabled === undefined) vibrationEnabled = prefs?.vibration !== false;
+    } catch (_) {
+      if (soundEnabled === undefined) soundEnabled = true;
+      if (vibrationEnabled === undefined) vibrationEnabled = true;
+    }
+  }
   const configs: MealReminderConfig[] = times.map((time, index) => ({
     tag: `${MEAL_TAG_PREFIX}${base}-${index + 1}`,
     hhmm: time,
@@ -96,7 +135,7 @@ export async function scheduleMealRemindersForTimes(
     body: opts?.body ?? DEFAULT_BODY,
   }));
   console.log('📋 derived reminder configs', configs);
-  await applyMealReminderSchedule(configs);
+  await applyMealReminderSchedule(configs, { soundEnabled: soundEnabled ?? true, vibrationEnabled: vibrationEnabled ?? true });
 }
 
 export async function scheduleMealRemindersFromServer() {
@@ -111,16 +150,19 @@ export async function scheduleMealRemindersFromServer() {
   const notify = root?.notify_on_time ?? true;
   const localToggle = localPrefs?.mealReminders ?? true;
 
+  const soundEnabled = localPrefs?.sound !== false;
+  const vibrationEnabled = localPrefs?.vibration !== false;
+
   if (!notify || !localToggle) {
     console.log('🚫 skipping reminders, notify flag or local toggle off', { notify, localToggle });
-    await applyMealReminderSchedule([]);
+    await applyMealReminderSchedule([], { soundEnabled, vibrationEnabled });
     return;
   }
 
   const activeMeals = meals.filter((m: any) => m?.is_active);
   if (!activeMeals.length) {
     console.log('ℹ️ no active meals returned from server');
-    await applyMealReminderSchedule([]);
+    await applyMealReminderSchedule([], { soundEnabled, vibrationEnabled });
     return;
   }
 
@@ -136,7 +178,7 @@ export async function scheduleMealRemindersFromServer() {
     };
   });
 
-  await applyMealReminderSchedule(configs);
+  await applyMealReminderSchedule(configs, { soundEnabled, vibrationEnabled });
   console.log('✅ meal reminders updated from server', configs.length);
 }
 
@@ -150,12 +192,19 @@ export function initMealReminderRescheduler() {
     const minute = typeof data?.minute === 'number' ? data.minute : undefined;
     if (!idTag || hour == null || minute == null) return;
 
+    let soundEnabled = true;
+    try {
+      const prefs = await loadNotificationPrefs();
+      soundEnabled = prefs?.sound !== false;
+    } catch (_) {}
+
     await scheduleOneShotDaily({
       idTag,
       title: n.request.content.title || 'มื้ออาหาร',
       body: n.request.content.body || '',
       hour,
       minute,
+      soundEnabled,
     });
   });
 }

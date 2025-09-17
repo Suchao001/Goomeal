@@ -46,17 +46,27 @@ const NotificationSettingsScreen = () => {
       const next = !notifications[key];
       setNotifications(prev => ({ ...prev, [key]: next }));
       try {
+        const soundNext = key === 'sound' ? next : notifications.sound;
+        const vibrationNext = key === 'vibration' ? next : notifications.vibration;
         await ensurePermissionsAndChannel({
-          sound: key === 'sound' ? next : notifications.sound,
-          vibration: key === 'vibration' ? next : notifications.vibration,
+          sound: soundNext,
+          vibration: vibrationNext,
         });
         await saveNotificationPrefs({
           mealReminders: notifications.mealReminders,
-          sound: key === 'sound' ? next : notifications.sound,
-          vibration: key === 'vibration' ? next : notifications.vibration,
+          sound: soundNext,
+          vibration: vibrationNext,
           popup: notifications.popup,
           mealTimes,
         });
+
+        if (notifications.mealReminders) {
+          console.log('🔁 reapplying scheduled reminders after channel toggle', { soundNext, vibrationNext });
+          await scheduleMealRemindersForTimes(mealTimes, {
+            soundEnabled: soundNext,
+            vibrationEnabled: vibrationNext,
+          });
+        }
       } catch (e) {
         Alert.alert('แจ้งเตือน', 'ตั้งค่า channel ไม่สำเร็จ');
         // revert state
@@ -72,7 +82,10 @@ const NotificationSettingsScreen = () => {
       try {
         if (next) {
           console.log('🔁 enabling meal reminders with times', mealTimes);
-          await scheduleMealRemindersForTimes(mealTimes);
+          await scheduleMealRemindersForTimes(mealTimes, {
+            soundEnabled: notifications.sound,
+            vibrationEnabled: notifications.vibration,
+          });
           Alert.alert('ตั้งสำเร็จ', 'ตั้งแจ้งเตือนตามเวลาที่กำหนดแล้ว');
         } else {
           console.log('🛑 disabling all scheduled notifications');

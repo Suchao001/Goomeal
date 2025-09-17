@@ -9,15 +9,30 @@ import { View, ActivityIndicator, Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { LogBox } from 'react-native';
 import { scheduleMealRemindersFromServer,initMealReminderRescheduler } from './utils/autoNotifications';
+import { loadNotificationPrefs } from './utils/notificationStorage';
 import './global.css';
 
 // Handler พื้นฐาน
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
+  handleNotification: async () => {
+    try {
+      const prefs = await loadNotificationPrefs();
+      const popupEnabled = prefs?.popup !== false;
+      const soundEnabled = prefs?.sound !== false;
+      return {
+        shouldShowAlert: popupEnabled,
+        shouldPlaySound: soundEnabled,
+        shouldSetBadge: false,
+      };
+    } catch (err) {
+      console.warn('⚠️ failed to load notification prefs in handler', err);
+      return {
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      };
+    }
+  },
 });
 
 function RootNavigator() {

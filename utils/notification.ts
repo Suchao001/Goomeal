@@ -45,12 +45,14 @@ export async function scheduleDailyAt({
   hour,
   minute,
   idTag,
+  soundEnabled = true,
 }: {
   title: string;
   body: string;
   hour: number;
   minute: number;
   idTag: string;
+  soundEnabled?: boolean;
 }) {
   // ยกเลิกของเดิม (ถ้ามี) ด้วย id ที่เก็บไว้
   const oldId = await AsyncStorage.getItem(keyFor(idTag));
@@ -72,10 +74,10 @@ export async function scheduleDailyAt({
     content: {
       title,
       body,
-      sound: 'default',
+      sound: soundEnabled ? 'default' : undefined,
       data: { idTag, hour, minute, repeating: false }, // ✅ one-shot
     },
-    trigger: target, // ✅ ใช้ Date ไม่ใช่ calendar trigger
+    trigger: target // ✅ absolute timestamp avoids deprecated Date trigger
   });
 
   await AsyncStorage.setItem(keyFor(idTag), id);
@@ -89,12 +91,14 @@ export async function scheduleOneTimeAtLocal({
   hour,
   minute,
   idTag,
+  soundEnabled = true,
 }: {
   title: string;
   body: string;
   hour: number;
   minute: number;
   idTag: string;
+  soundEnabled?: boolean;
 }) {
   const now = new Date();
   const target = new Date();
@@ -115,10 +119,10 @@ export async function scheduleOneTimeAtLocal({
     content: {
       title,
       body,
-      sound: 'default',
+      sound: soundEnabled ? 'default' : undefined,
       data: { idTag, hour, minute, repeating: false },
     },
-    trigger: target,
+    trigger: target // ✅ absolute timestamp avoids deprecated Date trigger
   });
 
   await AsyncStorage.setItem(keyFor(idTag), id);
@@ -159,18 +163,26 @@ export async function scheduleOneShotDaily({
   hour,
   minute,
   idTag,
+  soundEnabled = true,
 }: {
   title: string;
   body: string;
   hour: number;
   minute: number;
   idTag: string;
+  soundEnabled?: boolean;
 }) {
-  return scheduleOneTimeAtLocal({ title, body, hour, minute, idTag });
+  return scheduleOneTimeAtLocal({ title, body, hour, minute, idTag, soundEnabled });
 }
 
-export async function scheduleMealReminders(times: string[], opts?: { title?: string; body?: string }) {
-  await ensurePermissionsAndChannel();
+export async function scheduleMealReminders(
+  times: string[],
+  opts?: { title?: string; body?: string; soundEnabled?: boolean; vibrationEnabled?: boolean }
+) {
+  await ensurePermissionsAndChannel({
+    sound: opts?.soundEnabled ?? true,
+    vibration: opts?.vibrationEnabled ?? true,
+  });
   const results: string[] = [];
   for (let i = 0; i < times.length; i++) {
     const { hour, minute } = parseHHmmOrHHmmss(times[i]);
@@ -181,6 +193,7 @@ export async function scheduleMealReminders(times: string[], opts?: { title?: st
       hour,
       minute,
       idTag: `meal-${i + 1}`,
+      soundEnabled: opts?.soundEnabled ?? true,
     });
     results.push(r);
   }
