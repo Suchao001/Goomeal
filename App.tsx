@@ -2,19 +2,16 @@ import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { AuthProvider, useAuth } from 'AuthContext';
 import { PersonalSetupProvider } from './contexts/PersonalSetupContext';
-import FontWrapper from './components/FontWraper';
+import FontWrapper from './components/FontWraper'; // ตรวจสะกดให้ตรงไฟล์
 import AuthStack from 'AuthStack';
 import AppStack from 'AppStack';
-import { Platform, View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import './global.css';
 import { LogBox } from 'react-native';
+import { scheduleMealRemindersFromServer,initMealReminderRescheduler } from './utils/autoNotifications';
+import './global.css';
 
-
-// LogBox.ignoreLogs(['Setting a timer']);
-// console.error = () => {};
-// console.warn = () => {}; 
-
+// Handler พื้นฐาน
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -23,11 +20,30 @@ Notifications.setNotificationHandler({
   }),
 });
 
-export const ANDROID_CHANNEL_ID = 'general-noti';
-
-
 function RootNavigator() {
   const { user, loading } = useAuth();
+
+
+  useEffect(() => {
+    if (!user) return;
+    let booted = false;
+    (async () => {
+      try {
+        if (booted) return;
+        booted = true;
+        await scheduleMealRemindersFromServer(); // ตั้ง “หลายเวลา/ทุกวัน” ที่นี่ที่เดียว
+      } catch (err) {
+        console.warn('Failed to boot meal reminders', err);
+      }
+    })();
+    return () => { booted = true; };
+  }, [user]);
+
+    useEffect(() => {
+  const sub = initMealReminderRescheduler(); 
+  return () => { try { sub?.remove?.(); } catch {} };
+}, []);
+
 
   if (loading) {
     return (
@@ -47,34 +63,7 @@ function RootNavigator() {
 }
 
 export default function App() {
-  useEffect(() => {
-    const setupNoti = async () => {
-      if (Platform.OS === 'android') {
-        await Notifications.requestPermissionsAsync();
-        await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
-          name: 'General',
-          importance: Notifications.AndroidImportance.HIGH,
-          sound: 'default',
-          enableVibrate: true,
-          vibrationPattern: [0, 250, 250, 250],
-          lightColor: '#ffb800',
-        });
-      }
-    };
-    setupNoti();
-    
-    // let sub: Notifications.Subscription | undefined;
-    // const boot = async () => {
-    //   sub = initMealReminderRescheduler();
-    //   await scheduleMealRemindersFromServer();
-    // };
-    // boot();
-    // return () => {
-    //   try { sub?.remove?.(); } catch {}
-    // };
-
-  }, []);
-
+  
   return (
     <AuthProvider>
       <PersonalSetupProvider>

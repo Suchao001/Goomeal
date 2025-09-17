@@ -1,20 +1,23 @@
-
 import * as Notifications from 'expo-notifications';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { getBangkokTime } from './bangkokTime';
 
-export const ANDROID_CHANNEL_ID = 'meal-reminder';
+export const ANDROID_CHANNEL_ID = 'general-noti';
+
+function keyFor(idTag: string) {
+  return `NOTI_ID__${idTag}`;
+}
 
 export async function ensurePermissionsAndChannel({
   sound = true,
   vibration = true,
 }: { sound?: boolean; vibration?: boolean } = {}) {
-  const { status } = await Notifications.requestPermissionsAsync();
-  if (status !== 'granted') throw new Error('permission denied');
+  if (Platform.OS === 'web') return false;
 
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
-      name: 'Meal Reminder',
+      name: 'General',
       importance: Notifications.AndroidImportance.HIGH,
       sound: sound ? 'default' : undefined,
       enableVibrate: vibration,
@@ -22,13 +25,19 @@ export async function ensurePermissionsAndChannel({
       lightColor: '#ffb800',
     });
   }
+
+  const { status } = await Notifications.requestPermissionsAsync();
+  if (status !== 'granted') throw new Error('permission denied');
+  return true;
 }
 
 function parseHHmmOrHHmmss(t: string) {
-  
-  const [h, m] = t.split(':').map((x) => parseInt(x, 10));
-  return { hour: isNaN(h) ? 0 : h, minute: isNaN(m) ? 0 : m };
+  const s = String(t || '').trim();
+  const m = s.match(/^([01]?\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/);
+  if (!m) return { hour: 0, minute: 0 };
+  return { hour: Number(m[1]), minute: Number(m[2]) };
 }
+
 
 export async function scheduleDailyAt({
   title,
@@ -41,23 +50,38 @@ export async function scheduleDailyAt({
   body: string;
   hour: number;
   minute: number;
-  idTag: string; 
+  idTag: string;
 }) {
-  const notifId = await Notifications.scheduleNotificationAsync({
+  // ยกเลิกของเดิม (ถ้ามี) ด้วย id ที่เก็บไว้
+  const oldId = await AsyncStorage.getItem(keyFor(idTag));
+  if (oldId) {
+    try { await Notifications.cancelScheduledNotificationAsync(oldId); } catch (_) {}
+  }
+
+  // คำนวณ "ครั้งถัดไป" ให้เป็นอนาคตเสมอ
+  const now = new Date();
+  const target = new Date();
+  target.setSeconds(0, 0);
+  target.setHours(hour, minute, 0, 0);
+  if (target <= now) {
+    target.setDate(target.getDate() + 1);
+    target.setHours(hour, minute, 0, 0);
+  }
+
+  const id = await Notifications.scheduleNotificationAsync({
     content: {
       title,
       body,
       sound: 'default',
+      data: { idTag, hour, minute, repeating: false }, // ✅ one-shot
     },
-    trigger: {
-      hour,
-      minute,
-      repeats: true,
-      channelId: ANDROID_CHANNEL_ID,
-    },
+    trigger: target, // ✅ ใช้ Date ไม่ใช่ calendar trigger
   });
-  return { notifId, hour, minute, idTag };
+
+  await AsyncStorage.setItem(keyFor(idTag), id);
+  return id;
 }
+
 
 export async function scheduleOneTimeAtLocal({
   title,
@@ -73,34 +97,37 @@ export async function scheduleOneTimeAtLocal({
   idTag: string;
 }) {
   const now = new Date();
-  const target = new Date(now);
+  const target = new Date();
   target.setHours(hour, minute, 0, 0);
-  if (target.getTime() <= now.getTime()) {
-    
+  if (target.getTime() <= now.getTime() + 2000) {
     target.setDate(target.getDate() + 1);
+    target.setHours(hour, minute, 0, 0);
   }
 
-  const notifId = await Notifications.scheduleNotificationAsync({
+  const oldId = await AsyncStorage.getItem(keyFor(idTag));
+  if (oldId) {
+    try {
+      await Notifications.cancelScheduledNotificationAsync(oldId);
+    } catch (_) {}
+  }
+
+  const id = await Notifications.scheduleNotificationAsync({
     content: {
       title,
       body,
       sound: 'default',
-      data: { idTag },
+      data: { idTag, hour, minute, repeating: false },
     },
-    
-    trigger: {
-      type: 'date',
-      timestamp: target.getTime(),
-      channelId: ANDROID_CHANNEL_ID,
-    } as unknown as Notifications.NotificationTriggerInput,
+    trigger: target,
   });
 
-  return { notifId, fireDate: target, idTag };
+  await AsyncStorage.setItem(keyFor(idTag), id);
+  return id;
 }
 
 export function computeNextLocalFireDate(hour: number, minute: number): Date {
   const now = new Date();
-  const target = new Date(now);
+  const target = new Date();
   target.setHours(hour, minute, 0, 0);
   if (target.getTime() <= now.getTime()) target.setDate(target.getDate() + 1);
   return target;
@@ -139,28 +166,15 @@ export async function scheduleOneShotDaily({
   minute: number;
   idTag: string;
 }) {
-  const target = computeNextLocalFireDate(hour, minute);
-  const notifId = await Notifications.scheduleNotificationAsync({
-    content: {
-      title,
-      body,
-      sound: 'default',
-      data: { idTag, hour, minute },
-    },
-    trigger: {
-      type: 'date',
-      timestamp: target.getTime(),
-      channelId: ANDROID_CHANNEL_ID,
-    } as unknown as Notifications.NotificationTriggerInput,
-  });
-  return { notifId, fireDate: target, idTag };
+  return scheduleOneTimeAtLocal({ title, body, hour, minute, idTag });
 }
 
 export async function scheduleMealReminders(times: string[], opts?: { title?: string; body?: string }) {
   await ensurePermissionsAndChannel();
-  const results = [];
+  const results: string[] = [];
   for (let i = 0; i < times.length; i++) {
     const { hour, minute } = parseHHmmOrHHmmss(times[i]);
+    if (hour < 0 || hour > 23 || minute < 0 || minute > 59) continue; // skip ผิดรูป
     const r = await scheduleDailyAt({
       title: opts?.title ?? 'ถึงเวลากินข้าวแล้ว 🍚',
       body: opts?.body ?? 'อย่าลืมบันทึกแคลอรี่วันนี้',
@@ -172,6 +186,7 @@ export async function scheduleMealReminders(times: string[], opts?: { title?: st
   }
   return results;
 }
+
 
 export async function cancelAllScheduled() {
   await Notifications.cancelAllScheduledNotificationsAsync();
