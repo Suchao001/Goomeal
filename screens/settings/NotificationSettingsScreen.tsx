@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Switch, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTypedNavigation } from '../../hooks/Navigation';
-import { cancelAllScheduled, listScheduled, ensurePermissionsAndChannel } from '../../utils/notification';
-import { scheduleMealRemindersFromServer } from '../../utils/autoNotifications';
+import { cancelAllScheduled, ensurePermissionsAndChannel } from '../../utils/notification';
+import { scheduleMealRemindersForTimes } from '../../utils/autoNotifications';
 import { loadNotificationPrefs, saveNotificationPrefs } from '../../utils/notificationStorage';
 
 const NotificationSettingsScreen = () => {
@@ -71,9 +71,11 @@ const NotificationSettingsScreen = () => {
       setNotifications(prev => ({ ...prev, mealReminders: next }));
       try {
         if (next) {
-          await scheduleMealRemindersFromServer();
+          console.log('🔁 enabling meal reminders with times', mealTimes);
+          await scheduleMealRemindersForTimes(mealTimes);
           Alert.alert('ตั้งสำเร็จ', 'ตั้งแจ้งเตือนตามเวลาที่กำหนดแล้ว');
         } else {
+          console.log('🛑 disabling all scheduled notifications');
           await cancelAllScheduled();
           Alert.alert('ยกเลิกแล้ว', 'ยกเลิกแจ้งเตือนทั้งหมด');
         }

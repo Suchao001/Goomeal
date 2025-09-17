@@ -4,23 +4,103 @@ import { ensurePermissionsAndChannel, scheduleDailyAt, scheduleOneShotDaily } fr
 import { apiClient } from './apiClient';
 import { loadNotificationPrefs } from './notificationStorage';
 
+const MEAL_TAG_PREFIX = 'meal-';
+const DEFAULT_BODY = 'อย่าลืมบันทึกแคลอรี่ของคุณ';
+
+type MealReminderConfig = {
+  tag: string;
+  hhmm: string;
+  title: string;
+  body?: string;
+};
+
 function parseHHmm(hhmm: string): { hour: number; minute: number } | null {
-  const m = hhmm?.match?.(/^([01]\d|2[0-3]):([0-5]\d)$/);
-  if (!m) return null;
-  return { hour: Number(m[1]), minute: Number(m[2]) };
+  const match = String(hhmm ?? '').trim().match(/^([01]?\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/);
+  if (!match) return null;
+  return { hour: Number(match[1]), minute: Number(match[2]) };
 }
 
-async function scheduleMealItemRecurring(tag: string, hhmm: string, title: string, body: string) {
-  const t = parseHHmm(hhmm);
-  if (!t) return;
-  console.log('📆 scheduling daily meal reminder', { tag, hhmm, hour: t.hour, minute: t.minute });
-  await scheduleDailyAt({ idTag: tag, title, body, hour: t.hour, minute: t.minute });
+function normalizeHHmm(hhmm: string): string | null {
+  const parsed = parseHHmm(hhmm);
+  if (!parsed) return null;
+  const hour = String(parsed.hour).padStart(2, '0');
+  const minute = String(parsed.minute).padStart(2, '0');
+  return `${hour}:${minute}`;
+}
+
+export async function scheduleMealItemRecurring(tag: string, hhmm: string, title: string, body: string) {
+  const parsed = parseHHmm(hhmm);
+  if (!parsed) return;
+  console.log('📆 scheduling daily meal reminder', { tag, hhmm, hour: parsed.hour, minute: parsed.minute });
+  await scheduleDailyAt({ idTag: tag, title, body, hour: parsed.hour, minute: parsed.minute });
+}
+
+async function cancelObsoleteMealReminders(keepTags: Set<string>) {
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  for (const req of scheduled) {
+    const tag = typeof req?.content?.data?.idTag === 'string' ? req.content.data.idTag : undefined;
+    if (!tag) continue;
+    if (tag.startsWith(MEAL_TAG_PREFIX) && !keepTags.has(tag)) {
+      try {
+        await Notifications.cancelScheduledNotificationAsync(req.identifier);
+      } catch (_) {}
+    }
+  }
+}
+
+export async function applyMealReminderSchedule(configs: MealReminderConfig[]) {
+  try {
+    await ensurePermissionsAndChannel();
+  } catch (err) {
+    console.warn('⚠️ cannot ensure permissions/channel for meal reminders', err);
+    throw err;
+  }
+
+  const sanitized: MealReminderConfig[] = [];
+  for (const cfg of configs) {
+    const normalizedTime = normalizeHHmm(cfg.hhmm);
+    if (!normalizedTime) continue;
+    const tag = String(cfg.tag || '').trim();
+    if (!tag.startsWith(MEAL_TAG_PREFIX)) continue;
+    sanitized.push({
+      tag,
+      hhmm: normalizedTime,
+      title: cfg.title || 'ถึงเวลา มื้ออาหาร 🍽️',
+      body: cfg.body || DEFAULT_BODY,
+    });
+  }
+
+  const keepTags = new Set(sanitized.map((c) => c.tag));
+  console.log('🧹 syncing meal reminders', {
+    incoming: sanitized.map((c) => ({ tag: c.tag, hhmm: c.hhmm })),
+  });
+
+  await cancelObsoleteMealReminders(keepTags);
+
+  for (const cfg of sanitized) {
+    await scheduleMealItemRecurring(cfg.tag, cfg.hhmm, cfg.title, cfg.body || DEFAULT_BODY);
+  }
+}
+
+export async function scheduleMealRemindersForTimes(
+  times: string[],
+  opts?: { names?: string[]; baseTag?: string; body?: string }
+) {
+  const sanitizedBase = opts?.baseTag ? opts.baseTag.replace(/[^a-zA-Z0-9_-]/g, '') : 'custom';
+  const base = sanitizedBase || 'custom';
+  console.log('⏱️ scheduleMealRemindersForTimes called', { times, base, names: opts?.names });
+  const configs: MealReminderConfig[] = times.map((time, index) => ({
+    tag: `${MEAL_TAG_PREFIX}${base}-${index + 1}`,
+    hhmm: time,
+    title: `ถึงเวลา ${opts?.names?.[index] ?? `มื้อที่ ${index + 1}`} 🍽️`,
+    body: opts?.body ?? DEFAULT_BODY,
+  }));
+  console.log('📋 derived reminder configs', configs);
+  await applyMealReminderSchedule(configs);
 }
 
 export async function scheduleMealRemindersFromServer() {
-  const granted = await ensurePermissionsAndChannel();
-  if (!granted) return;
-
+  console.log('🌐 fetching meal times for reminders');
   const [resp, localPrefs] = await Promise.all([
     apiClient.getMealTimes(),
     loadNotificationPrefs(),
@@ -31,19 +111,33 @@ export async function scheduleMealRemindersFromServer() {
   const notify = root?.notify_on_time ?? true;
   const localToggle = localPrefs?.mealReminders ?? true;
 
-  if (!notify || !localToggle) return;
+  if (!notify || !localToggle) {
+    console.log('🚫 skipping reminders, notify flag or local toggle off', { notify, localToggle });
+    await applyMealReminderSchedule([]);
+    return;
+  }
 
   const activeMeals = meals.filter((m: any) => m?.is_active);
-  if (!activeMeals.length) return;
-
-  for (const m of activeMeals) {
-    const hhmm = String(m?.meal_time || '');
-    if (!/^([01]\d|2[0-3]):([0-5]\d)$/.test(hhmm)) continue;
-
-    const name = (String(m?.meal_name || '').trim()) || 'มื้ออาหาร';
-    const tag = `meal-${m?.id ?? name ?? hhmm}`; // tag ต้องไม่ซ้ำ
-    await scheduleMealItemRecurring(tag, hhmm, `ถึงเวลา ${name} 🍽️`, 'อย่าลืมบันทึกแคลอรี่ของคุณ');
+  if (!activeMeals.length) {
+    console.log('ℹ️ no active meals returned from server');
+    await applyMealReminderSchedule([]);
+    return;
   }
+
+  const configs: MealReminderConfig[] = activeMeals.map((m: any) => {
+    const hhmm = String(m?.meal_time || '');
+    const name = (String(m?.meal_name || '').trim()) || 'มื้ออาหาร';
+    const idOrName = m?.id ?? name ?? hhmm;
+    return {
+      tag: `${MEAL_TAG_PREFIX}${String(idOrName)}`,
+      hhmm,
+      title: `ถึงเวลา ${name} 🍽️`,
+      body: DEFAULT_BODY,
+    };
+  });
+
+  await applyMealReminderSchedule(configs);
+  console.log('✅ meal reminders updated from server', configs.length);
 }
 
 /** ใช้สำหรับ one-shot เท่านั้น (repeats ไม่ต้อง re-schedule) */

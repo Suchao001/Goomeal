@@ -4,6 +4,7 @@ import DateTimePicker, { AndroidNativeProps, IOSNativeProps } from '@react-nativ
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import { ApiClient } from 'utils/apiClient';
+import { scheduleMealRemindersForTimes } from '../../utils/autoNotifications';
 import { useMealPlanStore } from '../../stores/mealPlanStore';
 import { useMealPlanStoreEdit } from '../../stores/mealPlanStoreEdit';
 
@@ -232,6 +233,12 @@ const MealTimeSettingsScreen = () => {
                     refreshMealTimes?.(),
                     refreshMealTimesEdit?.(),
                   ]);
+
+                  const activeMeals = meals.filter((m) => m.is_active);
+                  const times = activeMeals.map((m) => m.meal_time);
+                  const names = activeMeals.map((m) => m.meal_name || 'มื้ออาหาร');
+                  console.log('🕒 rescheduling after meal time save', { times, names });
+                  await scheduleMealRemindersForTimes(times, { names, baseTag: 'server' });
                 } catch (e) {
                   // Silent error; UI already saved
                 }

@@ -31,7 +31,9 @@ function RootNavigator() {
       try {
         if (booted) return;
         booted = true;
+        console.log('🔔 booting meal reminders for user', user?.id ?? 'unknown');
         await scheduleMealRemindersFromServer(); // ตั้ง “หลายเวลา/ทุกวัน” ที่นี่ที่เดียว
+        console.log('✅ meal reminders scheduled');
       } catch (err) {
         console.warn('Failed to boot meal reminders', err);
       }
@@ -40,6 +42,7 @@ function RootNavigator() {
   }, [user]);
 
     useEffect(() => {
+  console.log('📳 registering one-shot meal rescheduler listener');
   const sub = initMealReminderRescheduler(); 
   return () => { try { sub?.remove?.(); } catch {} };
 }, []);
