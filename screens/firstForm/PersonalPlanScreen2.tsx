@@ -3,6 +3,7 @@ import { useTypedNavigation} from '../../hooks/Navigation';
 import { ArrowLeft } from '../../components/GeneralMaterial';
 import { useState } from 'react';
 import { usePersonalSetup } from '../../contexts/PersonalSetupContext';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 
 const PersonalPlanScreen2 = () => {
@@ -12,11 +13,11 @@ const PersonalPlanScreen2 = () => {
   const { updateSetupData } = usePersonalSetup();
   
   const activityItems = [ // Spell-checker: disable
-    { label: 'ไม่ออกกำลังกาย',content:'ไม่ค่อยได้ใช้กำลัง ทำงานอยู่กับโต๊ะเป็นส่วนมาก', value: 'low' },
-    { label: 'ได้ออกกำลังกายบ้างนิดหน่อย',content:'ได้ออกไปใช้แรงออกกำลังกาย เล็กน้อย 3 วันต่อสัปดาห์', value: 'moderate' },
-    { label: 'ออกกำลังกาย ระดับปานกลาง ',content:'ได้ออกไปออกกำลังกาย หรือ ใช้แรง อยู่เป็นประจำ', value: 'high' },
-    { label: 'ออกกำลังกายเป็นหลัก',content:'ได้ออกกำลังกาย หรือเล่นกีฬาอยู่แทบทุกวัน', value: 'very high' },
-    { label: 'ใช้ร่างกายอย่างหนัก',content:'ออกกำลังอย่างหนัก ไม่ว่าจะเป็นงาน กีฬา หรือ เป็นการเทรนร่างกาย', value: 'very high' }
+    { label: 'ไม่ออกกำลังกาย',content:'ไม่ค่อยได้ใช้กำลัง ทำงานอยู่กับโต๊ะเป็นส่วนมาก', value: 'low', icon: 'cafe-outline' },
+    { label: 'ได้ออกกำลังกายบ้างนิดหน่อย',content:'ได้ออกไปใช้แรงออกกำลังกาย เล็กน้อย 3 วันต่อสัปดาห์', value: 'moderate', icon: 'walk-outline' },
+    { label: 'ออกกำลังกาย ระดับปานกลาง ',content:'ได้ออกไปออกกำลังกาย หรือ ใช้แรง อยู่เป็นประจำ', value: 'high', icon: 'bicycle-outline' },
+    { label: 'ออกกำลังกายเป็นหลัก',content:'ได้ออกกำลังกาย หรือเล่นกีฬาอยู่แทบทุกวัน', value: 'very high', icon: 'barbell-outline' },
+    { label: 'ใช้ร่างกายอย่างหนัก',content:'ออกกำลังอย่างหนัก ไม่ว่าจะเป็นงาน กีฬา หรือ เป็นการเทรนร่างกาย', value: 'very high', icon: 'flame-outline' }
   ];
 
   const [actLevel,setActLevel] =useState(0);
@@ -47,8 +48,8 @@ const PersonalPlanScreen2 = () => {
 
       {/* Header Text */}
       <Text className="text-3xl text-gray-800 mb-5 mt-20 font-promptSemiBold text-center w-5/6">
-      กรอกข้อมูลในการสร้าง 
-      แพลนในการกินอาหาร
+      กรอกข้อมูลกิจกรรม{"\n"}
+      ของคุณ
       </Text>
       <Text className="text-gray-600 mb-6 font-promptMedium text-[20px] text-center ">
         ระดับการทำกิจกรรมของคุณ
@@ -63,9 +64,22 @@ const PersonalPlanScreen2 = () => {
       underlayColor="#facc15"
       activeOpacity={1}
     >
-      <View className={`w-full p-5 rounded-xl  ${actLevel == index + 1 ? 'border-2 border-primary' : 'border border-transparent'}`}>
-        <Text className="text-gray-800 text-lg font-promptMedium">{item.label}</Text>
-        <Text className="text-gray-600 text-sm font-promptLight">{item.content}</Text>
+      <View
+        className={`w-full p-5 rounded-xl flex-row ${
+          actLevel == index + 1 ? 'border-2 border-primary' : 'border border-transparent'
+        }`}
+        style={{ backgroundColor: actLevel == index + 1 ? '#FFF' : '#FFFFFF' }}
+      >
+        <View
+          className="w-12 h-12 rounded-xl items-center justify-center mr-4"
+          style={{ backgroundColor: actLevel == index + 1 ? '#FFF' : '#F3F4F6' }}
+        >
+          <Icon name={item.icon} size={24} color={actLevel == index + 1 ? '#ffb800' : '#6b7280'} />
+        </View>
+        <View className="flex-1">
+          <Text className="text-gray-800 text-lg font-promptMedium">{item.label}</Text>
+          <Text className="text-gray-600 text-sm font-promptLight">{item.content}</Text>
+        </View>
       </View>
     </TouchableHighlight>
   ))}

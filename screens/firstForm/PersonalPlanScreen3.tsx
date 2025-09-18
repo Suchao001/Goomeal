@@ -51,8 +51,8 @@ const PersonalPlanScreen3 = () => {
 
       {/* Header Text */}
       <Text className="text-3xl text-gray-800 mb-5 mt-20 font-promptSemiBold text-center w-5/6">
-      กรอกข้อมูลในการสร้าง 
-      แพลนในการกินอาหาร
+      กรอกข้อมูลสไตล์{"\n"}
+      การกินอาหารของคุณ
       </Text>
       <Text className="text-gray-600 mb-6 font-promptMedium text-[20px] text-center ">
         การกินของคุณ
@@ -62,24 +62,34 @@ const PersonalPlanScreen3 = () => {
   {foodTypeItems.map((item, index) => (
    <TouchableHighlight 
    key={index} 
-   className="rounded-xl shadow-lg shadow-slate-800 bg-white mt-2"
+   className="rounded-2xl shadow-lg shadow-slate-800 bg-white mt-4"
    onPress={() => handleFoodType(index + 1)}
    underlayColor="#facc15"
    activeOpacity={1}
  >
-   <View className={`w-full p-5 rounded-xl flex-row items-center gap-4  ${foodType == index + 1 ? 'border-2 border-primary' : 'border border-transparent'}`}>
+   <View
+     className={`w-full rounded-2xl flex-row items-center gap-6 border-2 ${
+       foodType == index + 1 ? 'border-primary' : 'border-transparent'
+     }`}
+     style={{ paddingVertical: 20, paddingHorizontal: 20, backgroundColor: foodType == index + 1 ? '#fff' : '#FFFFFF' }}
+   >
      
      {/* รูปภาพด้านซ้าย */}
-     <Image
-       source={item.image}
-       className="w-8 h-8 rounded-lg"
-       resizeMode="cover"
-     />
+     <View
+       className="rounded-2xl overflow-hidden"
+       style={{ width: 40, height: 40 }}
+     >
+       <Image
+         source={item.image}
+         className="w-full h-full"
+         resizeMode="cover"
+       />
+     </View>
  
      {/* ข้อความด้านขวา */}
      <View className="flex-1">
-       <Text className="text-gray-800 text-lg font-promptMedium">{item.label}</Text>
-       <Text className="text-gray-600 text-sm font-promptLight">{item.content}</Text>
+       <Text className="text-gray-800 text-xl font-promptSemiBold mb-1">{item.label}</Text>
+       <Text className="text-gray-600 text-base font-promptLight leading-6">{item.content}</Text>
      </View>
 
    </View>

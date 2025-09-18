@@ -12,7 +12,7 @@ const PersonalSetupScreen = () => {
     const [open, setOpen] = useState(false);
     const [value, setValue] = useState('20'); 
     const [gender, setGender] = useState<'male' | 'female' | 'other'>('male');
-    const [bodyFat, setBodyFat] = useState<'low' | 'normal' | 'high' | 'don\'t know'>('normal');
+    const [bodyFat, setBodyFat] = useState<'low' | 'normal' | 'high' | 'don\'t know'>('don\'t know');
     const [height, setHeight] = useState('');
     const [weight, setWeight] = useState('');
     const [items, setItems] = useState(
@@ -191,6 +191,9 @@ const PersonalSetupScreen = () => {
             {/* Body Fat Level Selection */}
             <View className="w-full mb-6">
                 <Text className="text-base text-gray-800 font-prompt mb-2">ระดับไขมันในร่างกาย</Text>
+                <Text className="text-sm text-gray-600 font-prompt mb-4">
+                    ข้อมูลระดับไขมันในร่างกายเป็นข้อมูลละเอียดอ่อน ควรผ่านการวัดด้วยมาตรการที่ถูกต้องเท่านั้น หากไม่แน่ใจ กรุณาเลือก "ไม่ทราบ"
+                </Text>
                 <View className="flex-row flex-wrap justify-between">
                     {[
                         { key: 'low', label: 'ต่ำ' },

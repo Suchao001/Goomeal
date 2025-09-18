@@ -194,13 +194,6 @@ const WeeklyReportScreen = () => {
   const displayData = getDisplayData();
 
   
-  
-  
-  
-  
-  
-  
-  
   const generateSmartRecommendations = useCallback((): Recommendation[] => {
     if (!reportData) return [];
 

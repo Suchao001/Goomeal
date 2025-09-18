@@ -115,7 +115,7 @@ export const PersonalSetupProvider: React.FC<{ children: ReactNode }> = ({ child
             : 'น้ำหนักเป้าหมาย', 
           value: setupData.target_weight ? `${setupData.target_weight} กก.` : '-' 
         },
-        { label: 'ระยะเวลาแพลน', value: setupData.plan_duration ? `${setupData.plan_duration} วัน` : '-' }
+       
       ],
       activity: [
         { label: 'ระดับกิจกรรม', value: setupData.activity_level ? activityLevelMap[setupData.activity_level] : '-' }

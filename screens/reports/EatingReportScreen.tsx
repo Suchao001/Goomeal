@@ -351,36 +351,38 @@ const EatingReportScreen = () => {
             <View className="flex-row items-center">
               <Text className="ml-2 text-lg text-gray-800 font-promptBold">สรุปโภชนาการ</Text>
             </View>
-            <View className="flex-row items-center space-x-2">
+            <TouchableOpacity
+              className="px-2 py-1"
+              onPress={() => setShowPrinciples((prev) => !prev)}
+              accessibilityLabel="toggle-nutrition-principles"
+            >
+              <View className="flex-row items-center">
+                <Icon name="information-circle-outline" size={18} color="#6b7280" />
+                <Text className="text-xs text-gray-500 ml-1 font-prompt">
+                  {showPrinciples ? 'ซ่อนหลักการ' : 'ดูหลักการ'}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+          <View className="flex-row items-center justify-end space-x-2 mt-2"> 
               {(reportData.hasRecommended && reportData.hasTarget) && (
                 <View className="flex-row bg-gray-100 rounded-lg p-1">
-                  <TouchableOpacity className={`px-4 py-2 rounded-md ${!useRecommended ? 'bg-blue-500' : ''}`} onPress={() => setUseRecommended(false)}>
+                  <TouchableOpacity
+                    className={`px-4 py-2 rounded-md ${!useRecommended ? 'bg-blue-500' : ''}`}
+                    onPress={() => setUseRecommended(false)}
+                  >
                     <Text className={`text-sm ${!useRecommended ? 'text-white font-promptSemiBold' : 'text-gray-600 font-prompt'}`}>เป้าหมาย</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity className={`px-4 py-2 rounded-md ${useRecommended ? 'bg-green-500' : ''}`} onPress={() => setUseRecommended(true)}>
+
+                  <TouchableOpacity
+                    className={`px-4 py-2 rounded-md ${useRecommended ? 'bg-green-500' : ''}`}
+                    onPress={() => setUseRecommended(true)}
+                  >
                     <Text className={`text-sm ${useRecommended ? 'text-white font-promptSemiBold' : 'text-gray-600 font-prompt'}`}>แนะนำ</Text>
                   </TouchableOpacity>
                 </View>
               )}
-              <TouchableOpacity
-                className="px-2 py-1"
-                onPress={() => setShowPrinciples((prev) => !prev)}
-                accessibilityLabel="toggle-nutrition-principles"
-              >
-                <View className="flex-row items-center">
-                  <Icon name="information-circle-outline" size={18} color="#6b7280" />
-                  <Text className="text-xs text-gray-500 ml-1 font-prompt">
-                    {showPrinciples ? 'ซ่อนหลักการ' : 'ดูหลักการ'}
-                  </Text>
-                </View>
-              </TouchableOpacity>
             </View>
-          </View>
-          {(reportData.hasRecommended && reportData.hasTarget) && (
-            <Text className="text-xs text-gray-500 mb-4">
-              {useRecommended ? 'แนะนำ: จากระบบโดยคำนวณจากข้อมูลของคุณ' : 'เป้าหมาย: ตามแผนการกินที่คุณตั้งค่าไว้'}
-            </Text>
-          )}
           {showPrinciples && (
             <View className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
               <Text className="text-xs text-amber-800 font-prompt">
@@ -400,8 +402,8 @@ const EatingReportScreen = () => {
             <CaloriesSummary
               caloriesConsumed={reportData.totalCalories || 0}
               caloriesTarget={Math.max(reportData.targetCalories || 0, 1)}
-              protein={{ current: reportData.totalProtein || 0, target: Math.max(reportData.targetProtein || 0, 1), unit: 'g', color: '#22c55e', icon: 'fitness' }}
-              carbs={{ current: reportData.totalCarbs || 0, target: Math.max(reportData.targetCarbs || 0, 1), unit: 'g', color: '#3b82f6', icon: 'leaf' }}
+              protein={{ current: reportData.totalProtein || 0, target: Math.max(reportData.targetProtein || 0, 1), unit: 'g', color: '#ef4444', icon: 'fitness' }}
+              carbs={{ current: reportData.totalCarbs || 0, target: Math.max(reportData.targetCarbs || 0, 1), unit: 'g', color: '#22c55e', icon: 'leaf' }}
               fat={{ current: reportData.totalFat || 0, target: Math.max(reportData.targetFat || 0, 1), unit: 'g', color: '#f59e0b', icon: 'water' }}
             />
           ) : (

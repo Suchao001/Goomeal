@@ -1405,9 +1405,7 @@ const RecordFoodScreen = () => {
               <Text className={`font-promptBold text-sm ${isOverTarget ? 'text-red-600' : isAtTarget ? 'text-green-600' : 'text-blue-600'}`}>
                 {totalCaloriesSaved.toLocaleString()} แคลอรี่ / {(todayMealData?.totalCalories?.toLocaleString?.() as string) || dailyNutritionSummary?.target_cal} แคลอรี่
               </Text>
-              <View className={`px-2 py-0.5 rounded-full mt-1 ${chipBg}`}>
-                <Text className={`text-xs font-promptMedium ${chipText}`}>{progressPercent}% ของเป้าหมาย</Text>
-              </View>
+             
             </View>
           )}
         </View>

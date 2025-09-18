@@ -70,7 +70,8 @@ const PersonalPlanScreen4 = () => {
       <View className="flex-1 items-center bg-white p-6">
         <ArrowLeft />
         <Text className="text-3xl text-gray-800 mb-5 mt-20 font-promptSemiBold text-center w-5/6">
-          กรอกข้อมูลในการสร้าง แพลนในการกินอาหาร
+          กรอกข้อจำกัด และ{"\n"}
+           ความต้องการเพิ่มเติม
         </Text>
         <Text className="text-gray-600 mb-6 font-promptMedium text-[20px] text-center">
           รายการอาหารที่คุณแพ้

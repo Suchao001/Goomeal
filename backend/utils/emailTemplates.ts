@@ -185,10 +185,7 @@ export const generateEmailVerificationTemplate = (username: string, verification
                             </ul>
                         </div>
                         
-                        <div class="alternative-link">
-                            <p>หากปุ่มข้างต้นไม่ทำงาน กรุณาคัดลอกลิงก์นี้ไปใส่ในเบราว์เซอร์:</p>
-                            <code>${verificationUrl}</code>
-                        </div>
+                       
                         
                         <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 30px 0; text-align: center;">
                             <p style="margin: 0; color: #6c757d; font-size: 14px;">

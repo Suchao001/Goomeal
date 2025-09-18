@@ -291,7 +291,7 @@ router.post("/forgot-password", async (req: Request, res: Response) => {
     } catch (error: any) {
         console.error("Forgot password error:", error);
         res.status(500).json({
-            message: "Error sending password reset email",
+            message: "เกิดข้อผิดพลาดในการส่งอีเมลรีเซ็ตรหัสผ่าน ตรวจสอบอีเมลอีกครั้ง",
             error: error.message,
             success: false
         });

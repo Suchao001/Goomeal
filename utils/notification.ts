@@ -122,7 +122,7 @@ export async function scheduleOneTimeAtLocal({
       sound: soundEnabled ? 'default' : undefined,
       data: { idTag, hour, minute, repeating: false },
     },
-    trigger: target // ✅ absolute timestamp avoids deprecated Date trigger
+    trigger: target 
   });
 
   await AsyncStorage.setItem(keyFor(idTag), id);

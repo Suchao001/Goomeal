@@ -7,6 +7,7 @@ import Header from '../material/Header';
 import Menu from '../material/Menu';
 import CaloriesSummary from '../../components/CaloriesSummary';
 import TodayMeals, { MealData } from '../../components/TodayMeals';
+import WeightUpdateCard from '../../components/WeightUpdateCard';
 import { useAuth } from 'AuthContext';
 import { showConfirmAlert } from '../../components/Alert';
 import InAppBrowser from '../../components/InAppBrowser';
@@ -159,6 +160,15 @@ const Home = () => {
       setLoadingSavedRecords(false);
     }
   }, []);
+
+  const handleWeightUpdated = useCallback(async () => {
+    try {
+      await fetchUserProfile();
+      await loadDailySummary();
+    } catch (error) {
+      console.error('❌ [HomeScreen] Error refreshing after weight update:', error);
+    }
+  }, [fetchUserProfile, loadDailySummary]);
 
   // Load blog articles from API
   const loadBlogArticles = async () => {
@@ -606,9 +616,11 @@ const Home = () => {
     <TouchableWithoutFeedback onPress={closeFloatMenu}>
       <View className="flex-1 bg-gray-100 ">
           <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>     
-          <View style={{ paddingTop: 0 }}>
-            <Header />
-          </View>
+        <View style={{ paddingTop: 0 }}>
+          <Header />
+        </View>
+
+        
 
         {/* Calories Summary */}
         {loadingTodayMeals || loadingSummary ? (
@@ -638,6 +650,8 @@ const Home = () => {
             onRefreshData={handleRefreshData}
           />
         )}
+
+
         {/* firsttime setting */}
         {firstTimeSetting === false && (
           <View className="w-[90%] bg-white rounded-lg shadow-md shadow-slate-600 p-6 mt-4 mx-auto items-center">
@@ -656,8 +670,18 @@ const Home = () => {
               <Text className="text-white font-promptSemiBold">กรอกข้อมูลครั้งแรก</Text>
             </TouchableOpacity>
           </View>
-        )}        
-       
+        )}
+        
+       {firstTimeSetting === true && (
+       <WeightUpdateCard
+          currentWeight={user?.weight ?? null}
+          lastRecordedWeight={user?.last_updated_weight ?? null}
+          targetWeight={user?.target_weight ?? null}
+          targetGoal={user?.target_goal}
+          onWeightUpdated={handleWeightUpdated}
+        />
+        )}
+
         <View className="mt-6">          
             <View className="flex-row justify-between items-center px-4 mb-4">
                 <Text className="text-xl font-promptBold text-myBlack">บทความการกิน</Text>

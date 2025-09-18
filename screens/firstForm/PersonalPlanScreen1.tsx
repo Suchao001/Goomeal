@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import { ArrowLeft } from '../../components/GeneralMaterial';
@@ -73,34 +73,35 @@ const PersonalPlanScreen1 = () => {
   };
 
   return (
-    <View className="flex-1 items-center bg-white p-6">
+    <View className="flex-1 items-center bg-white p-8"> {/* เพิ่ม padding */}
       {/* Back Arrow */}
       <ArrowLeft />
 
       {/* Header Text */}
-      <Text className="text-3xl text-gray-800 mb-2 mt-20 font-promptSemiBold text-center w-5/6">
-        กรอกข้อมูลในการสร้าง
-        แพลนในการกินอาหาร
+      <Text className="text-3xl text-gray-800 mb-4 mt-24 font-promptSemiBold text-center w-5/6"> {/* เพิ่ม margin */}
+        กรอกข้อมูลเป้าหมาย{"\n"}
+        สุขภาพของคุณ
       </Text>
-      <Text className="text-myBlack mb-6 font-promptMedium text-[20px] text-center">
+      <Text className="text-myBlack mb-8 font-promptMedium text-[20px] text-center"> {/* เพิ่ม margin */}
         เป้าหมายของคุณ
       </Text>
 
       {/* Target Selection */}
-      <View className="w-full mb-4 p-3">
+      <View className="w-full mb-6 p-4"> {/* เพิ่ม padding */}
           {[
-            { key: 'decrease', label: 'ลดน้ำหนัก' },
-            { key: 'healthy', label: 'สุขภาพดี' },
-            { key: 'increase', label: 'เพิ่มน้ำหนัก' }
+            { key: 'decrease', label: 'ลดน้ำหนัก', icon: require('../../assets/images/decrease.png') },
+            { key: 'healthy', label: 'สุขภาพดี', icon: require('../../assets/images/healthy.png') },
+            { key: 'increase', label: 'เพิ่มน้ำหนัก', icon: require('../../assets/images/increase.png') }
           ].map((target) => (
             <TouchableOpacity
               key={target.key}
-              className={`w-full rounded-xl p-3 items-center mb-2   ${
+              className={`w-full rounded-xl p-4 items-center mb-4 flex-row gap-4  ${
                 selectedTarget === target.key ? 'bg-white  border-primary border-2' : 'bg-gray-100 border border-transparent'
               }`}
               onPress={() => setSelectedTarget(target.key as 'decrease' | 'increase' | 'healthy')}
               accessibilityLabel={`เลือกเป้าหมาย ${target.label}`}
             >
+              <Image source={target.icon} className="w-8 h-8" /> {/* เพิ่มขนาดไอคอน */}
               <Text className="font-prompt text-myBlack">
                 {target.label}
               </Text>
@@ -216,10 +217,11 @@ const PersonalPlanScreen1 = () => {
 
       {/* Next Button */}
       <TouchableOpacity
-        className="w-[95%] bg-primary rounded-xl p-4 justify-center items-center absolute bottom-8"
+        className="w-[95%] bg-primary rounded-xl p-5 justify-center items-center absolute bottom-8"
         onPress={handleContinue} 
         accessibilityLabel="ไปยังหน้าถัดไป"
       >
+        {/* เพิ่ม padding */}
         <Text className="text-white text-lg font-promptBold">ต่อไป</Text>
       </TouchableOpacity>
     </View>

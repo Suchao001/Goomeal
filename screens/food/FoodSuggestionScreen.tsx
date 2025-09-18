@@ -167,13 +167,8 @@ const FoodSuggestionScreen: React.FC = () => {
             </Text>
           </TouchableOpacity>
 
-          {/* Hint */}
-          <View className="flex-row items-center justify-center mt-3">
-            <Icon name="information-circle-outline" size={14} color="#9ca3af" />
-            <Text className="text-xs text-gray-500 font-prompt ml-1">
-              ไฮไลต์ด้วยสีหลัก (แคลอรี่/ปุ่ม), สีรองใช้กับชิปวัตถุดิบ
-            </Text>
-          </View>
+      
+         
         </View>
       </ScrollView>
     </View>
