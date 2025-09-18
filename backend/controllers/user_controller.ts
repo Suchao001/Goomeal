@@ -385,27 +385,7 @@ const updatePersonalWeight = async (userId: number, newWeight: number) => {
             
             const updatedUser = await trx('users').where({ id: userId }).first();
             
-            return {
-                id: updatedUser.id,
-                username: updatedUser.username,
-                email: updatedUser.email,
-                age: updatedUser.age ? yearOfBirthToAge(updatedUser.age) : null,
-                weight: updatedUser.weight,
-                last_updated_weight: updatedUser.last_updated_weight,
-                height: updatedUser.height,
-                gender: updatedUser.gender,
-                body_fat: updatedUser.body_fat === "unknown" ? "don't know" : updatedUser.body_fat,
-                target_goal: updatedUser.target_goal,
-                target_weight: updatedUser.target_weight,
-                activity_level: updatedUser.activity_level,
-                eating_type: updatedUser.eating_type,
-                dietary_restrictions: updatedUser.dietary_restrictions,
-                additional_requirements: updatedUser.additional_requirements,
-                account_status: updatedUser.account_status,
-                suspend_reason: updatedUser.suspend_reason,
-                created_date: updatedUser.created_date,
-                first_time_setting: updatedUser.first_time_setting
-            };
+             return { success: true, newWeight };
         });
 
         console.log('✅ Weight updated successfully for user ID:', userId, 'New weight:', newWeight);

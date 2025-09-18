@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Dimensions, Alert } from 'react-native';
 import { BarChart } from 'react-native-gifted-charts';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -193,13 +193,83 @@ const WeeklyReportScreen = () => {
 
   const displayData = getDisplayData();
 
+  const loggingStats = useMemo(() => {
+    const normalizeDate = (value: string | Date | undefined | null) => {
+      if (!value) return null;
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return null;
+      date.setHours(0, 0, 0, 0);
+      return date;
+    };
+
+    const summaryLogged = typeof reportData?.summary?.total_days_with_data === 'number'
+      ? reportData?.summary?.total_days_with_data
+      : null;
+    const insightsLogged = typeof insightsData?.insights?.days_logged === 'number'
+      ? insightsData?.insights?.days_logged
+      : null;
+    const derivedLogged = Array.isArray(reportData?.daily_details)
+      ? reportData?.daily_details.filter(day => {
+          const fields = [
+            day?.total_calories,
+            day?.total_protein,
+            day?.total_carbs,
+            day?.total_fat
+          ];
+          return fields.some(value => typeof value === 'number' && value > 0);
+        }).length
+      : 0;
+
+    const loggedCandidates = [summaryLogged, insightsLogged, derivedLogged]
+      .filter((value): value is number => typeof value === 'number' && !Number.isNaN(value));
+    const loggedDays = loggedCandidates.length ? Math.max(...loggedCandidates) : 0;
+
+    let expectedDays = 7;
+    const startDate = normalizeDate(reportData?.week_info?.start_date);
+    const endDate = normalizeDate(reportData?.week_info?.end_date);
+    const isCurrentWeek = Boolean(reportData?.week_info?.is_current_week);
+
+    if (isCurrentWeek && startDate) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (today < startDate) {
+        expectedDays = 0;
+      } else {
+        const effectiveEnd = endDate && endDate < today ? endDate : today;
+        if (!effectiveEnd || effectiveEnd < startDate) {
+          expectedDays = 0;
+        } else {
+          const diffMs = effectiveEnd.getTime() - startDate.getTime();
+          const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+          expectedDays = Math.min(7, diffDays + 1);
+        }
+      }
+    } else if (startDate && endDate) {
+      const diffMs = endDate.getTime() - startDate.getTime();
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      expectedDays = Math.min(7, Math.max(0, diffDays + 1));
+    }
+
+    if (!Number.isFinite(expectedDays) || expectedDays < 0) {
+      expectedDays = 0;
+    }
+
+    return {
+      loggedDays,
+      expectedDays,
+      missingDays: Math.max(expectedDays - loggedDays, 0),
+    };
+  }, [reportData, insightsData]);
+
   
+  const { loggedDays, expectedDays } = loggingStats;
+
   const generateSmartRecommendations = useCallback((): Recommendation[] => {
     if (!reportData) return [];
 
     const recs: Recommendation[] = [];
     const sum = reportData.summary;
-    const daysLogged = (reportData as any)?.summary?.total_days_with_data ?? (insightsData?.insights?.days_logged ?? 0);
 
     
     const targetCal = sum.avg_recommended_cal || sum.avg_target_cal || 0;
@@ -247,6 +317,13 @@ const WeeklyReportScreen = () => {
             title: 'โปรตีนอาจต่ำกว่าที่เหมาะสม',
             message: 'เพิ่มโปรตีนไม่ติดมันในแต่ละมื้อ เช่น อกไก่ ปลา เต้าหู้ หรือไข่ เพื่ออิ่มนานและรักษามวลกล้ามเนื้อ'
           });
+        } else if (biggestKey === 'p' && delta.p > 0) {
+          recs.push({
+            icon: 'fitness',
+            color: '#f97316',
+            title: 'โปรตีนค่อนข้างสูง',
+            message: 'ลดปริมาณโปรตีนในบางมื้อ หรือเพิ่มคาร์บ/ผักให้สมดุล เพื่อไม่ให้สัดส่วนโปรตีนสูงเกินจำเป็น'
+          });
         } else if (biggestKey === 'c' && delta.c > 0) {
           recs.push({
             icon: 'nutrition',
@@ -266,12 +343,13 @@ const WeeklyReportScreen = () => {
     }
 
     
-    if (daysLogged < 5) {
+    if (expectedDays > 0 && loggedDays < expectedDays) {
+      const remaining = Math.max(expectedDays - loggedDays, 0);
       recs.push({
         icon: 'calendar',
         color: '#3b82f6',
         title: 'เพิ่มความสม่ำเสมอในการบันทึก',
-        message: 'บันทึกอย่างน้อย 5 วัน/สัปดาห์ เพื่อให้คำแนะนำแม่นยำขึ้น ลองตั้งเตือนเวลาเดิมทุกวัน'
+        message: `สัปดาห์นี้บันทึก ${loggedDays}/${expectedDays} วันแล้ว ลองตั้งเตือนเวลาเดิมทุกวันหรือจดล่วงหน้าเพื่อไม่พลาดอีก ${remaining} วัน`
       });
     }
 
@@ -314,7 +392,7 @@ const WeeklyReportScreen = () => {
     }
 
     return recs;
-  }, [reportData, insightsData?.insights?.days_logged]);
+  }, [expectedDays, loggedDays, reportData]);
 
   const renderChart = () => {
     if (!displayData.dailyChart.length) {
@@ -586,7 +664,7 @@ const WeeklyReportScreen = () => {
                       • สัดส่วนแมโครอ้างอิง: โปรตีน/คาร์บ/ไขมัน ≈ 25/50/25 หากเพี้ยน ≥ 7% จะแนะนำวิธีปรับ
                     </Text>
                     <Text className="text-xs text-amber-800 font-prompt mt-1">
-                      • ความสม่ำเสมอ: บันทึก {"<"} 5 วัน/สัปดาห์ → แนะนำเพิ่มความถี่ในการบันทึก
+                      • ความสม่ำเสมอ: บันทึกน้อยกว่าวันที่ควรในสัปดาห์นั้น → แนะนำเพิ่มความถี่ในการบันทึก
                     </Text>
                     <Text className="text-xs text-amber-800 font-prompt mt-1">
                       • ความเหวี่ยงพลังงาน: SD/Mean ≥ 20% → แนะนำวางแผนมื้อให้สม่ำเสมอ
@@ -631,7 +709,9 @@ const WeeklyReportScreen = () => {
                   <View className="mt-4 pt-4 border-t border-gray-100">
                     <Text className="text-sm text-gray-700 mb-2 font-promptSemiBold">สรุปสัปดาห์นี้</Text>
                     <View className="flex-row justify-between">
-                      <Text className="text-xs text-gray-500 font-prompt">บันทึก: {insightsData.insights.days_logged}/7 วัน</Text>
+                      <Text className="text-xs text-gray-500 font-prompt">
+                        บันทึก: {expectedDays > 0 ? `${Math.min(loggedDays, expectedDays)}/${expectedDays} วัน` : '-'}
+                      </Text>
                       <Text className="text-xs text-gray-500 font-prompt">ความสม่ำเสมอ: {insightsData.insights.consistency_rate}%</Text>
                     </View>
                   </View>

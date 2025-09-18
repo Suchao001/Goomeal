@@ -470,7 +470,7 @@ router.put("/update-weight", authenticateToken, async (req: AuthenticatedRequest
         const updatedUser = await updatePersonalWeight(userId, parseFloat(weight));
         
         res.status(200).json({
-            message: "Weight updated successfully",
+            message: "อัปเดตน้ำหนักสำเร็จ",
             user: updatedUser,
             success: true
         });
@@ -478,7 +478,7 @@ router.put("/update-weight", authenticateToken, async (req: AuthenticatedRequest
     } catch (error: any) {
         console.error("Update weight error:", error);
         res.status(400).json({
-            message: error.message,
+            message: 'เกิดข้อผิดพลาดในการอัปเดตน้ำหนัก',
             success: false
         });
     }

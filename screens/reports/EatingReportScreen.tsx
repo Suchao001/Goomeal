@@ -229,8 +229,8 @@ const EatingReportScreen = () => {
     setHasUserProfile(hasProfile);
 
     const hasEatingData = reportData.totalCalories > 0 || reportData.totalProtein > 0 || reportData.totalCarbs > 0 || reportData.totalFat > 0;
-    if (!hasProfile && !hasEatingData) {
-      console.log('⚠️ [EatingReport] No user profile and no eating data available');
+    if (!hasEatingData) {
+      console.log('ℹ️ [EatingReport] No eating data for recommendations');
       setDailyRecommendation(null);
       return;
     }

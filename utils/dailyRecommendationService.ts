@@ -71,6 +71,93 @@ interface HuberScoreParams {
   maxScore?: number; // optional upper bound (default 25)
 }
 
+export const AdviceTH = {
+  calories: {
+    low_mild: "แคลอรี่ยังต่ำเล็กน้อย ลองเพิ่ม `{nextMeal}` อีกนิด เช่นคาร์บเชิงซ้อนหรือโปรตีน 1 ส่วน",
+    low_severe: "วันนี้แคลอรี่ขาดไปพอควร เติมมื้อเล็กๆ ที่ย่อยง่ายก่อนนอน เช่นนม/โยเกิร์ต/กล้วย 1 ผล",
+    ok: "แคลอรี่รวมโอเคแล้ว รักษาจังหวะนี้ต่อไปได้เลย",
+    high_mild: "แคลอรี่เกินเล็กน้อย ไม่ต้องรีบตัดมื้อ ลองลดซอสหวาน/น้ำมันในมื้อต่อไป",
+    high_severe: "แคลอรี่เกินเยอะวันนี้ คุม portion ใน `{nextMeal}` และเพิ่มการเคลื่อนไหวเบาๆ 15–20 นาที"
+  },
+  protein: {
+    low_mild: "โปรตีนยังไม่ถึงเป้า เติมไข่/เต้าหู้/ไก่ไร้มัน 1 ส่วนใน `{nextMeal}`",
+    low_severe: "โปรตีนขาดค่อนข้างมากวันนี้ วางแผนเพิ่มโปรตีนทุกมื้อเล็กน้อยพรุ่งนี้",
+    ok: "โปรตีนกำลังดี ร่างกายได้ซ่อมแซมกล้ามเนื้อครบ",
+    high_mild_cal_ok: "โปรตีนเกินเล็กน้อยแต่ยังอยู่ในกรอบรวม ไม่ต้องลดทันที แค่บาลานซ์คาร์บ/ไขมันในมื้อต่อไป",
+    high_mild_cal_high: "โปรตีนเกินเล็กน้อยและแคลอรี่สูง ลองลดน้ำมัน/ซอส แล้วคงโปรตีนไว้พอดี",
+    high_cap: "โปรตีนเกินเพดานราว `{cap} g` ต่อวัน ลด portion โปรตีนเล็กน้อยและเพิ่มผัก/คาร์บเชิงซ้อนแทน"
+  },
+  carbs: {
+    low_mild: "คาร์บยังน้อยไปบ้าง ถ้าเพิ่มข้าวหรือผลไม้เล็กน้อยจะช่วยให้อิ่มและมีแรงต่อเนื่อง",
+    low_severe: "คาร์บขาดค่อนข้างเยอะ อาจทำให้หมดแรงช่วงบ่าย ลองเพิ่มข้าวหรือมันในมื้อถัดไป",
+    ok: "คาร์บอยู่ในช่วงพอดี พลังงานน่าจะนิ่งทั้งวัน",
+    high_mild: "คาร์บมากกว่าที่ตั้งใจนิดหน่อย ลดของหวาน น้ำหวาน หรือขนมจุบจิบก็ช่วยได้",
+    high_severe: "คาร์บสูงเกินไปวันนี้ ถ้ามื้อต่อไปเน้นโปรตีนกับผักจะช่วยบาลานซ์ได้"
+  },
+  fat: {
+    low: "ไขมันค่อนข้างน้อย ถ้ามีถั่วหรือน้ำมันดีติดครัว กินเพิ่มเล็กน้อยช่วยให้อิ่มนานขึ้น",
+    ok: "ไขมันวันนี้กำลังดี ทำให้อิ่มและช่วยดูดซึมสารอาหาร",
+    high_mild: "ไขมันเยอะกว่าที่ตั้งใจนิดหน่อย เลี่ยงของทอดหรือใช้น้ำมันน้อยลงในมื้อถัดไป",
+    high_severe: "ไขมันสูงเกินไปวันนี้ ลดของทอดหรือซอสที่มัน ๆ จะช่วยให้สมดุลขึ้น"
+  },
+  hydration: {
+    low_mild: "วันนี้น้ำน้อยไปหน่อย ลองจิบน้ำเพิ่มอีกสักแก้วสองแก้ว",
+    low_severe: "ร่างกายขาดน้ำพอควร จิบน้ำทุกชั่วโมงแก้วเล็ก ๆ จะช่วยได้",
+    ok: "ถ้าดื่มได้ครบตามเป้าหมาย รักษาจังหวะการจิบตลอดวันต่อไป"
+  },
+  timing: {
+    late_heavy: "มื้อดึกค่อนข้างหนัก ถ้าเลื่อนไวกว่านี้สักชั่วโมง หรือทำเป็นมื้อเบา ร่างกายจะย่อยสบายขึ้น",
+    long_gap: "ช่วงห่างระหว่างมื้อค่อนข้างยาว อาจทำให้หิวจัดตอนกิน ลองใส่มื้อว่างเล็ก ๆ กันไว้ก็ได้",
+    ok: "จังหวะมื้ออาหารวันนี้ดี ร่างกายคาดเดาได้ง่าย"
+  },
+  activity: {
+    baseline: "ถ้าได้ขยับตัวเบา ๆ เช่นเดินเร็วหรือยืดเหยียดสัก 15 นาที จะช่วยให้ร่างกายสดชื่นขึ้น",
+    after_high_cal: "วันนี้ได้พลังงานเยอะ การเดินเพิ่มหรือทำกิจกรรมกลางแจ้งจะช่วยบาลานซ์ได้",
+    build_muscle: "ถ้าอยากเสริมกล้าม ลองออกกำลังต้านทานเบา ๆ เช่นยกน้ำหนักหรือวิดพื้น"
+  },
+  tomorrow: [
+    "เตรียมของว่างโปรตีนง่าย ๆ ติดตัว เช่น โยเกิร์ตหรือถั่ว จะช่วยกันหิวจัด",
+    "เริ่มวันด้วยน้ำ 1 แก้วใหญ่ก่อนกาแฟ ทำให้ร่างกายสดชื่นขึ้น",
+    "ลองสลับเป็นข้าวกล้องหรือมันเทศตอนกลางวัน จะช่วยให้อิ่มนานขึ้น",
+    "จดแพลนกินคร่าว ๆ ก่อนนอน ลดการตัดสินใจระหว่างวัน"
+  ],
+  summary: {
+    balanced: "วันนี้สมดุลดีมาก รักษาจังหวะนี้ต่อไป เติมผักผลไม้หลากสีเพิ่มได้ก็ยิ่งดี",
+    needs_tweak: "มีบางอย่างแกว่งเล็กน้อย โฟกัสที่ {focus1} และ {focus2} ในมื้อต่อไปก็กลับเข้าที่ได้",
+    reset: "ตัวเลขไม่เป๊ะก็ไม่เป็นไร ใช้มื้อต่อไปเป็นจุดรีเซ็ต กินเบา ๆ แต่ครบหมู่ก็พอ"
+  }
+} as const;
+
+function applyTemplate(template: string, values: Record<string, string | number | undefined>): string {
+  return Object.keys(values).reduce((acc, key) => {
+    const token = `{${key}}`;
+    if (acc.includes(token) && values[key] !== undefined) {
+      return acc.replace(new RegExp(`\\{${key}\\}`, 'g'), String(values[key]));
+    }
+    return acc;
+  }, template);
+}
+
+function getNextMealLabel(): string {
+  const hour = new Date().getHours();
+  if (hour < 10) return 'มื้อเช้า';
+  if (hour < 14) return 'มื้อกลางวัน';
+  if (hour < 18) return 'มื้อบ่าย/ว่าง';
+  if (hour < 21) return 'มื้อเย็น';
+  return 'มื้อถัดไป';
+}
+
+const focusLabels: Record<'cal' | 'pro' | 'carb' | 'fat', string> = {
+  cal: 'พลังงานรวม',
+  pro: 'โปรตีน',
+  carb: 'คาร์บ',
+  fat: 'ไขมัน'
+};
+
+function getFocusLabel(key: 'cal' | 'pro' | 'carb' | 'fat'): string {
+  return focusLabels[key];
+}
+
 function normalizeGoal(goal?: UserGoal | UserProfile['target_goal']): NormalizedGoal {
   if (goal === 'decrease') return 'decrease';
   if (goal === 'increase') return 'increase';
@@ -107,17 +194,18 @@ function proteinScore(
   target: number,
   weightKg: number | undefined,
   caloriePct: number,
-  goal: NormalizedGoal
+  goal: 'decrease' | 'increase' | 'maintain'
 ): number {
-  if (!isFinite(target) || target <= 0) {
-    return 0;
-  }
+  if (!isFinite(target) || target <= 0) return 0;
 
-  const safeWeight = weightKg && weightKg > 0 ? weightKg : undefined;
-  const cap = safeWeight ? ((goal === 'increase' ? 2.2 : 2.0) * safeWeight) : Number.POSITIVE_INFINITY;
+  const cap = (weightKg && weightKg > 0)
+    ? ((goal === 'increase' ? 2.2 : 2.0) * weightKg)
+    : Number.POSITIVE_INFINITY;
+
   const pct = (actual / Math.max(target, 1)) * 100;
 
-  let score = huberScoreFromPct(pct, {
+  
+   let score = huberScoreFromPct(pct, {
     delta: 10,
     slope: 0.4,
     minScore: 12,
@@ -125,22 +213,15 @@ function proteinScore(
     asymUnder: goal === 'increase' ? 1.2 : 1.0,
   });
 
-  const mildOver = pct <= 115 && actual <= cap;
+
   const calOk = caloriePct >= 95 && caloriePct <= 105;
-  if (mildOver && calOk) {
-    score = Math.min(25, score + 2);
+  if (pct >= 100 && pct <= 115 && calOk && actual <= cap) {
+    score = Math.min(25, score + 1.5);
   }
 
-  return parseFloat(score.toFixed(2));
+  return +score.toFixed(2);
 }
 
-export interface ActivityAdviceParams {
-  userGoal: UserGoal;
-  caloriePercent: number;     
-  timeOfDay?: 'morning' | 'afternoon' | 'evening';
-  minutesAvailable?: 10 | 20 | 30;  
-  seed?: string;              
-}
 
 export function assessNutrient(
   actual: number,
@@ -174,16 +255,21 @@ export function assessNutrient(
       const goal = normalizeGoal(context.goal);
       const weightKg = context.weightKg;
       const caloriePct = context.caloriePct ?? 100;
-      const cap = weightKg && weightKg > 0
-        ? (goal === 'increase' ? 2.2 : 2.0) * weightKg
+
+      const cap = (weightKg && weightKg > 0)
+        ? ((goal === 'increase' ? 2.2 : 2.0) * weightKg)
         : Number.POSITIVE_INFINITY;
-      const mildOver = percentage <= 115 && actual <= cap;
+
       const calOk = caloriePct >= 95 && caloriePct <= 105;
+      const mildOver = percentage <= 120 && actual <= cap; // ขยายจาก 115 → 120
 
       if (percentage >= 90 && percentage <= 110) return { status: 'excellent', score, percentage };
-      if (percentage >= 70 && percentage < 90) return { status: 'need_more', score, percentage };
-      if (percentage < 70) return { status: 'insufficient', score, percentage };
-      if (mildOver && calOk) return { status: 'excellent', score, percentage };
+      if (percentage >= 80 && percentage < 90)   return { status: 'need_more', score, percentage };
+      if (percentage < 80)                       return { status: 'insufficient', score, percentage };
+
+      // เกินฝั่งโปรตีน
+      if (mildOver && calOk) return { status: 'good', score, percentage };              // เกินนิด แคลอรีตรง → good
+      if (mildOver)          return { status: 'needs_adjustment', score, percentage };  // เกินนิด แต่แคลอรีไม่นิ่ง → ปรับนิดหน่อย
       return { status: 'excessive', score, percentage };
     }
     case 'calories': {
@@ -243,7 +329,6 @@ export function generateNutritionAdvice(
   user: UserProfile
 ): string[] {
   const advice: string[] = [];
-
   const pct = {
     cal: assessments.calories.percentage || 0,
     pro: assessments.protein.percentage || 0,
@@ -251,155 +336,64 @@ export function generateNutritionAdvice(
     fat: assessments.fat.percentage || 0,
   };
 
-  
-  const hour = new Date().getHours();
-  const dayProgByTime = Math.max(0, Math.min(1, (hour - 6) / (21 - 6))); 
-  const dayProgByIntake = Math.max(0, Math.min(1, pct.cal / 100));
-  const dayProgress = Math.max(dayProgByTime * 0.6, dayProgByIntake * 0.9);
+  const nextMeal = getNextMealLabel();
+  const maxItems = 4;
 
-  const tone: 'mild' | 'standard' | 'strong' = (() => {
-    const bigDeviation = pct.cal > 120 || pct.pro < 70 || pct.carb > 140 || pct.fat > 140;
-    if (dayProgress > 0.8 || bigDeviation) return 'strong';
-    if (dayProgress < 0.5 && pct.cal < 60) return 'mild';
-    return 'standard';
+  const pushAdvice = (message: string | null | undefined) => {
+    if (!message) return;
+    if (advice.length >= maxItems) return;
+    if (!advice.includes(message)) {
+      advice.push(message);
+    }
+  };
+
+  const calorieMessage = (() => {
+    if (pct.cal < 85) return applyTemplate(AdviceTH.calories.low_severe, { nextMeal });
+    if (pct.cal < 95) return applyTemplate(AdviceTH.calories.low_mild, { nextMeal });
+    if (pct.cal <= 105) return AdviceTH.calories.ok;
+    if (pct.cal <= 115) return applyTemplate(AdviceTH.calories.high_mild, { nextMeal });
+    return applyTemplate(AdviceTH.calories.high_severe, { nextMeal });
   })();
+  pushAdvice(calorieMessage);
 
-  const maxItems = dayProgress < 0.5 ? 2 : tone === 'strong' ? 4 : 3;
+  const goal = normalizeGoal(user.target_goal);
+  const capPerKg = goal === 'increase' ? 2.2 : 2.0;
+  const cap = user.weight > 0 ? Math.round(user.weight * capPerKg) : undefined;
+  const actualProtein = actual.protein || 0;
+  const calOk = pct.cal >= 95 && pct.cal <= 105;
 
-  const say = (m: string) => {
-    if (tone === 'mild') return m.replace(/^/, 'ลอง ').replace('แนะนำ', 'ลอง');
-    if (tone === 'strong') return m.replace(/^/, ' ');
-    return m;
-  };
-
-  
-  const toProteinPortions = (g: number) => {
-    const eggs = Math.max(1, Math.round(g / 6)); 
-    const chickenG = Math.max(50, Math.round((g / 30) * 100)); 
-    const tofuG = Math.max(100, Math.round((g / 18) * 150)); 
-    return `เช่น ไข่ ${eggs} ฟอง หรือ อกไก่ ${chickenG}g หรือ เต้าหู้แข็ง ${tofuG}g`;
-  };
-  const toCarbPortions = (g: number) => {
-    const halfSpoons = Math.max(1, Math.round(g / 20)); 
-    const spoons = (halfSpoons / 2).toFixed(1).replace(/\.0$/, '');
-    const bananas = Math.max(1, Math.round(g / 23));
-    return `ลดข้าว ~${spoons} ทัพพี หรือ เลี่ยงกล้วย ${bananas} ผล`; 
-  };
-  const toFatPortions = (g: number) => {
-    const almondsG = Math.max(10, Math.round((g / 10) * 15)); 
-    return `ลดถั่ว ~${almondsG}g หรือเลี่ยงกะทิ/ของทอดในมื้อถัดไป`;
-  };
-
-  
-  if (advice.length < maxItems && pct.pro < 95) {
-    const deficitProG = Math.max(0, Math.round((recommended.protein || 0) - (actual.protein || 0)));
-    if (deficitProG > 0) {
-      if (pct.cal <= 105) {
-        
-        const addG = Math.max(10, Math.min(30, Math.round(deficitProG * (tone === 'mild' ? 0.4 : tone === 'strong' ? 0.7 : 0.5))));
-        advice.push(say(`โปรตีนขาด ~${deficitProG}g → เพิ่มโปรตีน ~${addG}g (${toProteinPortions(addG)})`));
-      } else {
-        
-        const addG = Math.max(10, Math.min(25, Math.round(deficitProG * 0.5)));
-        const reduceKcal = addG * 4;
-        const preferCarb = pct.carb > 105 || pct.fat <= 105;
-        if (preferCarb) {
-          const reduceCarbG = Math.round(reduceKcal / 4);
-          advice.push(say(`สลับ portion: ลดคาร์บ ~${reduceCarbG}g แล้วเพิ่มโปรตีน ~${addG}g (${toProteinPortions(addG)})`));
-        } else {
-          const reduceFatG = Math.round(reduceKcal / 9);
-          advice.push(say(`สลับ portion: ลดไขมัน ~${reduceFatG}g แล้วเพิ่มโปรตีน ~${addG}g (${toProteinPortions(addG)})`));
-        }
-      }
+  const proteinMessage = (() => {
+    if (pct.pro < 80) return applyTemplate(AdviceTH.protein.low_severe, { nextMeal });
+    if (pct.pro < 95) return applyTemplate(AdviceTH.protein.low_mild, { nextMeal });
+    if (pct.pro <= 110) return AdviceTH.protein.ok;
+    if (cap && actualProtein > cap) {
+      return applyTemplate(AdviceTH.protein.high_cap, { cap });
     }
-  }
-
-  
-  if (pct.cal > 110 && pct.pro < 90) {
-    const proDeficitG = Math.max(0, Math.round(recommended.protein * Math.max(0, (100 - pct.pro)) / 100));
-    const addProG = Math.max(10, Math.min(30, Math.round(proDeficitG * 0.5))); 
-    const overCarb = Math.max(0, Math.round(recommended.carbs * Math.max(0, (pct.carb - 100)) / 100));
-    const overFat = Math.max(0, Math.round(recommended.fat * Math.max(0, (pct.fat - 100)) / 100));
-    const preferCarb = overCarb >= Math.ceil((4 * addProG) / 9) || overFat === 0;
-    if (preferCarb) {
-      const reduceCarbG = addProG; 
-      advice.push(say(`สลับในแคลอรี่เดิม: ลดคาร์บ ~${reduceCarbG}g แล้วเพิ่มโปรตีน ~${addProG}g`));
-    } else {
-      const reduceFatG = Math.max(1, Math.round((4 * addProG) / 9));
-      advice.push(say(`สลับในแคลอรี่เดิม: ลดไขมัน ~${reduceFatG}g แล้วเพิ่มโปรตีน ~${addProG}g`));
+    if (pct.pro <= 120) {
+      return calOk
+        ? AdviceTH.protein.high_mild_cal_ok
+        : AdviceTH.protein.high_mild_cal_high;
     }
-  }
+    return applyTemplate(AdviceTH.protein.high_cap, { cap: cap ?? Math.round(actualProtein) });
+  })();
+  pushAdvice(proteinMessage);
 
-  
-  if (advice.length < maxItems && pct.cal < 85 && pct.pro < 90) {
-    const snackKcal = tone === 'mild' ? 150 : tone === 'strong' ? 250 : 200;
-    const proG = Math.round(snackKcal / 10) * 2; 
-    advice.push(say(`เพิ่มของว่างโปรตีน ${snackKcal} kcal (~${proG}g โปรตีน) เช่น โยเกิร์ตโปรตีน, นมถั่วเหลือง + ไข่ต้ม`));
-  }
+  const carbMessage = (() => {
+    if (pct.carb < 70) return AdviceTH.carbs.low_severe;
+    if (pct.carb < 90) return AdviceTH.carbs.low_mild;
+    if (pct.carb <= 120) return AdviceTH.carbs.ok;
+    if (pct.carb <= 135) return AdviceTH.carbs.high_mild;
+    return AdviceTH.carbs.high_severe;
+  })();
+  pushAdvice(carbMessage);
 
-  
-  if (advice.length < maxItems) {
-    const pctCal = pct.cal;
-    const pctPro = pct.pro;
-    const weightKg = Math.max(1, user.weight || 1);
-    const capPerKg = user.target_goal === 'increase' ? 2.2 : 2.0;
-    const proCap = capPerKg * weightKg; 
-    const upperPro = Math.max(1.1 * (recommended.protein || 0), proCap);
-    const isExcess = (actual.protein || 0) > upperPro || pctPro > 120;
-
-    if (!isExcess) {
-      
-      const tip = 'โปรตีนอยู่ในช่วงปลอดภัย — กระจายโปรตีน ≥25–30g ให้ได้ 2–3 มื้อ';
-      if (advice.length < maxItems) advice.push(say(tip));
-    } else {
-      if (pctCal > 105) {
-        advice.push(say('โปรตีนสูง + แคลอรี่เกิน: ลด portion โปรตีนที่ไขมันสูง และเลือกโปรตีนลีน (อกไก่/ปลา/ไข่ขาว/เต้าหู้)'));
-      } else if (pctCal >= 95 && pctCal <= 105) {
-        advice.push(say('โปรตีนสูงแต่แคลอรี่พอดี: ลดโปรตีนเล็กน้อย แล้วเติมคาร์บเชิงซ้อน/ไขมันดีให้สมดุลมาโคร'));
-      } else {
-        advice.push(say('โปรตีนสูงแต่แคลอรี่ขาด: คงโปรตีนไว้และเพิ่มคาร์บเชิงซ้อน/ไขมันดีเล็กน้อยเพื่อพลังงานพอเพียง'));
-      }
-    }
-  }
-
-  
-  if (advice.length < maxItems && pct.carb > 110) {
-    const overCarbG = Math.max(0, Math.round((actual.carbs || 0) - (recommended.carbs || 0)));
-    if (overCarbG > 0) {
-      advice.push(say(`คาร์บเกิน ~${overCarbG}g → ${toCarbPortions(overCarbG)} และเพิ่มผัก 1–2 กำมือ`));
-    }
-  }
-  if (advice.length < maxItems && pct.fat > 110) {
-    const overFatG = Math.max(0, Math.round((actual.fat || 0) - (recommended.fat || 0)));
-    if (overFatG > 0) {
-      advice.push(say(`ไขมันเกิน ~${overFatG}g → ${toFatPortions(overFatG)} (เปลี่ยนทอดเป็นย่าง/นึ่ง)`));
-    }
-  }
-
-  
-  const pushIf = (cond: boolean, msg: string) => { if (cond && advice.length < maxItems) advice.push(say(msg)); };
-
-  
-  pushIf(assessments.calories.status === 'excellent', `แคลอรี่ ${pct.cal.toFixed(0)}% เหมาะสม`);
-  pushIf(assessments.calories.status === 'good', `แคลอรี่ ${pct.cal.toFixed(0)}% ใกล้เคียงเป้า`);
-  pushIf(assessments.calories.status === 'needs_adjustment' && pct.cal > 115, `แคลอรี่สูง ลดขนมหวาน/ของทอดในมื้อถัดไป`);
-  pushIf(assessments.calories.status === 'needs_adjustment' && pct.cal < 85, `แคลอรี่ต่ำ เติมคาร์บเชิงซ้อนเล็กน้อย`);
-
-  
-  pushIf(assessments.protein.status === 'excellent', `โปรตีน ${pct.pro.toFixed(0)}% เพียงพอ`);
-  pushIf(assessments.protein.status === 'need_more', `โปรตีนยังไม่พอ เพิ่มโปรตีนไม่ติดมันเล็กน้อย`);
-  pushIf(assessments.protein.status === 'insufficient', `โปรตีนต่ำ เพิ่มโปรตีนคุณภาพดีในมื้อถัดไป`);
-  pushIf(assessments.protein.status === 'excessive', `โปรตีนเกิน ลดปริมาณในมื้อถัดไป หรือออกำลังกายเพิ่ม`);
-
-  
-  pushIf(assessments.carbs.status === 'excellent', `คาร์บ ${pct.carb.toFixed(0)}% พอดี`);
-  pushIf(assessments.carbs.status === 'need_more' || assessments.carbs.status === 'insufficient', `เพิ่มคาร์บเชิงซ้อนเล็กน้อย (ข้าวกล้อง/มันหวาน)`);
-  pushIf(assessments.carbs.status === 'excessive', `คาร์บสูง ลดน้ำตาล/ของหวาน`);
-
-  
-  pushIf(assessments.fat.status === 'excellent', `ไขมัน ${pct.fat.toFixed(0)}% พอดี`);
-  pushIf(assessments.fat.status === 'need_more' || assessments.fat.status === 'insufficient', `เพิ่มไขมันดีเล็กน้อย (อะโวคาโด/ถั่ว/น้ำมันมะกอก)`);
-  pushIf(assessments.fat.status === 'excessive', `ไขมันสูง ลดของทอด/อาหารมัน`);
+  const fatMessage = (() => {
+    if (pct.fat < 70) return AdviceTH.fat.low;
+    if (pct.fat <= 110) return AdviceTH.fat.ok;
+    if (pct.fat <= 130) return AdviceTH.fat.high_mild;
+    return AdviceTH.fat.high_severe;
+  })();
+  pushAdvice(fatMessage);
 
   return advice;
 }
@@ -407,188 +401,15 @@ export function generateNutritionAdvice(
 /**
  * สร้างคำแนะนำด้านกิจกรรม
  */
-export function getActivityAdvice({
-  userGoal,
-  caloriePercent,
-  timeOfDay,
-  minutesAvailable,
-  seed = new Date().toISOString().slice(0,10), 
-}: ActivityAdviceParams): string[] {
-  const goal: 'decrease'|'increase'|'maintain' =
-    userGoal === 'decrease' ? 'decrease'
-    : userGoal === 'increase' ? 'increase'
-    : 'maintain';
-
-  
-  const sev =
-    caloriePercent > 130 ? 'over_heavy' :
-    caloriePercent > 120 ? 'over_mid'   :
-    caloriePercent > 110 ? 'over_light' :
-    caloriePercent < 70  ? 'under_heavy':
-    caloriePercent < 80  ? 'under_mid'  :
-    caloriePercent < 90  ? 'under_light': 'ok';
-
-  
-  const rng = seeded(seed + goal + sev + (timeOfDay ?? '') + (minutesAvailable ?? ''));
-  const pick = <T,>(arr: T[], n = 1): T[] => {
-    const chosen: T[] = [];
-    const pool = [...arr];
-    for (let i = 0; i < Math.min(n, pool.length); i++) {
-      const idx = Math.floor(rng() * pool.length);
-      chosen.push(pool[idx]);
-      pool.splice(idx, 1);
-    }
-    return chosen;
-  };
-
-  const M = (def: number) => minutesAvailable ?? def; 
-
-  
-  const pools: Record<typeof goal, Record<string, string[]>> = {
-    decrease: {
-      over_heavy: [
-        `🏃‍♂️ เดินเร็ว ${M(40)}–${M(45)} นาที หลังมื้อเย็น`,
-        `🔥 HIIT ${M(12)}–${M(15)} นาที แล้วเดินคูลดาวน์ 10 นาที`,
-        `🚴‍♂️ ปั่นจักรยาน ${M(35)} นาที หรือว่ายน้ำ ${M(25)} นาที`,
-        `🏋️‍♀️ Circuit เวทน้ำหนักตัว ${M(20)} นาที + เดินหลังอาหาร 15 นาที`,
-        `🧹 ทำงานบ้านเร็ว ๆ ${M(30)} นาที (NEAT) แทนการนั่งนิ่ง`,
-      ],
-      over_mid: [
-        `🚶‍♂️ เดินเร็ว ${M(30)} นาที โดยเฉพาะหลังมื้อใหญ่`,
-        `🔥 Tabata/HIIT สั้น ๆ ${M(10)}–${M(12)} นาที ถ้าเวลาน้อย`,
-        `🚴 ปั่นชิล ${M(25)}–${M(30)} นาที`,
-        `🤸‍♂️ ยืดเหยียด 10 นาที + เดิน ${M(20)} นาที`,
-      ],
-      over_light: [
-        `🚶 เดินหลังมื้ออาหาร ${M(15)}–${M(20)} นาที ช่วยจัดการกลูโคส`,
-        `🏃‍♂️ เดินเร็ว/จ็อก ${M(20)}–${M(25)} นาที`,
-        `🪜 ขึ้นลงบันไดต่อเนื่อง ${M(10)}–${M(12)} นาที`,
-      ],
-      under_heavy: [
-        `⚠️ แคลขาดมาก: เติมพลังงานก่อน แล้วออกกำลังกายเบา ๆ ${M(10)}–${M(15)} นาที`,
-        `🍌+🥛 snack 150–250 kcal จากนั้นเดินเบา ${M(10)}–${M(15)} นาที`,
-        `🛌 เน้นพักผ่อนคุณภาพคืนนี้ แล้วค่อยเวทพรุ่งนี้`,
-      ],
-      under_mid: [
-        `🥪 เติมคาร์บเชิงซ้อนเล็กน้อยก่อน แล้วเดินเบา ${M(15)} นาที`,
-        `🏋️ เวทเบา ๆ แบบ full-body ${M(15)} นาที + เดินคูลดาวน์ 10 นาที`,
-      ],
-      under_light: [
-        `🤸‍♀️ ยืดเหยียด 10 นาที + เดิน ${M(15)} นาที`,
-        `🚶 เดินชิล ${M(20)} นาที รักษาการเผาผลาญ`,
-      ],
-      ok: [
-        `✅ เดินเร็ว ${M(20)}–${M(30)} นาที รักษาจังหวะการเผาผลาญ`,
-        `🏋️‍♂️ เวทวงจร ${M(20)} นาที หรือปั่น ${M(25)} นาที`,
-        `🧘 โยคะ/Flow ${M(20)} นาที + เดินหลังมื้อเย็น 10 นาที`,
-      ],
-    },
-    increase: {
-      under_heavy: [
-        `💪 เวทเน้น compound ${M(40)}–${M(45)} นาที แล้วคาร์ดิโอเบา 10 นาที`,
-        `🥤 เติมพลังงาน 300–500 kcal ก่อนซ้อม แล้วฝึกต้านทานคุณภาพ`,
-        `🏋️‍♀️ Progressive overload ${M(35)} นาที + โปรตีนหลังซ้อม`,
-      ],
-      under_mid: [
-        `💪 เวท ${M(30)} นาที + เดินคูลดาวน์ 10 นาที`,
-        `🏋️ Superset เบา ๆ ${M(20)}–${M(25)} นาที`,
-        `🍚 เติมคาร์บก่อนซ้อมเล็กน้อย แล้วฝึกต้านทาน`,
-      ],
-      under_light: [
-        `💪 เวทน้ำหนักตัว/ยางยืด ${M(20)} นาที`,
-        `🚶‍♂️ เดินอุ่นเครื่อง 10 นาที + เวท ${M(20)} นาที`,
-      ],
-      over_heavy: [
-        `🚶 แคลเกินมาก: เดินเร็ว ${M(30)}–${M(40)} นาที เพื่อบาลานซ์พลังงาน`,
-        `🚴 ปั่นเบา ${M(30)} นาที หรือว่ายน้ำ ${M(20)} นาที`,
-      ],
-      over_mid: [
-        `🚶 แคลเกิน: เดินเร็ว ${M(20)}–${M(30)} นาที`,
-        `🤸‍♂️ Mobility/ยืดเหยียด 10 นาที + เดิน ${M(15)} นาที`,
-      ],
-      over_light: [
-        `🚶 เดินหลังอาหาร ${M(15)}–${M(20)} นาที รักษาฟอร์ม`,
-        `🏃‍♂️ จ็อกช้า ${M(20)} นาที`,
-      ],
-      ok: [
-        `💪 เวทแบบ progressive overload ${M(30)} นาที`,
-        `🏋️ Compound (สควอต/ดัน/ดึง) ${M(25)} นาที + เดิน 10 นาที`,
-        `🚶 คาร์ดิโอเบา ${M(20)}–${M(25)} นาที เพื่อระบบหัวใจ`,
-      ],
-    },
-    maintain: {
-      over_heavy: [
-        `🏃‍♂️ เดินเร็ว ${M(35)}–${M(45)} นาที`,
-        `🔥 HIIT ${M(12)} นาที + เดิน 10 นาที`,
-      ],
-      over_mid: [
-        `🚶 เดินหลังมื้อใหญ่ ${M(20)}–${M(30)} นาที`,
-        `🚴 ปั่นชิล ${M(25)} นาที`,
-      ],
-      over_light: [
-        `🚶 เดิน ${M(20)}–${M(25)} นาที`,
-        `🪜 ขึ้นลงบันได ${M(10)}–${M(12)} นาที`,
-      ],
-      under_heavy: [
-        `⚠️ เติมพลังงานก่อน แล้วทำคาร์ดิโอเบา ${M(10)}–${M(15)} นาที`,
-        `🍽️ วางมื้อถัดไปให้ครบหมวด + เดินเบา 10 นาที`,
-      ],
-      under_mid: [
-        `🤸‍♂️ ยืดเหยียด 10 นาที + เดิน ${M(15)} นาที`,
-        `🚶 เดินชิล ${M(20)} นาที`,
-      ],
-      under_light: [
-        `🚶 เดินหลังอาหาร ${M(15)} นาที`,
-        `🧘 โยคะ/หายใจลึก ${M(15)} นาที`,
-      ],
-      ok: [
-        `✅ เดินเร็ว ${M(20)}–${M(30)} นาที`,
-        `🏋️ เวทน้ำหนักตัว ${M(20)} นาที`,
-        `🚴 ปั่นสบาย ๆ ${M(25)} นาที`,
-      ],
-    },
-  };
-
-  
-  const timeHints: Record<NonNullable<typeof timeOfDay>, string[]> = {
-    morning: [
-      '🌤️ รับแดดอ่อน ๆ 5–10 นาที แล้วเดินสั้น ๆ ก่อนเริ่มวัน',
-      '🥤 ดื่มน้ำ 1–2 แก้วก่อนออกกำลัง',
-    ],
-    afternoon: [
-      '☀️ หลังมื้อกลางวัน เดิน 10–15 นาที ช่วยลดง่วงบ่าย',
-    ],
-    evening: [
-      '🌙 หลังมื้อเย็น เดิน 15–20 นาที ช่วยย่อยและนอนดีขึ้น',
-      '🛌 เว้นระยะออกกำลังกายหนักก่อนนอน 3 ชม.',
-    ],
-  };
-
-  const base = pools[goal][sev] ?? pools.maintain.ok;
-  const picks = pick(base, sev.includes('heavy') ? 2 : 1); 
-  if (timeOfDay) {
-    picks.push(...pick(timeHints[timeOfDay], 1));
-  }
-  return picks;
-}
-
-
 export function generateActivityAdvice(caloriePercent: number, userGoal: string): string[] {
-  return getActivityAdvice({ userGoal, caloriePercent });
-}
-
-
-function seeded(s: string) {
-  let h = 2166136261 >>> 0;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 16777619);
+  const advice: string[] = [AdviceTH.activity.baseline];
+  if (caloriePercent > 110) {
+    advice.push(AdviceTH.activity.after_high_cal);
   }
-  return function rand() {
-    
-    h = (Math.imul(h, 1664525) + 1013904223) >>> 0;
-    return (h >>> 0) / 0xFFFFFFFF;
-  };
+  if (normalizeGoal(userGoal as UserGoal) === 'increase') {
+    advice.push(AdviceTH.activity.build_muscle);
+  }
+  return advice;
 }
 
 /**
@@ -599,10 +420,9 @@ export function generateHydrationAdvice(weight: number): string[] {
   const recommendedGlasses = Math.ceil(minWaterMl / 250); 
   
   return [
-    `💧 ดื่มน้ำอย่างน้อย ${recommendedGlasses} แก้ว/วัน (${minWaterMl}ml)`,
-    `➕ ถ้ามีออกกำลังกาย/อากาศร้อน เพิ่มอีก ~500–1000 ml วันนี้`,
-    `🚰 เช็คสีปัสสาวะ: ใสเหลืองอ่อน = ดื่มน้ำเพียงพอ`,
-    `⏰ ตั้งปลุกดื่มน้ำทุก 2 ชั่วโมง`
+    AdviceTH.hydration.low_mild,
+    AdviceTH.hydration.low_severe,
+    `${AdviceTH.hydration.ok} (~${recommendedGlasses} แก้ว หรือประมาณ ${minWaterMl} ml ต่อวัน)`
   ];
 }
 
@@ -611,22 +431,15 @@ export function generateHydrationAdvice(weight: number): string[] {
  */
 export function generateTimingAdvice(): string[] {
   const currentHour = new Date().getHours();
-  const advice: string[] = [];
-  
-  if (currentHour >= 6 && currentHour <= 10) {
-    advice.push("🌅 เช้านี้: ควรทานอาหารเช้าภายใน 2 ชั่วโมงหลังตื่น");
-    advice.push("☕ เริ่มวันด้วยน้ำเปล่า 1-2 แก้วก่อนอาหารเช้า");
-  } else if (currentHour >= 11 && currentHour <= 14) {
-    advice.push("🌞 กลางวัน: ช่วงที่ร่างกายต้องการพลังงานมากสุด");
-    advice.push("🍚 มื้อกลางวันควรมีคาร์บและโปรตีนครบถ้วน");
-  } else if (currentHour >= 17 && currentHour <= 20) {
-    advice.push("🌆 เย็นนี้: ควรทานอาหารเย็นก่อน 19:30");
-    advice.push("🥗 มื้อเย็นควรเบาและย่อยง่าย");
-  } else {
-    advice.push("🌙 หลีกเลี่ยงทานหลัง 21:00 เพื่อการนอนหลับดี");
+  const advice: string[] = [AdviceTH.timing.ok];
+
+  if (currentHour >= 20) {
+    advice.unshift(AdviceTH.timing.late_heavy);
+  } else if (currentHour >= 14) {
+    advice.unshift(AdviceTH.timing.long_gap);
   }
-  
-  return advice;
+
+  return Array.from(new Set(advice));
 }
 
 /**
@@ -665,14 +478,13 @@ export function calculateDailyScore(
 
 
 export function generateTomorrowTips(assessments: DailyAssessment, userProfile: UserProfile): string[] {
-  const tips: string[] = [];
   const pct = {
     cal: assessments.calories.percentage || 100,
     pro: assessments.protein.percentage || 100,
     carb: assessments.carbs.percentage || 100,
     fat: assessments.fat.percentage || 100,
   };
-  
+
   const deviations = [
     { key: 'cal', off: Math.abs(pct.cal - 100) },
     { key: 'pro', off: Math.abs(pct.pro - 100) },
@@ -681,33 +493,28 @@ export function generateTomorrowTips(assessments: DailyAssessment, userProfile: 
   ].sort((a, b) => b.off - a.off);
   const top = deviations[0]?.key;
 
+  const tipsSet = new Set<string>();
+
   if (top === 'pro' && pct.pro < 95) {
-    tips.push('🥚 พรุ่งนี้เริ่มวันด้วยโปรตีน ≥25–30g (เช่น ไข่ 3 ฟอง หรือ อกไก่ 100–120g)');
+    tipsSet.add(AdviceTH.tomorrow[0]);
   }
-  if (top === 'carb' && pct.carb > 110) {
-    tips.push('🍬 ลดของหวาน/น้ำหวาน และเดิน 20–30 นาทีหลังมื้อใหญ่');
+  if (top === 'cal') {
+    tipsSet.add(AdviceTH.tomorrow[3]);
   }
-  if (top === 'fat' && pct.fat > 110) {
-    tips.push('🍳 เลือกย่าง/นึ่งแทนทอดในมื้อเที่ยง/เย็น');
+  if (top === 'carb') {
+    tipsSet.add(AdviceTH.tomorrow[2]);
   }
-  if (top === 'cal' && pct.cal > 110) {
-    tips.push('🔥 เลี่ยงของหวานก่อนนอน และเดินเร็ว 20–30 นาทีหลังอาหารเย็น');
-  }
-  if (top === 'cal' && pct.cal < 90) {
-    tips.push('🍽️ เติมของว่างโปรตีน ~200 kcal ในครึ่งแรกของวัน');
+  if (tipsSet.size < 2) {
+    tipsSet.add(AdviceTH.tomorrow[1]);
   }
 
-  
-  if (userProfile.target_goal === 'increase') {
-    tips.push('💪 ออกกำลังกายต้านทาน 2–3 ครั้ง/สัปดาห์ เพื่อเสริมกล้ามเนื้อ');
-  } else if (userProfile.target_goal === 'decrease') {
-    tips.push('🚶‍♀️ เดิน 7–10k ก้าว/วัน ร่วมกับควบคุมขนมหวาน');
-  }
+  AdviceTH.tomorrow.forEach(tip => {
+    if (tipsSet.size < 4) {
+      tipsSet.add(tip);
+    }
+  });
 
-  
-  tips.push('💧 ดื่มน้ำสม่ำเสมอ และจบมื้อเย็น ≥ 3 ชม.ก่อนนอน');
-
-  return tips.slice(0, 4);
+  return Array.from(tipsSet).slice(0, 4);
 }
 
 /**
@@ -730,7 +537,26 @@ export function generateDailyRecommendation(
   const tomorrowTips = generateTomorrowTips(assessments, userProfile);
   
   
-  const summary = `📊 คะแนนรวม: ${totalScore}/100 (${grade})`;
+  const focusDeviations = [
+    { key: 'cal' as const, off: Math.abs((assessments.calories.percentage || 100) - 100) },
+    { key: 'pro' as const, off: Math.abs((assessments.protein.percentage || 100) - 100) },
+    { key: 'carb' as const, off: Math.abs((assessments.carbs.percentage || 100) - 100) },
+    { key: 'fat' as const, off: Math.abs((assessments.fat.percentage || 100) - 100) },
+  ].sort((a, b) => b.off - a.off);
+  const summaryTemplate = totalScore >= 85
+    ? AdviceTH.summary.balanced
+    : totalScore >= 70
+      ? AdviceTH.summary.needs_tweak
+      : AdviceTH.summary.reset;
+
+  const focus1 = focusDeviations[0]?.key ?? 'cal';
+  const focus2 = focusDeviations[1]?.key ?? focus1;
+  const summaryText = applyTemplate(summaryTemplate, {
+    focus1: getFocusLabel(focus1),
+    focus2: getFocusLabel(focus2),
+  });
+
+  const summary = `📊 คะแนนรวม: ${totalScore}/100 (${grade})\n${summaryText}`;
   
   return {
     date: new Date().toISOString().split('T')[0],

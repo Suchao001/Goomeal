@@ -821,7 +821,7 @@ const Home = () => {
                     shadowOpacity: 0.25,
                     shadowRadius: 3.84,
                     elevation: 5,
-                    maxWidth: 140, // จำกัดความกว้างสูงสุด
+                    maxWidth: 140, 
                   }}
                   onPress={item.onPress}
                 >

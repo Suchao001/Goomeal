@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert, Image } from 'react-native';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import { useRoute, useFocusEffect } from '@react-navigation/native';
@@ -60,6 +60,29 @@ const MealPlanScreen = () => {
   const [setAsCurrentPlan, setSetAsCurrentPlan] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  const handleExitConfirmation = useCallback((onConfirm: () => void) => {
+    if (!canSave()) {
+      clearMealPlan();
+      onConfirm();
+      return;
+    }
+
+    Alert.alert(
+      'ยังไม่ได้บันทึก',
+      'มีเมนูที่ยังไม่ถูกบันทึก คุณต้องการออกจากหน้านี้หรือไม่?',
+      [
+        { text: 'อยู่ต่อ', style: 'cancel' },
+        {
+          text: 'ออก',
+          style: 'destructive',
+          onPress: () => {
+            navigation.navigate(from || 'Home');
+          }
+        }
+      ]
+    );
+  }, [canSave, clearMealPlan]);
+
   // Calculate totals for SavePlanModal
   const totalDays = Object.keys(mealPlanData).length;
   const totalMenus = Object.values(mealPlanData).reduce((total, day: any) => 
@@ -79,16 +102,26 @@ const MealPlanScreen = () => {
   useFocusEffect(
     React.useCallback(() => {
       const unsubscribe = navigation.addListener('beforeRemove', (e) => {
-        // Only clear if we're navigating away from the add plan flow
-        const targetRoute = (e.data.action as any)?.payload?.name;
-        // Don't clear when going to SearchFoodForAdd or when returning from search
-        if (targetRoute !== 'SearchFoodForAdd') {
-          clearMealPlan();
+        const action = e.data.action;
+        const targetRoute = (action as any)?.payload?.name;
+
+        if (targetRoute === 'SearchFoodForAdd') {
+          return;
         }
+
+        if (!canSave()) {
+          clearMealPlan();
+          return;
+        }
+
+        e.preventDefault();
+        handleExitConfirmation(() => {
+          navigation.dispatch(action);
+        });
       });
 
       return unsubscribe;
-    }, [navigation, clearMealPlan])
+    }, [navigation, canSave, clearMealPlan, handleExitConfirmation])
   );
 
   // Handlers for SavePlanModal
@@ -232,6 +265,15 @@ const MealPlanScreen = () => {
       setSelectedDay(selectedDay + 1);
     }
   };
+
+  const handleBackPress = useCallback(() => {
+    handleExitConfirmation(() => {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: from || 'Home' }]
+      });
+    });
+  }, [from, handleExitConfirmation, navigation]);
 
   const handleAddFoodToMeal = (mealId: string) => {
     navigation.navigate('SearchFoodForAdd', {
@@ -377,10 +419,7 @@ const MealPlanScreen = () => {
       <View className="bg-primary px-4 py-4 mt-6 flex-row items-center justify-between border-b border-gray-100">
         <TouchableOpacity 
           className="w-10 h-10 rounded-lg items-center justify-center"
-          onPress={() => navigation.reset({
-            index: 0,
-            routes: [{ name: from || 'Home' }]
-          })}
+          onPress={handleBackPress}
         >
           
           <Icon name="arrow-back" size={24} color="white" />

@@ -6,43 +6,38 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Get email config from env
+
 const sender = process.env.EMAIL_SENDER;
 const app_password = process.env.APP_PASSWORD;
 
-// Generate password reset token
+
 const generateResetToken = (userId: number): string => {
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
         throw new Error('JWT_SECRET not configured');
     }
-    
-    // Include current timestamp to make token unique
     const tokenTimestamp = Date.now();
-    
-    // Token expires in 1 hour
-    return jwt.sign({ 
-        userId, 
-        type: 'password_reset', 
-        tokenTimestamp 
+
+    return jwt.sign({
+        userId,
+        type: 'password_reset',
+        tokenTimestamp
     }, jwtSecret, { expiresIn: '1h' });
 };
 
-// Send password reset email using nodemailer
+
 export const sendPasswordResetEmail = async (email: string) => {
     try {
-        // Check if user exists
+
         const user = await db('users').where({ email }).first();
         if (!user) {
             throw new Error('No user found with this email address');
         }
 
         const resetToken = generateResetToken(user.id);
-        
-        // For React Native app - use deep link
+
         const resetUrl = `${process.env.BASE_URL}/reset-password?token=${resetToken}`;
-        
-        // Create nodemailer transporter
+
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
@@ -106,14 +101,14 @@ export const sendPasswordResetEmail = async (email: string) => {
         console.log('✅ ส่งอีเมลรีเซ็ตรหัสผ่านสำเร็จ');
         console.log('📧 อีเมลที่ส่งถึง:', email);
         console.log('🆔 Message ID:', info.messageId);
-        
+
         return {
             success: true,
             message: 'ส่งอีเมลรีเซ็ตรหัสผ่านเรียบร้อยแล้ว',
             email: email,
             messageId: info.messageId
         };
-        
+
     } catch (error: any) {
         console.error('❌ เกิดข้อผิดพลาดในการส่งอีเมล:', error.message);
         throw new Error(error.message || 'ไม่สามารถส่งอีเมลรีเซ็ตรหัสผ่านได้');
@@ -128,23 +123,23 @@ export const verifyResetToken = async (token: string) => {
             throw new Error('JWT_SECRET not configured');
         }
 
-        // Verify token
+
         const decoded = jwt.verify(token, jwtSecret) as any;
-        
+
         if (decoded.type !== 'password_reset') {
             throw new Error('Invalid token type');
         }
 
         const userId = decoded.userId;
         const tokenTimestamp = decoded.tokenTimestamp;
-        
-        // Check if user exists
+
+
         const user = await db('users').where({ id: userId }).first();
         if (!user) {
             throw new Error('User not found');
         }
 
-        // Check if token has already been used
+
         if (user.last_password_reset && tokenTimestamp <= new Date(user.last_password_reset).getTime()) {
             throw new Error('ลิงก์รีเซ็ตรหัสผ่านนี้ถูกใช้งานไปแล้ว');
         }
@@ -157,16 +152,16 @@ export const verifyResetToken = async (token: string) => {
             userId: userId,
             userEmail: user.email
         };
-        
+
     } catch (error: any) {
         console.error('❌ Token ไม่ถูกต้อง:', error.message);
-        
+
         if (error.name === 'TokenExpiredError') {
             throw new Error('ลิงก์รีเซ็ตรหัสผ่านหมดอายุแล้ว');
         } else if (error.name === 'JsonWebTokenError') {
             throw new Error('ลิงก์รีเซ็ตรหัสผ่านไม่ถูกต้อง');
         }
-        
+
         throw new Error(error.message || 'Token ไม่ถูกต้อง');
     }
 };
@@ -179,33 +174,33 @@ export const resetPassword = async (token: string, newPassword: string) => {
             throw new Error('JWT_SECRET not configured');
         }
 
-        // Verify token
+
         const decoded = jwt.verify(token, jwtSecret) as any;
-        
+
         if (decoded.type !== 'password_reset') {
             throw new Error('Invalid token type');
         }
 
         const userId = decoded.userId;
         const tokenTimestamp = decoded.tokenTimestamp;
-        
+
         const user = await db('users').where({ id: userId }).first();
         if (!user) {
             throw new Error('User not found');
         }
 
-        // Check if token has already been used by comparing with last password reset timestamp
+
         if (user.last_password_reset && tokenTimestamp <= new Date(user.last_password_reset).getTime()) {
             throw new Error('ลิงก์รีเซ็ตรหัสผ่านนี้ถูกใช้งานไปแล้ว');
         }
 
-        // Hash new password
+
         const hashedPassword = await bcrypt.hash(newPassword, 10);
-        
-        // Update password and set last password reset timestamp
+
+
         await db('users')
             .where({ id: userId })
-            .update({ 
+            .update({
                 password: hashedPassword,
                 last_password_reset: new Date(),
                 updated_at: new Date()
@@ -218,16 +213,16 @@ export const resetPassword = async (token: string, newPassword: string) => {
             message: 'รีเซ็ตรหัสผ่านสำเร็จ',
             userId: userId
         };
-        
+
     } catch (error: any) {
         console.error('❌ เกิดข้อผิดพลาดในการรีเซ็ตรหัสผ่าน:', error.message);
-        
+
         if (error.name === 'TokenExpiredError') {
             throw new Error('ลิงก์รีเซ็ตรหัสผ่านหมดอายุแล้ว');
         } else if (error.name === 'JsonWebTokenError') {
             throw new Error('ลิงก์รีเซ็ตรหัสผ่านไม่ถูกต้อง');
         }
-        
+
         throw new Error(error.message || 'ไม่สามารถรีเซ็ตรหัสผ่านได้');
     }
 };
