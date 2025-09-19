@@ -67,6 +67,10 @@ const getImageUrl = (imagePath?: string) => {
   if (imagePath.startsWith('/foods/')) {
     return `${seconde_url}${imagePath}`;
   }
+
+  if (imagePath.startsWith('assets/')) {
+    return `${base_url}/${imagePath}`;
+  }
   
   // Default fallback - use seconde_url for other paths
   return `${seconde_url}${imagePath}`;

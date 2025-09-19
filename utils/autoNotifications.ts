@@ -37,7 +37,7 @@ export async function scheduleMealItemRecurring(
 ) {
   const parsed = parseHHmm(hhmm);
   if (!parsed) return;
-  console.log('📆 scheduling daily meal reminder', { tag, hhmm, hour: parsed.hour, minute: parsed.minute });
+
   await scheduleDailyAt({
     idTag: tag,
     title,

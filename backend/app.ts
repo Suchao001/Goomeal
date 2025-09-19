@@ -45,8 +45,9 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Serve static files for uploaded images
+// Serve static files for uploaded images and shared assets
 app.use('/images', express.static(path.join(__dirname, 'images')));
+app.use('/assets', express.static(path.join(__dirname, '..', 'assets')));
 
 app.use('/user',user);
 app.use('/api', article);

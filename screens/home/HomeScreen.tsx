@@ -43,6 +43,7 @@ interface RecommendedMeal {
   ingredient: string;
   src?: string;
   created_at?: string;
+  serving?: string;
 } 
 
 const Home = () => {
@@ -201,7 +202,6 @@ const Home = () => {
   // Get image source for articles
   const getImageSource = (imageUrl?: string, fallbackIndex: number = 0) => {
     if (imageUrl && imageUrl.trim() !== '') {
-      // สร้าง URL รูปภาพจาก BLOG_URL + public/ + item.img
       const fullImageUrl = `${blog_url}/${imageUrl}`;
     
       return { uri: fullImageUrl };
@@ -355,6 +355,8 @@ const Home = () => {
     }, [loadDailySummary, loadTodayMeals, loadSavedRecords])
   );
 
+ 
+
   // Transform API data to component format
   const getTodayMealsForComponent = useMemo((): MealData[] => {
     if (!todayMealData) return []; 
@@ -378,6 +380,7 @@ const Home = () => {
     // Convert breakfast meals
     todayMealData.breakfast.forEach((meal, index) => {
       const saved = isMealSaved(meal.name, 'มื้อเช้า');
+     console.log(meal.image)
       meals.push({
         id: `breakfast-${mealIdCounter++}`,
         mealType: 'breakfast',
@@ -476,6 +479,13 @@ const Home = () => {
   // Mock data for recommended meals
   const [recommendedMeals, setRecommendedMeals] = useState<RecommendedMeal[]>([]);
 
+  const resolveRecommendedImage = (img?: string | null) => {
+    if (!img) return null;
+    if (img.startsWith('http')) return img;
+    if (img.startsWith('/')) return `${base_url}${img}`;
+    return `${base_url}/${img}`;
+  };
+
   // Fetch recommended meals (latest 2 AI-generated foods)
   const fetchRecommendedMeals = async () => {
     try {
@@ -493,7 +503,7 @@ const Home = () => {
               carb: item.carb,
               fat: item.fat,
               protein: item.protein,
-              img: item.img,
+              img: resolveRecommendedImage(item.img),
               ingredient: item.ingredient,
               src: item.src,
               created_at: item.createdAt,

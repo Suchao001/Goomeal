@@ -32,6 +32,7 @@ export class ApiClient extends BaseApiClient {
     ingredient?: string;
     img?: string;
     src?: string;
+    serving?: string;
   }) {
     return this.foodClient.addUserFood(foodData);
   }
@@ -53,6 +54,7 @@ export class ApiClient extends BaseApiClient {
     ingredient?: string;
     img?: string;
     deleteImage?: boolean;
+    serving?: string;
   }) {
     return this.foodClient.updateUserFood(foodId, foodData);
   }

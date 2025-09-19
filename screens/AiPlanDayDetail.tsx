@@ -4,6 +4,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useTypedNavigation } from '../hooks/Navigation';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../types/navigation';
+import {base_url} from 'config';
 
 type AiPlanDayDetailRouteProp = RouteProp<RootStackParamList, 'AiPlanDayDetail'>;
 
@@ -134,12 +135,16 @@ const AiPlanDayDetail = () => {
       return 'https://via.placeholder.com/60x60/E5E7EB/6B7280?text=Food';
     }
     
-    // If it's already a full URL (starts with http/https), use it as is
+    
     if (imagePath.startsWith('http')) {
       return imagePath;
     }
+
+    if (imagePath.startsWith('assets/')) {
+      return `${base_url}/${imagePath}`;
+    }
     
-    // For AI generated foods, they typically don't have images, so use placeholder
+    
     return 'https://via.placeholder.com/60x60/E5E7EB/6B7280?text=AI';
   };
 

@@ -5,6 +5,8 @@ import { calculateRecommendedNutrition, getCalculationSummary, UserProfileData }
 import {yearOfBirthToAge } from '../utils/ageCal';
 
 const url = process.env.AI_API || 'http://localhost:11434';
+const suggestPlanModel = "gpt-5";
+const suggestFoodModel = "gpt-5";
 
 const openai = new OpenAI({
   apiKey: process.env.AI_API_KEY
@@ -110,6 +112,7 @@ const getDefaultMealTimes = async (userId: number) => {
     ] };
   }
 };
+
 export async function suggestFood(userId: number, payload?: any) {
   try {
     const {
@@ -123,34 +126,35 @@ export async function suggestFood(userId: number, payload?: any) {
 
     const { dietary_restrictions } = await getUserInfo(userId);
 
-    const foodSuggestionPrompt = `You are an AI assistant that generates default for Thai food menu suggestion.
-Your response MUST be a single, valid JSON object.
-It MUST NOT be a JSON array.
-It MUST NOT be wrapped in markdown backticks like \`\`\`json.
-The JSON object MUST only contain these exact keys: "name", "cal", "carbs", "protein", "fat", "ingredients".
+    const foodSuggestionPrompt = `คุณคือ AI ผู้ช่วยที่สร้างเมนูอาหารไทยแนะนำโดยอัตโนมัติ
+            คำตอบของคุณต้องเป็น JSON object ที่ถูกต้องเพียงหนึ่งเดียวเท่านั้น
+            ห้ามส่งกลับเป็น JSON array
+            JSON object ต้องมีเฉพาะคีย์ดังต่อไปนี้: "name", "cal", "carbs", "protein", "fat", "ingredients", "serving"
 
-Here is an example of the required format:
-{
-  "name": "ต้มยำกุ้ง",
-  "cal": 200,
-  "carbs": 10,
-  "protein": 30,
-  "fat": 5,
-  "ingredients": ["กุ้ง", "ตะไคร้", "ใบมะกรูด", "พริกขี้หนู", "น้ำมะนาว"]
-}
+            ตัวอย่างรูปแบบที่ต้องการ:
+            {
+              "name": "ต้มยำกุ้ง",
+              "cal": 200,
+              "carbs": 10,
+              "protein": 30,
+              "fat": 5,
+              "img": "/assets/images/menuplaceholder.png",
+              "ingredients": ["กุ้ง", "ตะไคร้", "ใบมะกรูด", "พริกขี้หนู", "น้ำมะนาว"],
+              "serving": "1 ถ้วย (250 กรัม)"
+            }
 
-Now, generate a single food suggestion based on these user preferences:
-- Meal Type: ${mealType}
-- Hunger Level: ${hungerLevel}
-- Available Ingredients: ${ingredients}
-- Food Type: ${foodType}
-- Budget: ${budget}
-- Dietary Restrictions: ${dietary_restrictions || 'None'}
-- Complexity: ${complexityLevel}
-`;
+            ตอนนี้ให้สร้างเมนูอาหารแนะนำเพียง 1 เมนู โดยอ้างอิงจากความต้องการของผู้ใช้ดังนี้:
+            - ประเภทมื้ออาหาร: ${mealType}
+            - ระดับความหิว: ${hungerLevel}
+            - วัตถุดิบที่มี: ${ingredients}
+            - ประเภทอาหาร: ${foodType}
+            - งบประมาณ: ${budget}
+            - ข้อจำกัดด้านอาหาร: ${dietary_restrictions || 'ไม่มี'}
+            - ระดับความซับซ้อน: ${complexityLevel}
+            `;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      const response = await openai.chat.completions.create({
+      model: suggestFoodModel,
       messages: [
         {
           role: 'user',
@@ -184,208 +188,11 @@ Now, generate a single food suggestion based on these user preferences:
 }
 
 
-export async function getFoodPlanSuggestions(userId: number, payload?: any) {
-  let recommendedNutrition: any;
-  let totalPlanDay: number = 3; // default value
-  
-  try {
-    const {
-      target_goal,
-      target_weight,
-      activity_level,
-      eating_type,
-      dietary_restrictions,
-      additional_requirements,
-      totalPlanDay: planDays
-    } = payload || {};
-
-    totalPlanDay = planDays || 3;
-
-    const {
-      age,
-      weight,
-      height,
-      gender,
-      body_fat
-    } = await getUserInfo(userId);
-
-    // สร้าง user profile สำหรับการคำนวณ
-    const userProfile: UserProfileData = {
-      age,
-      weight,
-      height,
-      gender,
-      body_fat,
-      target_goal,
-      target_weight: target_goal === 'increase' ? weight + target_weight : 
-                    target_goal === 'decrease' ? weight - target_weight : weight,
-      activity_level
-    };
-
-    // คำนวณโภชนาการที่แนะนำ
-    recommendedNutrition = calculateRecommendedNutrition(userProfile);
-    const calculationSummary = getCalculationSummary(userProfile);
-
-    const { breakfast: bfTime, lunch: lnTime, dinner: dnTime, mealsText, mealDefs } = await getDefaultMealTimes(userId);
-
-    // Calculate per-meal calorie targets based on active meals (default + custom)
-    const baseShare: Record<string, number> = { breakfast: 0.3, lunch: 0.4, dinner: 0.3 };
-    const shares: Record<string, number> = {};
-    const customCount = mealDefs.filter(m => !m.isDefault).length;
-    const customShare = customCount > 0 ? Math.min(0.1, 0.2 / customCount) : 0; // distribute small portion to customs
-    let totalShare = 0;
-    for (const m of mealDefs) {
-      if (m.isDefault) shares[m.key] = baseShare[m.key] ?? 0.3; else shares[m.key] = customShare || 0.1;
-      totalShare += shares[m.key];
-    }
-    // Normalize to 1.0
-    if (totalShare > 0) {
-      for (const k of Object.keys(shares)) shares[k] = shares[k] / totalShare;
-    }
-    const perMealKcal: Record<string, number> = {};
-    for (const m of mealDefs) perMealKcal[m.key] = Math.round(recommendedNutrition.cal * (shares[m.key] || 0.3));
-    const mealsDistributionBlock = mealDefs.map(m => `- ${m.name}: ${perMealKcal[m.key]} kcal at ${m.time}`).join('\n');
-    const mealsExampleBlock = mealDefs.map(m => `      "${m.key}": {\n        "name": "${m.name}",\n        "time": "${m.time}",\n        "totalCal": ${perMealKcal[m.key]},\n        "items": [{\n          "name": "ตัวอย่างอาหาร${m.name}",\n          "cal": ${perMealKcal[m.key]},\n          "carb": 45,\n          "fat": 12,\n          "protein": 25,\n          "img": "",\n          "ingredient": "",\n          "source": "ai",\n          "isUserFood": false\n        }]\n      }`).join(',\n');
-
-    const foodPlanPrompt = `You are a nutritionist creating a ${totalPlanDay}-day default for thai food plan. Return ONLY a valid JSON object.
-
-NUTRITIONAL TARGETS (per day):
-- Calories: ${recommendedNutrition.cal} kcal
-- Protein: ${recommendedNutrition.protein}g
-- Carbohydrates: ${recommendedNutrition.carb}g  
-- Fat: ${recommendedNutrition.fat}g
-
-USER INFO:
-- Age: ${age}, Weight: ${weight}kg → ${userProfile.target_weight}kg
-- Goal: ${target_goal}, Activity: ${activity_level}
-- Avoid: ${dietary_restrictions}
-\nUSER MEAL TIMES (use these times exactly if applicable):
-${mealsText || `- มื้อเช้า: ${bfTime}\n- มื้อกลางวัน: ${lnTime}\n- มื้อเย็น: ${dnTime}`}
-
-MEAL DISTRIBUTION:
-${mealsDistributionBlock}
-
-JSON FORMAT (return this structure exactly):
-{
-  "1": {
-    "totalCal": ${recommendedNutrition.cal},
-    "meals": {
-${mealsExampleBlock}
-    }
-  }
-}
-
-RULES:
-1. Create ${totalPlanDay} days (keys "1" to "${totalPlanDay}")
-2. Each meal must have ONE item only
-3. All food names in Thai
-4. Each day's totalCal = sum of meal totalCal
-5. Each meal's totalCal = sum of item cal
-6. Daily nutrition should match targets ±50 kcal
-7. NO markdown formatting, NO explanations
-8. Ensure JSON is complete and valid
-
-Generate the complete JSON now:`;
-
-    // Try with a more reliable model if available
-    const modelToUse = 'gpt-3.5-turbo';
-    const response = await openai.chat.completions.create({
-      model: modelToUse,
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a professional nutritionist who creates precise food plans. Always return valid JSON without any explanations or formatting.'
-        },
-        {
-          role: 'user',
-          content: foodPlanPrompt
-        }
-      ],
-      max_tokens: 4000,
-      temperature: 0.7
-    });
-
-    const content = response.choices[0].message.content;
-    const cleaned = content?.replace(/```(?:json)?/g, '').replace(/```/g, '').trim();
-    
-    console.log('🤖 Raw AI Response Length:', content?.length);
-    console.log('🧹 Cleaned Response Length:', cleaned?.length);
-    
-    if (cleaned && cleaned.length < 100) {
-      console.warn('⚠️ AI response seems too short:', cleaned);
-    }
-    
-    try {
-      const parsedResult = JSON.parse(cleaned || '');
-      
-      // Validate the structure
-      if (!parsedResult || typeof parsedResult !== 'object') {
-        throw new Error('Response is not a valid object');
-      }
-      
-      // Check if we have at least one day
-      const dayKeys = Object.keys(parsedResult);
-      if (dayKeys.length === 0) {
-        throw new Error('No days found in the food plan');
-      }
-      
-      // Validate first day structure
-      const firstDay = parsedResult[dayKeys[0]];
-      if (!firstDay.meals || !firstDay.totalCal) {
-        throw new Error('Invalid day structure - missing meals or totalCal');
-      }
-      
-      console.log('🎯 Nutritional Targets for Food Plan:');
-      console.log(`Daily Calories: ${recommendedNutrition.cal} kcal`);
-      console.log(`Protein: ${recommendedNutrition.protein}g | Carbs: ${recommendedNutrition.carb}g | Fat: ${recommendedNutrition.fat}g`);
-      console.log('✅ AI Response parsed successfully with', dayKeys.length, 'days');
-      console.log('full prompt:', foodPlanPrompt.substring(0, 500) + '...[truncated]');
-      
-      return parsedResult;
-    } catch (e) {
-      console.error('❌ Failed to parse JSON from AI response:');
-      console.error('Raw content length:', content?.length);
-      console.error('Cleaned content length:', cleaned?.length);
-      console.error('Last 200 chars of cleaned content:', cleaned?.slice(-200));
-      console.error('Parse error:', e);
-      
-      // Log the full prompt for debugging
-      console.error('🔍 Full prompt sent to AI:');
-      console.error(foodPlanPrompt.substring(0, 500) + '...[truncated]');
-      
-      throw new Error(`Invalid JSON returned from AI. Length: ${cleaned?.length}, Error: ${e}`);
-    }
-
-  } catch (err) {
-    // If AI fails, try to provide a fallback plan
-    if (err instanceof Error && err.message.includes('Invalid JSON')) {
-      console.warn('🔄 AI failed, creating fallback plan...');
-      try {
-        const times = await getDefaultMealTimes(userId);
-        const fallbackPlan = createFallbackPlan(recommendedNutrition, totalPlanDay || 3, times);
-        console.log('✅ Fallback plan created successfully');
-        return fallbackPlan;
-      } catch (fallbackErr) {
-        console.error('❌ Fallback plan creation failed:', fallbackErr);
-      }
-    }
-    
-    if (axios.isAxiosError(err) && err.response) {
-      console.error('Error calling AI API:', err.response.data);
-    } else if (err instanceof Error) {
-      console.error('Error calling AI API:', err.message);
-    } else {
-      console.error('An unknown error occurred:', err);
-    }
-    throw err;
-  }
-}
-
-
+export async function getFoodPlanSuggestions(userId: number, payload?: any) {}
 
 export async function getFoodPlanSuggestionsByPrompt(userId: number, payload?: any) {
   let recommendedNutrition: any;
-  let totalPlanDay: number = 7; // default value
+  let totalPlanDay: number = 7; 
   
   try {
     const userInfo = await getUserInfo(userId);
@@ -433,7 +240,7 @@ export async function getFoodPlanSuggestionsByPrompt(userId: number, payload?: a
       activity_level
     };
 
-    // Debug user profile data
+    
     console.log('🔍 [DEBUG] User Profile Data:', {
       age: ageNum,
       weight: weightNum,
@@ -449,19 +256,16 @@ export async function getFoodPlanSuggestionsByPrompt(userId: number, payload?: a
 
     // คำนวณโภชนาการที่แนะนำ
     recommendedNutrition = calculateRecommendedNutrition(userProfile);
-    
-    // Debug nutrition calculation result
+  
     console.log('🔍 [DEBUG] Recommended Nutrition Result:', recommendedNutrition);
     
-    const calculationSummary = getCalculationSummary(userProfile);
-
     // แปลงข้อมูลจาก prompt
     const budgetText = selectedBudget === 'low' ? 'งบประมาณประหยัด 50-150 บาท/มื้อ' :
                       selectedBudget === 'medium' ? 'งบประมาณปานกลาง 150-300 บาท/มื้อ' :
                       selectedBudget === 'high' ? 'งบประมาณหรูหรา 300+ บาท/มื้อ' :
                       selectedBudget === 'flexible' ? 'งบประมาณยืดหยุ่น ปรับตามสถานการณ์' : 'ไม่ระบุ';
 
-    const varietyText = varietyLevel === 'low' ? 'หลากหลายน้อย - อาหารคุ้นเคย ทำง่าย' :
+    const varietyText = varietyLevel === 'low' ? 'หลากหลายน้อย - เน้นเมนูเดิมๆ ไม่หลากหลายมาก' :
                        varietyLevel === 'medium' ? 'หลากหลายปานกลาง - ผสมผสานอาหารใหม่ๆ' :
                        varietyLevel === 'high' ? 'หลากหลายมาก - ลองของใหม่ทุกมื้อ' : 'ไม่ระบุ';
 
@@ -493,61 +297,58 @@ export async function getFoodPlanSuggestionsByPrompt(userId: number, payload?: a
     const perMealKcal2: Record<string, number> = {};
     for (const m of mealDefs2) perMealKcal2[m.key] = Math.round(recommendedNutrition.cal * (shares2[m.key] || 0.3));
     const mealsDistributionBlock2 = mealDefs2.map(m => `- ${m.name}: ${perMealKcal2[m.key]} kcal at ${m.time}`).join('\\n');
-    const mealsExampleBlock2 = mealDefs2.map(m => `      \"${m.key}\": {\\n        \"name\": \"${m.name}\",\\n        \"time\": \"${m.time}\",\\n        \"totalCal\": ${perMealKcal2[m.key]},\\n        \"items\": [{\\n          \"name\": \"ตัวอย่างอาหาร${m.name}\",\\n          \"cal\": ${perMealKcal2[m.key]},\\n          \"carb\": 45,\\n          \"fat\": 12,\\n          \"protein\": 25,\\n          \"img\": \"\",\\n          \"ingredient\": \"\",\\n          \"source\": \"ai\",\\n          \"isUserFood\": false\\n        }]\\n      }`).join(',\\n');
+    const mealsExampleBlock2 = mealDefs2.map(m => `      \"${m.key}\": {\\n        \"name\": \"${m.name}\",\\n        \"time\": \"${m.time}\",\\n        \"totalCal\": ${perMealKcal2[m.key]},\\n        \"items\": [{\\n          \"name\": \"ตัวอย่างอาหาร${m.name}\",\\n          \"cal\": ${perMealKcal2[m.key]},\\n          \"carb\": 45,\\n          \"fat\": 12,\\n          \"protein\": 25,\\n          \"img\": \"assets/images/menuplaceholder.png\",\\n          \"serving\": \",\\n          \"source\": \"ai\",\\n          \"isUserFood\": false\\n        }]\\n      }`).join(',\\n');
 
-    const foodPlanPrompt = `You are a nutritionist creating a ${totalPlanDay}-day default for Thai food plan based on user's detailed preferences. Return ONLY a valid JSON object.
+    const foodPlanPrompt = `คุณคือโภชนากรที่ต้องสร้างแผนอาหารสำหรับผู้ใช้ค่าเริ่มต้นเป็นอาหารไทย เป็นจำนวน ${totalPlanDay} วัน โดยต้องส่งกลับมาเป็น JSON ที่ถูกต้องเท่านั้น ห้ามมีคำอธิบายอื่น ๆ
+                            เป้าหมายโภชนาการ (ต่อวัน):
+                            - พลังงาน: ${recommendedNutrition.cal} กิโลแคลอรี
+                            - โปรตีน: ${recommendedNutrition.protein} กรัม
+                            - คาร์โบไฮเดรต: ${recommendedNutrition.carb} กรัม
+                            - ไขมัน: ${recommendedNutrition.fat} กรัม
+                            *** ให้ค่าพลังงาน ใกล้เคียงเป้าหมายมากที่สุด ให้ได้มากที่สุด ***
+                            *** ให้ค่า โปรตีน คาร์บ ไขมัน ตามเป้าหมาย ±5 กรัม ***
 
-NUTRITIONAL TARGETS (per day):
-- Calories: ${recommendedNutrition.cal} kcal
-- Protein: ${recommendedNutrition.protein}g
-- Carbohydrates: ${recommendedNutrition.carb}g  
-- Fat: ${recommendedNutrition.fat}g
+                            ความต้องการจากผู้ใช้:
+                            - ระยะเวลา: ${planDuration} วัน
+                            - งบประมาณ: ${budgetText}
+                            - ความหลากหลาย: ${varietyText}
+                            - ประเภทอาหารที่ชอบ: ${categoriesText}
+                            - วัตถุดิบที่ชอบ: ${ingredientsText}
+                            - ข้อจำกัดการกิน: ${restrictionsText}
+                            - เป้าหมายสุขภาพ: ${goalsText}
+                            - ความต้องการเพิ่มเติม: ${additionalRequirements || 'ไม่มี'}
+                            - รูปแบบการกิน: ${eating_type || 'ไม่ระบุ'}
 
-USER PROFILE:
-- Age: ${age}, Weight: ${weight}kg 
-- Goal: ${target_goal}, Activity: ${activity_level}
-- Gender: ${gender}
+                            ข้อจำกัดอาหารที่มีอยู่แล้ว: ${userDietaryRestrictions?.join(', ') || 'ไม่มี'}
 
-USER PREFERENCES FROM PROMPT:
-- ระยะเวลา: ${planDuration} วัน
-- งบประมาณ: ${budgetText}
-- ความหลากหลาย: ${varietyText}
-- ประเภทอาหารที่ชอบ: ${categoriesText}
-- วัตถุดิบที่ชอบ: ${ingredientsText}
-- การเลือกทานอาหาร: ${restrictionsText}
-- เป้าหมายสุขภาพ: ${goalsText}
-- ความต้องการเพิ่มเติม: ${additionalRequirements || 'ไม่มี'}
+                            เวลามื้ออาหาร (ใช้เวลานี้เท่านั้นถ้ามี):
+                            ${mealsText2 || `- มื้อเช้า: ${bfTime2}\n- มื้อกลางวัน: ${lnTime2}\n- มื้อเย็น: ${dnTime2}`}
 
-EXISTING DIETARY RESTRICTIONS: ${userDietaryRestrictions?.join(', ') || 'ไม่มี'}
+                            การกระจายพลังงาน:
+                            ${mealDefs2.map(m => `- ${m.name}: ${perMealKcal2[m.key]} kcal เวลา ${m.time}`).join('\n')}
 
-USER MEAL TIMES (use these times exactly if applicable):
-${mealsText2 || `- มื้อเช้า: ${bfTime2}\n- มื้อกลางวัน: ${lnTime2}\n- มื้อเย็น: ${dnTime2}`}
+                            รูปแบบ JSON (ต้องส่งกลับตามนี้เท่านั้น):
+                            {
+                              "1": {
+                                "totalCal": ${recommendedNutrition.cal},
+                                "meals": {
+                            ${mealsExampleBlock2}
+                                }
+                              }
+                            }
 
-MEAL DISTRIBUTION:
-${mealDefs2.map(m => `- ${m.name}: ${perMealKcal2[m.key]} kcal at ${m.time}`).join('\\n')}
+                            กฎ:
+                            1. สร้าง ${totalPlanDay} วัน (key "1" ถึง "${totalPlanDay}")
+                            2. แต่ละมื้อต้องมีอาหารได้่ 1 อย่างเท่านั้น
+                            3. ชื่ออาหารทุกชื่อเป็นภาษาไทย
+                            4. คำนึงถึงงบประมาณ ความหลากหลาย วัตถุดิบ ข้อจำกัด และเป้าหมายของผู้ใช้
+                            5. ห้ามมี markdown หรือคำอธิบายใด ๆ เพิ่มเติม
+                            6. ต้องเป็น JSON ที่สมบูรณ์และถูกต้อง 100%
+                            7. เวลาแต่ละมื้อให้ตรงตามเวลาที่ผู้ใช้กำหนด
+                            8. serving ต้องระบุหน่วยและปริมาณเสมอ เช่น "1 ถ้วย (200 กรัม)" หรือ "150 กรัม"
 
-JSON FORMAT (return this structure exactly):
-{
-  "1": {
-    "totalCal": ${recommendedNutrition.cal},
-    "meals": {
-${mealsExampleBlock2}
-    }
-  }
-}
-
-RULES:
-1. Create ${totalPlanDay} days (keys "1" to "${totalPlanDay}")
-2. Each meal must have ONE item only
-3. All food names in Thai
-4. Each day's totalCal = sum of meal totalCal
-5. Each meal's totalCal = sum of item cal
-6. Daily nutrition should match targets ±50 kcal
-7. Consider user's budget, variety preference, ingredients, and restrictions
-8. NO markdown formatting, NO explanations
-9. Ensure JSON is complete and valid
-
-Generate the complete JSON now:`;
+                            กรุณาสร้าง JSON ให้ครบทั้งหมด:
+                            `;    
 
     console.log('🎯 Food Plan Prompt Generated:');
     console.log('='.repeat(80));
@@ -565,9 +366,9 @@ Generate the complete JSON now:`;
 
     // ส่ง prompt ไป OpenAI
     console.log('🚀 Sending prompt to OpenAI...');
-    const modelToUse = 'gpt-4o-mini';
+  
     const response = await openai.chat.completions.create({
-      model: modelToUse,
+      model: suggestPlanModel,
       messages: [
         {
           role: 'system',
@@ -577,8 +378,7 @@ Generate the complete JSON now:`;
           role: 'user',
           content: foodPlanPrompt
         }
-      ],
-      temperature: 0.7
+      ]
     });
 
     const content = response.choices[0].message.content;

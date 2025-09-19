@@ -1069,11 +1069,7 @@ const RecordFoodScreen = () => {
           <View className="ml-3 flex-1">
             <View className="flex-row items-center">
               <Text className="font-promptSemiBold text-gray-800">{entry.name}</Text>
-              {entry.fromPlan && (
-                <View className="ml-2 px-2 py-1 rounded-full">
-                  <Text className="text-blue-600 text-xs font-promptMedium">ตามแผน</Text>
-                </View>
-              )}
+             
               {entry.saved && entry.fromPlan && (
                 <View className="ml-2 px-2 py-1 ">
                   <Icon name="checkmark-circle" size={16} color="#22c55e" />

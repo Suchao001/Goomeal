@@ -16,7 +16,8 @@ const ChatScreen = () => {
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [selectedStyle, setSelectedStyle] = useState<'style1' | 'style2' | 'style3'>('style1');
+  type ChatStyle = 'style1' | 'style2';
+  const [selectedStyle, setSelectedStyle] = useState<ChatStyle>('style1');
   const scrollViewRef = useRef<ScrollView>(null);
 
   
@@ -37,15 +38,17 @@ const ChatScreen = () => {
   const loadChatStyle = async () => {
     try {
       const session = await apiClient.getChatSession();
-      if (session.style && ['style1', 'style2', 'style3'].includes(session.style)) {
-        setSelectedStyle(session.style);
+      if (session.style && ['style1', 'style2'].includes(session.style)) {
+        setSelectedStyle(session.style as ChatStyle);
+      } else if (session.style === 'style3') {
+        setSelectedStyle('style1');
       }
     } catch (error) {
       console.error('Error loading chat style:', error);
     }
   };
 
-  const toggleChatStyle = async (style: 'style1' | 'style2' | 'style3') => {
+  const toggleChatStyle = async (style: ChatStyle) => {
     try {
       setSelectedStyle(style);
       await apiClient.updateChatStyle(style);
@@ -333,16 +336,6 @@ const ChatScreen = () => {
             <Text className={`text-sm font-promptMedium ${
               selectedStyle === 'style2' ? 'text-white' : 'text-gray-700'
             }`}>รู้เรื่องการกิน</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            className={`rounded-full px-4 py-2 mr-2 border ${
-              selectedStyle === 'style3' 
-                ? 'bg-primary border-primary' 
-                : 'bg-gray-100 border border-transparent'
-            }`}
-            onPress={() => toggleChatStyle('style3')}
-          >
-           
           </TouchableOpacity>
         </ScrollView>
       </View>

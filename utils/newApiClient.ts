@@ -21,6 +21,7 @@ export class ApiClient extends BaseApiClient {
     protein: string | number;
     ingredient?: string;
     img?: string;
+    serving?: string;
   }) {
     return this.foodClient.addUserFood(foodData);
   }

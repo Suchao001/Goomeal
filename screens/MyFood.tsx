@@ -22,6 +22,7 @@ interface FoodItem {
   src?: string; // 'user' or 'ai'
   createdAt?: any;
   updatedAt?: any;
+  serving?: string;
 }
 
 const MyFood = () => {
@@ -194,6 +195,12 @@ const MyFood = () => {
               <Text className="text-sm text-gray-600 mr-4 font-prompt">{food.carb}g คาร์บ</Text>
               <Text className="text-sm text-gray-600 font-prompt">{food.protein}g โปรตีน</Text>
             </View>
+            {food.serving ? (
+              <View className="flex-row items-center mb-1">
+                <Icon name="restaurant-outline" size={14} color="#9ca3af" />
+                <Text className="text-xs text-gray-500 font-prompt ml-1">{food.serving}</Text>
+              </View>
+            ) : null}
             {food.ingredient && (
               <Text className="text-xs text-gray-500 font-prompt" numberOfLines={2}>
                 {food.ingredient}

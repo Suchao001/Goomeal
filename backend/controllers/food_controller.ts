@@ -12,7 +12,8 @@ interface UserFoodData {
   img?: string | null;
   user_id: number;
   ingredient: string;
-  src?: string; 
+  src?: string;
+  serving?: string;
   created_at?: string;
 }
 
@@ -28,6 +29,7 @@ interface FoodSearchResult {
   source: 'user_food' | 'foods';
   isUserFood: boolean;
   src?: string; // 'user' or 'ai'
+  serving?: string;
   createdAt?: any;
   
 }
@@ -62,6 +64,7 @@ export const getUserFoods = async (req: Request & { user?: any }, res: Response)
         'protein',
         'img',
         'ingredient',
+        'serving',
         'src',
         'created_at',
       )
@@ -94,6 +97,7 @@ export const getUserFoods = async (req: Request & { user?: any }, res: Response)
       protein: parseFloat(food.protein) || 0,
       img: food.img || null, // Already has full path /images/user_foods/...
       ingredient: food.ingredient || '',
+      serving: food.serving || '',
       source: 'user_food' as const,
       isUserFood: true,
       src: food.src || 'user', // Add src information
@@ -153,7 +157,8 @@ export const searchFoods = async (req: Request & { user?: any }, res: Response):
         'fat',
         'protein',
         'img',
-        'ingredient'
+        'ingredient',
+        'serving'
       )
       .where('user_id', user_id).orderBy('created_at', 'desc'); 
 
@@ -166,7 +171,8 @@ export const searchFoods = async (req: Request & { user?: any }, res: Response):
         'fat',
         'protein',
         'img',
-        'ingredient'
+        'ingredient',
+        'serving'
       );
 
     // Apply search filter if query is provided
@@ -198,6 +204,7 @@ export const searchFoods = async (req: Request & { user?: any }, res: Response):
       protein: parseFloat(food.protein) || 0,
       img: food.img || null, // Already has full path /images/user_foods/...
       ingredient: food.ingredient || '',
+      serving: food.serving || '',
       source: 'user_food' as const,
       isUserFood: true
     }));
@@ -211,6 +218,7 @@ export const searchFoods = async (req: Request & { user?: any }, res: Response):
       protein: parseFloat(food.protein) || 0,
       img: food.img || null, // This will be used with seconde_url on frontend
       ingredient: food.ingredient || '',
+      serving: food.serving || '',
       source: 'foods' as const,
       isUserFood: false
     }));
@@ -336,7 +344,7 @@ export const deleteUserFood = async (req: Request & { user?: any }, res: Respons
  */
 export const addUserFood = async (req: Request & { user?: any; file?: Express.Multer.File }, res: Response): Promise<void> => {
   try {
-    const { name, calories, carbs, fat, protein, ingredient, src } = req.body;
+    const { name, calories, carbs, fat, protein, ingredient, src , serving } = req.body;
     const user_id = req.user?.id;
     const uploadedFile = req.file;
 
@@ -383,6 +391,7 @@ export const addUserFood = async (req: Request & { user?: any; file?: Express.Mu
       ingredient: ingredient || '',
       user_id: user_id,
       src: src || 'user',
+      serving: serving || '',
       created_at: new Date().toISOString().replace('T', ' ').replace('Z', '') 
     };
     
@@ -502,6 +511,7 @@ export const updateUserFood = async (req: Request, res: Response): Promise<void>
     if (req.body.fat) updateData.fat = parseFloat(req.body.fat);
     if (req.body.protein) updateData.protein = parseFloat(req.body.protein);
     if (req.body.ingredient !== undefined) updateData.ingredient = req.body.ingredient;
+    if (req.body.serving !== undefined) updateData.serving = req.body.serving;
 
     // Handle image upload if provided
     if (req.file) {

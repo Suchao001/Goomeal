@@ -20,6 +20,7 @@ interface FoodItem {
   ingredient: string;
   source: 'user_food' | 'foods';
   isUserFood: boolean;
+  serving?: string;
 }
 
 interface RouteParams {
@@ -214,6 +215,12 @@ const SearchFoodForAdd = () => {
             <Text className="text-sm text-gray-600 mr-4">{food.carb}g คาร์บ</Text>
             <Text className="text-sm text-gray-600">{food.protein}g โปรตีน</Text>
           </View>
+          {food.serving ? (
+            <View className="flex-row items-center mb-1">
+              <Icon name="restaurant-outline" size={14} color="#9ca3af" />
+              <Text className="text-xs text-gray-500 ml-1">{food.serving}</Text>
+            </View>
+          ) : null}
           {food.ingredient && (
             <Text className="text-xs text-gray-500" numberOfLines={1}>
               {food.ingredient}

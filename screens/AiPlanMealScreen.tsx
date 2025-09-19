@@ -60,7 +60,8 @@ const AiPlanMealScreen = () => {
             type: mealType,
             icon: mealTypeDisplay[mealType]?.icon || 'restaurant-outline',
             displayName: mealTypeDisplay[mealType]?.displayName || mealName, // ใช้ชื่อจริงสำหรับ custom
-            name: item.name || 'ไม่ระบุชื่อ'
+            name: item.name || 'ไม่ระบุชื่อ',
+            serving: item.serving || 'ไม่ระบุ', // Add serving size
           });
         });
       });
@@ -132,7 +133,7 @@ const AiPlanMealScreen = () => {
       const response = await apiClient.saveFoodPlan({
         name: planName?.trim() || `แผนอาหารจาก AI (${Object.keys(aiPlanData).length} วัน)`,
         description: planDescription?.trim() || `แผนอาหารที่สร้างโดย AI สำหรับ ${Object.keys(aiPlanData).length} วัน`,
-        plan: aiPlanData,
+        plan: aiPlanData, // Ensure serving sizes are included in the plan data
         image: selectedPlanImage || undefined
       });
       
@@ -242,6 +243,11 @@ const AiPlanMealScreen = () => {
                 {meal.displayName}: 
                 <Text className="font-promptLight"> {meal.name}</Text>
               </Text>
+              {meal.serving && (
+                <Text className="text-xs font-promptLight text-gray-500">
+                  ขนาดเสิร์ฟ: {meal.serving}
+                </Text>
+              )}
             </View>
           </View>
         ))}

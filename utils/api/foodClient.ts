@@ -10,7 +10,8 @@ export class FoodApiClient extends BaseApiClient {
     protein: string | number;
     ingredient?: string;
     img?: string;
-    src?: string; 
+    src?: string;
+    serving?: string;
   }) {
     try {
       
@@ -20,6 +21,7 @@ export class FoodApiClient extends BaseApiClient {
       formData.append('carbs', foodData.carbs.toString());
       formData.append('fat', foodData.fat.toString());
       formData.append('protein', foodData.protein.toString());
+      formData.append('serving', foodData.serving ? foodData.serving : ''); // Add serving field
       
       if (foodData.ingredient) {
         formData.append('ingredient', foodData.ingredient);
@@ -145,6 +147,7 @@ export class FoodApiClient extends BaseApiClient {
     ingredient?: string;
     img?: string;
     deleteImage?: boolean;
+    serving?: string;
   }) {
     try {
       
@@ -170,6 +173,9 @@ export class FoodApiClient extends BaseApiClient {
       }
       if (foodData.ingredient !== undefined) {
         formData.append('ingredient', foodData.ingredient);
+      }
+      if (foodData.serving !== undefined) {
+        formData.append('serving', foodData.serving);
       }
 
       

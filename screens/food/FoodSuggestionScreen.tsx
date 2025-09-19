@@ -5,6 +5,8 @@ import { useTypedNavigation } from '../../hooks/Navigation';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { apiClient } from '../../utils/apiClient';
 import { RootStackParamList } from '../../types/navigation';
+import { base_url } from 'config';
+import { Image } from 'react-native';
 
 const PRIMARY = '#ffb800';
 const SECONDARY = '#77dd77';
@@ -15,10 +17,13 @@ interface FoodSuggestion {
   carbs: number;
   protein: number;
   fat: number;
+  img?: string;
   ingredients: string[];
 }
 
 type FoodSuggestionScreenRouteProp = RouteProp<RootStackParamList, 'FoodSuggestion'>;
+
+
 
 const FoodSuggestionScreen: React.FC = () => {
   const navigation = useTypedNavigation();
@@ -33,6 +38,7 @@ const FoodSuggestionScreen: React.FC = () => {
         carbs: suggestion.carbs,
         fat: suggestion.fat,
         protein: suggestion.protein,
+        img: suggestion.img,
         src: 'ai',
         ingredient: suggestion.ingredients.join(', '),
       };
@@ -65,16 +71,25 @@ const FoodSuggestionScreen: React.FC = () => {
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }}>
         <View className="bg-white mx-4 mt-6 p-6 rounded-2xl border border-gray-100 shadow-md shadow-slate-600">
           {/* Avatar */}
+          
           <View
-            className="w-28 h-28 rounded-full items-center justify-center mx-auto mb-5"
-            style={{
-              backgroundColor: 'rgba(255,184,0,0.12)', // primary soft
-              borderWidth: 1,
-              borderColor: 'rgba(255,184,0,0.25)',
-            }}
-          >
+          className="w-28 h-28 rounded-full items-center justify-center mx-auto mb-5"
+          style={{
+            backgroundColor: 'rgba(255,184,0,0.12)', // primary soft
+            borderWidth: 1,
+            borderColor: 'rgba(255,184,0,0.25)',
+          }}
+        >
+          {suggestion.img ? (
+            <Image
+              source={{ uri: `${base_url}${suggestion.img}` }}
+              style={{ width: '100%', height: '100%', borderRadius: 999 }}
+              resizeMode="cover"
+            />
+          ) : (
             <Icon name="fast-food-outline" size={40} color={PRIMARY} />
-          </View>
+          )}
+        </View>
 
           {/* Title */}
           <Text style={{ lineHeight: 30 }}  className="text-2xl font-promptBold text-center text-gray-900 mb-2">

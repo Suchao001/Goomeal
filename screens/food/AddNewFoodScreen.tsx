@@ -23,6 +23,7 @@ const AddNewFoodScreen = () => {
   const [protein, setProtein] = useState('0');
   const [fat, setFat] = useState('0');
   const [ingredient, setIngredient] = useState('');
+  const [serving, setServing] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -68,6 +69,7 @@ const AddNewFoodScreen = () => {
         protein: protein,
         fat: fat,
         ingredient: ingredient.trim() || undefined,
+        serving: serving.trim(),
         img: selectedImage || undefined
       });
 
@@ -191,8 +193,8 @@ const AddNewFoodScreen = () => {
     onChangeText: (text: string) => void;
     placeholder: string;
     unit?: string;
-    keyboardType?: 'default' | 'numeric';
-  }) => (
+          keyboardType?: 'default' | 'numeric';
+        }) => (
     <View className="mb-4">
       <Text className="text-base font-semibold text-gray-800 mb-2">{label}</Text>
       <View className="flex-row items-center">
@@ -313,19 +315,31 @@ const AddNewFoodScreen = () => {
             keyboardType="numeric"
           />
 
-          <InputField
-            label="ไขมัน"
-            value={fat}
-            onChangeText={setFat}
-            placeholder="0"
-            unit="g"
-            keyboardType="numeric"
-          />
-        </View>
+        <InputField
+          label="ไขมัน"
+          value={fat}
+          onChangeText={setFat}
+          placeholder="0"
+          unit="g"
+          keyboardType="numeric"
+        />
+      </View>
 
-        {/* Ingredient */}
-        <View className="mb-6">
-          <Text className="text-base font-semibold text-gray-800 mb-2">ส่วนประกอบ</Text>
+      {/* Serving */}
+      <View className="mb-6">
+        <Text className="text-base font-semibold text-gray-800 mb-2">ขนาดเสิร์ฟ</Text>
+        <TextInput
+          className="bg-white border border-gray-200 rounded-lg px-4 py-3 text-gray-800"
+          placeholder="เช่น 1 ถ้วย (250 กรัม)"
+          placeholderTextColor="#9ca3af"
+          value={serving}
+          onChangeText={setServing}
+        />
+      </View>
+
+      {/* Ingredient */}
+      <View className="mb-6">
+        <Text className="text-base font-semibold text-gray-800 mb-2">ส่วนประกอบ</Text>
           <TextInput
             className="bg-white border border-gray-200 rounded-lg px-4 py-3 text-gray-800 h-24"
             placeholder="เพิ่มส่วนประกอบ (ถ้ามี)"

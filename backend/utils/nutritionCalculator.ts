@@ -59,9 +59,9 @@ const PROTEIN_DYNAMIC: Record<
 };
 
 const REMAINING_ENERGY_RATIOS = {
-  increase: { carb: 0.55, fat: 0.45 },
-  decrease: { carb: 0.45, fat: 0.55 },
-  healthy: { carb: 0.55, fat: 0.45 },
+  increase: { carb: 0.60, fat: 0.45 },
+  decrease: { carb: 0.50, fat: 0.50 },
+  healthy: { carb: 0.65, fat: 0.35 },
 } as const;
 
 const CALORIES_PER_GRAM = {

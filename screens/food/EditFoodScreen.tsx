@@ -17,6 +17,7 @@ interface FoodItem {
   img: string | null;
   ingredient: string;
   src?: string;
+  serving?: string;
 }
 
 type EditFoodScreenRouteProp = RouteProp<{
@@ -40,6 +41,7 @@ const EditFoodScreen = () => {
   const [protein, setProtein] = useState('0');
   const [fat, setFat] = useState('0');
   const [ingredient, setIngredient] = useState('');
+  const [serving, setServing] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -65,6 +67,7 @@ const EditFoodScreen = () => {
         setProtein(navFood.protein.toString());
         setFat(navFood.fat.toString());
         setIngredient(navFood.ingredient || '');
+        setServing(navFood.serving || '');
         setSelectedImage(navFood.img ? `${base_url}${navFood.img}` : null);
         setIsLoadingData(false);
         return;
@@ -83,6 +86,7 @@ const EditFoodScreen = () => {
           setProtein(food.protein.toString());
           setFat(food.fat.toString());
           setIngredient(food.ingredient || '');
+          setServing(food.serving || '');
           setSelectedImage(food.img ? `${base_url}${food.img}` : null);
         } else {
           Alert.alert('ข้อผิดพลาด', 'ไม่พบข้อมูลเมนูอาหาร', [
@@ -163,6 +167,7 @@ const EditFoodScreen = () => {
         protein: protein,
         fat: fat,
         ingredient: ingredient.trim() === '' ? '' : ingredient.trim(),
+        serving: serving.trim(),
         img: imageToSend ? 'NEW_IMAGE' : hasImageDeleted ? 'DELETE_IMAGE' : 'NO_CHANGE',
         deleteImage: deleteImage,
         ingredientLength: ingredient.trim().length // Debug log
@@ -175,6 +180,7 @@ const EditFoodScreen = () => {
         protein: protein,
         fat: fat,
         ingredient: ingredient.trim() === '' ? '' : ingredient.trim(), // Send empty string to clear ingredient
+        serving: serving.trim(),
         img: imageToSend,
         deleteImage: deleteImage
       });
@@ -438,19 +444,31 @@ const EditFoodScreen = () => {
             keyboardType="numeric"
           />
 
-          <InputField
-            label="ไขมัน"
-            value={fat}
-            onChangeText={setFat}
-            placeholder="0"
-            unit="g"
-            keyboardType="numeric"
-          />
-        </View>
+        <InputField
+          label="ไขมัน"
+          value={fat}
+          onChangeText={setFat}
+          placeholder="0"
+          unit="g"
+          keyboardType="numeric"
+        />
+      </View>
 
-        {/* Ingredient */}
-        <View className="mb-6">
-          <Text className="text-base font-semibold text-gray-800 mb-2 font-prompt">ส่วนประกอบ</Text>
+      {/* Serving */}
+      <View className="mb-6">
+        <Text className="text-base font-semibold text-gray-800 mb-2 font-prompt">ขนาดเสิร์ฟ</Text>
+        <TextInput
+          className="bg-white border border-gray-200 rounded-lg px-4 py-3 text-gray-800 font-prompt"
+          placeholder="เช่น 1 ถ้วย (250 กรัม)"
+          placeholderTextColor="#9ca3af"
+          value={serving}
+          onChangeText={setServing}
+        />
+      </View>
+
+      {/* Ingredient */}
+      <View className="mb-6">
+        <Text className="text-base font-semibold text-gray-800 mb-2 font-prompt">ส่วนประกอบ</Text>
           <TextInput
             className="bg-white border border-gray-200 rounded-lg px-4 py-3 text-gray-800 h-24 font-prompt"
             placeholder="เพิ่มส่วนประกอบ (ถ้ามี)"

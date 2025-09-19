@@ -15,6 +15,7 @@ interface MealItem {
   carb: number;
   fat: number;
   image?: string;
+  serving?: string;
 }
 
 type DayMealData = { [key: string]: MealItem[] };
@@ -171,7 +172,8 @@ const CalendarScreen = () => {
           protein: parseFloat(item.protein) || 0,
           carb: parseFloat(item.carb) || 0,
           fat: parseFloat(item.fat) || 0,
-          image: item.img
+          image: item.img,
+          serving: item.serving || ''
         }));
         
         // Ensure category exists then push
@@ -193,19 +195,26 @@ const CalendarScreen = () => {
     if (imagePath.startsWith('http')) {
       return imagePath;
     }
-    
-    // Check if path starts with /images/ -> use base_url
-    if (imagePath.startsWith('/images/')) {
+
+    // Normalise leading slash paths to base_url
+    if (imagePath.startsWith('/')) {
       return `${base_url}${imagePath}`;
     }
-    
-    // Check if path starts with /foods/ -> use seconde_url
-    if (imagePath.startsWith('/foods/')) {
-      return `${seconde_url}${imagePath}`;
+
+    if (imagePath.startsWith('images/')) {
+      return `${base_url}/${imagePath}`;
     }
-    
-    // Default fallback - use seconde_url for other paths
-    return `${seconde_url}${imagePath}`;
+
+    if (imagePath.startsWith('foods/')) {
+      return `${seconde_url}/${imagePath}`;
+    }
+
+    if (imagePath.startsWith('assets/')) {
+      return `${base_url}/${imagePath}`;
+    }
+
+    // Default fallback
+    return `${base_url}/${imagePath}`;
   };
 
   const calculateMealCalories = (meals: MealItem[]) => {
@@ -290,6 +299,11 @@ const CalendarScreen = () => {
                       <Text className="text-base font-promptSemiBold text-[#4A4A4A] mb-2">
                         {meal.name}
                       </Text>
+                      {meal.serving ? (
+                        <Text className="text-xs font-promptMedium text-gray-500 mb-1">
+                          {meal.serving}
+                        </Text>
+                      ) : null}
                       <Text className="text-sm font-promptMedium text-gray-600 mb-1">
                         {meal.calories} cal
                       </Text>

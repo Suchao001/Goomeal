@@ -48,6 +48,8 @@ export type RootStackParamList = {
         protein: number;
         fat: number;
         ingredients: string[];
+        serving?: string;
+        img?: string;
       };
     };
     Home: undefined;

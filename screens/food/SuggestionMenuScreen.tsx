@@ -59,9 +59,20 @@ const SuggestionMenuScreen = () => {
   const removeIngredient = (ingredient: string) => {
     setIngredients(ingredients.filter(item => item !== ingredient));
   };
-
-  
-
+  const popularIngredients = [
+    { key: 'chicken', label: 'ไก่', icon: '🐔' },
+    { key: 'pork', label: 'หมู', icon: '🐷' },
+    { key: 'beef', label: 'เนื้อ', icon: '🐄' },
+    { key: 'fish', label: 'ปลา', icon: '🐟' },
+    { key: 'shrimp', label: 'กุ้ง', icon: '🦐' },
+    { key: 'egg', label: 'ไข่', icon: '🥚' },
+    { key: 'vegetables', label: 'ผัก', icon: '🥬' },
+    { key: 'rice', label: 'ข้าว', icon: '🍚' },
+    { key: 'noodles', label: 'เส้น', icon: '🍜' },
+    { key: 'tofu', label: 'เต้าหู้', icon: '🧊' },
+    { key: 'coconut', label: 'มะพร้าว', icon: '🥥' },
+    { key: 'mushroom', label: 'เห็ด', icon: '🍄' },
+  ];
   const handleGetSuggestion = async () => {
     try {
       setLoading(true);
@@ -209,7 +220,36 @@ const SuggestionMenuScreen = () => {
             ))}
           </View>
         </View>
-
+        {/* Popular Ingredients */}
+        <View className="bg-white mx-4 mt-4 p-4 rounded-xl shadow-sm">
+          <Text className="text-lg font-promptSemiBold text-gray-800 mb-3">เลือกวัตถุดิบยอดนิยม</Text>
+          <View className="flex-row flex-wrap">
+            {popularIngredients.map((ingredient) => (
+              <TouchableOpacity
+                key={ingredient.key}
+                className={`px-4 py-2 m-1 rounded-full border-2 flex-row items-center ${
+                  ingredients.includes(ingredient.label)
+                    ? 'bg-primary border-primary'
+                    : 'bg-gray-50 border-gray-200'
+                }`}
+                onPress={() => {
+                  if (ingredients.includes(ingredient.label)) {
+                    setIngredients(ingredients.filter((ing) => ing !== ingredient.label));
+                  } else {
+                    setIngredients([...ingredients, ingredient.label]);
+                  }
+                }}
+              >
+                <Text className={`mr-2 text-lg ${
+                  ingredients.includes(ingredient.label) ? 'text-white' : 'text-gray-700'
+                }`}>{ingredient.icon}</Text>
+                <Text className={`font-promptMedium ${
+                  ingredients.includes(ingredient.label) ? 'text-white' : 'text-gray-700'
+                }`}>{ingredient.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
         {/* Food Type */}
         <View className="bg-white mx-4 mt-4 p-4 rounded-xl shadow-sm">
           <Text className="text-lg font-promptSemiBold text-gray-800 mb-3">ประเภทอาหารที่ต้องการ</Text>
@@ -243,7 +283,7 @@ const SuggestionMenuScreen = () => {
   key={option.id}
   className={`px-4 py-3.5 m-1 rounded-full border-2 min-h-[44px] ${
     budget === option.id
-      ? 'bg-[#77dd77] border-[#77dd77]'
+      ? 'bg-primary border-primary'
       : 'bg-gray-50 border-gray-200'
   }`}
   onPress={() => setBudget(option.id)}

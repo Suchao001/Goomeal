@@ -64,7 +64,7 @@ ${eatingData.recentDays.map((day: any) =>
 - วันที่บรรลุเป้าหมายแคลอรี่: ${eatingData.weekSummary.calorieGoalAchievement}/7 วัน`;
   }
 
-  console.table(eatingData);
+  console.log(JSON.stringify(nutritionContext));
   // Base prompt ที่ใช้ร่วมกัน
   const basePrompt = `คุณเป็น AI ผู้เชี่ยวชาญด้านโภชนาการและสุขภาพ ชื่อ "GoodMeal AI" 
   ให้คำแนะนำเกี่ยวกับ:
