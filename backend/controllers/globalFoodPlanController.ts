@@ -25,7 +25,8 @@ export const getGlobalFoodPlans = async (req: Request, res: Response) => {
         'description',
         'created_at',
         'image'
-      );
+      )
+      .where({ is_delete: false });
 
     // Add search functionality
     if (search) {
@@ -36,7 +37,7 @@ export const getGlobalFoodPlans = async (req: Request, res: Response) => {
     }
 
     // Get total count for pagination
-    const totalQuery = db('global_food_plan');
+    const totalQuery = db('global_food_plan').where({ is_delete: false });
     if (search) {
       totalQuery.where(function() {
         this.where('plan_name', 'like', `%${search}%`)

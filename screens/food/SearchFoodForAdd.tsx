@@ -48,13 +48,14 @@ const SearchFoodForAdd = () => {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   const [showAllUserFoods, setShowAllUserFoods] = useState(false);
-  const [showAllGlobalFoods, setShowAllGlobalFoods] = useState(false);
   
   // Load foods from API
   const loadFoods = async (query?: string) => {
     setIsLoading(true);
     try {
-      const result = await apiClient.searchFoods(query, query ? 50 : 8); // เริ่มต้น 8 รายการ, search 50 รายการ
+      const trimmedQuery = query?.trim() || undefined;
+      const limit = trimmedQuery ? 50 : 20;
+      const result = await apiClient.searchFoods(trimmedQuery, limit);
       
       if (result.success && result.data) {
         // แยกข้อมูลที่ได้จาก backend
@@ -86,7 +87,6 @@ const SearchFoodForAdd = () => {
       if (!isInitialLoad) {
         // Reset show all states when searching
         setShowAllUserFoods(false);
-        setShowAllGlobalFoods(false);
         loadFoods(searchQuery);
       }
     }, 500);
@@ -238,7 +238,7 @@ const SearchFoodForAdd = () => {
     );
   };
 
-  const renderFoodSection = (title: string, foods: FoodItem[], limit?: number, showAll?: boolean, onToggleShowAll?: () => void) => {
+  const renderFoodSection = (title: string, foods: FoodItem[], limit?: number, showAll?: boolean, onToggleShowAll?: () => void, extraAction?: React.ReactNode) => {
     if (foods.length === 0) return null;
     
     const shouldLimit = limit && !searchQuery && !showAll;
@@ -248,24 +248,31 @@ const SearchFoodForAdd = () => {
       <View className="mb-6">
         <View className="flex-row items-center justify-between mb-3 px-1">
           <Text className="text-lg font-semibold text-gray-800">{title}</Text>
-          {shouldLimit && foods.length > limit && (
-            <TouchableOpacity onPress={onToggleShowAll}>
-              <Text className="text-sm text-blue-600 font-medium">
-                ดูทั้งหมด ({foods.length})
-              </Text>
-            </TouchableOpacity>
-          )}
-          {showAll && limit && (
+          <View className="flex-row items-center">
+            {extraAction}
+            {onToggleShowAll && shouldLimit && foods.length > limit && (
+              <TouchableOpacity onPress={onToggleShowAll}>
+                <Text className="text-sm text-blue-600 font-medium">
+                  ดูทั้งหมด ({foods.length})
+                </Text>
+              </TouchableOpacity>
+            )}
+            {onToggleShowAll && showAll && limit && (
             <TouchableOpacity onPress={onToggleShowAll}>
               <Text className="text-sm text-gray-600 font-medium">
                 ดูน้อยลง
               </Text>
             </TouchableOpacity>
-          )}
+            )}
+          </View>
         </View>
         {displayFoods.map(food => renderFoodCard(food))}
       </View>
     );
+  };
+
+  const handleToggleUserFoods = () => {
+    setShowAllUserFoods(prev => !prev);
   };
 
   return (
@@ -282,7 +289,13 @@ const SearchFoodForAdd = () => {
           {params.source === 'MealPlan' ? 'เลือกอาหารสำหรับมื้อ' : 'เลือกอาหาร'}
         </Text>
         
-        <View className="w-10 h-10" />
+        <TouchableOpacity 
+          className="flex-row items-center justify-center px-3 h-10 rounded-lg bg-white/15"
+          onPress={handleAddNewMenu}
+        >
+          <Icon name="add" size={20} color="white" />
+          <Text className="text-white ml-1 font-promptMedium text-sm">เพิ่มเมนูใหม่</Text>
+        </TouchableOpacity>
       </View>
 
       <View className="bg-white px-4 py-3 border-b border-gray-100">
@@ -314,18 +327,19 @@ const SearchFoodForAdd = () => {
               userFoods, 
               4,
               showAllUserFoods,
-              () => setShowAllUserFoods(!showAllUserFoods)
+              handleToggleUserFoods,
+             
             )}
             
             {/* รายการอาหารจาก GoodMeal (Global Foods) - แสดงเสมอ */}
             {globalFoods.length > 0 && renderFoodSection(
               '🥗 รายการอาหารจาก GoodMeal', 
               globalFoods,
-              4,
-              showAllGlobalFoods,
-              () => setShowAllGlobalFoods(!showAllGlobalFoods)
+              undefined,
+              undefined,
+              undefined
             )}
-            
+
             {/* แสดงข้อความ "ไม่พบอาหาร" เฉพาะเมื่อไม่มีผลลัพธ์ใดๆ */}
             {(userFoods.length === 0 && globalFoods.length === 0) && !isLoading && (
               <View className="flex-1 items-center justify-center py-20">
@@ -341,15 +355,7 @@ const SearchFoodForAdd = () => {
           </>
         )}
 
-        <TouchableOpacity
-          onPress={handleAddNewMenu}
-          className="bg-primary rounded-xl p-4 items-center justify-center mx-4 mb-4"
-        >
-          <View className="flex-row items-center">
-            <Icon name="add" size={20} color="white" />
-            <Text className="text-white font-bold ml-2">เพิ่มเมนูใหม่</Text>                                                                                                                                                                                                          
-          </View>
-        </TouchableOpacity>
+        <View className='h-12'></View>
       </ScrollView>                                       
 
       <View className="bg-white px-4 py-4 border-t border-gray-100">
