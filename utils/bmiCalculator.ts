@@ -29,10 +29,10 @@ export const ADULT_BMI_CATEGORIES: BMICategory[] = [
 
 
 export const CHILD_BMI_CATEGORIES: BMICategory[] = [
-  { label: 'น้ำหนักต่ำ', color: '#3b82f6', range: '< 5th percentile' },
-  { label: 'ปกติ', color: '#22c55e', range: '5th-85th percentile' },
-  { label: 'เกินน้ำหนัก', color: '#f59e0b', range: '85th-95th percentile' },
-  { label: 'อ้วน', color: '#ef4444', range: '≥ 95th percentile' },
+  { label: 'น้ำหนักต่ำ', color: '#3b82f6', range: '< เปอร์เซ็นไทล์ที่ 5' },
+  { label: 'ปกติ', color: '#22c55e', range: 'เปอร์เซ็นไทล์ที่ 5-85' },
+  { label: 'เกินน้ำหนัก', color: '#f59e0b', range: 'เปอร์เซ็นไทล์ที่ 85-95' },
+  { label: 'อ้วน', color: '#ef4444', range: '≥ เปอร์เซ็นไทล์ที่ 95' },
 ];
 
 /**
@@ -106,10 +106,10 @@ const getChildBMIDescription = (categoryIndex: number): string => {
  */
 const getPercentileInfo = (categoryIndex: number): string => {
   const percentileInfo = [
-    'ต่ำกว่า percentile ที่ 5 (น้ำหนักต่ำเมื่อเทียบกับเด็กในวัยเดียวกัน)',
-    'อยู่ใน percentile ที่ 5-85 (น้ำหนักปกติเมื่อเทียบกับเด็กในวัยเดียวกัน)',
-    'อยู่ใน percentile ที่ 85-95 (เกินน้ำหนักเมื่อเทียบกับเด็กในวัยเดียวกัน)',
-    'สูงกว่า percentile ที่ 95 (อ้วนเมื่อเทียบกับเด็กในวัยเดียวกัน)'
+    'ต่ำกว่าเปอร์เซ็นไทล์ที่ 5 (น้ำหนักต่ำเมื่อเทียบกับเด็กในวัยเดียวกัน)',
+    'อยู่ในเปอร์เซ็นไทล์ที่ 5-85 (น้ำหนักปกติเมื่อเทียบกับเด็กในวัยเดียวกัน)',
+    'อยู่ในเปอร์เซ็นไทล์ที่ 85-95 (เกินน้ำหนักเมื่อเทียบกับเด็กในวัยเดียวกัน)',
+    'สูงกว่าเปอร์เซ็นไทล์ที่ 95 (อ้วนเมื่อเทียบกับเด็กในวัยเดียวกัน)'
   ];
   return percentileInfo[categoryIndex] || '';
 };

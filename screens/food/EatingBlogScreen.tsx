@@ -22,6 +22,7 @@ const EatingBlogScreen = () => {
   const [selectedTab, setSelectedTab] = useState('แนะนำ');
   const [articles, setArticles] = useState<Article[]>([]);
   const [featuredArticles, setFeaturedArticles] = useState<Article[]>([]);
+  const [latestArticles, setLatestArticles] = useState<Article[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,13 +48,14 @@ const EatingBlogScreen = () => {
 
       // Load featured articles and all articles in parallel
       const [featuredData, allArticlesData, tagsData] = await Promise.all([
-        fetchFeaturedArticles(1),
+        fetchFeaturedArticles(4),
         fetchArticles(),
         fetchAllTags()
       ]);
 
       setFeaturedArticles(featuredData);
-      setArticles(allArticlesData);
+      setArticles(featuredData);
+      setLatestArticles(allArticlesData);
       setTags(tagsData);
     } catch (err) {
       console.error('Error loading articles:', err);
@@ -67,11 +69,21 @@ const EatingBlogScreen = () => {
   const loadArticlesByTab = async (tab: string) => {
     try {
       if (tab === 'แนะนำ') {
-        const data = await fetchFeaturedArticles(10);
-        setArticles(data);
+        if (featuredArticles.length === 0) {
+          const data = await fetchFeaturedArticles(4);
+          setFeaturedArticles(data);
+          setArticles(data);
+        } else {
+          setArticles(featuredArticles);
+        }
       } else if (tab === 'ล่าสุด') {
-        const data = await fetchArticles();
-        setArticles(data);
+        if (latestArticles.length === 0) {
+          const data = await fetchArticles();
+          setLatestArticles(data);
+          setArticles(data);
+        } else {
+          setArticles(latestArticles);
+        }
       }
     } catch (err) {
       console.error('Error loading articles by tab:', err);

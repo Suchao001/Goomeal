@@ -183,31 +183,27 @@ export const getFeaturedArticles = async (userId: number, limit: number = 3) => 
       .groupBy('eb.id');
 
     // ถ้ามี keywords ให้ค้นหาตาม title, content, หรือ tags
-    if (searchKeywords.length > 0) {
-      const searchConditions = searchKeywords.map(keyword => {
-        return db.raw(`(
-          LOWER(eb.title) LIKE LOWER(?) OR 
-          LOWER(eb.content) LIKE LOWER(?) OR 
-          LOWER(eb.excerpt_content) LIKE LOWER(?) OR
-          LOWER(t.name) LIKE LOWER(?)
-        )`, [`%${keyword}%`, `%${keyword}%`, `%${keyword}%`, `%${keyword}%`]);
-      });
-      
-      // ใช้ OR เพื่อให้ค้นหาบทความที่มี keyword ใดๆ
-      query = query.where(function() {
-        searchConditions.forEach((condition, index) => {
-          if (index === 0) {
-            this.where(condition);
-          } else {
-            this.orWhere(condition);
-          }
-        });
-      });
-    }
+    // ถ้ามี keywords ให้ค้นหาตาม tags เท่านั้น
+if (searchKeywords.length > 0) {
+  const searchConditions = searchKeywords.map(keyword => {
+    return db.raw(`LOWER(t.name) LIKE LOWER(?)`, [`%${keyword}%`]);
+  });
+  
+  // ใช้ OR เพื่อให้ค้นหาบทความที่มี tag ใดๆ ที่ตรงกับ keyword
+  query = query.where(function() {
+    searchConditions.forEach((condition, index) => {
+      if (index === 0) {
+        this.where(condition);
+      } else {
+        this.orWhere(condition);
+      }
+    });
+  });
+}
 
     let articles = await query
       .orderBy('eb.publish_date', 'desc')
-      .limit(limit * 2); // ดึงมาเยอะหน่อยเพื่อคำนวณคะแนน
+      .limit(limit);
 
     // ถ้าไม่พบบทความที่เกี่ยวข้อง ให้ดึงบทความยอดนิยมมาแทน
     if (articles.length === 0) {
@@ -260,6 +256,7 @@ const generateSearchKeywords = (userInfo: any): string[] => {
   
   // Keywords จาก eating_type
   if (userInfo.eating_type) {
+    console.log('User eating type:', userInfo.eating_type);
     switch (userInfo.eating_type) {
       case 'vegan':
         keywords.push('vegan', 'วีแกน', 'พืช', 'ไม่ทานเนื้อ', 'ผัก', 'ธัญพืช');
@@ -408,4 +405,3 @@ export const getAllTags = async () => {
     throw error;
   }
 }; 
-

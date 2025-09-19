@@ -437,7 +437,7 @@ const ProfileDetailScreen = () => {
             </View>
 
             {/* Current BMI Indicator */}
-            <View className="my-4">
+            <View className="my-2">
               <View className="relative h-8">
                 <View 
                   className="absolute items-center"
@@ -454,7 +454,7 @@ const ProfileDetailScreen = () => {
                       borderBottomWidth: 12
                     }}
                   />
-                  <Text className="text-xs text-gray-800 mt-1 font-promptBold">{bmiValue}</Text>
+                 
                 </View>
               </View>
             </View>
