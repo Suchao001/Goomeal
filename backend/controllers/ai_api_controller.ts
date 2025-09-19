@@ -6,7 +6,7 @@ import {yearOfBirthToAge } from '../utils/ageCal';
 
 const url = process.env.AI_API || 'http://localhost:11434';
 const suggestPlanModel = "gpt-5";
-const suggestFoodModel = "gpt-5";
+const suggestFoodModel = "gpt-5-mini";
 
 const openai = new OpenAI({
   apiKey: process.env.AI_API_KEY
@@ -142,6 +142,8 @@ export async function suggestFood(userId: number, payload?: any) {
               "ingredients": ["กุ้ง", "ตะไคร้", "ใบมะกรูด", "พริกขี้หนู", "น้ำมะนาว"],
               "serving": "1 ถ้วย (250 กรัม)"
             }
+
+            img fixed to /assets/images/menuplaceholder.png
 
             ตอนนี้ให้สร้างเมนูอาหารแนะนำเพียง 1 เมนู โดยอ้างอิงจากความต้องการของผู้ใช้ดังนี้:
             - ประเภทมื้ออาหาร: ${mealType}

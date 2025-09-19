@@ -6,10 +6,6 @@ import { useTypedNavigation } from '../../hooks/Navigation';
 import Menu from '../material/Menu';
 import { apiClient } from '../../utils/apiClient';
 
-/**
- * ChatScreen Component
- * หน้าแชท/สนทนา - สำหรับคุยกับ AI เพื่อแนะนำการกินเพื่อสุขภาพ
- */
 const ChatScreen = () => {
   const [message, setMessage] = useState('');
   const navigation = useTypedNavigation<'ChatScreen'>();
@@ -18,6 +14,7 @@ const ChatScreen = () => {
   const [isSending, setIsSending] = useState(false);
   type ChatStyle = 'style1' | 'style2';
   const [selectedStyle, setSelectedStyle] = useState<ChatStyle>('style1');
+  const [showStyle2Info, setShowStyle2Info] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
   
@@ -39,23 +36,31 @@ const ChatScreen = () => {
     try {
       const session = await apiClient.getChatSession();
       if (session.style && ['style1', 'style2'].includes(session.style)) {
-        setSelectedStyle(session.style as ChatStyle);
+        const style = session.style as ChatStyle;
+        setSelectedStyle(style);
+        setShowStyle2Info(style === 'style2');
       } else if (session.style === 'style3') {
         setSelectedStyle('style1');
+        setShowStyle2Info(false);
       }
     } catch (error) {
       console.error('Error loading chat style:', error);
     }
   };
 
-  const toggleChatStyle = async (style: ChatStyle) => {
-    try {
-      setSelectedStyle(style);
-      await apiClient.updateChatStyle(style);
-    } catch (error) {
-      console.error('Error updating chat style:', error);
-      Alert.alert('ข้อผิดพลาด', 'ไม่สามารถเปลี่ยนรูปแบบการสนทนาได้');
-    }
+const toggleChatStyle = async (style: ChatStyle) => {
+  try {
+    setSelectedStyle(style);
+    await apiClient.updateChatStyle(style);
+  } catch (error) {
+    console.error('Error updating chat style:', error);
+    Alert.alert('ข้อผิดพลาด', 'ไม่สามารถเปลี่ยนรูปแบบการสนทนาได้');
+  }
+};
+
+  const handleSelectStyle = (style: ChatStyle) => {
+    toggleChatStyle(style);
+  
   };
 
   const loadChatHistory = async () => {
@@ -186,6 +191,208 @@ const ChatScreen = () => {
     );
   };
 
+  const enhancedMarkdownStyles = {
+  body: {
+    color: '#1f2937',
+    fontFamily: 'Prompt-Regular',
+    fontSize: 15,
+    lineHeight: 24,
+    marginBottom: 0,
+  },
+  
+  paragraph: {
+    marginTop: 0,
+    marginBottom: 8,
+    color: '#374151',
+    lineHeight: 22,
+  },
+  
+  // Headers with gradient-like colors
+  heading1: {
+    color: '#059669',
+    fontFamily: 'Prompt-Bold',
+    fontSize: 20,
+    lineHeight: 28,
+    marginTop: 6,
+    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#d1fae5',
+    paddingBottom: 4,
+  },
+  
+  heading2: {
+    color: '#0d9488',
+    fontFamily: 'Prompt-Bold',
+    fontSize: 18,
+    lineHeight: 26,
+    marginTop: 12,
+    marginBottom: 6,
+    paddingLeft: 6,
+    borderLeftWidth: 3,
+    borderLeftColor: '#5eead4',
+  },
+  
+  heading3: {
+    color: '#0f766e',
+    fontFamily: 'Prompt-Bold',
+    fontSize: 17,
+    lineHeight: 24,
+    marginTop: 10,
+    marginBottom: 6,
+    backgroundColor: '#f0fdfa',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  
+  heading4: {
+    color: '#115e59',
+    fontFamily: 'Prompt-SemiBold',
+    fontSize: 16,
+    lineHeight: 22,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  
+  // Lists with better spacing
+  list_item: {
+    fontFamily: 'Prompt-Regular',
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#374151',
+    marginBottom: 4,
+    paddingLeft: 2,
+  },
+  
+  bullet_list: {
+    marginTop: 6,
+    marginBottom: 8,
+    paddingLeft: 2,
+  },
+  
+  ordered_list: {
+    marginTop: 6,
+    marginBottom: 8,
+    paddingLeft: 2,
+  },
+  
+  // Enhanced text formatting
+  strong: {
+    fontFamily: 'Prompt-Bold',
+    color: '#059669'
+  },
+  
+  em: {
+    fontFamily: 'Prompt-Italic',
+    color: '#0d9488'
+  },
+  
+  // Beautiful links
+  link: {
+    color: '#2563eb',
+    fontFamily: 'Prompt-Medium',
+    textDecorationColor: '#93c5fd'
+  },
+  
+  // Code styling
+  code_inline: {
+    backgroundColor: '#f1f5f9',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    fontFamily: 'Courier New',
+    fontSize: 14,
+    color: '#dc2626',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  
+  code_block: {
+    backgroundColor: '#1e293b',
+    borderRadius: 8,
+    padding: 12,
+    marginVertical: 8,
+    fontFamily: 'Courier New',
+    fontSize: 13,
+    color: '#e2e8f0',
+    borderLeftWidth: 3,
+    borderLeftColor: '#0ea5e9',
+  },
+  
+  // Blockquote styling
+  blockquote: {
+    backgroundColor: '#fef3c7',
+    borderLeftWidth: 3,
+    borderLeftColor: '#f59e0b',
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginVertical: 8,
+    fontFamily: 'Prompt-Regular',
+    fontStyle: 'italic',
+    color: '#92400e',
+  },
+  
+  // Table styling
+  table: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 8,
+    marginVertical: 8
+  },
+  
+  thead: {
+    backgroundColor: '#f3f4f6',
+  },
+  
+  th: {
+    fontFamily: 'Prompt-Bold',
+    color: '#1f2937',
+    fontSize: 15,
+    padding: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#d1d5db',
+    textAlign: 'center',
+  },
+  
+  td: {
+    fontFamily: 'Prompt-Regular',
+    color: '#374151',
+    fontSize: 14,
+    padding: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+    textAlign: 'left',
+  },
+  
+  tr: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#f9fafb',
+  },
+  
+  // Horizontal rule
+  hr: {
+    backgroundColor: '#d1d5db',
+    height: 2,
+    marginVertical: 20,
+    borderRadius: 1,
+  },
+  
+  // Image styling
+  image: {
+    borderRadius: 12,
+    marginVertical: 12,
+  },
+  
+  // Text with background highlight
+  textgroup: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 8,
+    padding: 8,
+    marginVertical: 4,
+  },
+};
+
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       {/* Header */}
@@ -235,29 +442,7 @@ const ChatScreen = () => {
                   </View>
                 )}
                 {msg.isBot ? (
-                  <Markdown
-                    style={{
-                      body: {
-                        color: '#374151',
-                        fontFamily: 'Prompt-Regular',
-                        fontSize: 16,
-                        lineHeight: 24,
-                      },
-                      paragraph: {
-                        marginTop: 0,
-                        marginBottom: 0,
-                      },
-                      link: {
-                        color: '#2563eb',
-                      },
-                      code_inline: {
-                        backgroundColor: '#f3f4f6',
-                        borderRadius: 4,
-                        paddingHorizontal: 4,
-                        fontFamily: 'Prompt-Regular',
-                      },
-                    }}
-                  >
+                  <Markdown style={enhancedMarkdownStyles}>
                     {msg.text || ''}
                   </Markdown>
                 ) : (
@@ -311,7 +496,20 @@ const ChatScreen = () => {
 
       {/* Chat Style Selector */}
       <View className="px-4 py-2 border-t border-gray-200">
-        <Text className="text-myBlack text-sm mb-2 font-promptMedium">รูปแบบการสนทนา:</Text>
+        <View className="flex-row items-center justify-between mb-2">
+          <Text className="text-myBlack text-sm font-promptMedium">รูปแบบการสนทนา:</Text>
+          {selectedStyle === 'style2' && !showStyle2Info && (
+            <TouchableOpacity
+              className="flex-row items-center"
+              onPress={() => setShowStyle2Info(true)}
+            >
+              <Icon name="information-circle-outline" size={18} color="#6b7280" />
+              <Text className="ml-2 text-sm text-gray-500 font-promptMedium">
+                ดูคำอธิบาย
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <TouchableOpacity 
             className={`rounded-full px-4 py-2 mr-2 border ${
@@ -319,7 +517,7 @@ const ChatScreen = () => {
                 ? 'bg-primary border-primary' 
                 : 'bg-gray-100 border border-transparent'
             }`}
-            onPress={() => toggleChatStyle('style1')}
+            onPress={() => handleSelectStyle('style1')}
           >
             <Text className={`text-sm font-promptMedium ${
               selectedStyle === 'style1' ? 'text-white' : 'text-gray-700'
@@ -331,13 +529,32 @@ const ChatScreen = () => {
                 ? 'bg-primary border-primary' 
                 : 'bg-gray-100 border-transparent'
             }`}
-            onPress={() => toggleChatStyle('style2')}
+            onPress={() => handleSelectStyle('style2')}
           >
             <Text className={`text-sm font-promptMedium ${
               selectedStyle === 'style2' ? 'text-white' : 'text-gray-700'
             }`}>รู้เรื่องการกิน</Text>
           </TouchableOpacity>
         </ScrollView>
+        {selectedStyle === 'style2' && showStyle2Info && (
+          <View className="mt-3">
+            <View className="mt-3">
+              <View className=" border border-primary rounded-xl px-4 py-3">
+             
+                  <TouchableOpacity 
+                    onPress={() => setShowStyle2Info(false)}
+                    className="flex-row justify-between items-center"
+                  >
+                    <Text className="flex-1 text-sm text-gray-600 font-promptMedium">
+                      รู้ข้อมูลการกินในสัปดาห์ล่าสุดช่วยให้คุณปรับการกินได้ดีขึ้น
+                    </Text>
+                    <Icon name="chevron-up" size={18} color="#ffb800" className="ml-2" />
+                  </TouchableOpacity>
+               
+              </View>
+            </View>
+          </View>
+        )}
       </View>
 
       {/* Message Input */}

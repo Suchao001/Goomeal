@@ -19,11 +19,10 @@ interface FoodSuggestion {
   fat: number;
   img?: string;
   ingredients: string[];
+  serving?: string; // Add serving size here
 }
 
 type FoodSuggestionScreenRouteProp = RouteProp<RootStackParamList, 'FoodSuggestion'>;
-
-
 
 const FoodSuggestionScreen: React.FC = () => {
   const navigation = useTypedNavigation();
@@ -41,6 +40,7 @@ const FoodSuggestionScreen: React.FC = () => {
         img: suggestion.img,
         src: 'ai',
         ingredient: suggestion.ingredients.join(', '),
+        serving: suggestion.serving ,
       };
       const result = await apiClient.addUserFood(foodData);
       if (result && result.success) {
@@ -71,30 +71,36 @@ const FoodSuggestionScreen: React.FC = () => {
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }}>
         <View className="bg-white mx-4 mt-6 p-6 rounded-2xl border border-gray-100 shadow-md shadow-slate-600">
           {/* Avatar */}
-          
           <View
-          className="w-28 h-28 rounded-full items-center justify-center mx-auto mb-5"
-          style={{
-            backgroundColor: 'rgba(255,184,0,0.12)', // primary soft
-            borderWidth: 1,
-            borderColor: 'rgba(255,184,0,0.25)',
-          }}
-        >
-          {suggestion.img ? (
-            <Image
-              source={{ uri: `${base_url}${suggestion.img}` }}
-              style={{ width: '100%', height: '100%', borderRadius: 999 }}
-              resizeMode="cover"
-            />
-          ) : (
-            <Icon name="fast-food-outline" size={40} color={PRIMARY} />
-          )}
-        </View>
+            className="w-28 h-28 rounded-full items-center justify-center mx-auto mb-5"
+            style={{
+              backgroundColor: 'rgba(255,184,0,0.12)', // primary soft
+              borderWidth: 1,
+              borderColor: 'rgba(255,184,0,0.25)',
+            }}
+          >
+            {suggestion.img ? (
+              <Image
+                source={{ uri: `${base_url}${suggestion.img}` }}
+                style={{ width: '100%', height: '100%', borderRadius: 999 }}
+                resizeMode="cover"
+              />
+            ) : (
+              <Icon name="fast-food-outline" size={40} color={PRIMARY} />
+            )}
+          </View>
 
           {/* Title */}
-          <Text style={{ lineHeight: 30 }}  className="text-2xl font-promptBold text-center text-gray-900 mb-2">
+          <Text style={{ lineHeight: 30 }} className="text-2xl font-promptBold text-center text-gray-900 mb-2">
             {suggestion.name}
           </Text>
+
+          {/* Serving */}
+          {suggestion.serving && (
+            <Text className="text-sm font-prompt text-center text-gray-500 mb-4">
+              ปริมาณ: {suggestion.serving}
+            </Text>
+          )}
 
           {/* Ingredients chips (ใช้สีรองแบบอ่อน) */}
           <View className="mt-3 mb-6">
@@ -120,15 +126,10 @@ const FoodSuggestionScreen: React.FC = () => {
           <View className="flex-row justify-between w-full">
             {/* Calories (primary) */}
             <View className="flex-1 items-center px-2">
-              <View
-                className="w-10 h-10 rounded-full bg-red-100 items-center justify-center mb-2"
-              
-              >
-                <Icon name="flame-outline" size={18} color="red" />
+              <View className="w-10 h-10 rounded-full bg-red-100 items-center justify-center mb-2">
+                <Icon name="flame-outline" size={18} color="#ef4444" />
               </View>
-              <Text className="text-lg font-promptSemiBold text-gray-900">
-                {suggestion.cal}
-              </Text>
+              <Text className="text-lg font-promptSemiBold text-gray-900">{suggestion.cal}</Text>
               <Text className="text-gray-500 text-xs font-prompt mt-0.5">แคลอรี่</Text>
             </View>
 
@@ -137,9 +138,7 @@ const FoodSuggestionScreen: React.FC = () => {
               <View className="w-10 h-10 rounded-full bg-red-100 items-center justify-center mb-2 border border-transparent ">
                 <Icon name="barbell-outline" size={18} color="#ef4444" />
               </View>
-              <Text className="text-lg font-promptSemiBold text-gray-900">
-                {suggestion.protein}g
-              </Text>
+              <Text className="text-lg font-promptSemiBold text-gray-900">{suggestion.protein}g</Text>
               <Text className="text-gray-500 text-xs font-prompt mt-0.5">โปรตีน</Text>
             </View>
 
@@ -148,9 +147,7 @@ const FoodSuggestionScreen: React.FC = () => {
               <View className="w-10 h-10 rounded-full bg-green-200 items-center justify-center mb-2 border border-transparent">
                 <Icon name="leaf-outline" size={18} color="#22c55e" />
               </View>
-              <Text className="text-lg font-promptSemiBold text-gray-900">
-                {suggestion.carbs}g
-              </Text>
+              <Text className="text-lg font-promptSemiBold text-gray-900">{suggestion.carbs}g</Text>
               <Text className="text-gray-500 text-xs font-prompt mt-0.5">คาร์บ</Text>
             </View>
 
@@ -159,9 +156,7 @@ const FoodSuggestionScreen: React.FC = () => {
               <View className="w-10 h-10 rounded-full bg-orange-200 items-center justify-center mb-2 border border-transparent">
                 <Icon name="water-outline" size={18} color="#f59e0b" />
               </View>
-              <Text className="text-lg font-promptSemiBold text-gray-900">
-                {suggestion.fat}g
-              </Text>
+              <Text className="text-lg font-promptSemiBold text-gray-900">{suggestion.fat}g</Text>
               <Text className="text-gray-500 text-xs font-prompt mt-0.5">ไขมัน</Text>
             </View>
           </View>
@@ -177,13 +172,8 @@ const FoodSuggestionScreen: React.FC = () => {
             activeOpacity={0.85}
           >
             <Icon name="add-circle-outline" size={22} color="#ffffff" />
-            <Text className="text-white font-promptBold text-base ml-2">
-              เพิ่มเป็นเมนูของฉัน
-            </Text>
+            <Text className="text-white font-promptBold text-base ml-2">เพิ่มเป็นเมนูของฉัน</Text>
           </TouchableOpacity>
-
-      
-         
         </View>
       </ScrollView>
     </View>

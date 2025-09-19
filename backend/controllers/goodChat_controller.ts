@@ -6,6 +6,7 @@ import { get } from 'http';
 
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 const AI_API_KEY = process.env.AI_API_KEY;
+const chatModel = 'gpt-4.1-mini'; // เปลี่ยนเป็นโมเดลที่ต้องการใช้
 
 interface ChatMessage {
   id?: number;
@@ -311,20 +312,22 @@ export const getChatMessages = async (req: Request, res: Response): Promise<void
 
     const messages = await db('chat_message')
       .where({ user_id: userId })
-      .orderBy('created_at', 'asc')
+      .orderBy('created_at', 'desc') // เปลี่ยนเป็น desc เพื่อดึงข้อความล่าสุดก่อน
       .limit(Number(limit))
       .offset(Number(offset));
 
-    const formattedMessages = messages.map((msg: any, index: number) => ({
-      id: msg.id,
-      text: msg.message,
-      isBot: msg.role === 'assistant' || msg.role === 'system',
-      role: msg.role,
-      timestamp: new Date(msg.created_at).toLocaleTimeString('th-TH', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      })
-    }));
+    const formattedMessages = messages
+      .reverse() // reverse กลับเพื่อให้แสดงผลเรียงตามเวลาจากเก่าไปใหม่
+      .map((msg: any, index: number) => ({
+        id: msg.id,
+        text: msg.message,
+        isBot: msg.role === 'assistant' || msg.role === 'system',
+        role: msg.role,
+        timestamp: new Date(msg.created_at).toLocaleTimeString('th-TH', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        })
+      }));
 
     res.status(200).json({
       success: true,
@@ -537,7 +540,7 @@ async function getAiResponse(userMessage: string, userId: number): Promise<strin
 
     // Call OpenAI API
     const response = await axios.post(OPENAI_API_URL, {
-      model: 'gpt-3.5-turbo',
+      model: chatModel,
       messages: messages,
       max_tokens: 1000,
       temperature: 0.7,

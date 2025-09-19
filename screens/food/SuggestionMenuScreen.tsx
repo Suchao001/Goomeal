@@ -40,6 +40,7 @@ const SuggestionMenuScreen = () => {
   ];
 
   const [complexityLevel, setComplexityLevel] = useState('');
+  const [showCustomInput, setShowCustomInput] = useState(false);
   const complexityLevels = [
     { id: 'easy', label: 'ง่าย', icon: 'happy' },
     { id: 'medium', label: 'กลาง', icon: 'remove' },
@@ -189,41 +190,12 @@ const SuggestionMenuScreen = () => {
           </View>
         </View>
 
-        {/* Ingredients */}
+        {/* Ingredients Section */}
         <View className="bg-white mx-4 mt-4 p-4 rounded-xl shadow-sm">
-          <Text className="text-lg font-promptSemiBold text-gray-800 mb-3">วัตถุดิบที่มี</Text>
-          <View className="flex-row items-center mb-3">
-            <TextInput
-              className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mr-2 font-promptRegular"
-              placeholder="พิมพ์ชื่อวัตถุดิบ..."
-              value={currentIngredient}
-              onChangeText={setCurrentIngredient}
-              onSubmitEditing={addIngredient}
-            />
-            <TouchableOpacity
-              className="w-12 h-12 bg-primary rounded-xl items-center justify-center"
-              onPress={addIngredient}
-            >
-              <Icon name="add" size={20} color="white" />
-            </TouchableOpacity>
-          </View>
+          <Text className="text-lg font-promptSemiBold text-gray-800 mb-3">วัตถุดิบ</Text>
+          
           <View className="flex-row flex-wrap">
-            {ingredients.map((ingredient, index) => (
-              <TouchableOpacity
-                key={index}
-                className="bg-green-100 border border-green-300 rounded-full px-3 py-1 m-1 flex-row items-center"
-                onPress={() => removeIngredient(ingredient)}
-              >
-                <Text className="text-green-800 mr-1 font-promptMedium">{ingredient}</Text>
-                <Icon name="close" size={16} color="#059669" />
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-        {/* Popular Ingredients */}
-        <View className="bg-white mx-4 mt-4 p-4 rounded-xl shadow-sm">
-          <Text className="text-lg font-promptSemiBold text-gray-800 mb-3">เลือกวัตถุดิบยอดนิยม</Text>
-          <View className="flex-row flex-wrap">
+            {/* Popular Ingredients */}
             {popularIngredients.map((ingredient) => (
               <TouchableOpacity
                 key={ingredient.key}
@@ -248,8 +220,63 @@ const SuggestionMenuScreen = () => {
                 }`}>{ingredient.label}</Text>
               </TouchableOpacity>
             ))}
+
+            {/* Custom Ingredient Button */}
+            <TouchableOpacity
+              className={`px-4 py-2 m-1 rounded-full border-2 flex-row items-center ${
+                showCustomInput ? 'bg-primary border-primary' : 'bg-gray-50 border-gray-200'
+              }`}
+              onPress={() => setShowCustomInput(!showCustomInput)}
+            >
+              <Icon name="add-circle-outline" size={20} color={showCustomInput ? 'white' : '#6b7280'} />
+              <Text className={`font-promptMedium ml-2 ${
+                showCustomInput ? 'text-white' : 'text-gray-700'
+              }`}>เติม</Text>
+            </TouchableOpacity>
           </View>
+
+          {/* Custom Ingredient Input */}
+          {showCustomInput && (
+            <View className="mt-4">
+              <View className="flex-row items-center">
+                <TextInput
+                  className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mr-2 font-promptRegular"
+                  placeholder="พิมพ์ชื่อวัตถุดิบ..."
+                  value={currentIngredient}
+                  onChangeText={setCurrentIngredient}
+                  onSubmitEditing={addIngredient}
+                />
+                <TouchableOpacity
+                  className="w-12 h-12 bg-primary rounded-xl items-center justify-center"
+                  onPress={addIngredient}
+                >
+                  <Icon name="add" size={20} color="white" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
         </View>
+
+        {ingredients.length > 0 && (
+          <View className="bg-white mx-4 mt-4 p-4 rounded-xl shadow-sm">
+            <Text className="text-lg font-promptSemiBold text-gray-800 mb-2">ส่วนผสมที่เลือกไว้</Text>
+            <Text className="text-sm text-gray-500 font-prompt mb-3">แตะเพื่อลบออกจากรายการ</Text>
+            <View className="flex-row flex-wrap">
+              {ingredients.map((item) => (
+                <TouchableOpacity
+                  key={item}
+                  className="flex-row items-center bg-primary/10 border border-primary/30 px-3 py-1.5 rounded-full mr-2 mb-2"
+                  onPress={() => removeIngredient(item)}
+                  activeOpacity={0.7}
+                >
+                  <Text className="text-sm font-promptMedium text-gray-700 mr-1">{item}</Text>
+                  <Icon name="close" size={14} color="#ef4444" />
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* Food Type */}
         <View className="bg-white mx-4 mt-4 p-4 rounded-xl shadow-sm">
           <Text className="text-lg font-promptSemiBold text-gray-800 mb-3">ประเภทอาหารที่ต้องการ</Text>

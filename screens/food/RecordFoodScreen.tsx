@@ -198,8 +198,10 @@ const RecordFoodScreen = () => {
 
   // Load today's meals from API
   // Helper functions for meal processing
-  const convertMealToFoodEntry = (meal: TodayMealItem, mealIndex: number, itemIndex: number): FoodEntry => ({
-    id: `${['breakfast', 'lunch', 'dinner'][mealIndex]}-${itemIndex}`,
+  const defaultMealKeys = ['breakfast', 'lunch', 'dinner'];
+
+  const convertMealToFoodEntry = (meal: TodayMealItem, mealIndex: number, itemIndex: number, mealTypeOverride?: string): FoodEntry => ({
+    id: `${(mealTypeOverride || defaultMealKeys[mealIndex] || 'meal')}-${itemIndex}`,
     name: meal.name,
     calories: meal.calories,
     carbs: meal.carb,
@@ -218,11 +220,16 @@ const RecordFoodScreen = () => {
     originalMeal: MealTime, 
     planMeals: TodayMealItem[], 
     preservedEntries: FoodEntry[], 
-    mealIndex: number
+    mealIndex: number,
+    meta?: { time?: string; label?: string },
+    mealTypeOverride?: string
   ): MealTime => ({
     ...originalMeal,
+    time: typeof meta?.time === 'string' ? meta.time : originalMeal.time,
+    label: meta?.label || originalMeal.label,
+    mealType: mealTypeOverride || originalMeal.mealType,
     entries: [
-      ...planMeals.map((meal, index) => convertMealToFoodEntry(meal, mealIndex, index)),
+      ...planMeals.map((meal, index) => convertMealToFoodEntry(meal, mealIndex, index, mealTypeOverride || originalMeal.mealType)),
       ...preservedEntries
     ]
   });
@@ -238,7 +245,7 @@ const RecordFoodScreen = () => {
         setMealTimes(prev => {
           const preserved = preserveNonPlanEntries(prev);
           // Rebuild from defaults to avoid duplicate customs across refreshes
-          const defaults = ['breakfast','lunch','dinner'];
+          const defaults = defaultMealKeys;
           const base = prev.filter(m => defaults.includes(m.mealType));
           // Ensure base has 3 in correct order if possible
           const ensureBase = (idx: number, key: string) => base.find(b => b.mealType === key) || base[idx] || {
@@ -253,14 +260,15 @@ const RecordFoodScreen = () => {
             ensureBase(2,'dinner')
           ];
 
-          next[0] = createMealTimeWithPlanItems(next[0], todayMeals.breakfast, preserved[0] || [], 0);
-          next[1] = createMealTimeWithPlanItems(next[1], todayMeals.lunch, preserved[1] || [], 1);
-          next[2] = createMealTimeWithPlanItems(next[2], todayMeals.dinner, preserved[2] || [], 2);
+          const mealsMeta = (todayMeals as any).mealsMeta as Record<string, { time?: string; label?: string }> | undefined;
+
+          next[0] = createMealTimeWithPlanItems(next[0], todayMeals.breakfast, preserved[0] || [], 0, mealsMeta?.breakfast, 'breakfast');
+          next[1] = createMealTimeWithPlanItems(next[1], todayMeals.lunch, preserved[1] || [], 1, mealsMeta?.lunch, 'lunch');
+          next[2] = createMealTimeWithPlanItems(next[2], todayMeals.dinner, preserved[2] || [], 2, mealsMeta?.dinner, 'dinner');
 
           // Append custom meals dynamically (keys other than default)
-          const defaultKeys = new Set(['breakfast','lunch','dinner']);
+          const defaultKeys = new Set(defaultMealKeys);
           const mealsMap = (todayMeals as any).mealsMap as Record<string, any[]> | undefined;
-          const mealsMeta = (todayMeals as any).mealsMeta as Record<string, { time?: string; label?: string }> | undefined;
           if (mealsMap) {
             Object.keys(mealsMap)
               .filter(k => !defaultKeys.has(k))
