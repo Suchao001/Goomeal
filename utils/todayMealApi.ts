@@ -8,6 +8,7 @@ export interface TodayMealItem {
   protein: number;
   carb: number;
   fat: number;
+  serving?: string;
   image?: string;
 }
 
@@ -135,7 +136,8 @@ const transformMealData = (mealsData: any): { breakfast: TodayMealItem[], lunch:
         protein: parseFloat(item.protein) || 0,
         carb: parseFloat(item.carb) || 0,
         fat: parseFloat(item.fat) || 0,
-        image: getImageUrl(item.img)
+        image: getImageUrl(item.img),
+        serving: typeof item.serving === 'string' ? item.serving : undefined
       }));
       
       // Add to appropriate category (or combine if multiple map to same category)

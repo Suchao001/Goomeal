@@ -13,6 +13,7 @@ export { default as OptionPlanScreen } from './OptionPlanScreen';
 export { default as SelectGlobalPlan } from './SelectGlobalPlan';
 export { default as SeeMoreGlobalPlans } from './SeeMoreGlobalPlans';
 export { default as GlobalPlanMeal } from './GlobalPlanMeal';
+export { default as NutritionPrinciplesScreen } from './NutritionPrinciplesScreen';
 
 // FirstForm screens
 export { default as PersonalSetupScreen } from './firstForm/PersonalSetupScreen';

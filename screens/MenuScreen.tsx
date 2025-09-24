@@ -100,6 +100,10 @@ const MenuScreen = () => {
     navigation.navigate('MealTimeSettings');
   }, [navigation]);
 
+  const handleNutritionPrinciplesPress = useCallback(() => {
+    navigation.navigate('NutritionPrinciples');
+  }, [navigation]);
+
   // สำหรับ handleLogout มี dependency เป็นฟังก์ชัน logout จาก useAuth
   // ซึ่งเราได้แก้ไขให้คงที่ด้วย useCallback ใน AuthContext แล้ว
   const handleLogout = useCallback(() => {
@@ -349,6 +353,19 @@ const MenuScreen = () => {
         <View className="mx-4 mt-6">
           <Text className="text-lg font-promptBold text-myBlack mb-3">อื่นๆ</Text>
           <View className="bg-white rounded-xl shadow-md shadow-slate-600 overflow-hidden">
+            <TouchableOpacity 
+              className="flex-row items-center p-4 border-b border-gray-100"
+              onPress={handleNutritionPrinciplesPress}
+            >
+              <View className="w-10 h-10  rounded-full items-center justify-center mr-4">
+                <Icon name="book-outline" size={20} color="#6366f1" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-base font-promptMedium text-myBlack">หลักการโภชนาการ</Text>
+                <Text className="text-xs text-gray-500 font-prompt">สรุป BMR, TDEE และการจัดสัดส่วนอาหาร</Text>
+              </View>
+              <Icon name="chevron-forward" size={20} color="#9ca3af" />
+            </TouchableOpacity>
             <TouchableOpacity 
               className="flex-row items-center p-4"
               onPress={handleLogout}

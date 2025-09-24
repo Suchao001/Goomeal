@@ -110,13 +110,13 @@ const PersonalSetupScreen = () => {
             <View className="w-full flex-row justify-between mb-4">
                 <View className="w-[48%]">
                     <Text className="text-base text-gray-800 font-prompt mb-2">
-                        ส่วนสูง <Text className="text-red-500">*</Text>
+                        ส่วนสูง (ซม.) <Text className="text-red-500">*</Text>
                     </Text>
                     <TextInput
                         className={`w-full rounded-lg p-3 font-prompt border ${
                             !height ? 'bg-red-50 border-red-200' : 'bg-gray-100 border-transparent'
                         }`}
-                        placeholder="ส่วนสูง cm"
+                        placeholder="ส่วนสูง"
                         keyboardType="numeric"
                         value={height}
                         onChangeText={setHeight}
@@ -124,13 +124,13 @@ const PersonalSetupScreen = () => {
                 </View>
                 <View className="w-[48%]">
                     <Text className="text-base text-gray-800 font-prompt mb-2">
-                        น้ำหนัก <Text className="text-red-500">*</Text>
+                        น้ำหนัก (กก.) <Text className="text-red-500">*</Text>
                     </Text>
                     <TextInput
                         className={`w-full rounded-lg p-3 font-prompt border ${
                             !weight ? 'bg-red-50 border-red-200' : 'bg-gray-100 border-transparent'
                         }`}
-                        placeholder="น้ำหนัก kg"
+                        placeholder="น้ำหนัก"
                         keyboardType="numeric"
                         value={weight}
                         onChangeText={setWeight}
@@ -194,6 +194,25 @@ const PersonalSetupScreen = () => {
                 <Text className="text-sm text-gray-600 font-prompt mb-4">
                     ข้อมูลระดับไขมันในร่างกายเป็นข้อมูลละเอียดอ่อน ควรผ่านการวัดด้วยมาตรการที่ถูกต้องเท่านั้น หากไม่แน่ใจ กรุณาเลือก "ไม่ทราบ"
                 </Text>
+                <View className="w-full bg-gray-100 rounded-xl p-3 mb-4">
+                {gender === 'male' ? (
+                    <>
+                        <Text className="text-sm text-gray-700 font-prompt">ต่ำ: น้อยกว่าหรือเท่ากับ 13%</Text>
+                        <Text className="text-sm text-gray-700 font-prompt mt-1">ปานกลาง: 14-24%</Text>
+                        <Text className="text-sm text-gray-700 font-prompt mt-1">สูง: มากกว่าหรือเท่ากับ 25%</Text>
+                    </>
+                ) : gender === 'female' ? (
+                    <>
+                        <Text className="text-sm text-gray-700 font-prompt">ต่ำ: น้อยกว่าหรือเท่ากับ 20%</Text>
+                        <Text className="text-sm text-gray-700 font-prompt mt-1">ปานกลาง: 21-31%</Text>
+                        <Text className="text-sm text-gray-700 font-prompt mt-1">สูง: มากกว่าหรือเท่ากับ 32%</Text>
+                    </>
+                ) : (
+                    <Text className="text-sm text-gray-700 font-prompt">
+                        กรุณาเลือกเพศก่อน เพื่อดูค่าระดับไขมันที่เหมาะสม
+                    </Text>
+                )}
+            </View>
                 <View className="flex-row flex-wrap justify-between">
                     {[
                         { key: 'low', label: 'ต่ำ' },

@@ -5,10 +5,13 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import Menu from '../material/Menu';
 import { apiClient } from '../../utils/apiClient';
+import { useAuth } from 'AuthContext';
 
 const ChatScreen = () => {
   const [message, setMessage] = useState('');
   const navigation = useTypedNavigation<'ChatScreen'>();
+  const { fetchUserProfile } = useAuth();
+  const [firstTimeSetting, setFirstTimeSetting] = useState<boolean | null>(null);
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -16,6 +19,19 @@ const ChatScreen = () => {
   const [selectedStyle, setSelectedStyle] = useState<ChatStyle>('style1');
   const [showStyle2Info, setShowStyle2Info] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
+
+  // Fetch user profile to check first_time_setting
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const profile = await fetchUserProfile();
+        setFirstTimeSetting(!!profile?.first_time_setting === true);
+      } catch (e) {
+        setFirstTimeSetting(null);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   
   useEffect(() => {
@@ -392,6 +408,49 @@ const toggleChatStyle = async (style: ChatStyle) => {
     marginVertical: 4,
   },
 };
+
+  // Render a different screen if firstTimeSetting is false
+  if (firstTimeSetting === false) {
+    return (
+      <SafeAreaView className="flex-1 bg-gray-50">
+        <View className="bg-primary px-4 pt-10 pb-1">
+          <View className="flex-row items-center justify-between mb-2">
+            <TouchableOpacity 
+              onPress={() => navigation.goBack()}
+              className="p-2"
+            >
+              <Icon name="arrow-back" size={24} color="white" />
+            </TouchableOpacity>
+            <View className="flex-row items-center">
+              <Icon name="restaurant" size={28} color="white" />
+              <Text className="text-2xl font-promptBold text-white ml-2">GoodMealChat</Text>
+            </View>
+            <View className="w-10" /> {/* Spacer for symmetry */}
+          </View>
+        </View>
+
+        <View className="flex-1 items-center justify-center p-6">
+          <View className="bg-white rounded-lg shadow-md shadow-slate-600 p-6 w-full items-center">
+            <View className="w-16 h-16 bg-orange-100 rounded-full items-center justify-center mb-4">
+              <Icon name="information-circle" size={40} color="#f59e0b" />
+            </View>
+            <Text className="text-lg font-promptBold text-gray-800 text-center mb-2">
+              กรุณากรอกข้อมูลส่วนตัว
+            </Text>
+            <Text className="text-base font-prompt text-gray-600 text-center mb-6">
+              คุณจำเป็นต้องกรอกข้อมูลส่วนตัวก่อน เพื่อให้เราสามารถให้คำแนะนำด้านโภชนาการที่เหมาะสมกับคุณ
+            </Text>
+            <TouchableOpacity
+              className="bg-primary px-6 py-3 rounded-full"
+              onPress={() => navigation.navigate('PersonalSetup')}
+            >
+              <Text className="text-white font-promptSemiBold">กรอกข้อมูลเลย</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">

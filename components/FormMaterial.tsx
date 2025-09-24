@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Animated, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, Animated, StyleSheet, TouchableOpacity } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 
 
 interface TextInputProps {
@@ -10,12 +11,21 @@ interface TextInputProps {
     value: string;
     onChangeText: (text: string) => void;
     autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+    showPasswordToggle?: boolean;
 }
 
-export const Text_input = ({ title, placeholder,keyboardType,secureTextEntry, value, onChangeText, autoCapitalize }: TextInputProps) => {
+export const Text_input = ({ title, placeholder,keyboardType,secureTextEntry, value, onChangeText, autoCapitalize, showPasswordToggle }: TextInputProps) => {
     const [isFocused, setIsFocused] = useState(false);
     const animatedLabel = useState(new Animated.Value(value ? 1 : 0))[0];
-  
+    const [isSecure, setIsSecure] = useState<boolean>(!!secureTextEntry);
+
+    useEffect(() => {
+        setIsSecure(!!secureTextEntry);
+    }, [secureTextEntry]);
+
+    const toggleSecureEntry = () => {
+        setIsSecure(prev => !prev);
+    };
 
     const handleFocus = () => {
         setIsFocused(true);
@@ -75,17 +85,27 @@ export const Text_input = ({ title, placeholder,keyboardType,secureTextEntry, va
                     {title}
                 </Animated.Text>
                 <TextInput
-                    className="w-full h-14 bg-[#f3f3f3] rounded-xl p-3 border border-transparent font-prompt"
-                    style={styles.input}
+                className="w-full h-14 bg-[#f3f3f3] rounded-xl p-3 border border-transparent font-prompt"
+                    style={[styles.input, showPasswordToggle ? styles.inputWithToggle : null]}
                     placeholder={isFocused || value ? '' : placeholder}
                     keyboardType={keyboardType}
                     value={value}
                     onChangeText={onChangeText}
                     onFocus={handleFocus}
                     onBlur={handleBlur}
-                    secureTextEntry={secureTextEntry}
+                    secureTextEntry={isSecure}
                     autoCapitalize={autoCapitalize}
                 />
+                {showPasswordToggle && (
+                    <TouchableOpacity
+                        onPress={toggleSecureEntry}
+                        style={styles.toggleButton}
+                        accessibilityRole="button"
+                        accessibilityLabel={isSecure ? 'แสดงรหัสผ่าน' : 'ซ่อนรหัสผ่าน'}
+                    >
+                        <FontAwesome name={isSecure ? 'eye-slash' : 'eye'} size={18} color="#666" />
+                    </TouchableOpacity>
+                )}
             </View>
         </View>
     );
@@ -103,6 +123,9 @@ const styles = StyleSheet.create({
     input: {
         fontSize: 16,
     },
+    inputWithToggle: {
+        paddingRight: 42,
+    },
     label: {
         fontFamily: 'Prompt-Regular',
         color: '#999',
@@ -110,5 +133,10 @@ const styles = StyleSheet.create({
         left: 12,
         fontSize: 14,
         zIndex: 10,
+    },
+    toggleButton: {
+        position: 'absolute',
+        right: 12,
+        top: 18,
     },
 });

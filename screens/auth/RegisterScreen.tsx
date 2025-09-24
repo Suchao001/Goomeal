@@ -10,9 +10,7 @@ import { base_url } from '../../config';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-
 const RegisterScreen = () => {
-
     const navigation = useNavigation<NavigationProp>();
     const [user, setUser] = useState({
         username: '',
@@ -100,12 +98,12 @@ const RegisterScreen = () => {
                     onChangeText={text => setUser(u => ({ ...u, email: text }))}
                     autoCapitalize="none"
                   />
-                  <Text_input title="รหัสผ่าน" placeholder="รหัสผ่าน" keyboardType="default" secureTextEntry={true}
+                  <Text_input title="รหัสผ่าน" placeholder="รหัสผ่าน" keyboardType="default" secureTextEntry={true} showPasswordToggle
                     value={user.password}
                     onChangeText={text => setUser(u => ({ ...u, password: text }))}
                     autoCapitalize="none"
                   />
-                  <Text_input title="ยืนยันรหัสผ่าน" placeholder="ยืนยันรหัสผ่าน" keyboardType="default" secureTextEntry={true}
+                  <Text_input title="ยืนยันรหัสผ่าน" placeholder="ยืนยันรหัสผ่าน" keyboardType="default" secureTextEntry={true} showPasswordToggle
                     value={user.confirmPassword}
                     onChangeText={text => setUser(u => ({ ...u, confirmPassword: text }))}
                     autoCapitalize="none"

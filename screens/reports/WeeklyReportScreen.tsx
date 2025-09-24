@@ -425,11 +425,12 @@ const WeeklyReportScreen = () => {
     
     const barData = displayData.dailyChart.map((d) => {
       const cal = typeof d.calories === 'number' ? (d.calories as number) : 0;
-      const hasTarget = typeof d.target === 'number' && !Number.isNaN(d.target as number);
-      const tgt = hasTarget ? (d.target as number) : undefined;
+      const rawTarget = typeof d.target === 'number' && !Number.isNaN(d.target as number)
+        ? (d.target as number)
+        : undefined;
+      const hasTarget = typeof rawTarget === 'number' && rawTarget > 0;
+      const tgt = hasTarget ? rawTarget : undefined;
 
-      
-      
       
       
       
@@ -453,9 +454,14 @@ const WeeklyReportScreen = () => {
         ),
       } as any;
     });
-    const lineData = displayData.dailyChart.map((d) =>
-      typeof d.target === 'number' ? (d.target as number) : null
-    );
+    const lineDataRaw = displayData.dailyChart.map((d) => {
+      if (typeof d.target === 'number' && !Number.isNaN(d.target) && d.target > 0) {
+        return d.target as number;
+      }
+      return null;
+    });
+    const hasLine = lineDataRaw.every((value) => typeof value === 'number');
+    const lineData = hasLine ? (lineDataRaw as number[]) : [];
 
     return (
       <View className="bg-white rounded-2xl p-5 mb-6 shadow-lg shadow-slate-800">
@@ -475,14 +481,14 @@ const WeeklyReportScreen = () => {
           rulesType="dashed"
           rulesColor="#e5e7eb"
           rulesThickness={1}
-          showLine
-          lineData={lineData as any}
-          lineConfig={{
+          showLine={hasLine}
+          lineData={hasLine ? (lineData as any) : undefined}
+          lineConfig={hasLine ? {
             color: '#9ca3af',
             thickness: 2,
             curved: false,
             hideDataPoints: true,
-          }}
+          } : undefined}
         />
       </View>
     );

@@ -34,6 +34,28 @@ interface MealTime {
   entries: FoodEntry[];
 }
 
+const getLocalizedMealLabel = (label: string): string => {
+  const normalized = (label || '').trim().toLowerCase();
+  switch (normalized) {
+    case 'breakfast':
+      return 'มื้อเช้า';
+    case 'lunch':
+      return 'มื้อกลางวัน';
+    case 'dinner':
+      return 'มื้อเย็น';
+    default:
+      return label;
+  }
+};
+
+const getMealKey = (label: string): string => {
+  const normalized = (label || '').trim().toLowerCase();
+  if (normalized.includes('breakfast') || normalized.includes('เช้า')) return 'breakfast';
+  if (normalized.includes('lunch') || normalized.includes('กลางวัน')) return 'lunch';
+  if (normalized.includes('dinner') || normalized.includes('เย็น')) return 'dinner';
+  return normalized;
+};
+
 const RecordFoodScreen = () => {
   const navigation = useTypedNavigation();
   const route = useTypedRoute<any>();
@@ -200,17 +222,58 @@ const RecordFoodScreen = () => {
   // Helper functions for meal processing
   const defaultMealKeys = ['breakfast', 'lunch', 'dinner'];
 
-  const convertMealToFoodEntry = (meal: TodayMealItem, mealIndex: number, itemIndex: number, mealTypeOverride?: string): FoodEntry => ({
+  const convertMealToFoodEntry = (
+    meal: TodayMealItem,
+    mealIndex: number,
+    itemIndex: number,
+    mealTypeOverride?: string,
+    planDay?: number
+  ): FoodEntry => ({
     id: `${(mealTypeOverride || defaultMealKeys[mealIndex] || 'meal')}-${itemIndex}`,
     name: meal.name,
     calories: meal.calories,
     carbs: meal.carb,
     fat: meal.fat,
     protein: meal.protein,
+    serving: meal.serving,
     confirmed: true,
     fromPlan: true,
-    uniqueId: generateUniqueId(selectedDay, mealIndex, itemIndex)
+    uniqueId: generateUniqueId(planDay ?? selectedDay, mealIndex, itemIndex)
   });
+
+  const applySavedStatusToMeals = async (mealsList: MealTime[]): Promise<MealTime[]> => {
+    try {
+      const uniqueIds = mealsList.flatMap((meal) =>
+        meal.entries
+          .filter(entry => entry.fromPlan && !!entry.uniqueId)
+          .map(entry => entry.uniqueId as string)
+      );
+
+      if (uniqueIds.length === 0) {
+        return mealsList;
+      }
+
+      const savedStatus = await checkSavedPlanItems(uniqueIds) as Record<string, { saved: boolean; recordId?: number }>;
+
+      return mealsList.map(meal => ({
+        ...meal,
+        entries: meal.entries.map(entry => {
+          if (entry.fromPlan && entry.uniqueId) {
+            const status = savedStatus[entry.uniqueId];
+            return {
+              ...entry,
+              saved: !!status?.saved,
+              recordId: status?.recordId ?? entry.recordId,
+            };
+          }
+          return entry;
+        })
+      }));
+    } catch (error) {
+      console.error('Failed to apply saved status:', error);
+      return mealsList;
+    }
+  };
 
   const preserveNonPlanEntries = (mealTimes: MealTime[]): FoodEntry[][] => {
     return mealTimes.map(mt => mt.entries.filter(e => !e.fromPlan));
@@ -222,14 +285,15 @@ const RecordFoodScreen = () => {
     preservedEntries: FoodEntry[], 
     mealIndex: number,
     meta?: { time?: string; label?: string },
-    mealTypeOverride?: string
+    mealTypeOverride?: string,
+    planDay?: number
   ): MealTime => ({
     ...originalMeal,
     time: typeof meta?.time === 'string' ? meta.time : originalMeal.time,
     label: meta?.label || originalMeal.label,
     mealType: mealTypeOverride || originalMeal.mealType,
     entries: [
-      ...planMeals.map((meal, index) => convertMealToFoodEntry(meal, mealIndex, index, mealTypeOverride || originalMeal.mealType)),
+      ...planMeals.map((meal, index) => convertMealToFoodEntry(meal, mealIndex, index, mealTypeOverride || originalMeal.mealType, planDay)),
       ...preservedEntries
     ]
   });
@@ -241,20 +305,20 @@ const RecordFoodScreen = () => {
       setTodayMealData(todayMeals);
       
       if (todayMeals) {
-        // Convert API data to MealTime format but preserve any manually added (non-plan) entries
+        let nextMeals: MealTime[] = [];
+        const planDayNumber = (todayMeals as any)?.planDay ?? selectedDay;
+
         setMealTimes(prev => {
           const preserved = preserveNonPlanEntries(prev);
-          // Rebuild from defaults to avoid duplicate customs across refreshes
           const defaults = defaultMealKeys;
           const base = prev.filter(m => defaults.includes(m.mealType));
-          // Ensure base has 3 in correct order if possible
           const ensureBase = (idx: number, key: string) => base.find(b => b.mealType === key) || base[idx] || {
             time: idx === 0 ? '07:00' : idx === 1 ? '12:00' : '18:00',
             label: key === 'breakfast' ? 'มื้อเช้า' : key === 'lunch' ? 'มื้อกลางวัน' : 'มื้อเย็น',
             mealType: key,
             entries: []
           };
-          const next = [
+          const next: MealTime[] = [
             ensureBase(0,'breakfast'),
             ensureBase(1,'lunch'),
             ensureBase(2,'dinner')
@@ -262,11 +326,10 @@ const RecordFoodScreen = () => {
 
           const mealsMeta = (todayMeals as any).mealsMeta as Record<string, { time?: string; label?: string }> | undefined;
 
-          next[0] = createMealTimeWithPlanItems(next[0], todayMeals.breakfast, preserved[0] || [], 0, mealsMeta?.breakfast, 'breakfast');
-          next[1] = createMealTimeWithPlanItems(next[1], todayMeals.lunch, preserved[1] || [], 1, mealsMeta?.lunch, 'lunch');
-          next[2] = createMealTimeWithPlanItems(next[2], todayMeals.dinner, preserved[2] || [], 2, mealsMeta?.dinner, 'dinner');
+          next[0] = createMealTimeWithPlanItems(next[0], todayMeals.breakfast, preserved[0] || [], 0, mealsMeta?.breakfast, 'breakfast', planDayNumber);
+          next[1] = createMealTimeWithPlanItems(next[1], todayMeals.lunch, preserved[1] || [], 1, mealsMeta?.lunch, 'lunch', planDayNumber);
+          next[2] = createMealTimeWithPlanItems(next[2], todayMeals.dinner, preserved[2] || [], 2, mealsMeta?.dinner, 'dinner', planDayNumber);
 
-          // Append custom meals dynamically (keys other than default)
           const defaultKeys = new Set(defaultMealKeys);
           const mealsMap = (todayMeals as any).mealsMap as Record<string, any[]> | undefined;
           if (mealsMap) {
@@ -276,20 +339,10 @@ const RecordFoodScreen = () => {
                 const items = mealsMap[k] || [];
                 const label = mealsMeta?.[k]?.label || k;
                 const time = mealsMeta?.[k]?.time || '12:00';
-                // Create entries conversion manually
-                const converted = items.map((meal, index) => ({
-                  id: `${k}-${index}`,
-                  name: meal.name,
-                  calories: meal.calories,
-                  carbs: meal.carb,
-                  fat: meal.fat,
-                  protein: meal.protein,
-                  confirmed: true,
-                  fromPlan: true,
-                  uniqueId: generateUniqueId(selectedDay, 3 + idx, index)
-                }));
+                const converted = items.map((meal, index) =>
+                  convertMealToFoodEntry(meal, 3 + idx, index, k, planDayNumber)
+                );
 
-                // Preserve existing non-plan entries for this custom meal if existed
                 const existingIndex = next.findIndex(m => m.mealType === k);
                 if (existingIndex >= 0) {
                   const preservedEntries = next[existingIndex].entries.filter(e => !e.fromPlan);
@@ -311,11 +364,14 @@ const RecordFoodScreen = () => {
               });
           }
 
+          nextMeals = next;
           return next;
         });
 
-        // Check which plan items are already saved
-        await checkPlanItemsSavedStatus();
+        if (nextMeals.length > 0) {
+          const mealsWithSaved = await applySavedStatusToMeals(nextMeals);
+          setMealTimes(mealsWithSaved);
+        }
       }
     } catch (error) {
       console.error('❌ [RecordFoodScreen] Error loading today\'s meals:', error);
@@ -331,35 +387,8 @@ const RecordFoodScreen = () => {
   // Check which plan items are already saved using unique_id
   const checkPlanItemsSavedStatus = async () => {
     try {
-      const uniqueIds: string[] = [];
-      
-      mealTimes.forEach((meal, mealIndex) => {
-        meal.entries.forEach((entry, itemIndex) => {
-          if (entry.fromPlan && entry.uniqueId) {
-            uniqueIds.push(entry.uniqueId);
-          }
-        });
-      });
-      
-      if (uniqueIds.length > 0) {
-        const savedStatus = await checkSavedPlanItems(uniqueIds) as Record<string, { saved: boolean; recordId?: number }>;
-
-        // Update meal times with saved status and recordId
-        setMealTimes(prev => prev.map(meal => ({
-          ...meal,
-          entries: meal.entries.map(entry => {
-            if (entry.fromPlan && entry.uniqueId) {
-              const status = savedStatus[entry.uniqueId];
-              return {
-                ...entry,
-                saved: !!status?.saved,
-                recordId: status?.recordId ?? entry.recordId,
-              };
-            }
-            return entry;
-          })
-        })));
-      }
+      const updated = await applySavedStatusToMeals(mealTimes);
+      setMealTimes(updated);
     } catch (error) {
       console.error('Failed to check saved status:', error);
     }
@@ -374,11 +403,15 @@ const RecordFoodScreen = () => {
   });
 
   const getCustomMealTypes = (records: EatingRecord[]): string[] => {
-    const defaultMealLabels = new Set(['มื้อเช้า', 'มื้อกลางวัน', 'มื้อเย็น']);
+    const defaultMealKeys = new Set(['breakfast', 'lunch', 'dinner']);
     return [...new Set(
       records
         .map(r => r.meal_type)
-        .filter((mt): mt is string => mt !== undefined && mt !== null && !defaultMealLabels.has(mt))
+        .filter((mt): mt is string => {
+          if (!mt) return false;
+          const key = getMealKey(mt);
+          return !defaultMealKeys.has(key);
+        })
     )];
   };
 
@@ -401,19 +434,21 @@ const RecordFoodScreen = () => {
       
       const res = await getEatingRecordsByDate(date);
       
-      if (res.success) {
-        const records = res.data.records || [];
-        setSavedRecords(records);
-        setHasSavedToday(records.length > 0);
-        
-        // Add custom meals from saved records that don't match default meal types
-        const customMealTypes = getCustomMealTypes(records);
-        addCustomMealsToState(customMealTypes);
-      } else {
-        setSavedRecords([]);
-      }
-    } catch (e) {
-      console.error('❌ [RecordFood] loadSavedRecords failed:', e);
+    if (res.success) {
+      const records = res.data.records || [];
+      setSavedRecords(records);
+      setHasSavedToday(records.length > 0);
+      
+      // Add custom meals from saved records that don't match default meal types
+      const customMealTypes = getCustomMealTypes(records);
+      addCustomMealsToState(customMealTypes);
+
+      await checkPlanItemsSavedStatus();
+    } else {
+      setSavedRecords([]);
+    }
+  } catch (e) {
+    console.error('❌ [RecordFood] loadSavedRecords failed:', e);
       setSavedRecords([]);
     }
   }, [selectedDate]);
@@ -617,7 +652,7 @@ const RecordFoodScreen = () => {
     
     if (!isTodaySelected) {
       // For past days, search in savedEntries (displayed entries)
-      const savedForMeal = savedRecords.filter(r => r.meal_type === meal.label);
+      const savedForMeal = savedRecords.filter(r => getMealKey(r.meal_type || '') === getMealKey(meal.label));
       const savedEntries: FoodEntry[] = savedForMeal.map((r, idx) => ({
         id: r.id?.toString() || `saved-${timeIndex}-${idx}`,
         name: r.food_name,
@@ -634,7 +669,7 @@ const RecordFoodScreen = () => {
     } else {
       // For today, search in allEntries (plan + manual saved entries)
       const namesInPlan = new Set(meal.entries.map(e => e.name));
-      const savedForMeal = savedRecords.filter(r => r.meal_type === meal.label);
+      const savedForMeal = savedRecords.filter(r => getMealKey(r.meal_type || '') === getMealKey(meal.label));
       const savedMap = new Map(savedForMeal.map(r => [r.food_name, r] as const));
       const planEntriesWithSaved: FoodEntry[] = meal.entries.map(e => {
         const sr = savedMap.get(e.name);
@@ -706,7 +741,7 @@ const RecordFoodScreen = () => {
       
       if (!isTodaySelected) {
         // For past days, search in savedEntries
-        const savedForMeal = savedRecords.filter(r => r.meal_type === meal.label);
+        const savedForMeal = savedRecords.filter(r => getMealKey(r.meal_type || '') === getMealKey(meal.label));
         const savedEntries: FoodEntry[] = savedForMeal.map((r, idx) => ({
           id: r.id?.toString() || `saved-${editingFood.mealIndex}-${idx}`,
           name: r.food_name,
@@ -724,7 +759,7 @@ const RecordFoodScreen = () => {
       } else {
         // For today, search in allEntries
         const namesInPlan = new Set(meal.entries.map(e => e.name));
-        const savedForMeal = savedRecords.filter(r => r.meal_type === meal.label);
+        const savedForMeal = savedRecords.filter(r => getMealKey(r.meal_type || '') === getMealKey(meal.label));
         const savedMap = new Map(savedForMeal.map(r => [r.food_name, r] as const));
         const planEntriesWithSaved: FoodEntry[] = meal.entries.map(e => {
           const sr = savedMap.get(e.name);
@@ -800,7 +835,7 @@ const RecordFoodScreen = () => {
     
     if (!isTodaySelected) {
       // For past days, search in savedEntries
-      const savedForMeal = savedRecords.filter(r => r.meal_type === meal.label);
+      const savedForMeal = savedRecords.filter(r => getMealKey(r.meal_type || '') === getMealKey(meal.label));
       const savedEntries: FoodEntry[] = savedForMeal.map((r, idx) => ({
         id: r.id?.toString() || `saved-${timeIndex}-${idx}`,
         name: r.food_name,
@@ -818,7 +853,7 @@ const RecordFoodScreen = () => {
     } else {
       // For today, search in allEntries (plan + manual saved entries)
       const namesInPlan = new Set(meal.entries.map(e => e.name));
-      const savedForMeal = savedRecords.filter(r => r.meal_type === meal.label);
+      const savedForMeal = savedRecords.filter(r => getMealKey(r.meal_type || '') === getMealKey(meal.label));
       const savedMap = new Map(savedForMeal.map(r => [r.food_name, r] as const));
       const planEntriesWithSaved: FoodEntry[] = meal.entries.map(e => {
         const sr = savedMap.get(e.name);
@@ -986,7 +1021,7 @@ const RecordFoodScreen = () => {
   const createEatingRecordData = (entry: FoodEntry, meal: MealTime, logDate: string): Omit<EatingRecord, 'id' | 'user_id' | 'created_at' | 'updated_at'> => ({
     log_date: logDate,
     food_name: entry.name,
-    meal_type: meal.label,
+        meal_type: getLocalizedMealLabel(meal.label),
     calories: entry.calories || 0,
     carbs: entry.carbs || 0,
     fat: entry.fat || 0,
@@ -1134,20 +1169,21 @@ const RecordFoodScreen = () => {
   
     // สำหรับวันก่อนหน้า: แสดงเฉพาะ savedRecords
     if (!isTodaySelected) {
-      const savedForMeal = savedRecords.filter(r => r.meal_type === meal.label);
-     
-      const savedEntries: FoodEntry[] = savedForMeal.map((r, idx) => ({
-        id: r.id?.toString() || `saved-${timeIndex}-${idx}`,
-        name: r.food_name,
-        calories: r.calories || 0,
-        carbs: r.carbs || 0,
-        fat: r.fat || 0,
-        protein: r.protein || 0,
-        confirmed: true,
-        fromPlan: false,
-        saved: true,
-        recordId: r.id,
-      }));
+    const savedForMeal = savedRecords.filter(r => getMealKey(r.meal_type || '') === getMealKey(meal.label));
+    
+    const savedEntries: FoodEntry[] = savedForMeal.map((r, idx) => ({
+      id: r.id?.toString() || `saved-${timeIndex}-${idx}`,
+      name: r.food_name,
+      calories: r.calories || 0,
+      carbs: r.carbs || 0,
+      fat: r.fat || 0,
+      protein: r.protein || 0,
+      serving: (r as any)?.serving,
+      confirmed: true,
+      fromPlan: false,
+      saved: true,
+      recordId: r.id,
+    }));
 
       const handleDeleteSavedItem = async (entry: FoodEntry) => {
         if (!entry.recordId) return;
@@ -1187,7 +1223,7 @@ const RecordFoodScreen = () => {
                 />
               </View>
               <View>
-                <Text className="text-lg font-promptSemiBold text-gray-800">{meal.label}</Text>
+                <Text className="text-lg font-promptSemiBold text-gray-800">{getLocalizedMealLabel(meal.label)}</Text>
                 <Text className="text-sm text-gray-500">{meal.time}</Text>
               </View>
             </View>
@@ -1228,11 +1264,22 @@ const RecordFoodScreen = () => {
 
     
     const namesInPlan = new Set(meal.entries.map(e => e.name));
-    const savedForMeal = savedRecords.filter(r => r.meal_type === meal.label);
+    const savedForMeal = savedRecords.filter(r => getMealKey(r.meal_type || '') === getMealKey(meal.label));
     const savedMap = new Map(savedForMeal.map(r => [r.food_name, r] as const));
     const planEntriesWithSaved: FoodEntry[] = meal.entries.map(e => {
       const sr = savedMap.get(e.name);
-      return { ...e, saved: !!sr, recordId: sr?.id };
+      const entryWithSave = { ...e, saved: !!sr, recordId: sr?.id } as FoodEntry;
+      try {
+        console.log('[RecordFood] plan entry', {
+          meal: meal.label,
+          name: entryWithSave.name,
+          uniqueId: entryWithSave.uniqueId,
+          saved: entryWithSave.saved,
+          recordId: entryWithSave.recordId,
+          serving: entryWithSave.serving
+        });
+      } catch (_) {}
+      return entryWithSave;
     });
     const savedManualEntries: FoodEntry[] = savedForMeal
       .filter(r => !namesInPlan.has(r.food_name))
@@ -1248,6 +1295,18 @@ const RecordFoodScreen = () => {
         saved: true,
         recordId: r.id,
       }));
+    try {
+      savedManualEntries.forEach(entry => {
+        console.log('[RecordFood] saved manual entry', {
+          meal: meal.label,
+          name: entry.name,
+          uniqueId: entry.uniqueId,
+          saved: entry.saved,
+          recordId: entry.recordId,
+          serving: entry.serving
+        });
+      });
+    } catch (_) {}
 
     const allEntries = [...planEntriesWithSaved, ...savedManualEntries];
     
@@ -1261,7 +1320,7 @@ const RecordFoodScreen = () => {
         const recordData: Omit<EatingRecord, 'id' | 'user_id' | 'created_at' | 'updated_at'> = {
           log_date: logDate,
           food_name: entry.name,
-          meal_type: meal.label,
+          meal_type: getLocalizedMealLabel(meal.label),
           calories: entry.calories || 0,
           carbs: entry.carbs || 0,
           fat: entry.fat || 0,
@@ -1310,7 +1369,7 @@ const RecordFoodScreen = () => {
               />
             </View>
             <View>
-              <Text className="text-lg font-promptSemiBold text-gray-800">{meal.label}</Text>
+              <Text className="text-lg font-promptSemiBold text-gray-800">{getLocalizedMealLabel(meal.label)}</Text>
               <Text className="text-sm text-gray-500">{meal.time}</Text>
             </View>
           </View>

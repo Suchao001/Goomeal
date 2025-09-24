@@ -1,5 +1,5 @@
 import React, { useState, useEffect,useCallback,useMemo, useRef } from 'react';
-import { View, Text, TouchableOpacity, Image, ScrollView, FlatList, Linking, Animated, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, TouchableOpacity, Image, ScrollView, FlatList, Linking, Animated, TouchableWithoutFeedback, Alert } from 'react-native';
 import { useTypedNavigation } from '../../hooks/Navigation';
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -27,7 +27,7 @@ import {
   getDailyNutritionSummary,
   DailyNutritionSummary 
 } from '../../utils/api/dailyNutritionSummaryApi';
-import { getEatingRecordsByDate, EatingRecord } from '../../utils/api/eatingRecordApi';
+import { getEatingRecordsByDate, EatingRecord, generateUniqueId as generatePlanUniqueId } from '../../utils/api/eatingRecordApi';
 import { getTodayBangkokDate } from '../../utils/bangkokTime';
 import { blog_url, base_url } from '../../config';
 import { ApiClient } from '../../utils/apiClient';
@@ -363,24 +363,37 @@ const Home = () => {
 
     const meals: MealData[] = [];
     let mealIdCounter = 1;
-    
+    const planDayNumber = todayMealData.planDay || new Date().getDate();
+    const mealsMeta = (todayMealData as any)?.mealsMeta as Record<string, { time?: string; label?: string }> | undefined;
+
+    const getMealKey = (label: string): string => {
+      const normalized = (label || '').trim().toLowerCase();
+      if (normalized.includes('breakfast') || normalized.includes('เช้า')) return 'breakfast';
+      if (normalized.includes('lunch') || normalized.includes('กลางวัน')) return 'lunch';
+      if (normalized.includes('dinner') || normalized.includes('เย็น')) return 'dinner';
+      return normalized;
+    };
+
     // Helper function to check if meal is saved
     const isMealSaved = (mealName: string, mealTypeLabel: string): boolean => {
-      return savedRecords.some(record => 
-        record.food_name === mealName && record.meal_type === mealTypeLabel
+      const targetKey = getMealKey(mealTypeLabel);
+      return savedRecords.some(record =>
+        record.food_name === mealName && getMealKey(record.meal_type || '') === targetKey
       );
     };
 
-    // Helper function to generate unique ID
-    const generateUniqueId = (mealType: string, index: number): string => {
-      const today = new Date();
-      return `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}-${mealType}-${index}`;
+    // Helper function to generate unique ID aligned with RecordFoodScreen
+    const makeUniqueId = (mealIndex: number, itemIndex: number): string => {
+      return generatePlanUniqueId(planDayNumber, mealIndex, itemIndex);
     };
 
     // Convert breakfast meals
     todayMealData.breakfast.forEach((meal, index) => {
       const saved = isMealSaved(meal.name, 'มื้อเช้า');
-     console.log(meal.image)
+      try {
+        console.log('[Home] breakfast item', { index, name: meal.name, serving: meal.serving, uniqueId: makeUniqueId(0, index), saved });
+      } catch (_) {}
+      const breakfastTime = mealsMeta?.breakfast?.time;
       meals.push({
         id: `breakfast-${mealIdCounter++}`,
         mealType: 'breakfast',
@@ -390,16 +403,20 @@ const Home = () => {
         fat: meal.fat,
         protein: meal.protein,
         image: meal.image ? { uri: meal.image } : require('../../assets/images/Foodtype_1.png'),
-        time: '07:30',
+        time: typeof breakfastTime === 'string' ? breakfastTime : '07:30',
         fromPlan: true,
         saved: saved,
-        uniqueId: generateUniqueId('breakfast', index)
+        uniqueId: makeUniqueId(0, index)
       });
     });
 
     // Convert lunch meals
     todayMealData.lunch.forEach((meal, index) => {
       const saved = isMealSaved(meal.name, 'มื้อกลางวัน');
+      try {
+        console.log('[Home] lunch item', { index, name: meal.name, serving: meal.serving, uniqueId: makeUniqueId(1, index), saved });
+      } catch (_) {}
+      const lunchTime = mealsMeta?.lunch?.time;
       meals.push({
         id: `lunch-${mealIdCounter++}`,
         mealType: 'lunch',
@@ -409,16 +426,20 @@ const Home = () => {
         fat: meal.fat,
         protein: meal.protein,
         image: meal.image ? { uri: meal.image } : require('../../assets/images/Foodtype_3.png'),
-        time: '12:15',
+        time: typeof lunchTime === 'string' ? lunchTime : '12:15',
         fromPlan: true,
         saved: saved,
-        uniqueId: generateUniqueId('lunch', index)
+        uniqueId: makeUniqueId(1, index)
       });
     });
 
     // Convert dinner meals
     todayMealData.dinner.forEach((meal, index) => {
       const saved = isMealSaved(meal.name, 'มื้อเย็น');
+      try {
+        console.log('[Home] dinner item', { index, name: meal.name, serving: meal.serving, uniqueId: makeUniqueId(2, index), saved });
+      } catch (_) {}
+      const dinnerTime = mealsMeta?.dinner?.time;
       meals.push({
         id: `dinner-${mealIdCounter++}`,
         mealType: 'dinner',
@@ -428,25 +449,27 @@ const Home = () => {
         fat: meal.fat,
         protein: meal.protein,
         image: meal.image ? { uri: meal.image } : require('../../assets/images/Foodtype_4.png'),
-        time: '19:00',
+        time: typeof dinnerTime === 'string' ? dinnerTime : '19:00',
         fromPlan: true,
         saved: saved,
-        uniqueId: generateUniqueId('dinner', index)
+        uniqueId: makeUniqueId(2, index)
       });
     });
 
     // Convert custom meals (keys other than default)
     const defaultKeys = new Set(['breakfast','lunch','dinner']);
     const mealsMap: any = (todayMealData as any).mealsMap || {};
-    const mealsMeta: any = (todayMealData as any).mealsMeta || {};
     Object.keys(mealsMap)
       .filter(k => !defaultKeys.has(k))
-      .forEach((k) => {
+      .forEach((k, customIdx) => {
         const items = mealsMap[k] || [];
         const label = mealsMeta?.[k]?.label || k;
         const time = mealsMeta?.[k]?.time || '12:00';
         items.forEach((meal: TodayMealItem, index: number) => {
           const saved = isMealSaved(meal.name, label);
+          try {
+            console.log('[Home] custom meal item', { key: k, index, name: meal.name, serving: meal.serving, uniqueId: makeUniqueId(3 + customIdx, index), saved });
+          } catch (_) {}
           meals.push({
             id: `${k}-${mealIdCounter++}`,
             mealType: k,
@@ -459,7 +482,7 @@ const Home = () => {
             time: typeof time === 'string' ? time : '12:00',
             fromPlan: true,
             saved: saved,
-            uniqueId: generateUniqueId(k, index)
+            uniqueId: makeUniqueId(3 + customIdx, index)
           });
         });
       });
@@ -551,8 +574,25 @@ const Home = () => {
       icon: 'fast-food',
     color: '#3b82f6',
       onPress: () => {
-        setShowFloatMenu(false);
-        navigation.navigate('MyFood');
+        if (firstTimeSetting === true) {
+          setShowFloatMenu(false);
+          navigation.navigate('MyFood');
+        } else {
+          Alert.alert(
+            'กรุณากรอกข้อมูลส่วนตัว',
+            'คุณจำเป็นต้องกรอกข้อมูลส่วนตัวก่อน เพื่อจัดการเมนูอาหารของคุณ',
+            [
+              { 
+                text: 'กรอกข้อมูล', 
+                onPress: () => {
+                  setShowFloatMenu(false);
+                  navigation.navigate('PersonalSetup');
+                }
+              },
+              { text: 'ยกเลิก', style: 'cancel' }
+            ]
+          );
+        }
       }
     },
     {
@@ -561,8 +601,25 @@ const Home = () => {
       icon: 'sparkles',
       color: '#f59e0b',
       onPress: () => {
-        setShowFloatMenu(false);
-        navigation.navigate('OptionPlan', { from: 'Home' });
+        if (firstTimeSetting === true) {
+          setShowFloatMenu(false);
+          navigation.navigate('OptionPlan', { from: 'Home' });
+        } else {
+          Alert.alert(
+            'กรุณากรอกข้อมูลส่วนตัว',
+            'คุณจำเป็นต้องกรอกข้อมูลส่วนตัวก่อน เพื่อสร้างแผนการกินที่เหมาะสม',
+            [
+              { 
+                text: 'กรอกข้อมูล', 
+                onPress: () => {
+                  setShowFloatMenu(false);
+                  navigation.navigate('PersonalSetup');
+                }
+              },
+              { text: 'ยกเลิก', style: 'cancel' }
+            ]
+          );
+        }
       }
     },
     {
@@ -571,8 +628,25 @@ const Home = () => {
       icon: 'restaurant',
       color: '#22c55e',
       onPress: () => {
-        setShowFloatMenu(false);
-        navigation.navigate('PlanSelection');
+        if (firstTimeSetting === true) {
+          setShowFloatMenu(false);
+          navigation.navigate('PlanSelection');
+        } else {
+          Alert.alert(
+            'กรุณากรอกข้อมูลส่วนตัว',
+            'คุณจำเป็นต้องกรอกข้อมูลส่วนตัวก่อน เพื่อดูแผนการกินของคุณ',
+            [
+              { 
+                text: 'กรอกข้อมูล', 
+                onPress: () => {
+                  setShowFloatMenu(false);
+                  navigation.navigate('PersonalSetup');
+                }
+              },
+              { text: 'ยกเลิก', style: 'cancel' }
+            ]
+          );
+        }
       }
     }
   ];
@@ -774,7 +848,26 @@ const Home = () => {
             ))}           
             <TouchableOpacity 
               className="bg-primary rounded-lg p-4 flex-row items-center justify-center mt-2"
-              onPress={() => navigation.navigate('SuggestionMenu')}
+              onPress={() => {
+                if (firstTimeSetting === true) {
+                  navigation.navigate('SuggestionMenu');
+                } else {
+                  Alert.alert(
+                    'กรุณากรอกข้อมูลส่วนตัว',
+                    'คุณจำเป็นต้องกรอกข้อมูลส่วนตัวก่อน เพื่อให้เราสามารถแนะนำเมนูอาหารที่เหมาะสมกับคุณ',
+                    [
+                      { 
+                        text: 'กรอกข้อมูล', 
+                        onPress: () => navigation.navigate('PersonalSetup')
+                      },
+                      {
+                        text: 'ยกเลิก',
+                        style: 'cancel'
+                      }
+                    ]
+                  );
+                }
+              }}
             >
               <Icon name="sparkles" size={24} color="white" />
               <Text className="text-white font-promptBold text-lg ml-2">ขอเมนูอาหาร</Text>

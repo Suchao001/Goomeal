@@ -31,7 +31,6 @@ interface FoodSearchResult {
   src?: string; // 'user' or 'ai'
   serving?: string;
   createdAt?: any;
-  
 }
 
 /**
@@ -173,7 +172,10 @@ export const searchFoods = async (req: Request & { user?: any }, res: Response):
         'img',
         'ingredient',
         'serving'
-      );
+      )
+      .where((builder) => {
+        builder.where('is_delete', false).orWhereNull('is_delete');
+      });
 
     // Apply search filter if query is provided
     if (searchTerm.trim()) {

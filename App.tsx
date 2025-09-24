@@ -12,6 +12,15 @@ import { scheduleMealRemindersFromServer,initMealReminderRescheduler } from './u
 import { loadNotificationPrefs } from './utils/notificationStorage';
 import './global.css';
 
+
+// ปิดการแจ้งเตือนบางอย่างที่ไม่สำคัญ
+LogBox.ignoreLogs([
+  'Setting a timer',
+  'AsyncStorage has been extracted from react-native core',
+  'Non-serializable values were found in the navigation state',
+]);
+LogBox.ignoreAllLogs();
+
 // Handler พื้นฐาน
 Notifications.setNotificationHandler({
   handleNotification: async () => {

@@ -82,7 +82,7 @@ const LoginScreen = () => {
           value={user.username}
           onChangeText={text => setUser(u => ({ ...u, username: text }))}
         />
-        <Text_input title="รหัสผ่าน" placeholder="รหัสผ่าน" keyboardType="default" secureTextEntry={true}
+        <Text_input title="รหัสผ่าน" placeholder="รหัสผ่าน" keyboardType="default" secureTextEntry={true} showPasswordToggle
           value={user.password}
           onChangeText={text => setUser(u => ({ ...u, password: text }))}
           autoCapitalize="none"

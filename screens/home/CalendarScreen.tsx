@@ -196,16 +196,12 @@ const CalendarScreen = () => {
       return imagePath;
     }
 
-    // Normalise leading slash paths to base_url
-    if (imagePath.startsWith('/')) {
-      return `${base_url}${imagePath}`;
-    }
 
     if (imagePath.startsWith('images/')) {
       return `${base_url}/${imagePath}`;
     }
 
-    if (imagePath.startsWith('foods/')) {
+    if (imagePath.startsWith('/foods/')) {
       return `${seconde_url}/${imagePath}`;
     }
 

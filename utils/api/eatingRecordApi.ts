@@ -10,6 +10,7 @@ export interface EatingRecord {
   carbs?: number;
   fat?: number;
   protein?: number;
+  serving?: string;
   meal_time?: string;
   image?: string;
   unique_id?: string; 
