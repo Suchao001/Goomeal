@@ -15,10 +15,15 @@ const ChatScreen = () => {
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  type ChatStyle = 'style1' | 'style2';
-  const [selectedStyle, setSelectedStyle] = useState<ChatStyle>('style1');
-  const [showStyle2Info, setShowStyle2Info] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
+  const presetQuestions = [
+    'วันนี้ควรกินกี่แคลอรี่ดี?',
+    'ช่วยแนะนำเมนูอาหารสุขภาพสำหรับมื้อกลางวันหน่อย',
+    'อยากลดน้ำหนักควรเริ่มอย่างไรดี',
+    'มีอาหารว่างที่โปรตีนสูงแนะนำไหม',
+    'ช่วยวางแผนเมนูอาหารสำหรับ 1 วันให้หน่อย',
+  ];
+  const [showPresetQuestions, setShowPresetQuestions] = useState(false);
 
   // Fetch user profile to check first_time_setting
   useEffect(() => {
@@ -36,7 +41,6 @@ const ChatScreen = () => {
   
   useEffect(() => {
     loadChatHistory();
-    loadChatStyle();
   }, []);
 
   
@@ -47,37 +51,6 @@ const ChatScreen = () => {
       }, 100);
     }
   }, [chatMessages, isSending]);
-
-  const loadChatStyle = async () => {
-    try {
-      const session = await apiClient.getChatSession();
-      if (session.style && ['style1', 'style2'].includes(session.style)) {
-        const style = session.style as ChatStyle;
-        setSelectedStyle(style);
-        setShowStyle2Info(style === 'style2');
-      } else if (session.style === 'style3') {
-        setSelectedStyle('style1');
-        setShowStyle2Info(false);
-      }
-    } catch (error) {
-      console.error('Error loading chat style:', error);
-    }
-  };
-
-const toggleChatStyle = async (style: ChatStyle) => {
-  try {
-    setSelectedStyle(style);
-    await apiClient.updateChatStyle(style);
-  } catch (error) {
-    console.error('Error updating chat style:', error);
-    Alert.alert('ข้อผิดพลาด', 'ไม่สามารถเปลี่ยนรูปแบบการสนทนาได้');
-  }
-};
-
-  const handleSelectStyle = (style: ChatStyle) => {
-    toggleChatStyle(style);
-  
-  };
 
   const loadChatHistory = async () => {
     try {
@@ -107,81 +80,73 @@ const toggleChatStyle = async (style: ChatStyle) => {
     }
   };
 
-  const sendMessage = async () => {
-    if (message.trim() && !isSending) {
-      try {
-        setIsSending(true);
-        
-        
-        const userMessage = {
-          id: Date.now(), 
-          text: message.trim(),
-          isBot: false,
-          role: 'user' as const,
-          timestamp: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
-        };
-        
-        
+  const sendMessage = async (textOverride?: string) => {
+    const textToSend = (textOverride ?? message).trim();
+    if (!textToSend || isSending) {
+      return;
+    }
+
+    try {
+      setIsSending(true);
+
+      const userMessage = {
+        id: Date.now(),
+        text: textToSend,
+        isBot: false,
+        role: 'user' as const,
+        timestamp: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
+      };
+
+      setChatMessages(prev => {
+        const newMessages = [...prev, userMessage];
+        return newMessages.length > 50 ? newMessages.slice(-50) : newMessages;
+      });
+
+      if (!textOverride) {
+        setMessage('');
+      }
+
+      const result = await apiClient.sendChatMessage(userMessage.text);
+
+      if (result && result.botMessage) {
         setChatMessages(prev => {
-          const newMessages = [...prev, userMessage];
-          
+          const newMessages = [...prev, result.botMessage];
           return newMessages.length > 50 ? newMessages.slice(-50) : newMessages;
         });
-        setMessage(''); 
-        
-        
-        const result = await apiClient.sendChatMessage(userMessage.text);
-        
-        
-        
-        if (result && result.botMessage) {
-          setChatMessages(prev => {
-            const newMessages = [...prev, result.botMessage];
-            
-            return newMessages.length > 50 ? newMessages.slice(-50) : newMessages;
-          });
-        } else if (result && result.userMessage && result.botMessage) {
-          
-          setChatMessages(prev => {
-            const newMessages = [...prev, result.botMessage];
-            
-            return newMessages.length > 50 ? newMessages.slice(-50) : newMessages;
-          });
-        } else {
-          
-          const errorMessage = {
-            id: Date.now() + 1,
-            text: 'ขออภัยครับ เกิดข้อผิดพลาดในการประมวลผล กรุณาลองใหม่อีกครั้ง',
-            isBot: true,
-            role: 'assistant' as const,
-            timestamp: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
-          };
-          setChatMessages(prev => {
-            const newMessages = [...prev, errorMessage];
-            
-            return newMessages.length > 50 ? newMessages.slice(-50) : newMessages;
-          });
-        }
-      } catch (error) {
-        console.error('Error sending message:', error);
-        
-        
+      } else {
         const errorMessage = {
-          id: Date.now() + 2,
-          text: 'เกิดข้อผิดพลาดในการส่งข้อความ กรุณาลองใหม่อีกครั้ง',
+          id: Date.now() + 1,
+          text: 'ขออภัยครับ เกิดข้อผิดพลาดในการประมวลผล กรุณาลองใหม่อีกครั้ง',
           isBot: true,
           role: 'assistant' as const,
           timestamp: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
         };
         setChatMessages(prev => {
           const newMessages = [...prev, errorMessage];
-          
           return newMessages.length > 50 ? newMessages.slice(-50) : newMessages;
         });
-      } finally {
-        setIsSending(false);
       }
+    } catch (error) {
+      console.error('Error sending message:', error);
+
+      const errorMessage = {
+        id: Date.now() + 2,
+        text: 'เกิดข้อผิดพลาดในการส่งข้อความ กรุณาลองใหม่อีกครั้ง',
+        isBot: true,
+        role: 'assistant' as const,
+        timestamp: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
+      };
+      setChatMessages(prev => {
+        const newMessages = [...prev, errorMessage];
+        return newMessages.length > 50 ? newMessages.slice(-50) : newMessages;
+      });
+    } finally {
+      setIsSending(false);
     }
+  };
+
+  const handlePresetQuestion = (question: string) => {
+    sendMessage(question);
   };
 
   const clearHistory = async () => {
@@ -553,65 +518,38 @@ const toggleChatStyle = async (style: ChatStyle) => {
         )}
       </ScrollView>
 
-      {/* Chat Style Selector */}
-      <View className="px-4 py-2 border-t border-gray-200">
-        <View className="flex-row items-center justify-between mb-2">
-          <Text className="text-myBlack text-sm font-promptMedium">รูปแบบการสนทนา:</Text>
-          {selectedStyle === 'style2' && !showStyle2Info && (
-            <TouchableOpacity
-              className="flex-row items-center"
-              onPress={() => setShowStyle2Info(true)}
-            >
-              <Icon name="information-circle-outline" size={18} color="#6b7280" />
-              <Text className="ml-2 text-sm text-gray-500 font-promptMedium">
-                ดูคำอธิบาย
-              </Text>
-            </TouchableOpacity>
-          )}
+      {/* Preset Questions */}
+      <View className="bg-white border-t border-gray-200 px-4 py-3">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-myBlack text-sm font-promptMedium">คำถามยอดนิยม</Text>
+          <TouchableOpacity
+            className="flex-row items-center"
+            onPress={() => setShowPresetQuestions(prev => !prev)}
+          >
+            <Text className="text-sm font-promptMedium text-primary mr-1">
+              {showPresetQuestions ? 'ซ่อน' : 'ดูเพิ่มเติม'}
+            </Text>
+            <Icon
+              name={showPresetQuestions ? 'chevron-up' : 'chevron-down'}
+              size={16}
+              color="#ffb800"
+            />
+          </TouchableOpacity>
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <TouchableOpacity 
-            className={`rounded-full px-4 py-2 mr-2 border ${
-              selectedStyle === 'style1' 
-                ? 'bg-primary border-primary' 
-                : 'bg-gray-100 border border-transparent'
-            }`}
-            onPress={() => handleSelectStyle('style1')}
-          >
-            <Text className={`text-sm font-promptMedium ${
-              selectedStyle === 'style1' ? 'text-white' : 'text-gray-700'
-            }`}>พูดคุยปกติ</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            className={`rounded-full px-4 py-2 mr-2 border ${
-              selectedStyle === 'style2' 
-                ? 'bg-primary border-primary' 
-                : 'bg-gray-100 border-transparent'
-            }`}
-            onPress={() => handleSelectStyle('style2')}
-          >
-            <Text className={`text-sm font-promptMedium ${
-              selectedStyle === 'style2' ? 'text-white' : 'text-gray-700'
-            }`}>รู้เรื่องการกิน</Text>
-          </TouchableOpacity>
-        </ScrollView>
-        {selectedStyle === 'style2' && showStyle2Info && (
-          <View className="mt-3">
-            <View className="mt-3">
-              <View className=" border border-primary rounded-xl px-4 py-3">
-             
-                  <TouchableOpacity 
-                    onPress={() => setShowStyle2Info(false)}
-                    className="flex-row justify-between items-center"
-                  >
-                    <Text className="flex-1 text-sm text-gray-600 font-promptMedium">
-                      รู้ข้อมูลการกินในสัปดาห์ล่าสุดช่วยให้คุณปรับการกินได้ดีขึ้น
-                    </Text>
-                    <Icon name="chevron-up" size={18} color="#ffb800" className="ml-2" />
-                  </TouchableOpacity>
-               
-              </View>
-            </View>
+        {showPresetQuestions && (
+          <View className="flex-row flex-wrap mt-3">
+            {presetQuestions.map(question => (
+              <TouchableOpacity
+                key={question}
+                className="bg-gray-100 border border-gray-200 rounded-full px-4 py-2 mr-2 mb-2"
+                onPress={() => handlePresetQuestion(question)}
+                disabled={isSending}
+              >
+                <Text className="text-sm font-promptMedium text-gray-700">
+                  {question}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
         )}
       </View>

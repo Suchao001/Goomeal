@@ -96,9 +96,9 @@ ${eatingData.recentDays.map((day: any) =>
 
   // Style-specific prompts
   const stylePrompts = {
-    style1: basePrompt,
+    style1: `${basePrompt}
+     ${nutritionContext}`,
     style2: `${basePrompt}
-
       ${nutritionContext}`,
     style3: basePrompt,
       };
