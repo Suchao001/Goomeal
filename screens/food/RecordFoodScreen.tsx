@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert, Modal } from 'react-native';
 import { useTypedNavigation, useTypedRoute } from '../../hooks/Navigation';
 import { useFocusEffect } from '@react-navigation/native';
@@ -113,6 +113,7 @@ const RecordFoodScreen = () => {
   // Helper day number from selectedDate for legacy needs (labels, uniqueId)
   const selectedDay = parseDate(selectedDate).getDate();
   const [mealTimes, setMealTimes] = useState<MealTime[]>(() => getDefaultMeals());
+  const mealTimesRef = useRef<MealTime[]>(getDefaultMeals());
   const [todayMealData, setTodayMealData] = useState<TodayMealData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -168,7 +169,9 @@ const RecordFoodScreen = () => {
     const isTodaySelected = selectedDate === getTodayBangkokDate();
 
     // Reset meal times and state
-    setMealTimes(getDefaultMeals()); 
+    const defaults = getDefaultMeals();
+    mealTimesRef.current = defaults;
+    setMealTimes(defaults); 
     setHasSavedToday(false);
 
     if (isTodaySelected) {
@@ -179,6 +182,10 @@ const RecordFoodScreen = () => {
   }, [selectedDate]);
 
   // Load menus for today (using meal plan + saved status)
+  useEffect(() => {
+    mealTimesRef.current = mealTimes;
+  }, [mealTimes]);
+
   const loadTodayMenus = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -370,6 +377,7 @@ const RecordFoodScreen = () => {
 
         if (nextMeals.length > 0) {
           const mealsWithSaved = await applySavedStatusToMeals(nextMeals);
+          mealTimesRef.current = mealsWithSaved;
           setMealTimes(mealsWithSaved);
         }
       }
@@ -385,9 +393,16 @@ const RecordFoodScreen = () => {
   const getIsoDateForDay = (_day: number) => selectedDate;
 
   // Check which plan items are already saved using unique_id
-  const checkPlanItemsSavedStatus = async () => {
+  const checkPlanItemsSavedStatus = async (mealsOverride?: MealTime[]) => {
     try {
-      const updated = await applySavedStatusToMeals(mealTimes);
+      const mealsToUpdate = mealsOverride ?? mealTimesRef.current;
+      const hasPlanEntries = mealsToUpdate.some(meal => meal.entries.some(entry => entry.fromPlan));
+      if (!hasPlanEntries) {
+        return;
+      }
+
+      const updated = await applySavedStatusToMeals(mealsToUpdate);
+      mealTimesRef.current = updated;
       setMealTimes(updated);
     } catch (error) {
       console.error('Failed to check saved status:', error);

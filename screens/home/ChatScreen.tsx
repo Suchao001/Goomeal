@@ -530,7 +530,7 @@ const ChatScreen = () => {
               {showPresetQuestions ? 'ซ่อน' : 'ดูเพิ่มเติม'}
             </Text>
             <Icon
-              name={showPresetQuestions ? 'chevron-up' : 'chevron-down'}
+              name={showPresetQuestions ? 'chevron-down' : 'chevron-up'}
               size={16}
               color="#ffb800"
             />
