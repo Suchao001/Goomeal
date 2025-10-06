@@ -17,17 +17,21 @@ Goomeal คือแอปผู้ช่วยด้านโภชนากา
 ### เตรียมเครื่องมือ
 - Node.js 18 ขึ้นไป พร้อม npm หรือ pnpm
 - ฐานข้อมูล MySQL ที่สร้าง schema ตรงกับไฟล์ `goodmeal.sql`
-- Expo Go บนมือถือ หรือ Emulator ตามแพลตฟอร์มที่ต้องการ
+- Expo Go version sdk 52 บนมือถือ หรือ Emulator ตามแพลตฟอร์มที่ต้องการ
 
 ### ฝั่งแอป (Expo)
 1. ติดตั้งแพ็กเกจ: `npm install`
-2. คัดลอกไฟล์ตัวอย่าง: `cp .env.example .env` แล้วอัปเดต URL ของ backend ตามสภาพแวดล้อม
-3. รันแอป: `npm run start` แล้วเลือก platform (`android` / `ios` / `web`)
+3. สร้างไฟล์ env แล้วกรอกค่าตามระบบของคุโดยมีข้อมูลดังนี้: 
+   ```env
+   API_URL=http://10.10.57.151:3001 // ip 
+   SECOND_BACKEND_URL=http://10.10.57.151:3000 // ของ ฝั่ง admin
+   ```
+3. รันแอป: `npx expo start` แล้วเลือก platform ต่อด้วย (`--android` / `--ios` / `--web`)
 
 ### ฝั่ง backend (API)
 1. `cd backend`
 2. ติดตั้งแพ็กเกจ: `npm install`
-3. คัดลอกไฟล์ตัวอย่าง: `cp .env.example .env` แล้วกรอกค่าตามระบบของคุณ เช่น
+3. สร้างไฟล์ env แล้วกรอกค่าตามระบบของคุโดยมีข้อมูลดังนี้: 
    ```env
    DB_HOST=localhost
    DB_PORT=3306
@@ -36,17 +40,14 @@ Goomeal คือแอปผู้ช่วยด้านโภชนากา
    DB_NAME=goomeal
    JWT_SECRET=your_jwt_secret
    BASE_URL=http://localhost:3001
-   AI_API=http://localhost:11434
    AI_API_KEY=your_ai_key
-   RESEND_API_KEY=your_resend_api_key
    EMAIL_SENDER=you@example.com
    APP_PASSWORD=mail_app_password
    ```
 4. รันเซิร์ฟเวอร์พัฒนา: `npm run dev`
 
 ## คำสั่งที่ใช้บ่อย
-- `npm run android` / `npm run ios` / `npm run web` สำหรับทดสอบบนแต่ละแพลตฟอร์ม
-- `npm run lint` เพื่อตรวจสอบคุณภาพโค้ด
+- `npx expo start` / `npx expo start --android` / `npx expo start --web` สำหรับทดสอบบนแต่ละแพลตฟอร์ม
 - Backend: `npm run dev` (ที่โฟลเดอร์ `backend/`)
 
 ## โครงสร้างโปรเจ็กต์โดยย่อ
@@ -54,4 +55,3 @@ Goomeal คือแอปผู้ช่วยด้านโภชนากา
 - `backend/` — โค้ด API และสคริปต์ฐานข้อมูล
 - `docs/` — บันทึกการออกแบบและสรุปงานเพิ่มเติม
 
-พร้อมเริ่มปรับแต่งและพัฒนาต่อได้ทันที หากต้องการข้อมูลเชิงลึกดูได้จากไฟล์ในโฟลเดอร์ `docs/`
